@@ -19,7 +19,10 @@ function initCharts() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'bottom' }
+          legend: { 
+            position: 'bottom',
+            labels: { font: { family: 'Montserrat' } }
+          }
         }
       }
     });
@@ -51,10 +54,53 @@ function initCharts() {
           y: { beginAtZero: true }
         },
         plugins: {
-          legend: { position: 'bottom' }
+          legend: { 
+            position: 'bottom',
+            labels: { font: { family: 'Montserrat' } }
+          }
         }
       }
     });
+  }
+}
+
+// Năm sinh cơ sở ban đầu (2023 - 21 = 2002)
+let birthYear = 2002;
+
+function syncDynamicYear(newYear) {
+  // Cập nhật tất cả các vị trí hiển thị số năm
+  document.querySelectorAll('.dynamic-year').forEach(el => {
+    el.textContent = newYear;
+  });
+}
+
+function handleYearInput() {
+  const inputYearEl = document.getElementById('input-year');
+  const inputAgeEl = document.getElementById('input-age');
+  if (!inputYearEl || !inputAgeEl) return;
+
+  const currentYearVal = parseInt(inputYearEl.textContent.trim(), 10);
+  if (!isNaN(currentYearVal) && currentYearVal > 1900 && currentYearVal < 2200) {
+    syncDynamicYear(currentYearVal);
+    // Tính lại tuổi tự động
+    const calculatedAge = currentYearVal - birthYear;
+    if (calculatedAge >= 0) {
+      inputAgeEl.textContent = calculatedAge;
+    }
+  }
+}
+
+function handleAgeInput() {
+  const inputYearEl = document.getElementById('input-year');
+  const inputAgeEl = document.getElementById('input-age');
+  if (!inputYearEl || !inputAgeEl) return;
+
+  const currentYearVal = parseInt(inputYearEl.textContent.trim(), 10) || 2023;
+  const currentAgeVal = parseInt(inputAgeEl.textContent.trim(), 10);
+
+  if (!isNaN(currentAgeVal) && currentAgeVal >= 0 && currentAgeVal < 120) {
+    // Cập nhật lại năm sinh cơ sở ngầm
+    birthYear = currentYearVal - currentAgeVal;
   }
 }
 
@@ -86,7 +132,7 @@ function addIncomeRow() {
   targetCell.focus();
 }
 
-// 3. Thêm dòng cho bảng Kế hoạch phát triển (viết thêm plan mới)
+// 3. Thêm dòng cho bảng Kế hoạch phát triển
 function addPlanRow() {
   const tbody = document.querySelector('#table-plan tbody');
   const count = tbody.rows.length + 1;
@@ -116,8 +162,22 @@ function addInvestRow() {
   targetCell.focus();
 }
 
-// Xử lý chuyển tab khi nhấn menu Sidebar
 document.addEventListener('DOMContentLoaded', () => {
+  // Lắng nghe sự kiện chỉnh sửa Năm & Tuổi
+  const inputYear = document.getElementById('input-year');
+  const inputAge = document.getElementById('input-age');
+
+  if (inputYear) {
+    inputYear.addEventListener('input', handleYearInput);
+    inputYear.addEventListener('blur', handleYearInput);
+  }
+
+  if (inputAge) {
+    inputAge.addEventListener('input', handleAgeInput);
+    inputAge.addEventListener('blur', handleAgeInput);
+  }
+
+  // Điều hướng chuyển Tab Menu Sidebar
   const navItems = document.querySelectorAll('.nav-item');
   const bannerTitle = document.getElementById('current-title');
   const tabTuKhoa = document.getElementById('tab-tukhoa');
