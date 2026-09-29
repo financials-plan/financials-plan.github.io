@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bảng Quản Lý Tài Chính</title>
-  <!-- Google Fonts: Montserrat -->
+  <!-- Google Font: Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap" rel="stylesheet">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Stylesheet -->
+  <!-- File CSS riêng -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -58,7 +58,10 @@
       <button class="nav-item" data-tab="tab-thang10"><span>Theo dõi tháng 10</span></button>
       <button class="nav-item" data-tab="tab-thang11"><span>Theo dõi tháng 11</span></button>
       <button class="nav-item" data-tab="tab-thang12"><span>Theo dõi tháng 12</span></button>
-      <button class="nav-item" data-tab="tab-khaosat"><span>Bảng khảo sát</span></button>
+
+      <button class="nav-item" data-tab="tab-khaosat">
+        <span>Bảng khảo sát</span>
+      </button>
     </nav>
   </aside>
 
@@ -71,25 +74,27 @@
       <span class="unit-text">đơn vị: triệu đồng</span>
     </header>
 
-    <!-- NỘI DUNG SHEET -->
+    <!-- NỘI DUNG CÁC TAB -->
     <section class="content-body">
       
-      <!-- TAB 1: TỪ KHÓA -->
+      <!-- TAB TỪ KHÓA -->
       <div id="tab-tukhoa" class="tab-pane active">
         
-        <!-- KHU VỰC ĐỒNG BỘ NĂM THEO DÕI, TUỔI & QUY ƯỚC MÀU CHỮ -->
+        <!-- THÔNG SỐ TOP: NĂM BẮT ĐẦU, TUỔI & QUY ƯỚC MÀU CHỮ -->
         <div class="top-info-row">
           
-          <!-- 1. Năm bắt đầu theo dõi (Input editable) -->
+          <!-- 1. Năm bắt đầu theo dõi -->
           <div class="info-block block-orange">
             <div class="info-header">Năm bắt đầu theo dõi</div>
-            <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Nhấp để thay đổi năm">2023</div>
+            <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa năm">2023</div>
           </div>
 
-          <!-- 2. Tuổi của bạn (Tự động cập nhật theo năm) -->
+          <!-- 2. Tuổi của bạn theo năm đã chọn (tự động tính) -->
           <div class="info-block block-green">
-            <div class="info-header" id="label-age-header">Tuổi của bạn năm <span class="dynamic-year">2023</span></div>
-            <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false" title="Nhấp để thay đổi tuổi">21</div>
+            <div class="info-header">
+              Tuổi của bạn năm <span class="dynamic-year">2023</span>
+            </div>
+            <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa tuổi">21</div>
           </div>
 
           <!-- 3. Quy ước màu chữ -->
@@ -111,18 +116,18 @@
 
         </div>
 
-        <!-- HỆ THỐNG 4 BẢNG DỮ LIỆU ĐÃ LOẠI BỎ HÀNG THỪA -->
+        <!-- 4 BẢNG DỮ LIỆU ĐÃ LOẠI BỎ HÀNG THỪA & CÓ NÚT + THÊM ROW -->
         <div class="sheet-tables-container">
           
           <!-- BẢNG 1: DANH MỤC CHI PHÍ -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-expense">
+            <table class="excel-table" id="table-expenses">
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
                     <div class="table-header-flex">
                       <span class="title">Danh mục chi phí</span>
-                      <button type="button" class="btn-table-add" onclick="addExpenseRow()" title="Thêm khoản mục">
+                      <button class="btn-table-add" onclick="addExpenseRow()" title="Thêm khoản mục">
                         <i class="fa-solid fa-plus"></i>
                         <span class="btn-text">Thêm</span>
                       </button>
@@ -157,7 +162,7 @@
                   <th colspan="2">
                     <div class="table-header-flex">
                       <span class="title">Danh mục thu nhập</span>
-                      <button type="button" class="btn-table-add" onclick="addIncomeRow()" title="Thêm nguồn thu">
+                      <button class="btn-table-add" onclick="addIncomeRow()" title="Thêm nguồn thu">
                         <i class="fa-solid fa-plus"></i>
                         <span class="btn-text">Thêm</span>
                       </button>
@@ -178,13 +183,13 @@
 
           <!-- BẢNG 3: KẾ HOẠCH PHÁT TRIỂN -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-plan">
+            <table class="excel-table" id="table-learning">
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
                     <div class="table-header-flex">
                       <span class="title">Kế hoạch phát triển</span>
-                      <button type="button" class="btn-table-add" onclick="addPlanRow()" title="Thêm kế hoạch">
+                      <button class="btn-table-add" onclick="addPlanRow()" title="Thêm kế hoạch">
                         <i class="fa-solid fa-plus"></i>
                         <span class="btn-text">Thêm</span>
                       </button>
@@ -214,7 +219,7 @@
                   <th colspan="4">
                     <div class="table-header-flex">
                       <span class="title">Danh mục sản phẩm đầu tư</span>
-                      <button type="button" class="btn-table-add" onclick="addInvestRow()" title="Thêm sản phẩm">
+                      <button class="btn-table-add" onclick="addInvestRow()" title="Thêm danh mục">
                         <i class="fa-solid fa-plus"></i>
                         <span class="btn-text">Thêm</span>
                       </button>
@@ -224,8 +229,8 @@
                 <tr class="header-sub-green">
                   <th style="width: 36px;">#</th>
                   <th>Khoản mục</th>
-                  <th style="width: 145px;">Mức sinh lời TB 5 năm</th>
-                  <th style="width: 65px;">Rủi ro</th>
+                  <th style="width: 135px;">Mức sinh lời TB 5 năm</th>
+                  <th style="width: 60px;">Rủi ro</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,16 +253,16 @@
         </div>
       </div>
 
-      <!-- TAB 2: DASHBOARD TỔNG QUAN -->
+      <!-- TAB DASHBOARD -->
       <div id="tab-dashboard" class="tab-pane">
         <div class="stat-cards">
           <div class="stat-card">
-            <div class="stat-label">Tổng thu nhập tháng</div>
+            <div class="stat-label">Tổng thu nhập năm <span class="dynamic-year">2023</span></div>
             <div class="stat-value text-green">45.00 tr</div>
-            <div class="stat-sub">+12% so với tháng trước</div>
+            <div class="stat-sub">+12% so với kỳ trước</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Tổng chi tiêu tháng</div>
+            <div class="stat-label">Tổng chi tiêu năm <span class="dynamic-year">2023</span></div>
             <div class="stat-value text-red">21.45 tr</div>
             <div class="stat-sub">47.6% trên tổng thu</div>
           </div>
@@ -276,7 +281,7 @@
             </div>
           </div>
           <div class="chart-card">
-            <h3>Thu nhập vs Chi tiêu 6 tháng (<span class="dynamic-year">2023</span>)</h3>
+            <h3>Thu nhập vs Chi tiêu (Triệu đồng)</h3>
             <div class="chart-container">
               <canvas id="barChart"></canvas>
             </div>
@@ -284,18 +289,19 @@
         </div>
       </div>
 
-      <!-- CÁC TAB KHÁC -->
+      <!-- TAB PLACEHOLDER CÁC MỤC KHÁC -->
       <div id="tab-generic" class="tab-pane">
         <div class="empty-state">
           <i class="fa-regular fa-folder-open empty-icon"></i>
           <h2 id="empty-title">Nội dung trang</h2>
-          <p>Mẫu trang tính <span class="dynamic-year">2023</span> sẵn sàng nhập liệu.</p>
+          <p>Trang tính năm <strong class="dynamic-year">2023</strong> đã sẵn sàng nhập dữ liệu.</p>
         </div>
       </div>
 
     </section>
   </main>
 
+  <!-- File JS riêng -->
   <script src="script.js"></script>
 </body>
 </html>
