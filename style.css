@@ -16,7 +16,7 @@ body {
 
 /* ==================== SIDEBAR TRÁI ==================== */
 .sidebar {
-  width: 215px;
+  width: 220px;
   background-color: #0e5627;
   color: white;
   display: flex;
@@ -26,7 +26,7 @@ body {
 }
 
 .sidebar-header {
-  padding: 12px 16px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -41,10 +41,10 @@ body {
 }
 
 .nav-menu {
-  padding: 14px 10px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   overflow-y: auto;
 }
 
@@ -52,7 +52,7 @@ body {
   background-color: transparent;
   color: #ffffff;
   border: 1px solid transparent;
-  padding: 6px 12px;
+  padding: 7px 12px;
   border-radius: 9999px;
   cursor: pointer;
   text-align: center;
@@ -61,6 +61,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   transition: all 0.15s ease;
   outline: none;
 }
@@ -101,7 +102,7 @@ body {
 }
 
 .orange-banner h1 {
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: 1px;
   color: #000000;
@@ -222,7 +223,7 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== BẢNG GRID EXCEL (TAB TỪ KHÓA) ==================== */
+/* ==================== BẢNG GRID EXCEL ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
@@ -237,20 +238,21 @@ body {
   border-collapse: collapse;
   font-size: 0.76rem;
   background-color: #ffffff;
+  width: 100%;
 }
 
 .excel-table th, 
 .excel-table td {
   border: 1px solid #b7b7b7;
-  padding: 3px 6px;
-  height: 22px;
+  padding: 4px 6px;
+  height: 24px;
 }
 
 .header-main-orange th {
   background-color: #f29b28;
   color: #000000;
   font-weight: 700;
-  padding: 3px 6px;
+  padding: 4px 6px;
 }
 
 .header-sub-orange th {
@@ -264,7 +266,7 @@ body {
   background-color: #0e5627;
   color: #ffffff;
   font-weight: 700;
-  padding: 3px 6px;
+  padding: 4px 6px;
 }
 
 .header-sub-green th {
@@ -287,6 +289,7 @@ body {
   margin-left: 20px;
 }
 
+/* Nút + hover trượt ra chữ "Thêm" */
 .btn-table-add {
   display: inline-flex;
   align-items: center;
@@ -340,25 +343,19 @@ body {
 .header-main-orange .btn-table-add {
   background-color: #ffffff;
   color: #c26900;
-  border-color: rgba(194, 105, 0, 0.3);
 }
-
 .header-main-orange .btn-table-add:hover {
   background-color: #fff7ed;
   color: #9a3412;
-  border-color: #ea580c;
 }
 
 .header-main-green .btn-table-add {
   background-color: #ffffff;
   color: #0e5627;
-  border-color: rgba(14, 86, 39, 0.3);
 }
-
 .header-main-green .btn-table-add:hover {
   background-color: #f0fdf4;
   color: #14532d;
-  border-color: #16a34a;
 }
 
 .excel-table td:first-child {
@@ -485,7 +482,7 @@ body {
   outline: none;
 }
 
-/* ==================== BẢNG CHUNG CHO CÁC SHEET EXCEL MỚI ==================== */
+/* ==================== BẢNG CHUNG CỦA SHEET ==================== */
 .custom-sheet-container {
   max-width: 1000px;
 }
@@ -571,7 +568,7 @@ body {
 
 .month-buttons {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -666,7 +663,7 @@ body {
   background-color: #166534;
 }
 
-/* ==================== DASHBOARD STATS & CHARTS ==================== */
+/* ==================== DASHBOARD STATS ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -726,4 +723,28 @@ body {
 .chart-container {
   height: 250px;
   position: relative;
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.sheet-card {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.card-head {
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.card-head h3 {
+  font-size: 0.84rem;
+  font-weight: 700;
 }
