@@ -16,7 +16,7 @@ body {
 /* ==================== SIDEBAR TRÁI ==================== */
 .sidebar {
   width: 200px;
-  background-color: #0e5627; /* Màu xanh lá đậm nguyên bản của bảng tính */
+  background-color: #0e5627;
   color: white;
   display: flex;
   flex-direction: column;
@@ -47,7 +47,6 @@ body {
   overflow-y: auto;
 }
 
-/* Các nút dạng bo tròn viên thuốc */
 .nav-item {
   background-color: transparent;
   color: #ffffff;
@@ -74,9 +73,8 @@ body {
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Nút tab đang được chọn (Từ khóa) */
 .nav-item.active {
-  background-color: #f39c12; /* Màu cam tiệp với dải banner */
+  background-color: #f39c12;
   color: #000000;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
@@ -90,9 +88,9 @@ body {
   background-color: #ffffff;
 }
 
-/* Dải banner cam chạy ngang */
+/* Dải banner cam */
 .orange-banner {
-  background-color: #f29b28; /* Màu cam đất chuẩn hình */
+  background-color: #f29b28;
   padding: 6px 20px;
   display: flex;
   align-items: center;
@@ -107,7 +105,7 @@ body {
   font-weight: 800;
   letter-spacing: 1px;
   color: #000000;
-  margin-left: 200px; /* Căn chỉnh vị trí chữ TỪ KHÓA */
+  margin-left: 200px;
 }
 
 .unit-text {
@@ -147,7 +145,6 @@ body {
   text-align: center;
 }
 
-/* Khối năm theo dõi */
 .block-orange .info-header {
   background-color: #f29b28;
   color: #000000;
@@ -166,7 +163,6 @@ body {
   padding: 4px;
 }
 
-/* Khối tuổi */
 .block-green .info-header {
   background-color: #0e5627;
   color: #ffffff;
@@ -248,7 +244,6 @@ body {
   height: 22px;
 }
 
-/* Header lớn màu cam (Bảng 1, Bảng 3) */
 .header-main-orange th {
   background-color: #f29b28;
   color: #000000;
@@ -265,7 +260,6 @@ body {
   text-align: center;
 }
 
-/* Header lớn màu xanh lá (Bảng 2, Bảng 4) */
 .header-main-green th {
   background-color: #0e5627;
   color: #ffffff;
@@ -282,14 +276,12 @@ body {
   text-align: center;
 }
 
-/* Cột số thứ tự # */
 .excel-table td:first-child {
   text-align: center;
   font-weight: 700;
   color: #000000;
 }
 
-/* Màu chữ xanh nhập liệu */
 .cell-blue {
   color: #0070c0 !important;
   font-weight: 500;
@@ -304,29 +296,9 @@ body {
   text-align: right;
 }
 
-/* Ô được highlight (DCDS trong ảnh) */
 .excel-active-cell {
   outline: 2px solid #0e5627 !important;
   background-color: #ffffff;
-}
-
-/* Khối nhãn Legend đặt cạnh dòng 7-8 của Bảng 2 */
-.relative-cell {
-  position: relative;
-}
-
-.legend-badge {
-  position: absolute;
-  right: -58px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 1.5px solid #4a4a4a;
-  background: white;
-  padding: 1px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #333;
-  z-index: 5;
 }
 
 /* ==================== DASHBOARD TAB ==================== */
