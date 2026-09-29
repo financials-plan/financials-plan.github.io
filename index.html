@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bảng Quản Lý Tài Chính</title>
-  <!-- Google Font: Montserrat (Tất cả trọng số 400 - 800) -->
+  <!-- Google Font: Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap" rel="stylesheet">
@@ -59,7 +59,7 @@
       <button class="nav-item" data-tab="tab-thang11"><span>Theo dõi tháng 11</span></button>
       <button class="nav-item" data-tab="tab-thang12"><span>Theo dõi tháng 12</span></button>
 
-      <button class="nav-item" data-tab="tab-khaosat">
+      <button class="nav-item" data-tab="tab-khaosat" id="nav-btn-khaosat">
         <span>Bảng khảo sát</span>
       </button>
     </nav>
@@ -71,25 +71,25 @@
     <!-- Dải màu cam chạy ngang cả template -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
-      <span class="unit-text">đơn vị: triệu đồng</span>
+      <span class="unit-text">Đơn vị: triệu đồng</span>
     </header>
 
     <!-- NỘI DUNG CÁC TAB -->
     <section class="content-body">
       
-      <!-- TAB TỪ KHÓA -->
+      <!-- TAB 1: TỪ KHÓA -->
       <div id="tab-tukhoa" class="tab-pane active">
         
         <!-- THÔNG SỐ TOP: NĂM BẮT ĐẦU, TUỔI & QUY ƯỚC MÀU CHỮ -->
         <div class="top-info-row">
           
-          <!-- 1. Năm bắt đầu theo dõi (Dynamic Input) -->
+          <!-- 1. Năm bắt đầu theo dõi -->
           <div class="info-block block-orange">
             <div class="info-header">Năm bắt đầu theo dõi</div>
             <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa năm">2023</div>
           </div>
 
-          <!-- 2. Tuổi của bạn (Dynamic Sync theo năm) -->
+          <!-- 2. Tuổi của bạn theo năm đã chọn (tự động tính) -->
           <div class="info-block block-green">
             <div class="info-header">
               Tuổi của bạn năm <span class="dynamic-year">2023</span>
@@ -253,7 +253,251 @@
         </div>
       </div>
 
-      <!-- TAB DASHBOARD -->
+      <!-- TAB 2: XÁC ĐỊNH MỤC TIÊU BẢN THÂN -->
+      <div id="tab-muctieu-bt" class="tab-pane">
+        <div class="target-container">
+          
+          <!-- KHỐI 1: THỜI ĐIỂM / NỘI DUNG MỤC TIÊU TƯƠNG LAI -->
+          <div class="target-section">
+            <table class="target-table">
+              <thead>
+                <tr>
+                  <th style="width: 140px;" class="italic-head">Thời điểm</th>
+                  <th class="italic-head">Nội dung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-green-light text-center text-calc-black font-bold" contenteditable="true">50</td>
+                  <td class="cell-green-light cell-blue font-semibold" contenteditable="true">Từng bước đạt mục tiêu tài chính trong tương lai</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 2: MỤC TIÊU TRẢ NỢ -->
+          <div class="target-section">
+            <table class="target-table" id="table-no">
+              <thead>
+                <tr>
+                  <th style="width: 130px;" class="italic-head">Mục tiêu trả nợ</th>
+                  <th style="width: 140px;" class="italic-head">Thời điểm (tuổi)</th>
+                  <th class="italic-head">Nội dung</th>
+                  <th style="width: 140px;" class="italic-head text-center">Giá trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">1</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">35</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Vay mua chung cư</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">2</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true"></td>
+                  <td class="cell-green-light cell-blue" contenteditable="true"></td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true"></td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">3</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true"></td>
+                  <td class="cell-green-light cell-blue" contenteditable="true"></td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 3: MỤC TIÊU ĐẦU TƯ -->
+          <div class="target-section">
+            <table class="target-table" id="table-dautu">
+              <thead>
+                <tr>
+                  <th style="width: 130px;" class="italic-head">Mục tiêu đầu tư</th>
+                  <th style="width: 140px;" class="italic-head">Thời điểm (tuổi)</th>
+                  <th class="italic-head">Nội dung</th>
+                  <th style="width: 140px;" class="italic-head text-center">Giá trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">4</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">25</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Du lịch xuyên Thái Lan</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">50</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">5</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">26</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Quỹ dự phòng tài chính</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">100</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">6</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">28</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Đám cưới</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">200</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">7</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">30</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Khởi nghiệp</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">8</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">38</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Mua chung cư</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">1,500</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">9</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">46</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Cho con đi học đại học</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td>
+                </tr>
+                <tr>
+                  <td class="cell-green-light text-center font-bold">10</td>
+                  <td class="cell-green-light text-center cell-blue" contenteditable="true">50</td>
+                  <td class="cell-green-light cell-blue" contenteditable="true">Hưu trí</td>
+                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 4: TỶ LỆ GIÁ TRỊ (40%) -->
+          <div class="target-section">
+            <table class="target-table">
+              <thead>
+                <tr>
+                  <th class="italic-head text-center">Giá trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cell-green-light text-center cell-blue font-bold" contenteditable="true">40%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 5: PHÁT TRIỂN / THẾ MẠNH BẢN THÂN -->
+          <div class="target-section">
+            <table class="target-table">
+              <thead>
+                <tr>
+                  <th class="italic-head text-center">Nội dung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Sẵn sàng học hỏi cái mới</td></tr>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Nhiệt huyết trong công việc</td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 6: NGUỒN LỰC HỖ TRỢ GIA ĐÌNH -->
+          <div class="target-section">
+            <table class="target-table">
+              <thead>
+                <tr>
+                  <th class="italic-head text-center">Nội dung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Ba mẹ có hỗ trợ mua chung cư , lo đám cưới</td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 7: MÔI TRƯỜNG LÀM VIỆC -->
+          <div class="target-section">
+            <table class="target-table">
+              <thead>
+                <tr>
+                  <th class="italic-head text-center">Nội dung</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Môi trường đa quốc gia, có nhiều cơ hội phát triển</td></tr>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Môi trường làm việc có sự cạnh tranh gay gắt, áp lực KPI</td></tr>
+                <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Có chế độ đãi ngộ tốt về lương thưởng, lương bổng</td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- KHỐI 8: KẾT QUẢ KHẢO SÁT (VỚI 2 NÚT LINK KHẢO SÁT CHUYỂN TAB) -->
+          <div class="target-section survey-result-section">
+            <div class="survey-result-title">Kết quả</div>
+            
+            <div class="survey-row">
+              <button class="btn-survey-link" onclick="goToSurveyTab()" title="Nhấp để đến Bảng Khảo Sát">
+                Link khảo sát
+              </button>
+              <div class="survey-desc font-bold text-black" contenteditable="true">
+                Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình
+              </div>
+            </div>
+
+            <div class="survey-row">
+              <button class="btn-survey-link" onclick="goToSurveyTab()" title="Nhấp để đến Bảng Khảo Sát">
+                Link khảo sát
+              </button>
+              <div class="survey-desc font-bold text-black" contenteditable="true">
+                Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB 3: BẢNG KHẢO SÁT -->
+      <div id="tab-khaosat" class="tab-pane">
+        <div class="survey-sheet-wrapper">
+          <div class="survey-sheet-header">
+            <h2>BẢNG KHẢO SÁT ĐÁNH GIÁ MỨC ĐỘ CHỊU RỦI RO & HOÀN CẢNH TÀI CHÍNH</h2>
+            <p>Vui lòng trả lời các câu hỏi bên dưới để hệ thống tự động đưa ra kết luận phân bổ tài sản phù hợp nhất.</p>
+          </div>
+
+          <div class="survey-questions-grid">
+            <div class="survey-card">
+              <h3>1. Khẩu vị rủi ro đầu tư</h3>
+              <p>Nếu danh mục đầu tư của bạn sụt giảm 15% trong vòng 1 tháng, bạn sẽ xử lý như thế nào?</p>
+              <label class="survey-option"><input type="radio" name="q1" value="low"> Bán cắt lỗ toàn bộ để bảo toàn vốn.</label>
+              <label class="survey-option"><input type="radio" name="q1" value="mid" checked> Bình tĩnh giữ nguyên và theo dõi thị trường trung hạn.</label>
+              <label class="survey-option"><input type="radio" name="q1" value="high"> Nạp thêm tiền để mua gia tăng tích sản giá tốt.</label>
+            </div>
+
+            <div class="survey-card">
+              <h3>2. Hoàn cảnh tài chính hiện tại</h3>
+              <p>Thu nhập mỗi tháng của bạn có đều đặn và có quỹ dự phòng khẩn cấp 3-6 tháng không?</p>
+              <label class="survey-option"><input type="radio" name="q2" value="mid" checked> Có quỹ dự phòng 3 tháng, thu nhập tương đối ổn định.</label>
+              <label class="survey-option"><input type="radio" name="q2" value="high"> Có quỹ dự phòng trên 6 tháng, thu nhập dồi dào và nhiều nguồn thu.</label>
+              <label class="survey-option"><input type="radio" name="q2" value="low"> Chưa có quỹ dự phòng, thu nhập bấp bênh.</label>
+            </div>
+          </div>
+
+          <div class="survey-action-box">
+            <button class="btn-save-survey" onclick="saveSurveyAndBack()">
+              <i class="fa-solid fa-check"></i> Lưu kết quả & Quay lại Mục tiêu bản thân
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: DASHBOARD -->
       <div id="tab-dashboard" class="tab-pane">
         <div class="stat-cards">
           <div class="stat-card">
@@ -289,7 +533,7 @@
         </div>
       </div>
 
-      <!-- TAB CÁC MỤC KHÁC -->
+      <!-- TAB PLACEHOLDER CÁC MỤC KHÁC -->
       <div id="tab-generic" class="tab-pane">
         <div class="empty-state">
           <i class="fa-regular fa-folder-open empty-icon"></i>
