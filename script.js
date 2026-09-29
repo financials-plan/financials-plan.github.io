@@ -1,183 +1,50 @@
-let pieChartInstance = null;
-let barChartInstance = null;
-
-function initCharts() {
-  if (pieChartInstance && barChartInstance) return;
-
-  const ctxPie = document.getElementById('pieChart')?.getContext('2d');
-  if (ctxPie) {
-    pieChartInstance = new Chart(ctxPie, {
-      type: 'doughnut',
-      data: {
-        labels: ['Chi tiêu thiết yếu', 'Học tập & PTTN', 'Tích lũy & Đầu tư', 'Giải trí'],
-        datasets: [{
-          data: [45, 15, 30, 10],
-          backgroundColor: ['#f87171', '#60a5fa', '#34d399', '#fbbf24']
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { 
-            position: 'bottom',
-            labels: { font: { family: 'Montserrat' } }
-          }
-        }
-      }
-    });
-  }
-
-  const ctxBar = document.getElementById('barChart')?.getContext('2d');
-  if (ctxBar) {
-    barChartInstance = new Chart(ctxBar, {
-      type: 'bar',
-      data: {
-        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-        datasets: [
-          {
-            label: 'Thu nhập',
-            data: [38, 42, 39, 45, 43, 45],
-            backgroundColor: '#10b981'
-          },
-          {
-            label: 'Chi tiêu',
-            data: [20, 22, 19, 24, 21, 21.4],
-            backgroundColor: '#ef4444'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        },
-        plugins: {
-          legend: { 
-            position: 'bottom',
-            labels: { font: { family: 'Montserrat' } }
-          }
-        }
-      }
-    });
-  }
-}
-
-// Năm sinh cơ sở ban đầu (2023 - 21 = 2002)
-let birthYear = 2002;
-
-function syncDynamicYear(newYear) {
-  // Cập nhật tất cả các vị trí hiển thị số năm
-  document.querySelectorAll('.dynamic-year').forEach(el => {
-    el.textContent = newYear;
-  });
-}
-
-function handleYearInput() {
-  const inputYearEl = document.getElementById('input-year');
-  const inputAgeEl = document.getElementById('input-age');
-  if (!inputYearEl || !inputAgeEl) return;
-
-  const currentYearVal = parseInt(inputYearEl.textContent.trim(), 10);
-  if (!isNaN(currentYearVal) && currentYearVal > 1900 && currentYearVal < 2200) {
-    syncDynamicYear(currentYearVal);
-    // Tính lại tuổi tự động
-    const calculatedAge = currentYearVal - birthYear;
-    if (calculatedAge >= 0) {
-      inputAgeEl.textContent = calculatedAge;
-    }
-  }
-}
-
-function handleAgeInput() {
-  const inputYearEl = document.getElementById('input-year');
-  const inputAgeEl = document.getElementById('input-age');
-  if (!inputYearEl || !inputAgeEl) return;
-
-  const currentYearVal = parseInt(inputYearEl.textContent.trim(), 10) || 2023;
-  const currentAgeVal = parseInt(inputAgeEl.textContent.trim(), 10);
-
-  if (!isNaN(currentAgeVal) && currentAgeVal >= 0 && currentAgeVal < 120) {
-    // Cập nhật lại năm sinh cơ sở ngầm
-    birthYear = currentYearVal - currentAgeVal;
-  }
-}
-
-// 1. Thêm dòng cho bảng Chi Phí
-function addExpenseRow() {
-  const tbody = document.querySelector('#table-expense tbody');
-  const count = tbody.rows.length + 1;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${count}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
-  tbody.appendChild(tr);
-  const targetCell = tr.cells[1];
-  targetCell.focus();
-}
-
-// 2. Thêm dòng cho bảng Thu Nhập
-function addIncomeRow() {
-  const tbody = document.querySelector('#table-income tbody');
-  const count = tbody.rows.length + 1;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${count}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
-  tbody.appendChild(tr);
-  const targetCell = tr.cells[1];
-  targetCell.focus();
-}
-
-// 3. Thêm dòng cho bảng Kế hoạch phát triển
-function addPlanRow() {
-  const tbody = document.querySelector('#table-plan tbody');
-  const count = tbody.rows.length + 1;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${count}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
-  tbody.appendChild(tr);
-  const targetCell = tr.cells[1];
-  targetCell.focus();
-}
-
-// 4. Thêm dòng cho bảng Sản phẩm đầu tư (4 cột)
-function addInvestRow() {
-  const tbody = document.querySelector('#table-invest tbody');
-  const count = tbody.rows.length + 1;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${count}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-    <td class="text-right cell-blue" contenteditable="true">0%</td>
-    <td class="text-right cell-blue" contenteditable="true">0%</td>
-  `;
-  tbody.appendChild(tr);
-  const targetCell = tr.cells[1];
-  targetCell.focus();
-}
+// ==================== CƠ CHẾ TRACKING NĂM & TUỔI TỰ ĐỘNG ====================
+let currentYear = 2023;
+let currentAge = 21;
+let birthYear = currentYear - currentAge; // Mặc định năm sinh 2002
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Lắng nghe sự kiện chỉnh sửa Năm & Tuổi
-  const inputYear = document.getElementById('input-year');
-  const inputAge = document.getElementById('input-age');
+  const inputYearEl = document.getElementById('input-year');
+  const inputAgeEl = document.getElementById('input-age');
 
-  if (inputYear) {
-    inputYear.addEventListener('input', handleYearInput);
-    inputYear.addEventListener('blur', handleYearInput);
+  // Hàm đồng bộ năm lên toàn bộ các vị trí có class "dynamic-year"
+  function syncYearToAllElements(year) {
+    document.querySelectorAll('.dynamic-year').forEach(el => {
+      el.textContent = year;
+    });
   }
 
-  if (inputAge) {
-    inputAge.addEventListener('input', handleAgeInput);
-    inputAge.addEventListener('blur', handleAgeInput);
-  }
+  // Khi người dùng nhập/sửa ô Năm bắt đầu theo dõi
+  inputYearEl.addEventListener('input', () => {
+    const rawVal = inputYearEl.innerText.trim();
+    const parsedYear = parseInt(rawVal, 10);
 
-  // Điều hướng chuyển Tab Menu Sidebar
+    if (!isNaN(parsedYear) && parsedYear > 1900 && parsedYear < 2100) {
+      currentYear = parsedYear;
+      syncYearToAllElements(currentYear);
+
+      // Tự động tính toán lại tuổi tương ứng
+      const calculatedAge = currentYear - birthYear;
+      if (calculatedAge > 0 && calculatedAge < 120) {
+        currentAge = calculatedAge;
+        inputAgeEl.innerText = currentAge;
+      }
+    }
+  });
+
+  // Khi người dùng trực tiếp sửa ô Tuổi
+  inputAgeEl.addEventListener('input', () => {
+    const rawVal = inputAgeEl.innerText.trim();
+    const parsedAge = parseInt(rawVal, 10);
+
+    if (!isNaN(parsedAge) && parsedAge > 0 && parsedAge < 120) {
+      currentAge = parsedAge;
+      // Cập nhật lại năm sinh ngầm để khi đổi năm sau này vẫn tính chính xác
+      birthYear = currentYear - currentAge;
+    }
+  });
+
+  // ==================== CHUYỂN ĐỔI TAB SIDEBAR ====================
   const navItems = document.querySelectorAll('.nav-item');
   const bannerTitle = document.getElementById('current-title');
   const tabTuKhoa = document.getElementById('tab-tukhoa');
@@ -211,3 +78,131 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+// ==================== HÀM THÊM HÀNG CHO CÁC BẢNG ====================
+
+// 1. Thêm dòng cho Bảng Danh mục chi phí
+function addExpenseRow() {
+  const tbody = document.querySelector('#table-expenses tbody');
+  const rowCount = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${rowCount}</td>
+    <td class="cell-blue" contenteditable="true"></td>
+  `;
+  tbody.appendChild(tr);
+  focusCell(tr.cells[1]);
+}
+
+// 2. Thêm dòng cho Bảng Danh mục thu nhập
+function addIncomeRow() {
+  const tbody = document.querySelector('#table-income tbody');
+  const rowCount = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${rowCount}</td>
+    <td class="cell-blue" contenteditable="true"></td>
+  `;
+  tbody.appendChild(tr);
+  focusCell(tr.cells[1]);
+}
+
+// 3. Thêm dòng cho Bảng Kế hoạch phát triển
+function addPlanRow() {
+  const tbody = document.querySelector('#table-learning tbody');
+  const rowCount = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${rowCount}</td>
+    <td class="cell-blue" contenteditable="true"></td>
+  `;
+  tbody.appendChild(tr);
+  focusCell(tr.cells[1]);
+}
+
+// 4. Thêm dòng cho Bảng Danh mục sản phẩm đầu tư
+function addInvestRow() {
+  const tbody = document.querySelector('#table-invest tbody');
+  const rowCount = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${rowCount}</td>
+    <td class="cell-blue" contenteditable="true"></td>
+    <td class="text-right cell-blue" contenteditable="true">0%</td>
+    <td class="text-right cell-blue" contenteditable="true">0%</td>
+  `;
+  tbody.appendChild(tr);
+  focusCell(tr.cells[1]);
+}
+
+// Tự động focus con trỏ vào ô để gõ nội dung ngay sau khi thêm dòng
+function focusCell(cell) {
+  cell.focus();
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(cell);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+// ==================== DASHBOARD CHARTS ====================
+let pieChartInstance = null;
+let barChartInstance = null;
+
+function initCharts() {
+  if (pieChartInstance && barChartInstance) return;
+
+  const ctxPie = document.getElementById('pieChart')?.getContext('2d');
+  if (ctxPie) {
+    pieChartInstance = new Chart(ctxPie, {
+      type: 'doughnut',
+      data: {
+        labels: ['Chi tiêu thiết yếu', 'Học tập & PTTN', 'Tích lũy & Đầu tư', 'Giải trí'],
+        datasets: [{
+          data: [45, 15, 30, 10],
+          backgroundColor: ['#f87171', '#60a5fa', '#34d399', '#fbbf24']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  const ctxBar = document.getElementById('barChart')?.getContext('2d');
+  if (ctxBar) {
+    barChartInstance = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        datasets: [
+          {
+            label: 'Thu nhập',
+            data: [38, 42, 39, 45, 43, 45],
+            backgroundColor: '#10b981'
+          },
+          {
+            label: 'Chi tiêu',
+            data: [20, 22, 19, 24, 21, 21.4],
+            backgroundColor: '#ef4444'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true }
+        },
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+}
