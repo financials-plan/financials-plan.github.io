@@ -6,17 +6,17 @@
 }
 
 body {
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
   color: #1f2937;
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-/* ==================== SIDEBAR ==================== */
+/* ==================== SIDEBAR DỌC ==================== */
 .sidebar {
   width: 250px;
-  background-color: #13582e; /* Xanh lá đậm chuẩn ảnh */
+  background-color: #115328; /* Xanh lá đậm chuẩn Excel/ảnh */
   color: white;
   display: flex;
   flex-direction: column;
@@ -26,26 +26,26 @@ body {
 }
 
 .sidebar-header {
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: 0.5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  background-color: #0f4825;
+  background-color: #0c4220;
 }
 
 .diamond-icon {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
 .nav-menu {
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   overflow-y: auto;
 }
 
@@ -53,8 +53,8 @@ body {
   background-color: transparent;
   color: #d1fae5;
   border: 1px solid transparent;
-  padding: 7px 14px;
-  border-radius: 9999px; /* Dáng bo tròn con nhộng như trong ảnh */
+  padding: 6px 14px;
+  border-radius: 9999px; /* Viên thuốc bo tròn như ảnh */
   cursor: pointer;
   text-align: left;
   font-size: 0.8rem;
@@ -62,62 +62,65 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
   outline: none;
 }
 
 .nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
-  transform: translateX(3px);
 }
 
 .nav-item.active {
   background-color: #ffffff;
-  color: #13582e;
+  color: #115328;
   font-weight: 700;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
-/* ==================== VÙNG NỘI DUNG ==================== */
+/* ==================== KHU VỰC CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: #fcfcfc;
+  background-color: #ffffff;
 }
 
 /* Dải màu cam chạy ngang */
 .orange-banner {
-  background: linear-gradient(90deg, #f59e0b 0%, #ea580c 100%);
-  color: #ffffff;
-  padding: 14px 28px;
+  background-color: #e59837; /* Màu cam đất chuẩn ảnh */
+  color: #000000;
+  padding: 8px 30px;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid #c97f26;
+  position: relative;
 }
 
 .orange-banner h1 {
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #000000;
 }
 
-.banner-subtext {
+.unit-text {
   font-size: 0.85rem;
-  opacity: 0.9;
-  font-weight: 500;
+  font-style: italic;
+  font-weight: 600;
+  color: #1a1a1a;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-/* Khung hiển thị nội dung */
 .content-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px 24px;
 }
 
 .tab-pane {
@@ -128,117 +131,173 @@ body {
   display: block;
 }
 
+/* ==================== PHẦN CHÚ THÍCH TOP (TUỔI & QUY ƯỚC) ==================== */
+.top-info-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  margin-bottom: 24px;
+}
+
+/* Khối hiển thị tuổi */
+.age-card {
+  width: 250px;
+  border: 1px solid #165b2f;
+  text-align: center;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.age-header {
+  background-color: #0d5c24; /* Xanh lá đậm */
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.age-value {
+  background-color: #9bd770; /* Xanh lục nhạt */
+  color: #0066cc; /* Số màu xanh dương nổi bật */
+  font-size: 2.1rem;
+  font-weight: 800;
+  padding: 8px;
+  cursor: text;
+  outline: none;
+}
+
+.age-value:focus {
+  background-color: #bbf095;
+}
+
+/* Khối quy ước màu chữ */
+.color-rules-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.85rem;
+}
+
+.rules-title {
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 4px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-box {
+  width: 50px;
+  height: 18px;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,0.2);
+}
+
+.color-blue { background-color: #0070c0; }
+.color-black { background-color: #000000; }
+.color-red { background-color: #c00000; }
+
+.rule-text {
+  font-weight: 600;
+}
+
+/* Quy định lớp màu theo quy ước */
+.text-input-blue { color: #0070c0 !important; } /* Nhập dữ liệu */
+.text-calc-black { color: #000000 !important; } /* Kết quả trung gian */
+.text-imp-red { color: #c00000 !important; }   /* Dữ liệu quan trọng */
+
 /* ==================== BẢNG GRID EXCEL ==================== */
 .tables-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
   align-items: start;
 }
 
 .sheet-card {
   background: white;
-  border-radius: 6px;
   border: 1px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
-.card-head {
-  padding: 10px 14px;
-  background-color: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-head h3 {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #374151;
-}
-
-.btn-add {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  cursor: pointer;
-  color: #4b5563;
-  transition: all 0.2s;
-}
-
-.btn-add:hover {
-  background: #e5e7eb;
-  color: #111827;
-}
-
-/* Kiểu dáng ô tính Excel */
 .excel-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8rem;
 }
 
-.excel-table th,
+.excel-table th, 
 .excel-table td {
-  border: 1px solid #e5e7eb;
-  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  padding: 5px 8px;
 }
 
-.excel-table th {
-  background-color: #e2f1d9; /* Xanh lá nhạt header như ảnh */
-  color: #166534;
+/* Hàng tiêu đề lớn của bảng */
+.thead-group-green th {
+  background-color: #0d5c24; /* Xanh lá đậm */
+  color: #ffffff;
+  text-align: center;
+  font-size: 0.88rem;
   font-weight: 700;
-  text-align: left;
+  padding: 6px;
 }
 
-.excel-table tr:nth-child(even) {
-  background-color: #fafafa;
+.thead-group-orange th {
+  background-color: #f3aa53; /* Cam nhạt */
+  color: #000000;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 6px;
 }
 
-.excel-table tr:hover td {
-  background-color: #e0f2fe;
-}
-
-.excel-table td[contenteditable="true"]:focus {
-  outline: 2px solid #2563eb;
-  background-color: #ffffff;
+/* Hàng cột # và Khoản mục */
+.thead-cols th {
+  background-color: #d7e4bc; /* Xanh xám nhạt như Excel */
+  color: #000000;
+  font-weight: 700;
+  text-align: center;
 }
 
 .excel-table td:first-child {
-  font-weight: bold;
+  font-weight: 700;
   text-align: center;
-  color: #4b5563;
-  background-color: #f9fafb;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.excel-table td[contenteditable="true"]:focus {
+  outline: 2px solid #0070c0;
+  background-color: #f0f7ff;
 }
 
 .text-right {
   text-align: right;
 }
 
-/* Khung chú thích Legend */
+/* Khối Legend bên dưới */
 .legend-box-container {
   display: flex;
   justify-content: center;
-  margin-top: 35px;
+  margin-top: 50px;
   margin-bottom: 20px;
 }
 
-.legend-pill {
-  background: white;
-  border: 1.5px solid #cbd5e1;
-  padding: 6px 20px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  color: #64748b;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  font-weight: 500;
+.legend-box {
+  border: 1.5px solid #666666;
+  padding: 4px 18px;
+  background-color: #ffffff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #333333;
 }
 
-/* ==================== DASHBOARD STYLES ==================== */
+/* ==================== DASHBOARD ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -248,27 +307,25 @@ body {
 
 .stat-card {
   background: white;
-  padding: 18px 20px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .stat-label {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: #6b7280;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .stat-value {
   font-size: 1.4rem;
   font-weight: 800;
-  margin-bottom: 4px;
 }
 
 .stat-sub {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #9ca3af;
 }
 
@@ -284,24 +341,22 @@ body {
 
 .chart-card {
   background: white;
-  padding: 18px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .chart-card h3 {
-  font-size: 0.95rem;
-  margin-bottom: 15px;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
   color: #374151;
 }
 
 .chart-container {
-  height: 250px;
+  height: 240px;
   position: relative;
 }
 
-/* Generic View */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -309,11 +364,10 @@ body {
   justify-content: center;
   height: 60vh;
   color: #9ca3af;
-  text-align: center;
 }
 
 .empty-icon {
-  font-size: 4rem;
-  margin-bottom: 16px;
+  font-size: 3.5rem;
+  margin-bottom: 14px;
   color: #cbd5e1;
 }
