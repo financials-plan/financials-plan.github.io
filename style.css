@@ -1,4 +1,4 @@
-/* ==================== FONT CHỮ MONTSERRAT TOÀN DIỆN ==================== */
+/* ==================== FONT CHỮ MONTSERRAT ==================== */
 * {
   margin: 0;
   padding: 0;
@@ -18,7 +18,7 @@ body {
 .sidebar {
   width: 220px;
   background-color: #0e5627;
-  color: #ffffff;
+  color: white;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -70,7 +70,7 @@ body {
 }
 
 .nav-item * {
-  pointer-events: none; /* Ngăn chặn thẻ con chiếm sự kiện click */
+  pointer-events: none;
 }
 
 .nav-item.two-lines {
@@ -88,7 +88,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== VÙNG NỘI DUNG CHÍNH ==================== */
+/* ==================== VÙNG NỘI DUNG ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -137,7 +137,7 @@ body {
   display: block;
 }
 
-/* ==================== KHỐI NĂM, TUỔI & QUY ƯỚC MÀU CHỮ ==================== */
+/* ==================== THÔNG TIN TOP ==================== */
 .top-info-row {
   display: flex;
   align-items: flex-start;
@@ -231,7 +231,7 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== CẤU TRÚC BẢNG SPREADSHEET (TỪ KHÓA) ==================== */
+/* ==================== BẢNG CHUẨN SPREADSHEET ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
@@ -307,7 +307,7 @@ body {
   margin-left: 20px;
 }
 
-/* ==================== NÚT CỘNG (+) TINH TẾ HOVER MỞ RỘNG ==================== */
+/* NÚT THÊM (+) HOVER MỞ RỘNG */
 .btn-table-add {
   display: inline-flex;
   align-items: center;
@@ -488,7 +488,7 @@ body {
   outline: none;
 }
 
-/* ==================== BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD ==================== */
+/* ==================== BẢNG MA TRẬN DASHBOARD ==================== */
 .dashboard-matrix-container {
   width: 100%;
 }
