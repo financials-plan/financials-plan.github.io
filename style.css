@@ -1,4 +1,4 @@
-/* ==================== FONT CHỮ MONTSERRAT ==================== */
+/* ==================== FONT CHỮ MONTSERRAT TOÀN DIỆN ==================== */
 * {
   margin: 0;
   padding: 0;
@@ -8,7 +8,7 @@
 
 body {
   background-color: #ffffff;
-  color: #000000;
+  color: #111827;
   display: flex;
   height: 100vh;
   overflow: hidden;
@@ -18,22 +18,24 @@ body {
 .sidebar {
   width: 220px;
   background-color: #0e5627;
-  color: white;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  z-index: 20;
+  z-index: 50;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-header {
-  padding: 12px 16px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: #0b4620;
 }
 
 .diamond-icon {
@@ -52,7 +54,7 @@ body {
   background-color: transparent;
   color: #ffffff;
   border: 1px solid transparent;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 9999px;
   cursor: pointer;
   text-align: center;
@@ -62,13 +64,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.1s ease;
   outline: none;
+  user-select: none;
+}
+
+.nav-item * {
+  pointer-events: none; /* Ngăn chặn thẻ con chiếm sự kiện click */
 }
 
 .nav-item.two-lines {
-  line-height: 1.2;
-  padding: 4px 6px;
+  line-height: 1.25;
+  padding: 5px 8px;
 }
 
 .nav-item:hover {
@@ -81,7 +88,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== VÙNG NỘI DUNG ==================== */
+/* ==================== VÙNG NỘI DUNG CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -92,7 +99,7 @@ body {
 
 .orange-banner {
   background-color: #f29b28;
-  padding: 6px 24px;
+  padding: 8px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -102,14 +109,14 @@ body {
 }
 
 .orange-banner h1 {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: 1px;
   color: #000000;
 }
 
 .unit-text {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-style: italic;
   font-weight: 600;
   color: #000000;
@@ -130,16 +137,17 @@ body {
   display: block;
 }
 
-/* ==================== THÔNG TIN TOP ==================== */
+/* ==================== KHỐI NĂM, TUỔI & QUY ƯỚC MÀU CHỮ ==================== */
 .top-info-row {
   display: flex;
   align-items: flex-start;
-  gap: 30px;
+  gap: 25px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .info-block {
-  width: 250px;
+  width: 240px;
   text-align: center;
 }
 
@@ -147,7 +155,7 @@ body {
   background-color: #f29b28;
   color: #000000;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   padding: 5px;
   border: 1px solid #c97d1b;
 }
@@ -156,7 +164,7 @@ body {
   background-color: #fde5c4;
   border: 1px solid #c97d1b;
   border-top: none;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   padding: 4px;
 }
@@ -165,7 +173,7 @@ body {
   background-color: #0e5627;
   color: #ffffff;
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   padding: 5px;
   border: 1px solid #0e5627;
 }
@@ -174,7 +182,7 @@ body {
   background-color: #9ad76c;
   border: 1px solid #0e5627;
   border-top: none;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 800;
   padding: 4px;
 }
@@ -209,7 +217,7 @@ body {
 }
 
 .color-rect {
-  width: 50px;
+  width: 45px;
   height: 16px;
   display: inline-block;
   border: 1px solid #444444;
@@ -223,15 +231,18 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== BẢNG CHUẨN SPREADSHEET ==================== */
+/* ==================== CẤU TRÚC BẢNG SPREADSHEET (TỪ KHÓA) ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
+  gap: 18px;
+  flex-wrap: wrap;
 }
 
 .sheet-table-wrap {
-  background: white;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .excel-table {
@@ -296,7 +307,7 @@ body {
   margin-left: 20px;
 }
 
-/* NÚT THÊM (+) HOVER MỞ RỘNG */
+/* ==================== NÚT CỘNG (+) TINH TẾ HOVER MỞ RỘNG ==================== */
 .btn-table-add {
   display: inline-flex;
   align-items: center;
@@ -477,7 +488,7 @@ body {
   outline: none;
 }
 
-/* ==================== BẢNG MA TRẬN DASHBOARD (Y CHANG ẢNH XLSX) ==================== */
+/* ==================== BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD ==================== */
 .dashboard-matrix-container {
   width: 100%;
 }
@@ -526,7 +537,6 @@ body {
   font-style: italic;
 }
 
-/* Hàng tiết kiệm đỏ nổi bật */
 .savings-highlight-row {
   background-color: #fff1f2;
   font-weight: 700;
@@ -536,7 +546,6 @@ body {
   border: 1px solid #fecdd3;
 }
 
-/* Đồ thị đường mini Sparkline */
 .sparkline-svg {
   display: block;
   margin: 0 auto;
@@ -681,7 +690,7 @@ body {
   background-color: #166534;
 }
 
-/* ==================== DASHBOARD STATS ==================== */
+/* ==================== THẺ THỐNG KÊ STATS ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
