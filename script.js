@@ -7,81 +7,107 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputYearEl = document.getElementById('input-year');
   const inputAgeEl = document.getElementById('input-age');
 
-  // Hàm đồng bộ năm lên toàn bộ các vị trí có class "dynamic-year"
   function syncYearToAllElements(year) {
     document.querySelectorAll('.dynamic-year').forEach(el => {
       el.textContent = year;
     });
   }
 
-  // Khi nhập/sửa ô Năm bắt đầu theo dõi
-  inputYearEl.addEventListener('input', () => {
-    const rawVal = inputYearEl.innerText.trim();
-    const parsedYear = parseInt(rawVal, 10);
+  if (inputYearEl) {
+    inputYearEl.addEventListener('input', () => {
+      const rawVal = inputYearEl.innerText.trim();
+      const parsedYear = parseInt(rawVal, 10);
 
-    if (!isNaN(parsedYear) && parsedYear > 1900 && parsedYear < 2100) {
-      currentYear = parsedYear;
-      syncYearToAllElements(currentYear);
+      if (!isNaN(parsedYear) && parsedYear > 1900 && parsedYear < 2100) {
+        currentYear = parsedYear;
+        syncYearToAllElements(currentYear);
 
-      // Tự động tính toán lại tuổi tương ứng
-      const calculatedAge = currentYear - birthYear;
-      if (calculatedAge > 0 && calculatedAge < 120) {
-        currentAge = calculatedAge;
-        inputAgeEl.innerText = currentAge;
+        const calculatedAge = currentYear - birthYear;
+        if (calculatedAge > 0 && calculatedAge < 120 && inputAgeEl) {
+          currentAge = calculatedAge;
+          inputAgeEl.innerText = currentAge;
+        }
       }
-    }
-  });
+    });
+  }
 
-  // Khi trực tiếp sửa ô Tuổi
-  inputAgeEl.addEventListener('input', () => {
-    const rawVal = inputAgeEl.innerText.trim();
-    const parsedAge = parseInt(rawVal, 10);
+  if (inputAgeEl) {
+    inputAgeEl.addEventListener('input', () => {
+      const rawVal = inputAgeEl.innerText.trim();
+      const parsedAge = parseInt(rawVal, 10);
 
-    if (!isNaN(parsedAge) && parsedAge > 0 && parsedAge < 120) {
-      currentAge = parsedAge;
-      // Cập nhật lại năm sinh ngầm để khi đổi năm sau này vẫn tính chính xác
-      birthYear = currentYear - currentAge;
-    }
-  });
+      if (!isNaN(parsedAge) && parsedAge > 0 && parsedAge < 120) {
+        currentAge = parsedAge;
+        birthYear = currentYear - currentAge;
+      }
+    });
+  }
 
-  // ==================== CHUYỂN ĐỔI TAB SIDEBAR ====================
+  // ==================== ĐIỀU HƯỚNG TAB TRÊN SIDEBAR ====================
   const navItems = document.querySelectorAll('.nav-item');
-  const bannerTitle = document.getElementById('current-title');
-  const tabTuKhoa = document.getElementById('tab-tukhoa');
-  const tabDashboard = document.getElementById('tab-dashboard');
-  const tabGeneric = document.getElementById('tab-generic');
-  const emptyTitle = document.getElementById('empty-title');
-
   navItems.forEach(item => {
     item.addEventListener('click', () => {
-      navItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-
       const tabId = item.getAttribute('data-tab');
-      const text = item.querySelector('span').innerText.replace(/\n/g, ' ');
-
-      bannerTitle.textContent = text.toUpperCase();
-
-      tabTuKhoa.classList.remove('active');
-      tabDashboard.classList.remove('active');
-      tabGeneric.classList.remove('active');
-
-      if (tabId === 'tab-tukhoa') {
-        tabTuKhoa.classList.add('active');
-      } else if (tabId === 'tab-dashboard') {
-        tabDashboard.classList.add('active');
-        initCharts();
-      } else {
-        tabGeneric.classList.add('active');
-        emptyTitle.textContent = text;
-      }
+      activateTab(tabId);
     });
   });
 });
 
-// ==================== HÀM THÊM HÀNG CHO CÁC BẢNG ====================
+// Hàm kích hoạt chuyển Tab dùng chung
+function activateTab(tabId) {
+  const navItems = document.querySelectorAll('.nav-item');
+  const bannerTitle = document.getElementById('current-title');
+  const targetItem = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
 
-// 1. Thêm dòng cho Bảng Danh mục chi phí
+  navItems.forEach(i => i.classList.remove('active'));
+  if (targetItem) {
+    targetItem.classList.add('active');
+  }
+
+  // Cập nhật tiêu đề dải màu cam
+  if (tabId === 'tab-muctieu-bt') {
+    bannerTitle.textContent = 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN';
+  } else if (targetItem) {
+    const text = targetItem.querySelector('span').innerText.replace(/\n/g, ' ');
+    bannerTitle.textContent = text.toUpperCase();
+  }
+
+  // Ẩn tất cả các tab
+  document.querySelectorAll('.tab-pane').forEach(pane => {
+    pane.classList.remove('active');
+  });
+
+  // Hiện tab mục tiêu
+  const activePane = document.getElementById(tabId);
+  if (activePane) {
+    activePane.classList.add('active');
+    if (tabId === 'tab-dashboard') {
+      initCharts();
+    }
+  } else {
+    // Nếu là tab phụ chưa làm giao diện riêng
+    const genericPane = document.getElementById('tab-generic');
+    const emptyTitle = document.getElementById('empty-title');
+    if (genericPane) {
+      genericPane.classList.add('active');
+      if (emptyTitle && targetItem) {
+        emptyTitle.textContent = targetItem.querySelector('span').innerText;
+      }
+    }
+  }
+}
+
+// NÚT "Link khảo sát": Tự động kích hoạt chuyển sang tab Bảng khảo sát
+function goToSurveyTab() {
+  activateTab('tab-khaosat');
+}
+
+// Nút lưu khảo sát và quay về Mục tiêu bản thân
+function saveSurveyAndBack() {
+  activateTab('tab-muctieu-bt');
+}
+
+// ==================== THÊM DÒNG CHO CÁC BẢNG DANH MỤC ====================
 function addExpenseRow() {
   const tbody = document.querySelector('#table-expenses tbody');
   const rowCount = tbody.rows.length + 1;
@@ -94,7 +120,6 @@ function addExpenseRow() {
   focusCell(tr.cells[1]);
 }
 
-// 2. Thêm dòng cho Bảng Danh mục thu nhập
 function addIncomeRow() {
   const tbody = document.querySelector('#table-income tbody');
   const rowCount = tbody.rows.length + 1;
@@ -107,7 +132,6 @@ function addIncomeRow() {
   focusCell(tr.cells[1]);
 }
 
-// 3. Thêm dòng cho Bảng Kế hoạch phát triển
 function addPlanRow() {
   const tbody = document.querySelector('#table-learning tbody');
   const rowCount = tbody.rows.length + 1;
@@ -120,7 +144,6 @@ function addPlanRow() {
   focusCell(tr.cells[1]);
 }
 
-// 4. Thêm dòng cho Bảng Danh mục sản phẩm đầu tư
 function addInvestRow() {
   const tbody = document.querySelector('#table-invest tbody');
   const rowCount = tbody.rows.length + 1;
@@ -135,7 +158,6 @@ function addInvestRow() {
   focusCell(tr.cells[1]);
 }
 
-// Tự động focus con trỏ vào ô để nhập ngay
 function focusCell(cell) {
   cell.focus();
   const range = document.createRange();
@@ -146,7 +168,7 @@ function focusCell(cell) {
   sel.addRange(range);
 }
 
-// ==================== DASHBOARD CHARTS ====================
+// ==================== CHARTS DASHBOARD ====================
 let pieChartInstance = null;
 let barChartInstance = null;
 
