@@ -1,100 +1,475 @@
-/* ==================== NÚT CỘNG NHỎ GỌN + HIỆU ỨNG HOVER HIỆN CHỮ "THÊM" ==================== */
-.btn-table-add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  
-  /* Kích thước mặc định nhỏ gọn (chỉ vừa vặn icon +) */
-  height: 20px;
-  min-width: 20px;
-  padding: 0 4px;
-  border-radius: 9999px;
-  
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-  
-  /* Hiệu ứng chuyển động mượt mà khi hover */
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-  white-space: nowrap;
-  vertical-align: middle;
-  line-height: 1;
+/* STREAMING_CHUNK:Applying Montserrat font and core reset */
+
+{
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Montserrat', sans-serif;
 }
 
-/* Phần chữ "Thêm" bên trong mặc định ẩn đi */
-.btn-table-add .btn-text {
-  max-width: 0;
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.7rem;
-  letter-spacing: 0.2px;
+body {
+background-color: #ffffff;
+color: #000000;
+display: flex;
+height: 100vh;
+overflow: hidden;
+font-size: 13px;
 }
 
-/* Biểu tượng dấu cộng */
-.btn-table-add i {
-  font-size: 0.65rem;
-  transition: transform 0.2s ease;
+/* STREAMING_CHUNK:Styling left sidebar and pills navigation /
+/ ==================== SIDEBAR TRÁI ==================== /
+.sidebar {
+width: 210px;
+background-color: #0e5627; / Xanh lá đậm chuẩn bảng tính */
+color: white;
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+z-index: 20;
 }
 
-/* === KHI HOVER VÀO NÚT === */
-.btn-table-add:hover {
-  gap: 4px;
-  padding: 0 8px; /* Mở rộng chiều ngang */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-  transform: scale(1.05);
+.sidebar-header {
+padding: 14px 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 1.05rem;
+font-weight: 800;
+letter-spacing: 0.5px;
+border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.btn-table-add:hover .btn-text {
-  max-width: 50px;
-  opacity: 1;
-  transform: translateX(0);
+.diamond-icon {
+font-size: 1.25rem;
 }
 
-.btn-table-add:hover i {
-  transform: rotate(90deg); /* Xoay nhẹ icon tạo cảm giác linh hoạt */
+.nav-menu {
+padding: 12px 10px;
+display: flex;
+flex-direction: column;
+gap: 6px;
+overflow-y: auto;
 }
 
-/* --- Phối màu nút trên Header Cam (Bảng 1, Bảng 3) --- */
-.header-main-orange .btn-table-add {
-  background-color: #ffffff;
-  color: #c26900;
-  border-color: rgba(194, 105, 0, 0.3);
+.nav-item {
+background-color: transparent;
+color: #ffffff;
+border: 1px solid transparent;
+padding: 6px 12px;
+border-radius: 9999px;
+cursor: pointer;
+text-align: center;
+font-size: 0.76rem;
+font-weight: 600;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.15s ease;
+outline: none;
 }
 
-.header-main-orange .btn-table-add:hover {
-  background-color: #fff7ed;
-  color: #9a3412;
-  border-color: #ea580c;
+.nav-item.two-lines {
+line-height: 1.25;
+padding: 5px 8px;
 }
 
-/* --- Phối màu nút trên Header Xanh lá (Bảng 2, Bảng 4) --- */
-.header-main-green .btn-table-add {
-  background-color: #ffffff;
-  color: #0e5627;
-  border-color: rgba(14, 86, 39, 0.3);
+.nav-item:hover {
+background-color: rgba(255, 255, 255, 0.15);
 }
 
-.header-main-green .btn-table-add:hover {
-  background-color: #f0fdf4;
-  color: #14532d;
-  border-color: #16a34a;
+.nav-item.active {
+background-color: #f29b28;
+color: #000000;
+font-weight: 700;
+box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Căn chỉnh header bảng để tiêu đề và nút nằm thẳng hàng đối xứng */
+/* STREAMING_CHUNK:Styling top orange banner and layout area /
+/ ==================== VÙNG NỘI DUNG CHÍNH ==================== */
+.main-content {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+background-color: #ffffff;
+}
+
+/* Dải màu cam chạy ngang */
+.orange-banner {
+background-color: #f29b28;
+padding: 6px 24px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+border-bottom: 1px solid #d48016;
+position: relative;
+height: 48px;
+}
+
+.orange-banner h1 {
+font-size: 1.45rem;
+font-weight: 800;
+letter-spacing: 1px;
+color: #000000;
+margin-left: 200px;
+}
+
+.unit-text {
+font-size: 0.85rem;
+font-style: italic;
+font-weight: 500;
+color: #000000;
+margin-right: 170px;
+}
+
+.content-body {
+flex: 1;
+overflow-x: auto;
+overflow-y: auto;
+padding: 16px 20px;
+}
+
+.tab-pane {
+display: none;
+}
+
+.tab-pane.active {
+display: block;
+}
+
+/* STREAMING_CHUNK:Styling tracking information row /
+/ ==================== PHẦN ĐỒNG BỘ NĂM & TUỔI ==================== */
+.top-info-row {
+display: flex;
+align-items: flex-start;
+gap: 28px;
+margin-bottom: 20px;
+}
+
+.info-block {
+width: 250px;
+border-collapse: collapse;
+text-align: center;
+}
+
+/* Khối năm theo dõi */
+.block-orange .info-header {
+background-color: #f29b28;
+color: #000000;
+font-weight: 700;
+font-size: 0.84rem;
+padding: 5px;
+border: 1px solid #c97d1b;
+}
+
+.block-orange .info-body {
+background-color: #fde5c4;
+border: 1px solid #c97d1b;
+border-top: none;
+font-size: 1.55rem;
+font-weight: 800;
+padding: 4px;
+}
+
+/* Khối tuổi */
+.block-green .info-header {
+background-color: #0e5627;
+color: #ffffff;
+font-weight: 700;
+font-size: 0.84rem;
+padding: 5px;
+border: 1px solid #0e5627;
+}
+
+.block-green .info-body {
+background-color: #9ad76c;
+border: 1px solid #0e5627;
+border-top: none;
+font-size: 1.55rem;
+font-weight: 800;
+padding: 4px;
+}
+
+.num-blue {
+color: #0070c0 !important;
+outline: none;
+cursor: text;
+}
+
+.num-blue:focus {
+background-color: #e3f2fd !important;
+border-radius: 2px;
+}
+
+/* Khối quy ước màu chữ */
+.color-convention-block {
+display: flex;
+flex-direction: column;
+gap: 3px;
+font-size: 0.8rem;
+}
+
+.convention-title {
+font-weight: 700;
+margin-bottom: 2px;
+}
+
+.convention-item {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.color-rect {
+width: 48px;
+height: 15px;
+display: inline-block;
+border: 1px solid #333333;
+}
+
+.bg-blue { background-color: #0070c0; }
+.bg-black { background-color: #000000; }
+.bg-red { background-color: #c00000; }
+
+.text-blue-rule { color: #0070c0; font-weight: 600; }
+.text-black-rule { color: #000000; font-weight: 600; }
+.text-red-rule { color: #c00000; font-weight: 600; }
+
+/* STREAMING_CHUNK:Styling spreadsheet table components /
+/ ==================== CÁC BẢNG EXCEL ==================== */
+.sheet-tables-container {
+display: flex;
+align-items: flex-start;
+gap: 18px;
+}
+
+.sheet-table-wrap {
+background: white;
+}
+
+.excel-table {
+border-collapse: collapse;
+font-size: 0.77rem;
+background-color: #ffffff;
+}
+
+.excel-table th,
+.excel-table td {
+border: 1px solid #b7b7b7;
+padding: 3px 6px;
+height: 22px;
+}
+
+.header-main-orange th {
+background-color: #f29b28;
+color: #000000;
+font-weight: 700;
+font-size: 0.82rem;
+padding: 3px 4px;
+}
+
+.header-sub-orange th {
+background-color: #fce5cd;
+color: #000000;
+font-weight: 700;
+text-align: center;
+}
+
+.header-main-green th {
+background-color: #0e5627;
+color: #ffffff;
+font-weight: 700;
+font-size: 0.82rem;
+padding: 3px 4px;
+}
+
+.header-sub-green th {
+background-color: #d9ead3;
+color: #000000;
+font-weight: 700;
+text-align: center;
+}
+
+.excel-table td:first-child {
+text-align: center;
+font-weight: 700;
+color: #000000;
+user-select: none;
+}
+
+.cell-blue {
+color: #0070c0 !important;
+font-weight: 500;
+outline: none;
+}
+
+.cell-blue:focus {
+background-color: #e8f4fc;
+}
+
+.text-right {
+text-align: right;
+}
+
+.excel-active-cell {
+outline: 2px solid #0e5627 !important;
+background-color: #ffffff;
+}
+
+/* STREAMING_CHUNK:Styling compact expandable add button on hover /
+/ ==================== NÚT CỘNG NHỎ GỌN + HIỆU ỨNG HOVER CHỮ "THÊM" ==================== */
 .table-header-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 6px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+width: 100%;
 }
 
 .table-header-flex span.title {
-  flex: 1;
-  text-align: center;
-  margin-left: 20px; /* Bù trừ khoảng trống với nút bên phải để chữ nằm chính giữa */
+flex: 1;
+text-align: center;
+margin-left: 20px; /* Cân bằng khoảng trống với nút bên phải */
+}
+
+.btn-table-add {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 0;
+height: 20px;
+min-width: 20px;
+padding: 0 4px;
+border-radius: 9999px;
+font-size: 0.7rem;
+font-weight: 600;
+cursor: pointer;
+border: 1px solid rgba(0, 0, 0, 0.15);
+box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+overflow: hidden;
+white-space: nowrap;
+line-height: 1;
+outline: none;
+}
+
+.btn-table-add .btn-text {
+max-width: 0;
+opacity: 0;
+transform: translateX(-4px);
+transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+font-size: 0.68rem;
+letter-spacing: 0.2px;
+}
+
+.btn-table-add i {
+font-size: 0.62rem;
+transition: transform 0.2s ease;
+}
+
+/* Khi hover: mở rộng mượt mà và hiển thị chữ "Thêm" */
+.btn-table-add:hover {
+gap: 4px;
+padding: 0 8px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+transform: scale(1.05);
+}
+
+.btn-table-add:hover .btn-text {
+max-width: 45px;
+opacity: 1;
+transform: translateX(0);
+}
+
+.btn-table-add:hover i {
+transform: rotate(90deg);
+}
+
+/* Nút trên bảng Cam */
+.header-main-orange .btn-table-add {
+background-color: #ffffff;
+color: #c26900;
+border-color: rgba(194, 105, 0, 0.35);
+}
+
+.header-main-orange .btn-table-add:hover {
+background-color: #fff7ed;
+color: #9a3412;
+border-color: #ea580c;
+}
+
+/* Nút trên bảng Xanh lá */
+.header-main-green .btn-table-add {
+background-color: #ffffff;
+color: #0e5627;
+border-color: rgba(14, 86, 39, 0.35);
+}
+
+.header-main-green .btn-table-add:hover {
+background-color: #f0fdf4;
+color: #14532d;
+border-color: #16a34a;
+}
+
+/* STREAMING_CHUNK:Styling dashboard tabs and placeholder cards /
+/ ==================== DASHBOARD TAB ==================== */
+.stat-cards {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 16px;
+margin-bottom: 24px;
+}
+
+.stat-card {
+background: white;
+padding: 16px;
+border-radius: 6px;
+border: 1px solid #e5e7eb;
+}
+
+.stat-label {
+font-size: 0.8rem;
+color: #6b7280;
+font-weight: 600;
+}
+
+.stat-value {
+font-size: 1.4rem;
+font-weight: 800;
+}
+
+.text-green { color: #16a34a; }
+.text-red { color: #dc2626; }
+.text-blue { color: #2563eb; }
+
+.charts-wrapper {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+gap: 20px;
+}
+
+.chart-card {
+background: white;
+padding: 16px;
+border-radius: 6px;
+border: 1px solid #e5e7eb;
+}
+
+.chart-container {
+height: 240px;
+position: relative;
+}
+
+.empty-state {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: 60vh;
+color: #9ca3af;
+}
+
+.empty-icon {
+font-size: 3.5rem;
+margin-bottom: 14px;
+color: #cbd5e1;
 }
