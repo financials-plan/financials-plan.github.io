@@ -1,5 +1,5 @@
 /**
- * TOÀN BỘ LOGIC CỦA DASHBOARD MA TRẬN 12 THÁNG & ĐỒNG BỘ NGUYÊN BẢN XLSX
+ * TOÀN BỘ LOGIC REACTIVE & ĐIỀU HƯỚNG BẢNG TÀI CHÍNH
  */
 
 const AppState = {
@@ -8,7 +8,6 @@ const AppState = {
   birthYear: 2002,
   currentMonth: 1,
 
-  // Danh mục thiết lập gốc
   expenses: [
     'Mua thực phẩm', 'Mua đồ dùng trong nhà', 'Đi ăn ở ngoài',
     'Chi tiền phát triển bản thân', 'Chi tiền bảo hiểm',
@@ -18,7 +17,7 @@ const AppState = {
   ],
   incomeList: ['Lương từ công ty', 'Thu nhập khác'],
   planList: ['Mua sách', 'Khóa học ngắn hạn', 'Khóa học dài hạn', 'Tham gia các buổi diễn thuyết', 'Chi phát triển bản thân khác'],
-  
+
   investProducts: [
     { name: 'ETF - ETFVFM', returnRate: 13, risk: 18 },
     { name: 'ETF - ETFFINLEAD', returnRate: 15, risk: 20 },
@@ -72,7 +71,6 @@ const AppState = {
     { name: 'Chi tiền cho tặng gia đình', plan: 1.0, note: '' }
   ],
 
-  // Ma trận số liệu chính xác 100% từ Dashboard của file XLSX
   matrixIncome: {
     'Lương từ công ty': [20, 25, 18, 20, 25, 20, 20, 20, 20, 20, 20, 25],
     'Thu nhập khác': [4, 4.5, 5.7, 3.9, 7.8, 7.5, 9.0, 5.0, 7.0, 8.0, 4.0, 10.0]
@@ -123,26 +121,32 @@ const AppState = {
   }
 };
 
-// Khởi tạo các tháng còn lại
+// Khởi tạo các tháng T2 -> T12
 for (let m = 2; m <= 12; m++) {
   if (!AppState.monthlyDetails[m]) {
+    const incComp = (AppState.matrixIncome['Lương từ công ty'] && AppState.matrixIncome['Lương từ công ty'][m - 1]) || 20.0;
+    const incOther = (AppState.matrixIncome['Thu nhập khác'] && AppState.matrixIncome['Thu nhập khác'][m - 1]) || 5.0;
+    const expFood = (AppState.matrixExpense['Mua thực phẩm'] && AppState.matrixExpense['Mua thực phẩm'][m - 1]) || 5.0;
+    const expUtil = (AppState.matrixExpense['Chi tiền điện, nước, internet, điện thoại, xăng xe'] && AppState.matrixExpense['Chi tiền điện, nước, internet, điện thoại, xăng xe'][m - 1]) || 2.0;
+    const expOut = (AppState.matrixExpense['Đi ăn ở ngoài'] && AppState.matrixExpense['Đi ăn ở ngoài'][m - 1]) || 1.5;
+
     AppState.monthlyDetails[m] = {
       incomes: [
-        { date: `15/0${m}/2023`, cat: 'Lương từ công ty', desc: 'Lương tháng', val: AppState.matrixIncome['Lương từ công ty'][m - 1], reason: '' },
-        { date: `30/0${m}/2023`, cat: 'Thu nhập khác', desc: 'Thu nhập ngoài', val: AppState.matrixIncome['Thu nhập khác'][m - 1], reason: '' }
+        { date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Lương từ công ty', desc: 'Lương tháng', val: incComp, reason: '' },
+        { date: `30/${m < 10 ? '0' + m : m}/2023`, cat: 'Thu nhập khác', desc: 'Thu nhập ngoài', val: incOther, reason: '' }
       ],
       expenses: [
-        { date: `01/0${m}/2023`, cat: 'Mua thực phẩm', desc: 'Tiền chợ', val: AppState.matrixExpense['Mua thực phẩm'][m - 1], reason: '' },
-        { date: `10/0${m}/2023`, cat: 'Chi tiền trả nợ', desc: 'Gốc + Lãi', val: 6.5, reason: '' },
-        { date: `15/0${m}/2023`, cat: 'Chi tiền điện, nước, internet, điện thoại, xăng xe', desc: 'Hóa đơn', val: AppState.matrixExpense['Chi tiền điện, nước, internet, điện thoại, xăng xe'][m - 1], reason: '' },
-        { date: `20/0${m}/2023`, cat: 'Đi ăn ở ngoài', desc: 'Cà phê', val: AppState.matrixExpense['Đi ăn ở ngoài'][m - 1], reason: '' }
+        { date: `01/${m < 10 ? '0' + m : m}/2023`, cat: 'Mua thực phẩm', desc: 'Tiền chợ', val: expFood, reason: '' },
+        { date: `10/${m < 10 ? '0' + m : m}/2023`, cat: 'Chi tiền trả nợ', desc: 'Gốc + Lãi', val: 6.5, reason: '' },
+        { date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Chi tiền điện, nước, internet, điện thoại, xăng xe', desc: 'Hóa đơn', val: expUtil, reason: '' },
+        { date: `20/${m < 10 ? '0' + m : m}/2023`, cat: 'Đi ăn ở ngoài', desc: 'Cà phê', val: expOut, reason: '' }
       ]
     };
   }
 }
 
-// ==================== CÁC HÀM ĐIỀU HƯỚNG TAB CHÍNH (ĐẢM BẢO ĂN 100%) ====================
-function switchTab(tabId) {
+// ==================== CÁC HÀM ĐIỀU HƯỚNG TOÀN CỤC (GLOBAL FUNCTIONS) ====================
+window.switchTab = function(tabId) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   const btn = document.getElementById(`btn-${tabId}`);
   if (btn) btn.classList.add('active');
@@ -164,11 +168,13 @@ function switchTab(tabId) {
   const targetPane = document.getElementById(tabId);
   if (targetPane) {
     targetPane.classList.add('active');
-    if (tabId === 'tab-dashboard') updateDashboardCharts();
+    if (tabId === 'tab-dashboard') {
+      updateDashboardCharts();
+    }
   }
-}
+};
 
-function switchMonthTab(m) {
+window.switchMonthTab = function(m) {
   AppState.currentMonth = m;
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   const mBtn = document.getElementById(`btn-month-${m}`);
@@ -182,6 +188,27 @@ function switchMonthTab(m) {
   if (monthPane) monthPane.classList.add('active');
 
   renderMonthView(m);
+};
+
+// ==================== ĐỒ THỊ SPARKLINE ====================
+function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
+  if (!arr || arr.length === 0) return '';
+  const min = Math.min(...arr);
+  const max = Math.max(...arr);
+  const range = max - min === 0 ? 1 : max - min;
+  const step = width / (arr.length - 1);
+
+  const points = arr.map((v, i) => {
+    const x = i * step;
+    const y = height - ((v - min) / range) * (height - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+
+  return `
+    <svg class="sparkline-svg" width="${width}" height="${height}">
+      <polyline fill="none" stroke="${color}" stroke-width="1.6" points="${points}" />
+    </svg>
+  `;
 }
 
 // ==================== KHỞI TẠO DOM ====================
@@ -222,31 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function syncYearLabels() {
-  document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+  document.querySelectorAll('.dynamic-year').forEach(el => {
+    el.textContent = AppState.currentYear;
+  });
 }
 
-// ==================== VẼ ĐỒ THỊ SPARKLINE MINI ====================
-function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
-  if (!arr || arr.length === 0) return '';
-  const min = Math.min(...arr);
-  const max = Math.max(...arr);
-  const range = max - min === 0 ? 1 : max - min;
-  const step = width / (arr.length - 1);
-
-  const points = arr.map((v, i) => {
-    const x = i * step;
-    const y = height - ((v - min) / range) * (height - 4) - 2;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-
-  return `
-    <svg class="sparkline-svg" width="${width}" height="${height}">
-      <polyline fill="none" stroke="${color}" stroke-width="1.6" points="${points}" />
-    </svg>
-  `;
-}
-
-// ==================== RENDER 4 BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD ====================
+// ==================== RENDER 4 BẢNG MA TRẬN 12 THÁNG ====================
 function renderDashboardMatrices() {
   const tbInc = document.getElementById('tbody-db-income');
   if (tbInc) {
@@ -364,17 +372,17 @@ function renderSetupTables() {
   }
 }
 
-function updateExpenseItem(idx, val) { AppState.expenses[idx] = val.trim(); recalculateAll(); }
-function updateIncomeItem(idx, val) { AppState.incomeList[idx] = val.trim(); recalculateAll(); }
-function updateProductRate(idx, val) {
+window.updateExpenseItem = function(idx, val) { AppState.expenses[idx] = val.trim(); recalculateAll(); };
+window.updateIncomeItem = function(idx, val) { AppState.incomeList[idx] = val.trim(); recalculateAll(); };
+window.updateProductRate = function(idx, val) {
   AppState.investProducts[idx].returnRate = parseFloat(val.replace('%', '')) || 0;
   recalculateAll();
-}
+};
 
-function addExpenseRow() { AppState.expenses.push(`Khoản chi mới ${AppState.expenses.length + 1}`); renderSetupTables(); }
-function addIncomeRow() { AppState.incomeList.push(`Nguồn thu mới ${AppState.incomeList.length + 1}`); renderSetupTables(); }
-function addPlanRow() { AppState.planList.push(`Kế hoạch mới ${AppState.planList.length + 1}`); renderSetupTables(); }
-function addInvestRow() { AppState.investProducts.push({ name: 'Sản phẩm mới', returnRate: 10, risk: 10 }); renderSetupTables(); recalculateAll(); }
+window.addExpenseRow = function() { AppState.expenses.push(`Khoản chi mới ${AppState.expenses.length + 1}`); renderSetupTables(); };
+window.addIncomeRow = function() { AppState.incomeList.push(`Nguồn thu mới ${AppState.incomeList.length + 1}`); renderSetupTables(); };
+window.addPlanRow = function() { AppState.planList.push(`Kế hoạch mới ${AppState.planList.length + 1}`); renderSetupTables(); };
+window.addInvestRow = function() { AppState.investProducts.push({ name: 'Sản phẩm mới', returnRate: 10, risk: 10 }); renderSetupTables(); recalculateAll(); };
 
 // ==================== MỤC TIÊU BẢN THÂN ====================
 function renderTargetTables() {
@@ -403,11 +411,11 @@ function renderTargetTables() {
   }
 }
 
-function updateDebtTarget(i, text) { AppState.debtTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); }
-function updateInvestTarget(i, text) { AppState.investTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); }
+window.updateDebtTarget = function(i, text) { AppState.debtTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); };
+window.updateInvestTarget = function(i, text) { AppState.investTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); };
 
-function addDebtTargetRow() { AppState.debtTargets.push({ age: 35, desc: 'Mục tiêu nợ mới', val: 100 }); renderTargetTables(); recalculateAll(); }
-function addInvestTargetRow() { AppState.investTargets.push({ age: 40, desc: 'Mục tiêu tích lũy mới', val: 200 }); renderTargetTables(); recalculateAll(); }
+window.addDebtTargetRow = function() { AppState.debtTargets.push({ age: 35, desc: 'Mục tiêu nợ mới', val: 100 }); renderTargetTables(); recalculateAll(); };
+window.addInvestTargetRow = function() { AppState.investTargets.push({ age: 40, desc: 'Mục tiêu tích lũy mới', val: 200 }); renderTargetTables(); recalculateAll(); };
 
 function renderSkillsFamilyJob() {
   const tbS = document.getElementById('tbody-skills');
@@ -419,9 +427,9 @@ function renderSkillsFamilyJob() {
   if (tbJ) tbJ.innerHTML = AppState.job.map(j => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${j}</td></tr>`).join('');
 }
 
-function addSkillRow() { AppState.skills.push('Kỹ năng mới'); renderSkillsFamilyJob(); }
-function addFamilyRow() { AppState.family.push('Hỗ trợ gia đình mới'); renderSkillsFamilyJob(); }
-function addJobRow() { AppState.job.push('Môi trường nghề nghiệp mới'); renderSkillsFamilyJob(); }
+window.addSkillRow = function() { AppState.skills.push('Kỹ năng mới'); renderSkillsFamilyJob(); };
+window.addFamilyRow = function() { AppState.family.push('Hỗ trợ gia đình mới'); renderSkillsFamilyJob(); };
+window.addJobRow = function() { AppState.job.push('Môi trường nghề nghiệp mới'); renderSkillsFamilyJob(); };
 
 // ==================== KẾ HOẠCH HÀNG THÁNG ====================
 function renderPlanTables() {
@@ -449,8 +457,8 @@ function renderPlanTables() {
   }
 }
 
-function updatePlanIncVal(i, text) { AppState.planIncome[i].plan = parseFloat(text) || 0; recalculateAll(); }
-function updatePlanExpVal(i, text) { AppState.planExpense[i].plan = parseFloat(text) || 0; recalculateAll(); }
+window.updatePlanIncVal = function(i, text) { AppState.planIncome[i].plan = parseFloat(text) || 0; recalculateAll(); };
+window.updatePlanExpVal = function(i, text) { AppState.planExpense[i].plan = parseFloat(text) || 0; recalculateAll(); };
 
 // ==================== THEO DÕI THU CHI CHI TIẾT TỪNG THÁNG ====================
 function renderMonthView(m) {
@@ -486,31 +494,37 @@ function renderMonthView(m) {
   renderReconciliationTable(m);
 }
 
-function addMonthDetailIncomeRow() {
+window.addMonthDetailIncomeRow = function() {
   const m = AppState.currentMonth;
-  AppState.monthlyDetails[m].incomes.push({ date: `15/0${m}/2023`, cat: 'Thu nhập khác', desc: 'Khoản thu mới', val: 2.0, reason: '' });
+  if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
+  AppState.monthlyDetails[m].incomes.push({ date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Thu nhập khác', desc: 'Khoản thu mới', val: 2.0, reason: '' });
   renderMonthView(m);
   recalculateAll();
-}
+};
 
-function addMonthDetailExpenseRow() {
+window.addMonthDetailExpenseRow = function() {
   const m = AppState.currentMonth;
-  AppState.monthlyDetails[m].expenses.push({ date: `10/0${m}/2023`, cat: 'Mua thực phẩm', desc: 'Khoản chi mới', val: 1.0, reason: '' });
+  if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
+  AppState.monthlyDetails[m].expenses.push({ date: `10/${m < 10 ? '0' + m : m}/2023`, cat: 'Mua thực phẩm', desc: 'Khoản chi mới', val: 1.0, reason: '' });
   renderMonthView(m);
   recalculateAll();
-}
+};
 
-function updateMonthIncVal(m, i, text) {
-  AppState.monthlyDetails[m].incomes[i].val = parseFloat(text) || 0;
+window.updateMonthIncVal = function(m, i, text) {
+  if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes[i]) {
+    AppState.monthlyDetails[m].incomes[i].val = parseFloat(text) || 0;
+  }
   recalculateAll();
   renderReconciliationTable(m);
-}
+};
 
-function updateMonthExpVal(m, i, text) {
-  AppState.monthlyDetails[m].expenses[i].val = parseFloat(text) || 0;
+window.updateMonthExpVal = function(m, i, text) {
+  if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].expenses[i]) {
+    AppState.monthlyDetails[m].expenses[i].val = parseFloat(text) || 0;
+  }
   recalculateAll();
   renderReconciliationTable(m);
-}
+};
 
 function renderReconciliationTable(m) {
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [] };
@@ -608,8 +622,8 @@ function recalculateAll() {
   const dTotSav = document.getElementById('dash-total-savings');
   const dSavRat = document.getElementById('dash-savings-rate');
 
-  if (dTotInc) dTotInc.textContent = '${yearTotalInc.toFixed(2)} tr';
-  if (dAvgInc) dAvgInc.textContent = 'Bình quân ~${(yearTotalInc / 12).toFixed(2)} tr/tháng';
+  if (dTotInc) dTotInc.textContent = `${yearTotalInc.toFixed(2)} tr`;
+  if (dAvgInc) dAvgInc.textContent = `Bình quân ~${(yearTotalInc / 12).toFixed(2)} tr/tháng`;
   if (dTotExp) dTotExp.textContent = `${yearTotalExp.toFixed(2)} tr`;
   if (dExpRat) dExpRat.textContent = `Chiếm ${expRatio.toFixed(1)}% tổng thu`;
   if (dTotSav) dTotSav.textContent = `${yearSavings.toFixed(2)} tr`;
@@ -684,33 +698,41 @@ function updateDashboardCharts() {
 
   const pieCtx = document.getElementById('pieChart')?.getContext('2d');
   if (pieCtx) {
-    if (pieChartInstance) pieChartInstance.destroy();
-    pieChartInstance = new Chart(pieCtx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(catSums),
-        datasets: [{
-          data: Object.values(catSums),
-          backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#eab308', '#ec4899', '#6366f1']
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
+    try {
+      if (pieChartInstance) pieChartInstance.destroy();
+      pieChartInstance = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(catSums),
+          datasets: [{
+            data: Object.values(catSums),
+            backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#eab308', '#ec4899', '#6366f1']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+    } catch (e) {
+      console.warn("Chart render skipped:", e);
+    }
   }
 
   const barCtx = document.getElementById('barChart')?.getContext('2d');
   if (barCtx) {
-    if (barChartInstance) barChartInstance.destroy();
-    barChartInstance = new Chart(barCtx, {
-      type: 'bar',
-      data: {
-        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-        datasets: [
-          { label: 'Thu nhập', data: income12, backgroundColor: '#10b981' },
-          { label: 'Chi tiêu', data: expense12, backgroundColor: '#ef4444' }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } }
-    });
+    try {
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+          datasets: [
+            { label: 'Thu nhập', data: income12, backgroundColor: '#10b981' },
+            { label: 'Chi tiêu', data: expense12, backgroundColor: '#ef4444' }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } }
+      });
+    } catch (e) {
+      console.warn("Chart render skipped:", e);
+    }
   }
 }
