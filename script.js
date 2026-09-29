@@ -10,7 +10,7 @@ function initCharts() {
     pieChartInstance = new Chart(ctxPie, {
       type: 'doughnut',
       data: {
-        labels: ['Chi tiêu thiết yếu', 'Học tập & PTTN', 'Tích lũy & Đầu tư', 'Giải trí hưởng thụ'],
+        labels: ['Chi tiêu thiết yếu', 'Học tập & PTTN', 'Tích lũy & Đầu tư', 'Giải trí'],
         datasets: [{
           data: [45, 15, 30, 10],
           backgroundColor: ['#f87171', '#60a5fa', '#34d399', '#fbbf24']
@@ -59,7 +59,7 @@ function initCharts() {
   }
 }
 
-// Xử lý chuyển đổi Tab khi bấm menu Sidebar
+// Xử lý chuyển đổi Tab khi click menu bên trái
 document.addEventListener('DOMContentLoaded', () => {
   const navItems = document.querySelectorAll('.nav-item');
   const bannerTitle = document.getElementById('current-title');
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tabDashboard.classList.remove('active');
       tabGeneric.classList.remove('active');
 
-      // Hiển thị tab tương ứng
+      // Kích hoạt tab tương ứng
       if (tabId === 'tab-tukhoa') {
         tabTuKhoa.classList.add('active');
       } else if (tabId === 'tab-dashboard') {
@@ -98,27 +98,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-
-// Hàm thêm dòng cho bảng đơn giản (2 cột)
-function addRow(tableId) {
-  const table = document.getElementById(tableId).querySelector('tbody');
-  const rowCount = table.rows.length + 1;
-  const newRow = table.insertRow();
-  newRow.innerHTML = `
-    <td>${rowCount}</td>
-    <td contenteditable="true">Mục mới ${rowCount}</td>
-  `;
-}
-
-// Hàm thêm dòng cho bảng đầu tư (4 cột)
-function addRowInvest(tableId) {
-  const table = document.getElementById(tableId).querySelector('tbody');
-  const rowCount = table.rows.length + 1;
-  const newRow = table.insertRow();
-  newRow.innerHTML = `
-    <td>${rowCount}</td>
-    <td contenteditable="true">Mã quỹ / CP mới</td>
-    <td class="text-right" contenteditable="true">10%</td>
-    <td class="text-right" contenteditable="true">12%</td>
-  `;
-}
