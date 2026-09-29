@@ -17,7 +17,7 @@
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM -->
+  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM (DÙNG ONCLICK TRỰC TIẾP CHẮC CHẮN ĂN 100%) -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="diamond-icon">💎</span>
@@ -25,28 +25,42 @@
     </div>
 
     <nav class="nav-menu">
-      <button class="nav-item active" data-tab="tab-tukhoa"><span>Từ khóa</span></button>
-      <button class="nav-item" data-tab="tab-dashboard"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></button>
-      <button class="nav-item" data-tab="tab-muctieu-bt"><span>Mục tiêu bản thân</span></button>
-      <button class="nav-item" data-tab="tab-muctieu-tc"><span>Mục tiêu tài chính</span></button>
-      <button class="nav-item two-lines" data-tab="tab-candoi"><span>Cân đối<br>lộ trình nghề nghiệp</span></button>
-      <button class="nav-item two-lines" data-tab="tab-kehoach"><span>Kế hoạch<br>thu nhập & chi tiêu</span></button>
+      <button class="nav-item active" id="btn-tab-tukhoa" onclick="switchTab('tab-tukhoa')">
+        <span>Từ khóa</span>
+      </button>
+      <button class="nav-item" id="btn-tab-dashboard" onclick="switchTab('tab-dashboard')">
+        <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+      </button>
+      <button class="nav-item" id="btn-tab-muctieu-bt" onclick="switchTab('tab-muctieu-bt')">
+        <span>Mục tiêu bản thân</span>
+      </button>
+      <button class="nav-item" id="btn-tab-muctieu-tc" onclick="switchTab('tab-muctieu-tc')">
+        <span>Mục tiêu tài chính</span>
+      </button>
+      <button class="nav-item two-lines" id="btn-tab-candoi" onclick="switchTab('tab-candoi')">
+        <span>Cân đối<br>lộ trình nghề nghiệp</span>
+      </button>
+      <button class="nav-item two-lines" id="btn-tab-kehoach" onclick="switchTab('tab-kehoach')">
+        <span>Kế hoạch<br>thu nhập & chi tiêu</span>
+      </button>
 
-      <!-- 12 NÚT THÁNG TÁCH BIỆT -->
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="1"><span>Theo dõi tháng 1</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="2"><span>Theo dõi tháng 2</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="3"><span>Theo dõi tháng 3</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="4"><span>Theo dõi tháng 4</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="5"><span>Theo dõi tháng 5</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="6"><span>Theo dõi tháng 6</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="7"><span>Theo dõi tháng 7</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="8"><span>Theo dõi tháng 8</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="9"><span>Theo dõi tháng 9</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="10"><span>Theo dõi tháng 10</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="11"><span>Theo dõi tháng 11</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="12"><span>Theo dõi tháng 12</span></button>
+      <!-- 12 NÚT THÁNG RIÊNG BIỆT -->
+      <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Theo dõi tháng 1</span></button>
+      <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Theo dõi tháng 2</span></button>
+      <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Theo dõi tháng 3</span></button>
+      <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Theo dõi tháng 4</span></button>
+      <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Theo dõi tháng 5</span></button>
+      <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Theo dõi tháng 6</span></button>
+      <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Theo dõi tháng 7</span></button>
+      <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Theo dõi tháng 8</span></button>
+      <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Theo dõi tháng 9</span></button>
+      <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Theo dõi tháng 10</span></button>
+      <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Theo dõi tháng 11</span></button>
+      <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Theo dõi tháng 12</span></button>
 
-      <button class="nav-item" data-tab="tab-khaosat" id="nav-btn-khaosat"><span>Bảng khảo sát</span></button>
+      <button class="nav-item" id="btn-tab-khaosat" onclick="switchTab('tab-khaosat')">
+        <span>Bảng khảo sát</span>
+      </button>
     </nav>
   </aside>
 
@@ -59,7 +73,7 @@
       <span class="unit-text">Đơn vị: triệu đồng</span>
     </header>
 
-    <!-- NỘI DUNG CÁC TAB -->
+    <!-- NỘI DUNG SHEET -->
     <section class="content-body">
       
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
@@ -191,9 +205,8 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 2: DASHBOARD (CHỨA ĐẦY ĐỦ 4 BẢNG MA TRẬN 12 THÁNG) ==================== -->
+      <!-- ==================== TAB 2: DASHBOARD (CÓ 4 BẢNG MA TRẬN 12 THÁNG) ==================== -->
       <div id="tab-dashboard" class="tab-pane">
-        <!-- KHỐI 1: CÁC THẺ STATS TRÊN CÙNG -->
         <div class="stat-cards">
           <div class="stat-card">
             <div class="stat-label">Tổng tiết kiệm cần đạt</div>
@@ -222,7 +235,6 @@
           </div>
         </div>
 
-        <!-- KHỐI 2: 2 BIỂU ĐỒ TRỰC QUAN -->
         <div class="charts-wrapper mb-4">
           <div class="chart-card">
             <h3>Cơ cấu chi tiêu thực tế năm <span class="dynamic-year">2023</span></h3>
@@ -234,10 +246,8 @@
           </div>
         </div>
 
-        <!-- KHỐI 3: 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN THEO FILE XLSX -->
+        <!-- 4 BẢNG MA TRẬN 12 THÁNG -->
         <div class="dashboard-matrix-container">
-          
-          <!-- BẢNG 1: THU NHẬP 12 THÁNG -->
           <div class="sheet-title-banner mt-3">THU NHẬP THEO TỪNG THÁNG TRONG NĂM</div>
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-income">
@@ -255,17 +265,16 @@
               <tfoot>
                 <tr class="matrix-total-row">
                   <td class="font-bold">Tổng thu nhập</td>
-                  <td id="dbt-inc-1">24.0</td><td id="dbt-inc-2">29.5</td><td id="dbt-inc-3">23.7</td><td id="dbt-inc-4">23.9</td>
-                  <td id="dbt-inc-5">32.8</td><td id="dbt-inc-6">27.5</td><td id="dbt-inc-7">29.0</td><td id="dbt-inc-8">25.0</td>
-                  <td id="dbt-inc-9">27.0</td><td id="dbt-inc-10">28.0</td><td id="dbt-inc-11">24.0</td><td id="dbt-inc-12">35.0</td>
-                  <td class="font-bold text-green" id="dbt-inc-total">329.40</td>
+                  <td>24.0</td><td>29.5</td><td>23.7</td><td>23.9</td>
+                  <td>32.8</td><td>27.5</td><td>29.0</td><td>25.0</td>
+                  <td>27.0</td><td>28.0</td><td>24.0</td><td>35.0</td>
+                  <td class="font-bold text-green">329.40</td>
                   <td id="sparkline-inc-total"></td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
-          <!-- BẢNG 2: CHI TIÊU 12 THÁNG -->
           <div class="sheet-title-banner mt-4">CHI TIÊU THEO TỪNG THÁNG TRONG NĂM</div>
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-expense">
@@ -283,10 +292,10 @@
               <tfoot>
                 <tr class="matrix-total-row">
                   <td class="font-bold">Tổng chi tiêu</td>
-                  <td id="dbt-exp-1">17.5</td><td id="dbt-exp-2">19.2</td><td id="dbt-exp-3">19.25</td><td id="dbt-exp-4">17.25</td>
-                  <td id="dbt-exp-5">16.6</td><td id="dbt-exp-6">14.95</td><td id="dbt-exp-7">18.25</td><td id="dbt-exp-8">22.55</td>
-                  <td id="dbt-exp-9">17.45</td><td id="dbt-exp-10">17.95</td><td id="dbt-exp-11">17.75</td><td id="dbt-exp-12">25.05</td>
-                  <td class="font-bold text-red" id="dbt-exp-total">223.75</td>
+                  <td>17.5</td><td>19.2</td><td>19.25</td><td>17.25</td>
+                  <td>16.6</td><td>14.95</td><td>18.25</td><td>22.55</td>
+                  <td>17.45</td><td>17.95</td><td>17.75</td><td>25.05</td>
+                  <td class="font-bold text-red">223.75</td>
                   <td id="sparkline-exp-total"></td>
                 </tr>
                 <tr class="matrix-sub-row">
@@ -307,7 +316,7 @@
             </table>
           </div>
 
-          <!-- BẢNG 3: BĂNG ĐỎ TIẾT KIỆM (DÒNG TIẾT KIỆM NGUYÊN BẢN HÌNH ẢNH) -->
+          <!-- BĂNG ĐỎ TIẾT KIỆM -->
           <div class="mt-4">
             <div class="table-scroll-x">
               <table class="excel-matrix-table">
@@ -334,7 +343,7 @@
             </div>
           </div>
 
-          <!-- BẢNG 4: CHI PHÍ PHÁT TRIỂN BẢN THÂN -->
+          <!-- PHÁT TRIỂN BẢN THÂN 12 THÁNG -->
           <div class="sheet-title-banner mt-4">CHI PHÍ PHÁT TRIỂN BẢN THÂN QUA 12 THÁNG</div>
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-learning">
@@ -354,13 +363,12 @@
                   <td class="font-bold">Tổng</td>
                   <td>1.10</td><td>2.30</td><td>1.50</td><td>1.30</td><td>2.00</td><td>1.10</td>
                   <td>1.10</td><td>3.10</td><td>0.80</td><td>2.10</td><td>1.50</td><td>1.50</td>
-                  <td class="font-bold text-red" id="dbt-learn-total">19.40</td>
+                  <td class="font-bold text-red">19.40</td>
                   <td id="sparkline-learn-total"></td>
                 </tr>
               </tfoot>
             </table>
           </div>
-
         </div>
       </div>
 
@@ -482,13 +490,13 @@
           <div class="target-section survey-result-section">
             <div class="survey-result-title">Kết quả</div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="goToSurveyTab()">Link khảo sát</button>
+              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')">Link khảo sát</button>
               <div class="survey-desc font-bold text-black" id="survey-result-risk">
                 Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình
               </div>
             </div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="goToSurveyTab()">Link khảo sát</button>
+              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')">Link khảo sát</button>
               <div class="survey-desc font-bold text-black" id="survey-result-context">
                 Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn
               </div>
@@ -596,7 +604,7 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 7: THEO DÕI THU CHI TỪNG THÁNG (T1 -> T12) ==================== -->
+      <!-- ==================== TAB 7: THEO DÕI THU CHI TỪNG THÁNG ==================== -->
       <div id="tab-month" class="tab-pane">
         <div class="custom-sheet-container">
           <div class="sheet-title-banner">
@@ -705,7 +713,7 @@
           </div>
 
           <div class="survey-action-box">
-            <button class="btn-save-survey" onclick="saveSurveyAndBack()">
+            <button class="btn-save-survey" onclick="switchTab('tab-muctieu-bt')">
               <i class="fa-solid fa-arrow-left"></i> Quay về phần mục tiêu bản thân
             </button>
           </div>
