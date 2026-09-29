@@ -1,4 +1,4 @@
-/* TOÀN BỘ SỬ DỤNG FONT MONTSERRAT */
+/* TOÀN BỘ GIAO DIỆN SỬ DỤNG FONT MONTSERRAT */
 * {
   margin: 0;
   padding: 0;
@@ -80,7 +80,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== NỘI DUNG CHÍNH ==================== */
+/* ==================== VÙNG NỘI DUNG CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -293,10 +293,10 @@ body {
 .table-header-flex .title {
   flex: 1;
   text-align: center;
-  margin-left: 20px; /* Bù trừ khoảng trống để chữ nằm ngay giữa */
+  margin-left: 20px;
 }
 
-/* ==================== NÚT CỘNG NHỎ GỌN + HIỆU ỨNG HOVER ==================== */
+/* ==================== NÚT CỘNG NHỎ GỌN + HIỆU ỨNG HOVER RA CHỮ "THÊM" ==================== */
 .btn-table-add {
   display: inline-flex;
   align-items: center;
@@ -330,7 +330,7 @@ body {
   transition: transform 0.2s ease;
 }
 
-/* Hiệu ứng khi rê chuột vào nút */
+/* Hiệu ứng khi rê chuột vào */
 .btn-table-add:hover {
   gap: 4px;
   padding: 0 7px;
@@ -401,7 +401,7 @@ body {
   background-color: #ffffff;
 }
 
-/* ==================== DASHBOARD TAB ==================== */
+/* ==================== DASHBOARD ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
