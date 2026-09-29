@@ -44,7 +44,7 @@ body {
   padding: 14px 10px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
   overflow-y: auto;
 }
 
@@ -80,7 +80,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== NỘI DUNG CHÍNH ==================== */
+/* ==================== VÙNG NỘI DUNG CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -129,7 +129,7 @@ body {
   display: block;
 }
 
-/* ==================== TOP INFO (TAB TỪ KHÓA) ==================== */
+/* ==================== TOP INFO: NĂM, TUỔI & QUY ƯỚC ==================== */
 .top-info-row {
   display: flex;
   align-items: flex-start;
@@ -222,7 +222,7 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== BẢNG CHUẨN EXCEL ==================== */
+/* ==================== BẢNG GRID EXCEL (TAB TỪ KHÓA) ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
@@ -388,7 +388,7 @@ body {
   background-color: #ffffff;
 }
 
-/* ==================== TAB MỤC TIÊU BẢN THÂN ==================== */
+/* ==================== MỤC TIÊU BẢN THÂN ==================== */
 .target-container {
   display: flex;
   flex-direction: column;
@@ -413,7 +413,6 @@ body {
   height: 24px;
 }
 
-/* Tiêu đề in nghiêng chuẩn mẫu ảnh */
 .italic-head {
   font-style: italic;
   font-weight: 700;
@@ -424,7 +423,6 @@ body {
   background-color: #ffffff;
 }
 
-/* Nền xanh lá non đặc trưng của tab Mục tiêu bản thân */
 .cell-green-light {
   background-color: #a4de6b;
   color: #000000;
@@ -435,7 +433,6 @@ body {
   background-color: #bdf285;
 }
 
-/* KHỐI KẾT QUẢ KHẢO SÁT & NÚT LINK KHẢO SÁT */
 .survey-result-section {
   margin-top: 10px;
 }
@@ -457,7 +454,6 @@ body {
   margin-bottom: 6px;
 }
 
-/* Nút Link khảo sát xanh đậm */
 .btn-survey-link {
   background-color: #1e6b37;
   color: #ffffff;
@@ -489,24 +485,132 @@ body {
   outline: none;
 }
 
-/* ==================== TAB BẢNG KHẢO SÁT ==================== */
+/* ==================== BẢNG CHUNG CHO CÁC SHEET EXCEL MỚI ==================== */
+.custom-sheet-container {
+  max-width: 1000px;
+}
+
+.sheet-title-banner {
+  background-color: #f29b28;
+  color: #000000;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+}
+
+.sheet-note-box {
+  background-color: #f0fdf4;
+  border-left: 4px solid #16a34a;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  color: #166534;
+  margin-bottom: 14px;
+}
+
+.excel-table-bordered {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  background-color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.excel-table-bordered th, 
+.excel-table-bordered td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 10px;
+}
+
+.bg-header-green th {
+  background-color: #0e5627;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bg-header-light-green th {
+  background-color: #d9ead3;
+  color: #000000;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bg-header-orange th {
+  background-color: #fce5cd;
+  color: #000000;
+  font-weight: 700;
+  text-align: center;
+}
+
+.bg-total-row {
+  background-color: #f8fafc;
+  border-top: 2px solid #000000;
+}
+
+.bg-total-save {
+  background-color: #eff6ff;
+  border-top: 2px solid #2563eb;
+}
+
+.mt-3 { margin-top: 14px; }
+.mt-4 { margin-top: 20px; }
+
+/* BỘ CHỌN THÁNG */
+.month-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.month-buttons {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.btn-m {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-m.active, 
+.btn-m:hover {
+  background: #0e5627;
+  color: #ffffff;
+  border-color: #0e5627;
+}
+
+/* ==================== BẢNG KHẢO SÁT ==================== */
 .survey-sheet-wrapper {
   background: white;
   padding: 24px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  max-width: 800px;
+  max-width: 850px;
 }
 
 .survey-sheet-header h2 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   color: #0e5627;
   margin-bottom: 6px;
   font-weight: 800;
 }
 
 .survey-sheet-header p {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #4b5563;
   margin-bottom: 20px;
 }
@@ -524,16 +628,10 @@ body {
 }
 
 .survey-card h3 {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #111827;
-  margin-bottom: 6px;
-  font-weight: 700;
-}
-
-.survey-card p {
-  font-size: 0.8rem;
-  color: #4b5563;
   margin-bottom: 10px;
+  font-weight: 700;
 }
 
 .survey-option {
@@ -568,30 +666,37 @@ body {
   background-color: #166534;
 }
 
-/* ==================== DASHBOARD TAB ==================== */
+/* ==================== DASHBOARD STATS & CHARTS ==================== */
 .stat-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
 }
 
 .stat-card {
   background: white;
-  padding: 16px;
+  padding: 14px 16px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .stat-label {
-  font-size: 0.78rem;
-  color: #6b7280;
+  font-size: 0.76rem;
+  color: #64748b;
   font-weight: 600;
 }
 
 .stat-value {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 800;
+  margin: 4px 0 2px 0;
+}
+
+.stat-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
 }
 
 .text-green { color: #16a34a; }
@@ -608,25 +713,17 @@ body {
   background: white;
   padding: 16px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
+}
+
+.chart-card h3 {
+  font-size: 0.88rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+  font-weight: 700;
 }
 
 .chart-container {
-  height: 240px;
+  height: 250px;
   position: relative;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 60vh;
-  color: #9ca3af;
-}
-
-.empty-icon {
-  font-size: 3.5rem;
-  margin-bottom: 14px;
-  color: #cbd5e1;
 }
