@@ -34,7 +34,6 @@ const AppState = {
     { name: 'Cổ phiếu riêng lẻ', returnRate: 12, risk: 6 }
   ],
 
-  // Mục tiêu bản thân
   debtTargets: [
     { age: 35, desc: 'Vay mua chung cư', val: 500 }
   ],
@@ -124,7 +123,7 @@ const AppState = {
   }
 };
 
-// Điền sẵn dữ liệu mặc định cho các tháng từ T2 đến T12
+// Khởi tạo các tháng còn lại
 for (let m = 2; m <= 12; m++) {
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = {
@@ -142,7 +141,50 @@ for (let m = 2; m <= 12; m++) {
   }
 }
 
-// ==================== KHỞI TẠO ====================
+// ==================== CÁC HÀM ĐIỀU HƯỚNG TAB CHÍNH (ĐẢM BẢO ĂN 100%) ====================
+function switchTab(tabId) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const btn = document.getElementById(`btn-${tabId}`);
+  if (btn) btn.classList.add('active');
+
+  const titlesMap = {
+    'tab-tukhoa': 'TỪ KHÓA',
+    'tab-dashboard': 'THEO DÕI TÀI CHÍNH CÁ NHÂN',
+    'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
+    'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
+    'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
+    'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
+    'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN'
+  };
+
+  const titleEl = document.getElementById('current-title');
+  if (titleEl) titleEl.textContent = titlesMap[tabId] || 'TÀI CHÍNH CÁ NHÂN';
+
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  const targetPane = document.getElementById(tabId);
+  if (targetPane) {
+    targetPane.classList.add('active');
+    if (tabId === 'tab-dashboard') updateDashboardCharts();
+  }
+}
+
+function switchMonthTab(m) {
+  AppState.currentMonth = m;
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  const mBtn = document.getElementById(`btn-month-${m}`);
+  if (mBtn) mBtn.classList.add('active');
+
+  const titleEl = document.getElementById('current-title');
+  if (titleEl) titleEl.textContent = `THEO DÕI THU - CHI THÁNG ${m}`;
+
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  const monthPane = document.getElementById('tab-month');
+  if (monthPane) monthPane.classList.add('active');
+
+  renderMonthView(m);
+}
+
+// ==================== KHỞI TẠO DOM ====================
 document.addEventListener('DOMContentLoaded', () => {
   renderSetupTables();
   renderTargetTables();
@@ -156,78 +198,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputYearEl = document.getElementById('input-year');
   const inputAgeEl = document.getElementById('input-age');
 
-  inputYearEl.addEventListener('input', () => {
-    const val = parseInt(inputYearEl.innerText.trim(), 10);
-    if (!isNaN(val) && val > 1900 && val < 2100) {
-      AppState.currentYear = val;
-      AppState.currentAge = AppState.currentYear - AppState.birthYear;
-      inputAgeEl.innerText = AppState.currentAge;
-      syncYearLabels();
-    }
-  });
-
-  inputAgeEl.addEventListener('input', () => {
-    const val = parseInt(inputAgeEl.innerText.trim(), 10);
-    if (!isNaN(val) && val > 0 && val < 120) {
-      AppState.currentAge = val;
-      AppState.birthYear = AppState.currentYear - AppState.currentAge;
-    }
-  });
-
-  // Chuyển tab sidebar
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const tabId = item.getAttribute('data-tab');
-      if (item.classList.contains('nav-month')) {
-        const m = parseInt(item.getAttribute('data-month'), 10);
-        AppState.currentMonth = m;
-        activateTab('tab-month');
-        renderMonthView(m);
-      } else {
-        activateTab(tabId);
+  if (inputYearEl) {
+    inputYearEl.addEventListener('input', () => {
+      const val = parseInt(inputYearEl.innerText.trim(), 10);
+      if (!isNaN(val) && val > 1900 && val < 2100) {
+        AppState.currentYear = val;
+        AppState.currentAge = AppState.currentYear - AppState.birthYear;
+        if (inputAgeEl) inputAgeEl.innerText = AppState.currentAge;
+        syncYearLabels();
       }
     });
-  });
+  }
+
+  if (inputAgeEl) {
+    inputAgeEl.addEventListener('input', () => {
+      const val = parseInt(inputAgeEl.innerText.trim(), 10);
+      if (!isNaN(val) && val > 0 && val < 120) {
+        AppState.currentAge = val;
+        AppState.birthYear = AppState.currentYear - AppState.currentAge;
+      }
+    });
+  }
 });
 
 function syncYearLabels() {
   document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 }
-
-function activateTab(tabId) {
-  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-  
-  if (tabId === 'tab-month') {
-    const mBtn = document.querySelector(`.nav-month[data-month="${AppState.currentMonth}"]`);
-    if (mBtn) mBtn.classList.add('active');
-  } else {
-    const btn = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
-    if (btn) btn.classList.add('active');
-  }
-
-  const titlesMap = {
-    'tab-tukhoa': 'TỪ KHÓA',
-    'tab-dashboard': 'THEO DÕI TÀI CHÍNH CÁ NHÂN',
-    'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
-    'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
-    'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
-    'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
-    'tab-month': `THEO DÕI THU - CHI THÁNG ${AppState.currentMonth}`,
-    'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN'
-  };
-
-  document.getElementById('current-title').textContent = titlesMap[tabId] || 'TÀI CHÍNH CÁ NHÂN';
-
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  const targetPane = document.getElementById(tabId);
-  if (targetPane) {
-    targetPane.classList.add('active');
-    if (tabId === 'tab-dashboard') updateDashboardCharts();
-  }
-}
-
-function goToSurveyTab() { activateTab('tab-khaosat'); }
-function saveSurveyAndBack() { activateTab('tab-muctieu-bt'); }
 
 // ==================== VẼ ĐỒ THỊ SPARKLINE MINI ====================
 function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
@@ -252,99 +248,120 @@ function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
 
 // ==================== RENDER 4 BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD ====================
 function renderDashboardMatrices() {
-  // 1. Ma trận thu nhập
-  let incRows = '';
-  Object.entries(AppState.matrixIncome).forEach(([cat, vals]) => {
-    const sum = vals.reduce((a, b) => a + b, 0);
-    const cells = vals.map(v => `<td>${v.toFixed(1)}</td>`).join('');
-    incRows += `
-      <tr>
-        <td>${cat}</td>
-        ${cells}
-        <td class="font-bold text-green">${sum.toFixed(1)}</td>
-        <td>${createSparkline(vals)}</td>
-      </tr>
-    `;
-  });
-  document.getElementById('tbody-db-income').innerHTML = incRows;
+  const tbInc = document.getElementById('tbody-db-income');
+  if (tbInc) {
+    let incRows = '';
+    Object.entries(AppState.matrixIncome).forEach(([cat, vals]) => {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const cells = vals.map(v => `<td>${v.toFixed(1)}</td>`).join('');
+      incRows += `
+        <tr>
+          <td>${cat}</td>
+          ${cells}
+          <td class="font-bold text-green">${sum.toFixed(1)}</td>
+          <td>${createSparkline(vals)}</td>
+        </tr>
+      `;
+    });
+    tbInc.innerHTML = incRows;
+  }
 
-  // 2. Ma trận chi tiêu
-  let expRows = '';
-  Object.entries(AppState.matrixExpense).forEach(([cat, vals]) => {
-    const sum = vals.reduce((a, b) => a + b, 0);
-    const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
-    expRows += `
-      <tr>
-        <td>${cat}</td>
-        ${cells}
-        <td class="font-bold text-red">${sum.toFixed(2)}</td>
-        <td>${createSparkline(vals)}</td>
-      </tr>
-    `;
-  });
-  document.getElementById('tbody-db-expense').innerHTML = expRows;
+  const tbExp = document.getElementById('tbody-db-expense');
+  if (tbExp) {
+    let expRows = '';
+    Object.entries(AppState.matrixExpense).forEach(([cat, vals]) => {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
+      expRows += `
+        <tr>
+          <td>${cat}</td>
+          ${cells}
+          <td class="font-bold text-red">${sum.toFixed(2)}</td>
+          <td>${createSparkline(vals)}</td>
+        </tr>
+      `;
+    });
+    tbExp.innerHTML = expRows;
+  }
 
-  // 3. Sparkline cho dòng Tiết kiệm
   const savArr = [6.5, 10.3, 4.45, 6.65, 16.2, 12.55, 10.75, 2.45, 9.55, 10.05, 6.25, 9.95];
-  document.getElementById('sparkline-savings').innerHTML = createSparkline(savArr, 75, 18, '#2563eb');
+  const spkSav = document.getElementById('sparkline-savings');
+  if (spkSav) spkSav.innerHTML = createSparkline(savArr, 75, 18, '#2563eb');
 
-  // 4. Ma trận chi phí phát triển bản thân
-  let learnRows = '';
-  Object.entries(AppState.matrixLearning).forEach(([cat, vals]) => {
-    const sum = vals.reduce((a, b) => a + b, 0);
-    const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
-    learnRows += `
-      <tr>
-        <td>${cat}</td>
-        ${cells}
-        <td class="font-bold">${sum.toFixed(2)}</td>
-        <td>${createSparkline(vals)}</td>
-      </tr>
-    `;
-  });
-  document.getElementById('tbody-db-learning').innerHTML = learnRows;
+  const tbLrn = document.getElementById('tbody-db-learning');
+  if (tbLrn) {
+    let learnRows = '';
+    Object.entries(AppState.matrixLearning).forEach(([cat, vals]) => {
+      const sum = vals.reduce((a, b) => a + b, 0);
+      const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
+      learnRows += `
+        <tr>
+          <td>${cat}</td>
+          ${cells}
+          <td class="font-bold">${sum.toFixed(2)}</td>
+          <td>${createSparkline(vals)}</td>
+        </tr>
+      `;
+    });
+    tbLrn.innerHTML = learnRows;
+  }
 
-  // Sparkline tổng
   const incTotalArr = [24, 29.5, 23.7, 23.9, 32.8, 27.5, 29, 25, 27, 28, 24, 35];
   const expTotalArr = [17.5, 19.2, 19.25, 17.25, 16.6, 14.95, 18.25, 22.55, 17.45, 17.95, 17.75, 25.05];
   const lrnTotalArr = [1.1, 2.3, 1.5, 1.3, 2.0, 1.1, 1.1, 3.1, 0.8, 2.1, 1.5, 1.5];
 
-  document.getElementById('sparkline-inc-total').innerHTML = createSparkline(incTotalArr, 75, 18, '#16a34a');
-  document.getElementById('sparkline-exp-total').innerHTML = createSparkline(expTotalArr, 75, 18, '#dc2626');
-  document.getElementById('sparkline-learn-total').innerHTML = createSparkline(lrnTotalArr, 75, 18, '#ea580c');
+  const spkInc = document.getElementById('sparkline-inc-total');
+  const spkExp = document.getElementById('sparkline-exp-total');
+  const spkLrn = document.getElementById('sparkline-learn-total');
+
+  if (spkInc) spkInc.innerHTML = createSparkline(incTotalArr, 75, 18, '#16a34a');
+  if (spkExp) spkExp.innerHTML = createSparkline(expTotalArr, 75, 18, '#dc2626');
+  if (spkLrn) spkLrn.innerHTML = createSparkline(lrnTotalArr, 75, 18, '#ea580c');
 }
 
 // ==================== BẢNG TỪ KHÓA ====================
 function renderSetupTables() {
-  document.getElementById('tbody-expenses').innerHTML = AppState.expenses.map((item, idx) => `
-    <tr>
-      <td>${idx + 1}</td>
-      <td class="cell-blue" contenteditable="true" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
-    </tr>
-  `).join('');
+  const tbExp = document.getElementById('tbody-expenses');
+  if (tbExp) {
+    tbExp.innerHTML = AppState.expenses.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td class="cell-blue" contenteditable="true" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-income').innerHTML = AppState.incomeList.map((item, idx) => `
-    <tr>
-      <td>${idx + 1}</td>
-      <td class="cell-blue" contenteditable="true" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
-    </tr>
-  `).join('');
+  const tbInc = document.getElementById('tbody-income');
+  if (tbInc) {
+    tbInc.innerHTML = AppState.incomeList.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td class="cell-blue" contenteditable="true" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-learning').innerHTML = AppState.planList.map((item, idx) => `
-    <tr>
-      <td>${idx + 1}</td>
-      <td class="cell-blue" contenteditable="true">${item}</td>
-    </tr>
-  `).join('');
+  const tbLrn = document.getElementById('tbody-learning');
+  if (tbLrn) {
+    tbLrn.innerHTML = AppState.planList.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td class="cell-blue" contenteditable="true">${item}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-invest').innerHTML = AppState.investProducts.map((p, idx) => `
-    <tr>
-      <td>${idx + 1}</td>
-      <td class="cell-blue ${p.name === 'DCDS' ? 'excel-active-cell' : ''}" contenteditable="true">${p.name}</td>
-      <td class="text-right cell-blue" contenteditable="true" onblur="updateProductRate(${idx}, this.innerText)">${p.returnRate}%</td>
-      <td class="text-right cell-blue" contenteditable="true">${p.risk}%</td>
-    </tr>
-  `).join('');
+  const tbInv = document.getElementById('tbody-invest');
+  if (tbInv) {
+    tbInv.innerHTML = AppState.investProducts.map((p, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td class="cell-blue ${p.name === 'DCDS' ? 'excel-active-cell' : ''}" contenteditable="true">${p.name}</td>
+        <td class="text-right cell-blue" contenteditable="true" onblur="updateProductRate(${idx}, this.innerText)">${p.returnRate}%</td>
+        <td class="text-right cell-blue" contenteditable="true">${p.risk}%</td>
+      </tr>
+    `).join('');
+  }
 }
 
 function updateExpenseItem(idx, val) { AppState.expenses[idx] = val.trim(); recalculateAll(); }
@@ -361,23 +378,29 @@ function addInvestRow() { AppState.investProducts.push({ name: 'Sản phẩm m�
 
 // ==================== MỤC TIÊU BẢN THÂN ====================
 function renderTargetTables() {
-  document.getElementById('tbody-debt-target').innerHTML = AppState.debtTargets.map((d, i) => `
-    <tr>
-      <td class="cell-green-light text-center font-bold">${i + 1}</td>
-      <td class="cell-green-light text-center cell-blue" contenteditable="true">${d.age}</td>
-      <td class="cell-green-light cell-blue" contenteditable="true">${d.desc}</td>
-      <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateDebtTarget(${i}, this.innerText)">${d.val}</td>
-    </tr>
-  `).join('');
+  const tbDebt = document.getElementById('tbody-debt-target');
+  if (tbDebt) {
+    tbDebt.innerHTML = AppState.debtTargets.map((d, i) => `
+      <tr>
+        <td class="cell-green-light text-center font-bold">${i + 1}</td>
+        <td class="cell-green-light text-center cell-blue" contenteditable="true">${d.age}</td>
+        <td class="cell-green-light cell-blue" contenteditable="true">${d.desc}</td>
+        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateDebtTarget(${i}, this.innerText)">${d.val}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-invest-target').innerHTML = AppState.investTargets.map((inv, i) => `
-    <tr>
-      <td class="cell-green-light text-center font-bold">${i + 4}</td>
-      <td class="cell-green-light text-center cell-blue" contenteditable="true">${inv.age}</td>
-      <td class="cell-green-light cell-blue" contenteditable="true">${inv.desc}</td>
-      <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateInvestTarget(${i}, this.innerText)">${inv.val.toLocaleString()}</td>
-    </tr>
-  `).join('');
+  const tbInv = document.getElementById('tbody-invest-target');
+  if (tbInv) {
+    tbInv.innerHTML = AppState.investTargets.map((inv, i) => `
+      <tr>
+        <td class="cell-green-light text-center font-bold">${i + 4}</td>
+        <td class="cell-green-light text-center cell-blue" contenteditable="true">${inv.age}</td>
+        <td class="cell-green-light cell-blue" contenteditable="true">${inv.desc}</td>
+        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateInvestTarget(${i}, this.innerText)">${inv.val.toLocaleString()}</td>
+      </tr>
+    `).join('');
+  }
 }
 
 function updateDebtTarget(i, text) { AppState.debtTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); }
@@ -387,9 +410,13 @@ function addDebtTargetRow() { AppState.debtTargets.push({ age: 35, desc: 'Mục 
 function addInvestTargetRow() { AppState.investTargets.push({ age: 40, desc: 'Mục tiêu tích lũy mới', val: 200 }); renderTargetTables(); recalculateAll(); }
 
 function renderSkillsFamilyJob() {
-  document.getElementById('tbody-skills').innerHTML = AppState.skills.map(s => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${s}</td></tr>`).join('');
-  document.getElementById('tbody-family').innerHTML = AppState.family.map(f => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${f}</td></tr>`).join('');
-  document.getElementById('tbody-job').innerHTML = AppState.job.map(j => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${j}</td></tr>`).join('');
+  const tbS = document.getElementById('tbody-skills');
+  const tbF = document.getElementById('tbody-family');
+  const tbJ = document.getElementById('tbody-job');
+
+  if (tbS) tbS.innerHTML = AppState.skills.map(s => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${s}</td></tr>`).join('');
+  if (tbF) tbF.innerHTML = AppState.family.map(f => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${f}</td></tr>`).join('');
+  if (tbJ) tbJ.innerHTML = AppState.job.map(j => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${j}</td></tr>`).join('');
 }
 
 function addSkillRow() { AppState.skills.push('Kỹ năng mới'); renderSkillsFamilyJob(); }
@@ -398,22 +425,28 @@ function addJobRow() { AppState.job.push('Môi trường nghề nghiệp mới')
 
 // ==================== KẾ HOẠCH HÀNG THÁNG ====================
 function renderPlanTables() {
-  document.getElementById('tbody-plan-inc').innerHTML = AppState.planIncome.map((item, i) => `
-    <tr>
-      <td class="text-center">${i + 1}</td>
-      <td>${item.name}</td>
-      <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanIncVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
-    </tr>
-  `).join('');
+  const tbInc = document.getElementById('tbody-plan-inc');
+  if (tbInc) {
+    tbInc.innerHTML = AppState.planIncome.map((item, i) => `
+      <tr>
+        <td class="text-center">${i + 1}</td>
+        <td>${item.name}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanIncVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-plan-exp').innerHTML = AppState.planExpense.map((item, i) => `
-    <tr>
-      <td class="text-center">${i + 1}</td>
-      <td>${item.name}</td>
-      <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanExpVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
-      <td class="cell-blue" contenteditable="true">${item.note}</td>
-    </tr>
-  `).join('');
+  const tbExp = document.getElementById('tbody-plan-exp');
+  if (tbExp) {
+    tbExp.innerHTML = AppState.planExpense.map((item, i) => `
+      <tr>
+        <td class="text-center">${i + 1}</td>
+        <td>${item.name}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanExpVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
+        <td class="cell-blue" contenteditable="true">${item.note}</td>
+      </tr>
+    `).join('');
+  }
 }
 
 function updatePlanIncVal(i, text) { AppState.planIncome[i].plan = parseFloat(text) || 0; recalculateAll(); }
@@ -421,28 +454,34 @@ function updatePlanExpVal(i, text) { AppState.planExpense[i].plan = parseFloat(t
 
 // ==================== THEO DÕI THU CHI CHI TIẾT TỪNG THÁNG ====================
 function renderMonthView(m) {
-  document.getElementById('month-view-title').textContent = `THEO DÕI THU - CHI THÁNG ${m}`;
-  document.getElementById('current-title').textContent = `THEO DÕI THU - CHI THÁNG ${m}`;
+  const titleEl = document.getElementById('month-view-title');
+  if (titleEl) titleEl.textContent = `THEO DÕI THU - CHI THÁNG ${m}`;
 
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [] };
 
-  document.getElementById('tbody-m-detail-income').innerHTML = mData.incomes.map((inc, i) => `
-    <tr>
-      <td class="cell-blue text-center" contenteditable="true">${inc.date}</td>
-      <td class="cell-blue" contenteditable="true">${inc.cat}</td>
-      <td class="cell-blue" contenteditable="true">${inc.desc}</td>
-      <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(2)}</td>
-    </tr>
-  `).join('');
+  const tbInc = document.getElementById('tbody-m-detail-income');
+  if (tbInc) {
+    tbInc.innerHTML = mData.incomes.map((inc, i) => `
+      <tr>
+        <td class="cell-blue text-center" contenteditable="true">${inc.date}</td>
+        <td class="cell-blue" contenteditable="true">${inc.cat}</td>
+        <td class="cell-blue" contenteditable="true">${inc.desc}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
 
-  document.getElementById('tbody-m-detail-expense').innerHTML = mData.expenses.map((exp, i) => `
-    <tr>
-      <td class="cell-blue text-center" contenteditable="true">${exp.date}</td>
-      <td class="cell-blue" contenteditable="true">${exp.cat}</td>
-      <td class="cell-blue" contenteditable="true">${exp.desc}</td>
-      <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(2)}</td>
-    </tr>
-  `).join('');
+  const tbExp = document.getElementById('tbody-m-detail-expense');
+  if (tbExp) {
+    tbExp.innerHTML = mData.expenses.map((exp, i) => `
+      <tr>
+        <td class="cell-blue text-center" contenteditable="true">${exp.date}</td>
+        <td class="cell-blue" contenteditable="true">${exp.cat}</td>
+        <td class="cell-blue" contenteditable="true">${exp.desc}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
 
   renderReconciliationTable(m);
 }
@@ -513,34 +552,42 @@ function renderReconciliationTable(m) {
     `;
   });
 
-  document.getElementById('tbody-m-reconciliation').innerHTML = rows;
+  const reconEl = document.getElementById('tbody-m-reconciliation');
+  if (reconEl) reconEl.innerHTML = rows;
 
   const totalInc = mData.incomes.reduce((a, b) => a + b.val, 0);
   const totalExp = mData.expenses.reduce((a, b) => a + b.val, 0);
   const savings = totalInc - totalExp;
 
-  document.getElementById('m-summary-income').textContent = `${totalInc.toFixed(2)} tr`;
-  document.getElementById('m-summary-expense').textContent = `${totalExp.toFixed(2)} tr`;
-  document.getElementById('m-summary-savings').textContent = `${savings.toFixed(2)} tr`;
+  const sumIncEl = document.getElementById('m-summary-income');
+  const sumExpEl = document.getElementById('m-summary-expense');
+  const sumSavEl = document.getElementById('m-summary-savings');
+
+  if (sumIncEl) sumIncEl.textContent = `${totalInc.toFixed(2)} tr`;
+  if (sumExpEl) sumExpEl.textContent = `${totalExp.toFixed(2)} tr`;
+  if (sumSavEl) sumSavEl.textContent = `${savings.toFixed(2)} tr`;
 }
 
 // ==================== CƠ CHẾ TÍNH TOÁN LIÊN KẾT ====================
 function recalculateAll() {
   const sumRate = AppState.investProducts.reduce((acc, p) => acc + p.returnRate, 0);
   const avgRate = AppState.investProducts.length ? (sumRate / AppState.investProducts.length) : 0;
-  document.getElementById('dash-expected-return').textContent = `${avgRate.toFixed(2)}%/năm`;
+  const expRateEl = document.getElementById('dash-expected-return');
+  if (expRateEl) expRateEl.textContent = `${avgRate.toFixed(2)}%/năm`;
 
   const totalInvest = AppState.investTargets.reduce((a, b) => a + b.val, 0);
-  document.getElementById('dash-target-savings').textContent = `${totalInvest.toLocaleString()} tr`;
+  const tgtSavEl = document.getElementById('dash-target-savings');
+  if (tgtSavEl) tgtSavEl.textContent = `${totalInvest.toLocaleString()} tr`;
 
   calculateAmortization();
 
   const sumPlanInc = AppState.planIncome.reduce((a, b) => a + b.plan, 0);
   const sumPlanExp = AppState.planExpense.reduce((a, b) => a + b.plan, 0);
-  document.getElementById('plan-sum-inc-val').textContent = `${sumPlanInc.toFixed(2)} tr`;
-  document.getElementById('plan-sum-exp-val').textContent = `${sumPlanExp.toFixed(2)} tr`;
+  const plIncEl = document.getElementById('plan-sum-inc-val');
+  const plExpEl = document.getElementById('plan-sum-exp-val');
+  if (plIncEl) plIncEl.textContent = `${sumPlanInc.toFixed(2)} tr`;
+  if (plExpEl) plExpEl.textContent = `${sumPlanExp.toFixed(2)} tr`;
 
-  // Tổng hợp cả năm
   let yearTotalInc = 0;
   let yearTotalExp = 0;
 
@@ -554,12 +601,19 @@ function recalculateAll() {
   const expRatio = yearTotalInc > 0 ? (yearTotalExp / yearTotalInc) * 100 : 0;
   const savRate = yearTotalInc > 0 ? (yearSavings / yearTotalInc) * 100 : 0;
 
-  document.getElementById('dash-total-income').textContent = `${yearTotalInc.toFixed(2)} tr`;
-  document.getElementById('dash-avg-income').textContent = `Bình quân ~${(yearTotalInc / 12).toFixed(2)} tr/tháng`;
-  document.getElementById('dash-total-expense').textContent = `${yearTotalExp.toFixed(2)} tr`;
-  document.getElementById('dash-expense-ratio').textContent = `Chiếm ${expRatio.toFixed(1)}% tổng thu`;
-  document.getElementById('dash-total-savings').textContent = `${yearSavings.toFixed(2)} tr`;
-  document.getElementById('dash-savings-rate').textContent = `Tỷ lệ tích lũy: ${savRate.toFixed(1)}%`;
+  const dTotInc = document.getElementById('dash-total-income');
+  const dAvgInc = document.getElementById('dash-avg-income');
+  const dTotExp = document.getElementById('dash-total-expense');
+  const dExpRat = document.getElementById('dash-expense-ratio');
+  const dTotSav = document.getElementById('dash-total-savings');
+  const dSavRat = document.getElementById('dash-savings-rate');
+
+  if (dTotInc) dTotInc.textContent = '${yearTotalInc.toFixed(2)} tr';
+  if (dAvgInc) dAvgInc.textContent = 'Bình quân ~${(yearTotalInc / 12).toFixed(2)} tr/tháng';
+  if (dTotExp) dTotExp.textContent = `${yearTotalExp.toFixed(2)} tr`;
+  if (dExpRat) dExpRat.textContent = `Chiếm ${expRatio.toFixed(1)}% tổng thu`;
+  if (dTotSav) dTotSav.textContent = `${yearSavings.toFixed(2)} tr`;
+  if (dSavRat) dSavRat.textContent = `Tỷ lệ tích lũy: ${savRate.toFixed(1)}%`;
 }
 
 function calculateAmortization() {
@@ -569,10 +623,12 @@ function calculateAmortization() {
   const r = (parseFloat(document.getElementById('tc-rate')?.innerText || '8.0') || 8.0) / 100;
   const n = Math.max(1, end - start + 1);
 
-  document.getElementById('tc-duration').textContent = n;
+  const durEl = document.getElementById('tc-duration');
+  if (durEl) durEl.textContent = n;
 
   const pmt = p * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-  document.getElementById('tc-pmt').textContent = `${pmt.toFixed(2)} tr`;
+  const pmtEl = document.getElementById('tc-pmt');
+  if (pmtEl) pmtEl.textContent = `${pmt.toFixed(2)} tr`;
 
   let bal = p;
   let rows = '';
@@ -599,14 +655,17 @@ function calculateAmortization() {
   if (n > 5) {
     rows += `<tr><td colspan="7" class="text-center font-medium" style="color: #64748b;">... Tính toán niên kim trả góp tự động cho các năm tiếp theo đến ${end}</td></tr>`;
   }
-  document.getElementById('tbody-amortization').innerHTML = rows;
+  const amortEl = document.getElementById('tbody-amortization');
+  if (amortEl) amortEl.innerHTML = rows;
 }
 
-// ==================== BIỂU ĐỒ DASHBOARD ====================
+// ==================== BIỂU ĐỒ DASHBOARD AN TOÀN ====================
 let pieChartInstance = null;
 let barChartInstance = null;
 
 function updateDashboardCharts() {
+  if (typeof Chart === 'undefined') return;
+
   const income12 = [];
   const expense12 = [];
   const catSums = {};
