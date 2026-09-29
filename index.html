@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bảng Quản Lý Tài Chính</title>
-  <!-- Google Font: Montserrat -->
+  <!-- Google Font: Montserrat (Tất cả trọng số 400 - 800) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- File CSS riêng -->
-  <link rel="stylesheet" href="style.css">
+  <!-- Link file CSS độc lập -->
+  <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
@@ -68,7 +68,7 @@
   <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải màu cam chạy ngang -->
+    <!-- Dải màu cam chạy ngang cả template -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">đơn vị: triệu đồng</span>
@@ -83,13 +83,13 @@
         <!-- THÔNG SỐ TOP: NĂM BẮT ĐẦU, TUỔI & QUY ƯỚC MÀU CHỮ -->
         <div class="top-info-row">
           
-          <!-- 1. Năm bắt đầu theo dõi -->
+          <!-- 1. Năm bắt đầu theo dõi (Dynamic Input) -->
           <div class="info-block block-orange">
             <div class="info-header">Năm bắt đầu theo dõi</div>
             <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa năm">2023</div>
           </div>
 
-          <!-- 2. Tuổi của bạn theo năm đã chọn (tự động tính) -->
+          <!-- 2. Tuổi của bạn (Dynamic Sync theo năm) -->
           <div class="info-block block-green">
             <div class="info-header">
               Tuổi của bạn năm <span class="dynamic-year">2023</span>
@@ -116,7 +116,7 @@
 
         </div>
 
-        <!-- 4 BẢNG DỮ LIỆU ĐÃ LOẠI BỎ HÀNG THỪA & CÓ NÚT + THÊM ROW -->
+        <!-- 4 BẢNG DỮ LIỆU ĐÃ BỎ HÀNG THỪA & CÓ NÚT + EXPAND KHI HOVER -->
         <div class="sheet-tables-container">
           
           <!-- BẢNG 1: DANH MỤC CHI PHÍ -->
@@ -289,7 +289,7 @@
         </div>
       </div>
 
-      <!-- TAB PLACEHOLDER CÁC MỤC KHÁC -->
+      <!-- TAB CÁC MỤC KHÁC -->
       <div id="tab-generic" class="tab-pane">
         <div class="empty-state">
           <i class="fa-regular fa-folder-open empty-icon"></i>
@@ -301,7 +301,7 @@
     </section>
   </main>
 
-  <!-- File JS riêng -->
-  <script src="script.js"></script>
+  <!-- Link file JS độc lập -->
+  <script src="./script.js"></script>
 </body>
 </html>
