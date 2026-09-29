@@ -4,19 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bảng Quản Lý Tài Chính</title>
-  <!-- Google Fonts & Font Awesome Icons -->
+  <!-- Google Fonts: Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- File CSS riêng biệt -->
+  <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM (#0e5627) -->
+  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="diamond-icon">💎</span>
@@ -44,7 +45,7 @@
         <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- Danh sách theo dõi tháng 1 -> 12 -->
+      <!-- Danh sách tháng 1 -> 12 -->
       <button class="nav-item" data-tab="tab-thang1"><span>Theo dõi tháng 1</span></button>
       <button class="nav-item" data-tab="tab-thang2"><span>Theo dõi tháng 2</span></button>
       <button class="nav-item" data-tab="tab-thang3"><span>Theo dõi tháng 3</span></button>
@@ -64,7 +65,7 @@
   <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- DẢI MÀU CAM CHẠY NGANG CẢ TEMPLATE -->
+    <!-- Dải màu cam chạy ngang -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">đơn vị: triệu đồng</span>
@@ -73,22 +74,22 @@
     <!-- NỘI DUNG SHEET -->
     <section class="content-body">
       
-      <!-- TAB TỪ KHÓA -->
+      <!-- TAB 1: TỪ KHÓA -->
       <div id="tab-tukhoa" class="tab-pane active">
         
-        <!-- KHU VỰC THÔNG TIN TRÊN: NĂM, TUỔI & QUY ƯỚC MÀU CHỮ -->
+        <!-- KHU VỰC ĐỒNG BỘ NĂM THEO DÕI, TUỔI & QUY ƯỚC MÀU CHỮ -->
         <div class="top-info-row">
           
-          <!-- 1. Năm bắt đầu theo dõi -->
+          <!-- 1. Năm bắt đầu theo dõi (Input editable) -->
           <div class="info-block block-orange">
             <div class="info-header">Năm bắt đầu theo dõi</div>
-            <div class="info-body num-blue" contenteditable="true">2023</div>
+            <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Nhấp để thay đổi năm">2023</div>
           </div>
 
-          <!-- 2. Tuổi của bạn năm 2023 -->
+          <!-- 2. Tuổi của bạn (Tự động cập nhật theo năm) -->
           <div class="info-block block-green">
-            <div class="info-header">Tuổi của bạn năm 2023</div>
-            <div class="info-body num-blue" contenteditable="true">21</div>
+            <div class="info-header" id="label-age-header">Tuổi của bạn năm <span class="dynamic-year">2023</span></div>
+            <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false" title="Nhấp để thay đổi tuổi">21</div>
           </div>
 
           <!-- 3. Quy ước màu chữ -->
@@ -110,7 +111,7 @@
 
         </div>
 
-        <!-- KHU VỰC 4 BẢNG DỮ LIỆU ĐÃ LỌC DÒNG THỪA & CÓ NÚT THÊM (+) -->
+        <!-- HỆ THỐNG 4 BẢNG DỮ LIỆU ĐÃ LOẠI BỎ HÀNG THỪA -->
         <div class="sheet-tables-container">
           
           <!-- BẢNG 1: DANH MỤC CHI PHÍ -->
@@ -119,10 +120,11 @@
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
-                    <div class="table-header-content">
-                      <span>Danh mục chi phí</span>
-                      <button type="button" class="btn-table-add" onclick="addExpenseRow()" title="Thêm khoản chi mới">
+                    <div class="table-header-flex">
+                      <span class="title">Danh mục chi phí</span>
+                      <button type="button" class="btn-table-add" onclick="addExpenseRow()" title="Thêm khoản mục">
                         <i class="fa-solid fa-plus"></i>
+                        <span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -153,10 +155,11 @@
               <thead>
                 <tr class="header-main-green">
                   <th colspan="2">
-                    <div class="table-header-content">
-                      <span>Danh mục thu nhập</span>
-                      <button type="button" class="btn-table-add" onclick="addIncomeRow()" title="Thêm nguồn thu nhập">
+                    <div class="table-header-flex">
+                      <span class="title">Danh mục thu nhập</span>
+                      <button type="button" class="btn-table-add" onclick="addIncomeRow()" title="Thêm nguồn thu">
                         <i class="fa-solid fa-plus"></i>
+                        <span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -179,10 +182,11 @@
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
-                    <div class="table-header-content">
-                      <span>Kế hoạch phát triển</span>
-                      <button type="button" class="btn-table-add" onclick="addPlanRow()" title="Thêm kế hoạch mới">
+                    <div class="table-header-flex">
+                      <span class="title">Kế hoạch phát triển</span>
+                      <button type="button" class="btn-table-add" onclick="addPlanRow()" title="Thêm kế hoạch">
                         <i class="fa-solid fa-plus"></i>
+                        <span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -208,10 +212,11 @@
               <thead>
                 <tr class="header-main-green">
                   <th colspan="4">
-                    <div class="table-header-content">
-                      <span>Danh mục sản phẩm đầu tư</span>
-                      <button type="button" class="btn-table-add" onclick="addInvestRow()" title="Thêm danh mục đầu tư">
+                    <div class="table-header-flex">
+                      <span class="title">Danh mục sản phẩm đầu tư</span>
+                      <button type="button" class="btn-table-add" onclick="addInvestRow()" title="Thêm sản phẩm">
                         <i class="fa-solid fa-plus"></i>
+                        <span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -219,7 +224,7 @@
                 <tr class="header-sub-green">
                   <th style="width: 36px;">#</th>
                   <th>Khoản mục</th>
-                  <th style="width: 140px;">Mức sinh lời TB 5 năm</th>
+                  <th style="width: 145px;">Mức sinh lời TB 5 năm</th>
                   <th style="width: 65px;">Rủi ro</th>
                 </tr>
               </thead>
@@ -243,7 +248,7 @@
         </div>
       </div>
 
-      <!-- TAB DASHBOARD -->
+      <!-- TAB 2: DASHBOARD TỔNG QUAN -->
       <div id="tab-dashboard" class="tab-pane">
         <div class="stat-cards">
           <div class="stat-card">
@@ -271,7 +276,7 @@
             </div>
           </div>
           <div class="chart-card">
-            <h3>Thu nhập vs Chi tiêu 6 tháng (Triệu đồng)</h3>
+            <h3>Thu nhập vs Chi tiêu 6 tháng (<span class="dynamic-year">2023</span>)</h3>
             <div class="chart-container">
               <canvas id="barChart"></canvas>
             </div>
@@ -279,19 +284,18 @@
         </div>
       </div>
 
-      <!-- TAB PLACEHOLDER KHÁC -->
+      <!-- CÁC TAB KHÁC -->
       <div id="tab-generic" class="tab-pane">
         <div class="empty-state">
           <i class="fa-regular fa-folder-open empty-icon"></i>
           <h2 id="empty-title">Nội dung trang</h2>
-          <p>Mẫu trang tính sẵn sàng để nhập liệu.</p>
+          <p>Mẫu trang tính <span class="dynamic-year">2023</span> sẵn sàng nhập liệu.</p>
         </div>
       </div>
 
     </section>
   </main>
 
-  <!-- Link file JS -->
   <script src="script.js"></script>
 </body>
 </html>
