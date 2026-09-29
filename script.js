@@ -43,17 +43,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ==================== ĐIỀU HƯỚNG TAB TRÊN SIDEBAR ====================
+  // ==================== CHUYỂN ĐỔI TAB SIDEBAR ====================
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const tabId = item.getAttribute('data-tab');
-      activateTab(tabId);
+      if (item.classList.contains('nav-month')) {
+        const monthNum = parseInt(item.getAttribute('data-month'), 10);
+        activateTab('tab-month');
+        switchMonth(monthNum);
+      } else {
+        activateTab(tabId);
+      }
     });
   });
 });
 
-// Hàm kích hoạt chuyển Tab dùng chung
+// Hàm chuyển tab
 function activateTab(tabId) {
   const navItems = document.querySelectorAll('.nav-item');
   const bannerTitle = document.getElementById('current-title');
@@ -64,58 +70,88 @@ function activateTab(tabId) {
     targetItem.classList.add('active');
   }
 
-  // Cập nhật tiêu đề dải màu cam
-  if (tabId === 'tab-muctieu-bt') {
-    bannerTitle.textContent = 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN';
-  } else if (targetItem) {
-    const text = targetItem.querySelector('span').innerText.replace(/\n/g, ' ');
-    bannerTitle.textContent = text.toUpperCase();
-  }
+  // Tiêu đề dải cam theo từng trang của case study
+  const titlesMap = {
+    'tab-tukhoa': 'TỪ KHÓA',
+    'tab-dashboard': 'THEO DÕI TÀI CHÍNH CÁ NHÂN',
+    'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
+    'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
+    'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
+    'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
+    'tab-month': 'THEO DÕI THU - CHI CHI TIẾT',
+    'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN'
+  };
 
-  // Ẩn tất cả các tab
+  bannerTitle.textContent = titlesMap[tabId] || 'TÀI CHÍNH CÁ NHÂN';
+
+  // Chuyển pane hiển thị
   document.querySelectorAll('.tab-pane').forEach(pane => {
     pane.classList.remove('active');
   });
 
-  // Hiện tab mục tiêu
   const activePane = document.getElementById(tabId);
   if (activePane) {
     activePane.classList.add('active');
     if (tabId === 'tab-dashboard') {
       initCharts();
     }
-  } else {
-    // Nếu là tab phụ chưa làm giao diện riêng
-    const genericPane = document.getElementById('tab-generic');
-    const emptyTitle = document.getElementById('empty-title');
-    if (genericPane) {
-      genericPane.classList.add('active');
-      if (emptyTitle && targetItem) {
-        emptyTitle.textContent = targetItem.querySelector('span').innerText;
-      }
-    }
   }
 }
 
-// NÚT "Link khảo sát": Tự động kích hoạt chuyển sang tab Bảng khảo sát
+// Chuyển tab sang Bảng khảo sát
 function goToSurveyTab() {
   activateTab('tab-khaosat');
 }
 
-// Nút lưu khảo sát và quay về Mục tiêu bản thân
+// Lưu khảo sát và quay về Mục tiêu bản thân
 function saveSurveyAndBack() {
   activateTab('tab-muctieu-bt');
 }
 
-// ==================== THÊM DÒNG CHO CÁC BẢNG DANH MỤC ====================
+// ==================== DỮ LIỆU 12 THÁNG (T1 -> T12) ====================
+const monthData = {
+  1: { thu: 24.0, chi: 17.5, tk: 6.5 },
+  2: { thu: 28.5, chi: 19.0, tk: 9.5 },
+  3: { thu: 25.0, chi: 16.5, tk: 8.5 },
+  4: { thu: 30.0, chi: 21.0, tk: 9.0 },
+  5: { thu: 26.5, chi: 18.0, tk: 8.5 },
+  6: { thu: 27.0, chi: 17.0, tk: 10.0 },
+  7: { thu: 26.0, chi: 18.5, tk: 7.5 },
+  8: { thu: 28.0, chi: 19.5, tk: 8.5 },
+  9: { thu: 27.5, chi: 18.0, tk: 9.5 },
+  10: { thu: 29.0, chi: 20.0, tk: 9.0 },
+  11: { thu: 28.5, chi: 19.25, tk: 9.25 },
+  12: { thu: 29.4, chi: 19.5, tk: 9.9 }
+};
+
+function switchMonth(m) {
+  document.querySelectorAll('.btn-m').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx + 1 === m);
+  });
+
+  const data = monthData[m] || { thu: 25.0, chi: 18.0, tk: 7.0 };
+  document.getElementById('m-name-thu').textContent = `Tháng ${m}`;
+  document.getElementById('m-name-chi').textContent = `Tháng ${m}`;
+  document.getElementById('m-name-tk').textContent = `Tháng ${m}`;
+
+  document.getElementById('m-val-thu').textContent = `${data.thu.toFixed(2)} tr`;
+  document.getElementById('m-val-chi').textContent = `${data.chi.toFixed(2)} tr`;
+  document.getElementById('m-val-tk').textContent = `${data.tk.toFixed(2)} tr`;
+
+  // Highlight menu bên trái
+  const leftItem = document.querySelector(`.nav-month[data-month="${m}"]`);
+  if (leftItem) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    leftItem.classList.add('active');
+  }
+}
+
+// ==================== THÊM HÀNG CHO BẢNG ====================
 function addExpenseRow() {
   const tbody = document.querySelector('#table-expenses tbody');
   const rowCount = tbody.rows.length + 1;
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${rowCount}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
+  tr.innerHTML = `<td>${rowCount}</td><td class="cell-blue" contenteditable="true"></td>`;
   tbody.appendChild(tr);
   focusCell(tr.cells[1]);
 }
@@ -124,10 +160,7 @@ function addIncomeRow() {
   const tbody = document.querySelector('#table-income tbody');
   const rowCount = tbody.rows.length + 1;
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${rowCount}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
+  tr.innerHTML = `<td>${rowCount}</td><td class="cell-blue" contenteditable="true"></td>`;
   tbody.appendChild(tr);
   focusCell(tr.cells[1]);
 }
@@ -136,10 +169,7 @@ function addPlanRow() {
   const tbody = document.querySelector('#table-learning tbody');
   const rowCount = tbody.rows.length + 1;
   const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>${rowCount}</td>
-    <td class="cell-blue" contenteditable="true"></td>
-  `;
+  tr.innerHTML = `<td>${rowCount}</td><td class="cell-blue" contenteditable="true"></td>`;
   tbody.appendChild(tr);
   focusCell(tr.cells[1]);
 }
@@ -180,18 +210,16 @@ function initCharts() {
     pieChartInstance = new Chart(ctxPie, {
       type: 'doughnut',
       data: {
-        labels: ['Chi tiêu thiết yếu', 'Học tập & PTTN', 'Tích lũy & Đầu tư', 'Giải trí'],
+        labels: ['Mua thực phẩm (60 tr)', 'Đi ăn ở ngoài (24 tr)', 'Phát triển bản thân (18 tr)', 'Tiền điện nước xe (24 tr)', 'Chi trả nợ (78 tr)', 'Khác (19.75 tr)'],
         datasets: [{
-          data: [45, 15, 30, 10],
-          backgroundColor: ['#f87171', '#60a5fa', '#34d399', '#fbbf24']
+          data: [60, 24, 18, 24, 78, 19.75],
+          backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#eab308']
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom' }
-        }
+        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
@@ -201,16 +229,16 @@ function initCharts() {
     barChartInstance = new Chart(ctxBar, {
       type: 'bar',
       data: {
-        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
         datasets: [
           {
             label: 'Thu nhập',
-            data: [38, 42, 39, 45, 43, 45],
+            data: [24.0, 28.5, 25.0, 30.0, 26.5, 27.0, 26.0, 28.0, 27.5, 29.0, 28.5, 29.4],
             backgroundColor: '#10b981'
           },
           {
             label: 'Chi tiêu',
-            data: [20, 22, 19, 24, 21, 21.4],
+            data: [17.5, 19.0, 16.5, 21.0, 18.0, 17.0, 18.5, 19.5, 18.0, 20.0, 19.25, 19.5],
             backgroundColor: '#ef4444'
           }
         ]
@@ -218,12 +246,8 @@ function initCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true }
-        },
-        plugins: {
-          legend: { position: 'bottom' }
-        }
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
