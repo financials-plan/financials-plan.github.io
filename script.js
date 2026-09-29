@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Khi người dùng nhập/sửa ô Năm bắt đầu theo dõi
+  // Khi nhập/sửa ô Năm bắt đầu theo dõi
   inputYearEl.addEventListener('input', () => {
     const rawVal = inputYearEl.innerText.trim();
     const parsedYear = parseInt(rawVal, 10);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Khi người dùng trực tiếp sửa ô Tuổi
+  // Khi trực tiếp sửa ô Tuổi
   inputAgeEl.addEventListener('input', () => {
     const rawVal = inputAgeEl.innerText.trim();
     const parsedAge = parseInt(rawVal, 10);
@@ -135,7 +135,7 @@ function addInvestRow() {
   focusCell(tr.cells[1]);
 }
 
-// Tự động focus con trỏ vào ô để gõ nội dung ngay sau khi thêm dòng
+// Tự động focus con trỏ vào ô để nhập ngay
 function focusCell(cell) {
   cell.focus();
   const range = document.createRange();
