@@ -145,7 +145,7 @@ for (let m = 2; m <= 12; m++) {
   }
 }
 
-// ==================== CÁC HÀM ĐIỀU HƯỚNG TOÀN CỤC (GLOBAL FUNCTIONS) ====================
+// ==================== CÁC HÀM ĐIỀU HƯỚNG TOÀN CỤC ====================
 window.switchTab = function(tabId) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   const btn = document.getElementById(`btn-${tabId}`);
