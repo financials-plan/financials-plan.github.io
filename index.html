@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bảng Quản Lý Tài Chính</title>
-  <!-- Google Fonts & Font Awesome Icons -->
+  <!-- Google Fonts & Font Awesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Chart.js CDN -->
+  <!-- Chart.js CDN (cho tab Dashboard) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- CSS -->
+  <!-- Link file CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
 
     <nav class="nav-menu">
       <button class="nav-item active" data-tab="tab-tukhoa">
-        <span>Từ khoá</span>
+        <span>Từ khóa</span>
       </button>
       <button class="nav-item" data-tab="tab-dashboard">
         <i class="fa-solid fa-chart-pie"></i>
@@ -37,14 +37,14 @@
       <button class="nav-item" data-tab="tab-muctieu-tc">
         <span>Mục tiêu tài chính</span>
       </button>
-      <button class="nav-item" data-tab="tab-candoi">
-        <span>Cân đối lộ trình nghề nghiệp</span>
+      <button class="nav-item two-lines" data-tab="tab-candoi">
+        <span>Cân đối<br>lộ trình nghề nghiệp</span>
       </button>
-      <button class="nav-item" data-tab="tab-kehoach">
-        <span>Kế hoạch thu nhập & chi tiêu</span>
+      <button class="nav-item two-lines" data-tab="tab-kehoach">
+        <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- Danh sách tháng 1 -> 12 -->
+      <!-- Danh sách theo dõi tháng 1 -> 12 -->
       <button class="nav-item" data-tab="tab-thang1"><span>Theo dõi tháng 1</span></button>
       <button class="nav-item" data-tab="tab-thang2"><span>Theo dõi tháng 2</span></button>
       <button class="nav-item" data-tab="tab-thang3"><span>Theo dõi tháng 3</span></button>
@@ -57,168 +57,191 @@
       <button class="nav-item" data-tab="tab-thang10"><span>Theo dõi tháng 10</span></button>
       <button class="nav-item" data-tab="tab-thang11"><span>Theo dõi tháng 11</span></button>
       <button class="nav-item" data-tab="tab-thang12"><span>Theo dõi tháng 12</span></button>
-
-      <button class="nav-item" data-tab="tab-khaosat">
-        <span>Bảng khảo sát</span>
-      </button>
+      <button class="nav-item" data-tab="tab-khaosat"><span>Bảng khảo sát</span></button>
     </nav>
   </aside>
 
   <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải màu cam chạy ngang -->
+    <!-- DẢI MÀU CAM CHẠY NGANG CẢ TEMPLATE -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
-      <span class="unit-text">Đơn vị: triệu đồng</span>
+      <span class="unit-text">đơn vị: triệu đồng</span>
     </header>
 
-    <!-- NỘI DUNG TỪNG TAB -->
+    <!-- NỘI DUNG SHEET -->
     <section class="content-body">
       
-      <!-- TAB 1: TỪ KHÓA -->
+      <!-- TAB TỪ KHÓA -->
       <div id="tab-tukhoa" class="tab-pane active">
         
-        <!-- KHU VỰC TOP INFO: TUỔI & QUY ƯỚC MÀU CHỮ -->
-        <div class="top-info-section">
-          <!-- Khối tuổi của bạn -->
-          <div class="age-card">
-            <div class="age-header">Tuổi của bạn năm 2023</div>
-            <div class="age-value" contenteditable="true" title="Bấm để chỉnh sửa">21</div>
+        <!-- KHU VỰC THÔNG TIN TRÊN: NĂM, TUỔI & QUY ƯỚC MÀU CHỮ -->
+        <div class="top-info-row">
+          
+          <!-- 1. Năm bắt đầu theo dõi -->
+          <div class="info-block block-orange">
+            <div class="info-header">Năm bắt đầu theo dõi</div>
+            <div class="info-body num-blue" contenteditable="true">2023</div>
           </div>
 
-          <!-- Khối quy ước màu chữ -->
-          <div class="color-rules-card">
-            <div class="rules-title">Quy ước màu chữ:</div>
-            <div class="rule-item">
-              <span class="color-box color-blue"></span>
-              <span class="rule-text text-input-blue">Màu xanh dương: Nhập dữ liệu</span>
+          <!-- 2. Tuổi của bạn năm 2023 -->
+          <div class="info-block block-green">
+            <div class="info-header">Tuổi của bạn năm 2023</div>
+            <div class="info-body num-blue" contenteditable="true">21</div>
+          </div>
+
+          <!-- 3. Quy ước màu chữ -->
+          <div class="color-convention-block">
+            <div class="convention-title">Quy ước màu chữ:</div>
+            <div class="convention-item">
+              <span class="color-rect bg-blue"></span>
+              <span class="convention-desc text-blue-rule">Màu xanh dương: Nhập dữ liệu</span>
             </div>
-            <div class="rule-item">
-              <span class="color-box color-black"></span>
-              <span class="rule-text text-calc-black">Màu đen: Kết quả trung gian</span>
+            <div class="convention-item">
+              <span class="color-rect bg-black"></span>
+              <span class="convention-desc text-black-rule">Màu đen: Kết quả trung gian</span>
             </div>
-            <div class="rule-item">
-              <span class="color-box color-red"></span>
-              <span class="rule-text text-imp-red">Màu đỏ: Dữ liệu quan trọng</span>
+            <div class="convention-item">
+              <span class="color-rect bg-red"></span>
+              <span class="convention-desc text-red-rule">Màu đỏ: Dữ liệu quan trọng</span>
             </div>
           </div>
+
         </div>
 
-        <!-- HỆ THỐNG 4 BẢNG DỮ LIỆU -->
-        <div class="tables-grid">
+        <!-- KHU VỰC 4 BẢNG DỮ LIỆU CHUẨN MẪU -->
+        <div class="sheet-tables-container">
           
-          <!-- BẢNG 1: CHI TIÊU / KHOẢN MỤC -->
-          <div class="sheet-card">
-            <table class="excel-table" id="table-expenses">
+          <!-- BẢNG 1: DANH MỤC CHI PHÍ (15 dòng) -->
+          <div class="sheet-table-wrap">
+            <table class="excel-table">
               <thead>
-                <tr class="thead-group-orange">
-                  <th colspan="2">Khoản mục chi tiêu</th>
+                <tr class="header-main-orange">
+                  <th colspan="2">Danh mục chi phí</th>
                 </tr>
-                <tr class="thead-cols">
-                  <th style="width: 45px;">#</th>
+                <tr class="header-sub-orange">
+                  <th style="width: 40px;">#</th>
                   <th>Khoản mục</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td class="text-input-blue" contenteditable="true">Mua sắm trang phục</td></tr>
-                <tr><td>2</td><td class="text-input-blue" contenteditable="true">Mỹ phẩm, đồ trang điểm</td></tr>
-                <tr><td>3</td><td class="text-input-blue" contenteditable="true">Gặp gỡ bạn bè, đối tác</td></tr>
-                <tr><td>4</td><td class="text-input-blue" contenteditable="true">Chi phí bảo hiểm sức khỏe</td></tr>
-                <tr><td>5</td><td class="text-input-blue" contenteditable="true">Chi tiêu ăn uống hằng ngày</td></tr>
-                <tr><td>6</td><td class="text-input-blue" contenteditable="true">Chi phí điện, nước, internet, gửi xe</td></tr>
-                <tr><td>7</td><td class="text-input-blue" contenteditable="true">Chi tiêu giải trí, xem phim</td></tr>
-                <tr><td>8</td><td class="text-input-blue" contenteditable="true">Chi phí xăng xe, di chuyển</td></tr>
-                <tr><td>9</td><td class="text-input-blue" contenteditable="true">Chi tiêu quà biếu, đám tiệc</td></tr>
-                <tr><td>10</td><td class="text-input-blue" contenteditable="true">Chi tiêu gia đình</td></tr>
+                <tr><td>1</td><td class="cell-blue" contenteditable="true">Mua thực phẩm</td></tr>
+                <tr><td>2</td><td class="cell-blue" contenteditable="true">Mua đồ dùng trong nhà</td></tr>
+                <tr><td>3</td><td class="cell-blue" contenteditable="true">Đi ăn ở ngoài</td></tr>
+                <tr><td>4</td><td class="cell-blue" contenteditable="true">Chi tiền phát triển bản thân</td></tr>
+                <tr><td>5</td><td class="cell-blue" contenteditable="true">Chi tiền bảo hiểm</td></tr>
+                <tr><td>6</td><td class="cell-blue" contenteditable="true">Chi tiền điện, nước, internet, điện thoại, xăng xe</td></tr>
+                <tr><td>7</td><td class="cell-blue" contenteditable="true">Chi tiền giải trí, quà tặng</td></tr>
+                <tr><td>8</td><td class="cell-blue" contenteditable="true">Chi tiền cho con</td></tr>
+                <tr><td>9</td><td class="cell-blue" contenteditable="true">Chi tiền trả nợ</td></tr>
+                <tr><td>10</td><td class="cell-blue" contenteditable="true">Chi tiền cho tặng gia đình</td></tr>
+                <tr><td>11</td><td class="cell-blue" contenteditable="true">Chi tiêu 1</td></tr>
+                <tr><td>12</td><td class="cell-blue" contenteditable="true">Chi tiêu 2</td></tr>
+                <tr><td>13</td><td class="cell-blue" contenteditable="true">Chi tiêu 3</td></tr>
+                <tr><td>14</td><td class="cell-blue" contenteditable="true">Chi tiêu 4</td></tr>
+                <tr><td>15</td><td class="cell-blue" contenteditable="true">Chi tiêu 5</td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG 2: DANH MỤC THU NHẬP -->
-          <div class="sheet-card">
-            <table class="excel-table" id="table-income">
+          <!-- BẢNG 2: DANH MỤC THU NHẬP (8 dòng + Ô Legend) -->
+          <div class="sheet-table-wrap">
+            <table class="excel-table">
               <thead>
-                <tr class="thead-group-green">
+                <tr class="header-main-green">
                   <th colspan="2">Danh mục thu nhập</th>
                 </tr>
-                <tr class="thead-cols">
-                  <th style="width: 45px;">#</th>
+                <tr class="header-sub-green">
+                  <th style="width: 40px;">#</th>
                   <th>Khoản mục</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td class="text-input-blue" contenteditable="true">Lương từ công ty</td></tr>
-                <tr><td>2</td><td class="text-input-blue" contenteditable="true">Thu nhập khác</td></tr>
-                <tr><td>3</td><td class="text-input-blue" contenteditable="true"></td></tr>
-                <tr><td>4</td><td class="text-input-blue" contenteditable="true"></td></tr>
-                <tr><td>5</td><td class="text-input-blue" contenteditable="true"></td></tr>
-                <tr><td>6</td><td class="text-input-blue" contenteditable="true"></td></tr>
-                <tr><td>7</td><td class="text-input-blue" contenteditable="true"></td></tr>
+                <tr><td>1</td><td class="cell-blue" contenteditable="true">Lương từ công ty</td></tr>
+                <tr><td>2</td><td class="cell-blue" contenteditable="true">Thu nhập khác</td></tr>
+                <tr><td>3</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>4</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>5</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>6</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr>
+                  <td>7</td>
+                  <td class="cell-blue relative-cell" contenteditable="true">
+                    <!-- Nút Legend đặt vị trí cạnh ô 7 - 8 -->
+                    <div class="legend-badge">Legend</div>
+                  </td>
+                </tr>
+                <tr><td>8</td><td class="cell-blue" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG 3: KẾ HOẠCH PHÁT TRIỂN -->
-          <div class="sheet-card">
-            <table class="excel-table" id="table-learning">
+          <!-- BẢNG 3: KẾ HOẠCH PHÁT TRIỂN (10 dòng) -->
+          <div class="sheet-table-wrap">
+            <table class="excel-table">
               <thead>
-                <tr class="thead-group-orange">
+                <tr class="header-main-orange">
                   <th colspan="2">Kế hoạch phát triển</th>
                 </tr>
-                <tr class="thead-cols">
-                  <th style="width: 45px;">#</th>
+                <tr class="header-sub-orange">
+                  <th style="width: 40px;">#</th>
                   <th>Khoản mục</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td class="text-input-blue" contenteditable="true">Mua sách</td></tr>
-                <tr><td>2</td><td class="text-input-blue" contenteditable="true">Khóa học ngắn hạn</td></tr>
-                <tr><td>3</td><td class="text-input-blue" contenteditable="true">Khóa học dài hạn</td></tr>
-                <tr><td>4</td><td class="text-input-blue" contenteditable="true">Tham gia các buổi diễn thuyết</td></tr>
-                <tr><td>5</td><td class="text-input-blue" contenteditable="true">Chi phí thi lấy chứng chỉ</td></tr>
-                <tr><td>6</td><td class="text-input-blue" contenteditable="true"></td></tr>
-                <tr><td>7</td><td class="text-input-blue" contenteditable="true"></td></tr>
+                <tr><td>1</td><td class="cell-blue" contenteditable="true">Mua sách</td></tr>
+                <tr><td>2</td><td class="cell-blue" contenteditable="true">Khóa học ngắn hạn</td></tr>
+                <tr><td>3</td><td class="cell-blue" contenteditable="true">Khóa học dài hạn</td></tr>
+                <tr><td>4</td><td class="cell-blue" contenteditable="true">Tham gia các buổi diễn thuyết</td></tr>
+                <tr><td>5</td><td class="cell-blue" contenteditable="true">Chi phát triển bản thân khác</td></tr>
+                <tr><td>6</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>7</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>8</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>9</td><td class="cell-blue" contenteditable="true"></td></tr>
+                <tr><td>10</td><td class="cell-blue" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG 4: DANH MỤC ĐẦU TƯ -->
-          <div class="sheet-card">
-            <table class="excel-table" id="table-invest">
+          <!-- BẢNG 4: DANH MỤC SẢN PHẨM ĐẦU TƯ (4 cột, 15 dòng) -->
+          <div class="sheet-table-wrap">
+            <table class="excel-table">
               <thead>
-                <tr class="thead-group-green">
-                  <th colspan="4">Danh mục đầu tư</th>
+                <tr class="header-main-green">
+                  <th colspan="4">Danh mục sản phẩm đầu tư</th>
                 </tr>
-                <tr class="thead-cols">
-                  <th style="width: 38px;">#</th>
+                <tr class="header-sub-green">
+                  <th style="width: 36px;">#</th>
                   <th>Khoản mục</th>
-                  <th style="width: 75px;">Hiệu suất</th>
-                  <th style="width: 75px;">Kỳ vọng</th>
+                  <th style="width: 140px;">Mức sinh lời TB 5 năm</th>
+                  <th style="width: 65px;">Rủi ro</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td class="text-input-blue" contenteditable="true">ETF - E1VFVN30</td><td class="text-right text-calc-black">15%</td><td class="text-right text-imp-red">18%</td></tr>
-                <tr><td>2</td><td class="text-input-blue" contenteditable="true">ETF - ETFFINLEAD</td><td class="text-right text-calc-black">17%</td><td class="text-right text-imp-red">20%</td></tr>
-                <tr><td>3</td><td class="text-input-blue" contenteditable="true">DCBC</td><td class="text-right text-calc-black">16%</td><td class="text-right text-imp-red">20%</td></tr>
-                <tr><td>4</td><td class="text-input-blue" contenteditable="true">DCDS</td><td class="text-right text-calc-black">14%</td><td class="text-right text-imp-red">18%</td></tr>
-                <tr><td>5</td><td class="text-input-blue" contenteditable="true">DCDF</td><td class="text-right text-calc-black">9.5%</td><td class="text-right text-imp-red">10%</td></tr>
-                <tr><td>6</td><td class="text-input-blue" contenteditable="true">Trái phiếu Techcombank</td><td class="text-right text-calc-black">10%</td><td class="text-right text-imp-red">11%</td></tr>
-                <tr><td>7</td><td class="text-input-blue" contenteditable="true">Trái phiếu FE Credit</td><td class="text-right text-calc-black">10%</td><td class="text-right text-imp-red">10%</td></tr>
+                <tr><td>1</td><td class="cell-blue" contenteditable="true">ETF - ETFVFM</td><td class="text-right cell-blue" contenteditable="true">13%</td><td class="text-right cell-blue" contenteditable="true">18%</td></tr>
+                <tr><td>2</td><td class="cell-blue" contenteditable="true">ETF - ETFFINLEAD</td><td class="text-right cell-blue" contenteditable="true">15%</td><td class="text-right cell-blue" contenteditable="true">20%</td></tr>
+                <tr><td>3</td><td class="cell-blue" contenteditable="true">DCBC</td><td class="text-right cell-blue" contenteditable="true">16%</td><td class="text-right cell-blue" contenteditable="true">20%</td></tr>
+                <!-- Ô chọn DCDS viền xanh chuẩn giao diện Excel -->
+                <tr><td>4</td><td class="cell-blue excel-active-cell" contenteditable="true">DCDS</td><td class="text-right cell-blue" contenteditable="true">11%</td><td class="text-right cell-blue" contenteditable="true">10%</td></tr>
+                <tr><td>5</td><td class="cell-blue" contenteditable="true">DCBF</td><td class="text-right cell-blue" contenteditable="true">9%</td><td class="text-right cell-blue" contenteditable="true">8%</td></tr>
+                <tr><td>6</td><td class="cell-blue" contenteditable="true">Trái phiếu Techcombank</td><td class="text-right cell-blue" contenteditable="true">11%</td><td class="text-right cell-blue" contenteditable="true">6%</td></tr>
+                <tr><td>7</td><td class="cell-blue" contenteditable="true">Trái phiếu FE Credit</td><td class="text-right cell-blue" contenteditable="true">10%</td><td class="text-right cell-blue" contenteditable="true">8%</td></tr>
+                <tr><td>8</td><td class="cell-blue" contenteditable="true">Finhay</td><td class="text-right cell-blue" contenteditable="true">6%</td><td class="text-right cell-blue" contenteditable="true">7%</td></tr>
+                <tr><td>9</td><td class="cell-blue" contenteditable="true">Bảo hiểm thuần túy</td><td class="text-right cell-blue" contenteditable="true">4%</td><td class="text-right cell-blue" contenteditable="true">5%</td></tr>
+                <tr><td>10</td><td class="cell-blue" contenteditable="true">BH liên kết đầu tư</td><td class="text-right cell-blue" contenteditable="true">12%</td><td class="text-right cell-blue" contenteditable="true">5%</td></tr>
+                <tr><td>11</td><td class="cell-blue" contenteditable="true">Tiền gửi ngân hàng</td><td class="text-right cell-blue" contenteditable="true">5%</td><td class="text-right cell-blue" contenteditable="true">2%</td></tr>
+                <tr><td>12</td><td class="cell-blue" contenteditable="true">Cổ phiếu riêng lẻ</td><td class="text-right cell-blue" contenteditable="true">12%</td><td class="text-right cell-blue" contenteditable="true">6%</td></tr>
+                <tr><td>13</td><td class="cell-blue" contenteditable="true">Sản phẩm 1</td><td class="text-right cell-blue" contenteditable="true">0%</td><td class="text-right cell-blue" contenteditable="true">0%</td></tr>
+                <tr><td>14</td><td class="cell-blue" contenteditable="true">Sản phẩm 2</td><td class="text-right cell-blue" contenteditable="true">0%</td><td class="text-right cell-blue" contenteditable="true">0%</td></tr>
+                <tr><td>15</td><td class="cell-blue" contenteditable="true">Sản phẩm 3</td><td class="text-right cell-blue" contenteditable="true">0%</td><td class="text-right cell-blue" contenteditable="true">0%</td></tr>
               </tbody>
             </table>
           </div>
 
         </div>
-
-        <!-- HỘP CHÚ THÍCH LEGEND DƯỚI BẢNG -->
-        <div class="legend-box-container">
-          <div class="legend-box">Legend</div>
-        </div>
-
       </div>
 
-      <!-- TAB 2: DASHBOARD -->
+      <!-- TAB DASHBOARD -->
       <div id="tab-dashboard" class="tab-pane">
         <div class="stat-cards">
           <div class="stat-card">
@@ -240,13 +263,13 @@
 
         <div class="charts-wrapper">
           <div class="chart-card">
-            <h3>Cơ cấu chi tiêu & Phân bổ ngân sách</h3>
+            <h3>Cơ cấu phân bổ ngân sách</h3>
             <div class="chart-container">
               <canvas id="pieChart"></canvas>
             </div>
           </div>
           <div class="chart-card">
-            <h3>Thu nhập vs Chi tiêu 6 tháng gần nhất (Triệu đồng)</h3>
+            <h3>Thu nhập vs Chi tiêu 6 tháng (Triệu đồng)</h3>
             <div class="chart-container">
               <canvas id="barChart"></canvas>
             </div>
@@ -254,19 +277,19 @@
         </div>
       </div>
 
-      <!-- TAB PLACEHOLDER CHO CÁC MỤC KHÁC -->
+      <!-- TAB KHÁC -->
       <div id="tab-generic" class="tab-pane">
         <div class="empty-state">
           <i class="fa-regular fa-folder-open empty-icon"></i>
           <h2 id="empty-title">Nội dung trang</h2>
-          <p>Mẫu trang tính đã sẵn sàng kết nối dữ liệu chi tiết cho mục này.</p>
+          <p>Mẫu trang tính sẵn sàng để nhập liệu.</p>
         </div>
       </div>
 
     </section>
   </main>
 
-  <!-- JS -->
+  <!-- Link file JS -->
   <script src="script.js"></script>
 </body>
 </html>
