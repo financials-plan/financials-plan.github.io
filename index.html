@@ -12,12 +12,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Link file CSS độc lập -->
+  <!-- CSS -->
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM (DÙNG ONCLICK TRỰC TIẾP CHẮC CHẮN ĂN 100%) -->
+  <!-- SIDEBAR DỌC XANH LÁ ĐẬM -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="diamond-icon">💎</span>
@@ -44,7 +44,7 @@
         <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- 12 NÚT THÁNG RIÊNG BIỆT -->
+      <!-- 12 NÚT THÁNG RIÊNG BIỆT T1 -> T12 -->
       <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Theo dõi tháng 1</span></button>
       <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Theo dõi tháng 2</span></button>
       <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Theo dõi tháng 3</span></button>
@@ -64,16 +64,16 @@
     </nav>
   </aside>
 
-  <!-- VÙNG NỘI DUNG CHÍNH -->
+  <!-- NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải banner cam -->
+    <!-- Dải banner màu cam -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">Đơn vị: triệu đồng</span>
     </header>
 
-    <!-- NỘI DUNG SHEET -->
+    <!-- KHU VỰC CÁC TAB -->
     <section class="content-body">
       
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
@@ -111,7 +111,7 @@
         <div class="sheet-tables-container">
           <!-- BẢNG 1: CHI PHÍ -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-expenses">
+            <table class="excel-table">
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
@@ -134,7 +134,7 @@
 
           <!-- BẢNG 2: THU NHẬP -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-income">
+            <table class="excel-table">
               <thead>
                 <tr class="header-main-green">
                   <th colspan="2">
@@ -157,7 +157,7 @@
 
           <!-- BẢNG 3: KẾ HOẠCH PHÁT TRIỂN -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-learning">
+            <table class="excel-table">
               <thead>
                 <tr class="header-main-orange">
                   <th colspan="2">
@@ -180,7 +180,7 @@
 
           <!-- BẢNG 4: DANH MỤC ĐẦU TƯ -->
           <div class="sheet-table-wrap">
-            <table class="excel-table" id="table-invest">
+            <table class="excel-table">
               <thead>
                 <tr class="header-main-green">
                   <th colspan="4">
@@ -205,8 +205,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 2: DASHBOARD (CÓ 4 BẢNG MA TRẬN 12 THÁNG) ==================== -->
+      <!-- ==================== TAB 2: DASHBOARD (NGUYÊN BẢN THEO ẢNH BẢNG TÍNH) ==================== -->
       <div id="tab-dashboard" class="tab-pane">
+        
+        <!-- HÀNG THẺ CHỈ SỐ KPI CHÍNH -->
         <div class="stat-cards">
           <div class="stat-card">
             <div class="stat-label">Tổng tiết kiệm cần đạt</div>
@@ -216,7 +218,7 @@
           <div class="stat-card">
             <div class="stat-label">Mức sinh lời trung bình ước tính</div>
             <div class="stat-value text-green" id="dash-expected-return">9.97%/năm</div>
-            <div class="stat-sub">Theo danh mục sản phẩm đầu tư</div>
+            <div class="stat-sub">Bình quân danh mục đầu tư</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Tổng thu nhập năm <span class="dynamic-year">2023</span></div>
@@ -235,6 +237,7 @@
           </div>
         </div>
 
+        <!-- BIỂU ĐỒ TRỰC QUAN -->
         <div class="charts-wrapper mb-4">
           <div class="chart-card">
             <h3>Cơ cấu chi tiêu thực tế năm <span class="dynamic-year">2023</span></h3>
@@ -246,14 +249,15 @@
           </div>
         </div>
 
-        <!-- 4 BẢNG MA TRẬN 12 THÁNG -->
+        <!-- 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN THEO ẢNH BẠN GỬI -->
         <div class="dashboard-matrix-container">
-          <div class="sheet-title-banner mt-3">THU NHẬP THEO TỪNG THÁNG TRONG NĂM</div>
+          
+          <!-- BẢNG 1: THU NHẬP 12 THÁNG -->
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-income">
               <thead>
                 <tr class="header-main-green">
-                  <th style="min-width: 180px;">Thu nhập</th>
+                  <th style="min-width: 220px; text-align: left;">Thu nhập</th>
                   <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
                   <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
                   <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
@@ -275,12 +279,12 @@
             </table>
           </div>
 
-          <div class="sheet-title-banner mt-4">CHI TIÊU THEO TỪNG THÁNG TRONG NĂM</div>
-          <div class="table-scroll-x">
+          <!-- BẢNG 2: CHI TIÊU 12 THÁNG -->
+          <div class="table-scroll-x mt-3">
             <table class="excel-matrix-table" id="table-db-expense">
               <thead>
                 <tr class="header-main-orange">
-                  <th style="min-width: 180px;">Chi tiêu</th>
+                  <th style="min-width: 220px; text-align: left;">Chi tiêu</th>
                   <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
                   <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
                   <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
@@ -316,40 +320,37 @@
             </table>
           </div>
 
-          <!-- BĂNG ĐỎ TIẾT KIỆM -->
-          <div class="mt-4">
-            <div class="table-scroll-x">
-              <table class="excel-matrix-table">
-                <thead>
-                  <tr class="header-main-red">
-                    <th style="min-width: 180px;">Tiết kiệm</th>
-                    <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
-                    <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
-                    <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
-                    <th style="min-width: 90px;">Tổng</th>
-                    <th style="min-width: 90px;">Xu hướng</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr class="savings-highlight-row">
-                    <td class="font-bold">Giá trị</td>
-                    <td>6.50</td><td>10.30</td><td>4.45</td><td>6.65</td><td>16.20</td><td>12.55</td>
-                    <td>10.75</td><td>2.45</td><td>9.55</td><td>10.05</td><td>6.25</td><td>9.95</td>
-                    <td class="font-bold text-blue">105.65</td>
-                    <td id="sparkline-savings"></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- BẢNG 3: BĂNG ĐỎ TIẾT KIỆM NGUYÊN BẢN THEO ẢNH -->
+          <div class="table-scroll-x mt-3">
+            <table class="excel-matrix-table">
+              <thead>
+                <tr class="header-main-red">
+                  <th style="min-width: 220px; text-align: left;">Tiết kiệm</th>
+                  <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
+                  <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
+                  <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
+                  <th style="min-width: 90px;">Tổng</th>
+                  <th style="min-width: 90px;">Xu hướng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="savings-highlight-row">
+                  <td class="font-bold">Giá trị</td>
+                  <td>6.50</td><td>10.30</td><td>4.45</td><td>6.65</td><td>16.20</td><td>12.55</td>
+                  <td>10.75</td><td>2.45</td><td>9.55</td><td>10.05</td><td>6.25</td><td>9.95</td>
+                  <td class="font-bold text-blue">105.65</td>
+                  <td id="sparkline-savings"></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- PHÁT TRIỂN BẢN THÂN 12 THÁNG -->
-          <div class="sheet-title-banner mt-4">CHI PHÍ PHÁT TRIỂN BẢN THÂN QUA 12 THÁNG</div>
-          <div class="table-scroll-x">
+          <!-- BẢNG 4: CHI PHÍ PHÁT TRIỂN BẢN THÂN QUA 12 THÁNG -->
+          <div class="table-scroll-x mt-3">
             <table class="excel-matrix-table" id="table-db-learning">
               <thead>
                 <tr class="header-sub-orange">
-                  <th style="min-width: 180px;">Chi phí phát triển bản thân</th>
+                  <th style="min-width: 220px; text-align: left;">Chi phí phát triển bản thân</th>
                   <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
                   <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
                   <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
@@ -369,6 +370,7 @@
               </tfoot>
             </table>
           </div>
+
         </div>
       </div>
 
@@ -393,7 +395,7 @@
           </div>
 
           <div class="target-section">
-            <table class="target-table" id="table-debt-target">
+            <table class="target-table">
               <thead>
                 <tr>
                   <th style="width: 140px;" class="italic-head">
@@ -412,7 +414,7 @@
           </div>
 
           <div class="target-section">
-            <table class="target-table" id="table-invest-target">
+            <table class="target-table">
               <thead>
                 <tr>
                   <th style="width: 140px;" class="italic-head">
@@ -723,7 +725,7 @@
     </section>
   </main>
 
-  <!-- Link file JS độc lập -->
+  <!-- JS -->
   <script src="./script.js"></script>
 </body>
 </html>
