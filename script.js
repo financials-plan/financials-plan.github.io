@@ -1,4 +1,4 @@
-// Khởi tạo các biểu đồ Chart.js khi mở Dashboard
+// Khởi tạo các biểu đồ Chart.js khi người dùng bấm vào tab Dashboard
 let pieChartInstance = null;
 let barChartInstance = null;
 
@@ -59,7 +59,7 @@ function initCharts() {
   }
 }
 
-// Xử lý chuyển đổi Tab khi click menu bên trái
+// Xử lý chuyển tab khi nhấn menu Sidebar
 document.addEventListener('DOMContentLoaded', () => {
   const navItems = document.querySelectorAll('.nav-item');
   const bannerTitle = document.getElementById('current-title');
@@ -75,8 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
       item.classList.add('active');
 
       const tabId = item.getAttribute('data-tab');
-      const text = item.querySelector('span').innerText;
-      
+      const text = item.querySelector('span').innerText.replace(/\n/g, ' ');
+
       // Đồng bộ tiêu đề trên dải màu cam
       bannerTitle.textContent = text.toUpperCase();
 
