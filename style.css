@@ -6,80 +6,82 @@
 }
 
 body {
-  background-color: #f8fafc;
-  color: #1f2937;
+  background-color: #ffffff;
+  color: #000000;
   display: flex;
   height: 100vh;
   overflow: hidden;
 }
 
-/* ==================== SIDEBAR DỌC ==================== */
+/* ==================== SIDEBAR TRÁI ==================== */
 .sidebar {
-  width: 250px;
-  background-color: #115328; /* Xanh lá đậm chuẩn Excel/ảnh */
+  width: 200px;
+  background-color: #0e5627; /* Màu xanh lá đậm nguyên bản của bảng tính */
   color: white;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
   z-index: 20;
 }
 
 .sidebar-header {
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  background-color: #0c4220;
-}
-
-.diamond-icon {
-  font-size: 1.3rem;
-}
-
-.nav-menu {
-  padding: 12px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-}
-
-.nav-item {
-  background-color: transparent;
-  color: #d1fae5;
-  border: 1px solid transparent;
-  padding: 6px 14px;
-  border-radius: 9999px; /* Viên thuốc bo tròn như ảnh */
-  cursor: pointer;
-  text-align: left;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.diamond-icon {
+  font-size: 1.2rem;
+}
+
+.nav-menu {
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* Các nút dạng bo tròn viên thuốc */
+.nav-item {
+  background-color: transparent;
+  color: #ffffff;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.15s ease;
-  white-space: nowrap;
   outline: none;
+}
+
+.nav-item.two-lines {
+  line-height: 1.25;
+  padding: 5px 10px;
 }
 
 .nav-item:hover {
   background-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
 }
 
+/* Nút tab đang được chọn (Từ khóa) */
 .nav-item.active {
-  background-color: #ffffff;
-  color: #115328;
-  font-weight: 700;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  background-color: #f39c12; /* Màu cam tiệp với dải banner */
+  color: #000000;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== KHU VỰC CHÍNH ==================== */
+/* ==================== NỘI DUNG CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -88,39 +90,39 @@ body {
   background-color: #ffffff;
 }
 
-/* Dải màu cam chạy ngang */
+/* Dải banner cam chạy ngang */
 .orange-banner {
-  background-color: #e59837; /* Màu cam đất chuẩn ảnh */
-  color: #000000;
-  padding: 8px 30px;
+  background-color: #f29b28; /* Màu cam đất chuẩn hình */
+  padding: 6px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #c97f26;
+  border-bottom: 1px solid #d48016;
   position: relative;
+  height: 48px;
 }
 
 .orange-banner h1 {
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 1px;
   color: #000000;
+  margin-left: 200px; /* Căn chỉnh vị trí chữ TỪ KHÓA */
 }
 
 .unit-text {
   font-size: 0.85rem;
   font-style: italic;
-  font-weight: 600;
-  color: #1a1a1a;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  font-weight: 500;
+  color: #000000;
+  margin-right: 180px;
 }
 
 .content-body {
   flex: 1;
+  overflow-x: auto;
   overflow-y: auto;
-  padding: 20px 24px;
+  padding: 16px 20px;
 }
 
 .tab-pane {
@@ -131,173 +133,203 @@ body {
   display: block;
 }
 
-/* ==================== PHẦN CHÚ THÍCH TOP (TUỔI & QUY ƯỚC) ==================== */
-.top-info-section {
+/* ==================== PHẦN THÔNG SỐ TRÊN (NĂM, TUỔI, QUY ƯỚC) ==================== */
+.top-info-row {
   display: flex;
   align-items: flex-start;
-  gap: 40px;
-  margin-bottom: 24px;
+  gap: 30px;
+  margin-bottom: 22px;
 }
 
-/* Khối hiển thị tuổi */
-.age-card {
+.info-block {
   width: 250px;
-  border: 1px solid #165b2f;
+  border-collapse: collapse;
   text-align: center;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-.age-header {
-  background-color: #0d5c24; /* Xanh lá đậm */
-  color: #ffffff;
-  padding: 8px 12px;
-  font-size: 0.95rem;
+/* Khối năm theo dõi */
+.block-orange .info-header {
+  background-color: #f29b28;
+  color: #000000;
   font-weight: 700;
+  font-size: 0.88rem;
+  padding: 5px;
+  border: 1px solid #c97d1b;
 }
 
-.age-value {
-  background-color: #9bd770; /* Xanh lục nhạt */
-  color: #0066cc; /* Số màu xanh dương nổi bật */
-  font-size: 2.1rem;
+.block-orange .info-body {
+  background-color: #fde5c4;
+  border: 1px solid #c97d1b;
+  border-top: none;
+  font-size: 1.6rem;
   font-weight: 800;
-  padding: 8px;
-  cursor: text;
+  padding: 4px;
+}
+
+/* Khối tuổi */
+.block-green .info-header {
+  background-color: #0e5627;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 5px;
+  border: 1px solid #0e5627;
+}
+
+.block-green .info-body {
+  background-color: #9ad76c;
+  border: 1px solid #0e5627;
+  border-top: none;
+  font-size: 1.6rem;
+  font-weight: 800;
+  padding: 4px;
+}
+
+.num-blue {
+  color: #0070c0 !important;
   outline: none;
 }
 
-.age-value:focus {
-  background-color: #bbf095;
-}
-
 /* Khối quy ước màu chữ */
-.color-rules-card {
+.color-convention-block {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  font-size: 0.85rem;
+  gap: 3px;
+  font-size: 0.82rem;
 }
 
-.rules-title {
+.convention-title {
   font-weight: 700;
-  color: #000000;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
-.rule-item {
+.convention-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.color-box {
+.color-rect {
   width: 50px;
-  height: 18px;
+  height: 16px;
   display: inline-block;
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 1px solid #444444;
 }
 
-.color-blue { background-color: #0070c0; }
-.color-black { background-color: #000000; }
-.color-red { background-color: #c00000; }
+.bg-blue { background-color: #0070c0; }
+.bg-black { background-color: #000000; }
+.bg-red { background-color: #c00000; }
 
-.rule-text {
-  font-weight: 600;
+.text-blue-rule { color: #0070c0; font-weight: 600; }
+.text-black-rule { color: #000000; font-weight: 600; }
+.text-red-rule { color: #c00000; font-weight: 600; }
+
+/* ==================== HỆ THỐNG CÁC BẢNG EXCEL ==================== */
+.sheet-tables-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
 }
 
-/* Quy định lớp màu theo quy ước */
-.text-input-blue { color: #0070c0 !important; } /* Nhập dữ liệu */
-.text-calc-black { color: #000000 !important; } /* Kết quả trung gian */
-.text-imp-red { color: #c00000 !important; }   /* Dữ liệu quan trọng */
-
-/* ==================== BẢNG GRID EXCEL ==================== */
-.tables-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
-  align-items: start;
-}
-
-.sheet-card {
+.sheet-table-wrap {
   background: white;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .excel-table {
-  width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  background-color: #ffffff;
 }
 
 .excel-table th, 
 .excel-table td {
-  border: 1px solid #d1d5db;
-  padding: 5px 8px;
+  border: 1px solid #b7b7b7;
+  padding: 3px 6px;
+  height: 22px;
 }
 
-/* Hàng tiêu đề lớn của bảng */
-.thead-group-green th {
-  background-color: #0d5c24; /* Xanh lá đậm */
+/* Header lớn màu cam (Bảng 1, Bảng 3) */
+.header-main-orange th {
+  background-color: #f29b28;
+  color: #000000;
+  font-weight: 700;
+  text-align: center;
+  font-size: 0.84rem;
+  padding: 4px;
+}
+
+.header-sub-orange th {
+  background-color: #fce5cd;
+  color: #000000;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Header lớn màu xanh lá (Bảng 2, Bảng 4) */
+.header-main-green th {
+  background-color: #0e5627;
   color: #ffffff;
-  text-align: center;
-  font-size: 0.88rem;
   font-weight: 700;
-  padding: 6px;
+  text-align: center;
+  font-size: 0.84rem;
+  padding: 4px;
 }
 
-.thead-group-orange th {
-  background-color: #f3aa53; /* Cam nhạt */
-  color: #000000;
-  text-align: center;
-  font-size: 0.88rem;
-  font-weight: 700;
-  padding: 6px;
-}
-
-/* Hàng cột # và Khoản mục */
-.thead-cols th {
-  background-color: #d7e4bc; /* Xanh xám nhạt như Excel */
+.header-sub-green th {
+  background-color: #d9ead3;
   color: #000000;
   font-weight: 700;
   text-align: center;
 }
 
+/* Cột số thứ tự # */
 .excel-table td:first-child {
-  font-weight: 700;
   text-align: center;
-  background-color: #ffffff;
+  font-weight: 700;
   color: #000000;
 }
 
-.excel-table td[contenteditable="true"]:focus {
-  outline: 2px solid #0070c0;
-  background-color: #f0f7ff;
+/* Màu chữ xanh nhập liệu */
+.cell-blue {
+  color: #0070c0 !important;
+  font-weight: 500;
+  outline: none;
+}
+
+.cell-blue:focus {
+  background-color: #e8f4fc;
 }
 
 .text-right {
   text-align: right;
 }
 
-/* Khối Legend bên dưới */
-.legend-box-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 50px;
-  margin-bottom: 20px;
-}
-
-.legend-box {
-  border: 1.5px solid #666666;
-  padding: 4px 18px;
+/* Ô được highlight (DCDS trong ảnh) */
+.excel-active-cell {
+  outline: 2px solid #0e5627 !important;
   background-color: #ffffff;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: #333333;
 }
 
-/* ==================== DASHBOARD ==================== */
+/* Khối nhãn Legend đặt cạnh dòng 7-8 của Bảng 2 */
+.relative-cell {
+  position: relative;
+}
+
+.legend-badge {
+  position: absolute;
+  right: -58px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 1.5px solid #4a4a4a;
+  background: white;
+  padding: 1px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #333;
+  z-index: 5;
+}
+
+/* ==================== DASHBOARD TAB ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -316,17 +348,11 @@ body {
   font-size: 0.8rem;
   color: #6b7280;
   font-weight: 600;
-  margin-bottom: 4px;
 }
 
 .stat-value {
   font-size: 1.4rem;
   font-weight: 800;
-}
-
-.stat-sub {
-  font-size: 0.72rem;
-  color: #9ca3af;
 }
 
 .text-green { color: #16a34a; }
@@ -344,12 +370,6 @@ body {
   padding: 16px;
   border-radius: 6px;
   border: 1px solid #e5e7eb;
-}
-
-.chart-card h3 {
-  font-size: 0.9rem;
-  margin-bottom: 12px;
-  color: #374151;
 }
 
 .chart-container {
