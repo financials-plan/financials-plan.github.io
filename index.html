@@ -12,12 +12,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Link file CSS độc lập -->
+  <!-- Link file CSS -->
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM -->
+  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM (ĐÃ LOẠI BỎ 12 NÚT THÁNG DƯ THỪA) -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="diamond-icon">💎</span>
@@ -45,19 +45,11 @@
         <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- Danh sách tháng 1 -> 12 -->
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="1"><span>Theo dõi tháng 1</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="2"><span>Theo dõi tháng 2</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="3"><span>Theo dõi tháng 3</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="4"><span>Theo dõi tháng 4</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="5"><span>Theo dõi tháng 5</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="6"><span>Theo dõi tháng 6</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="7"><span>Theo dõi tháng 7</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="8"><span>Theo dõi tháng 8</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="9"><span>Theo dõi tháng 9</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="10"><span>Theo dõi tháng 10</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="11"><span>Theo dõi tháng 11</span></button>
-      <button class="nav-item nav-month" data-tab="tab-month" data-month="12"><span>Theo dõi tháng 12</span></button>
+      <!-- 1 nút duy nhất để theo dõi chi tiết 12 tháng -->
+      <button class="nav-item" data-tab="tab-month">
+        <i class="fa-regular fa-calendar-days"></i>
+        <span>Theo dõi thu chi 12 tháng</span>
+      </button>
 
       <button class="nav-item" data-tab="tab-khaosat" id="nav-btn-khaosat">
         <span>Bảng khảo sát</span>
@@ -68,7 +60,7 @@
   <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải màu cam chạy ngang cả template -->
+    <!-- Dải banner cam -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">Đơn vị: triệu đồng</span>
@@ -79,18 +71,18 @@
       
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
       <div id="tab-tukhoa" class="tab-pane active">
-        <!-- TOP INFO: NĂM BẮT ĐẦU, TUỔI & QUY ƯỚC MÀU CHỮ -->
+        <!-- TOP INFO: NĂM, TUỔI & QUY ƯỚC -->
         <div class="top-info-row">
           <div class="info-block block-orange">
             <div class="info-header">Năm bắt đầu theo dõi</div>
-            <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa năm">2023</div>
+            <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false" title="Nhấp để sửa năm">2023</div>
           </div>
 
           <div class="info-block block-green">
             <div class="info-header">
               Tuổi của bạn năm <span class="dynamic-year">2023</span>
             </div>
-            <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false" title="Bấm để chỉnh sửa tuổi">21</div>
+            <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false" title="Nhấp để sửa tuổi">21</div>
           </div>
 
           <div class="color-convention-block">
@@ -110,9 +102,10 @@
           </div>
         </div>
 
-        <!-- 4 BẢNG DANH MỤC THIẾT LẬP -->
+        <!-- 4 BẢNG DANH MỤC THIẾT LẬP GỐC -->
         <div class="sheet-tables-container">
-          <!-- BẢNG 1: DANH MỤC CHI PHÍ -->
+          
+          <!-- BẢNG 1: CHI PHÍ -->
           <div class="sheet-table-wrap">
             <table class="excel-table" id="table-expenses">
               <thead>
@@ -121,8 +114,7 @@
                     <div class="table-header-flex">
                       <span class="title">Danh mục chi phí</span>
                       <button class="btn-table-add" onclick="addExpenseRow()" title="Thêm khoản mục">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="btn-text">Thêm</span>
+                        <i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -132,22 +124,13 @@
                   <th>Khoản mục</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr><td>1</td><td class="cell-blue" contenteditable="true">Mua thực phẩm</td></tr>
-                <tr><td>2</td><td class="cell-blue" contenteditable="true">Mua đồ dùng trong nhà</td></tr>
-                <tr><td>3</td><td class="cell-blue" contenteditable="true">Đi ăn ở ngoài</td></tr>
-                <tr><td>4</td><td class="cell-blue" contenteditable="true">Chi tiền phát triển bản thân</td></tr>
-                <tr><td>5</td><td class="cell-blue" contenteditable="true">Chi tiền bảo hiểm</td></tr>
-                <tr><td>6</td><td class="cell-blue" contenteditable="true">Chi tiền điện, nước, internet, điện thoại, xăng xe</td></tr>
-                <tr><td>7</td><td class="cell-blue" contenteditable="true">Chi tiền giải trí, quà tặng</td></tr>
-                <tr><td>8</td><td class="cell-blue" contenteditable="true">Chi tiền cho con</td></tr>
-                <tr><td>9</td><td class="cell-blue" contenteditable="true">Chi tiền trả nợ</td></tr>
-                <tr><td>10</td><td class="cell-blue" contenteditable="true">Chi tiền cho tặng gia đình</td></tr>
+              <tbody id="tbody-expenses">
+                <!-- Được render tự động từ JS -->
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG 2: DANH MỤC THU NHẬP -->
+          <!-- BẢNG 2: THU NHẬP -->
           <div class="sheet-table-wrap">
             <table class="excel-table" id="table-income">
               <thead>
@@ -156,8 +139,7 @@
                     <div class="table-header-flex">
                       <span class="title">Danh mục thu nhập</span>
                       <button class="btn-table-add" onclick="addIncomeRow()" title="Thêm nguồn thu">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="btn-text">Thêm</span>
+                        <i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -167,9 +149,8 @@
                   <th>Khoản mục</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr><td>1</td><td class="cell-blue" contenteditable="true">Lương từ công ty</td></tr>
-                <tr><td>2</td><td class="cell-blue" contenteditable="true">Thu nhập khác</td></tr>
+              <tbody id="tbody-income">
+                <!-- Được render tự động từ JS -->
               </tbody>
             </table>
           </div>
@@ -183,8 +164,7 @@
                     <div class="table-header-flex">
                       <span class="title">Kế hoạch phát triển</span>
                       <button class="btn-table-add" onclick="addPlanRow()" title="Thêm kế hoạch">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="btn-text">Thêm</span>
+                        <i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -194,17 +174,13 @@
                   <th>Khoản mục</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr><td>1</td><td class="cell-blue" contenteditable="true">Mua sách</td></tr>
-                <tr><td>2</td><td class="cell-blue" contenteditable="true">Khóa học ngắn hạn</td></tr>
-                <tr><td>3</td><td class="cell-blue" contenteditable="true">Khóa học dài hạn</td></tr>
-                <tr><td>4</td><td class="cell-blue" contenteditable="true">Tham gia các buổi diễn thuyết</td></tr>
-                <tr><td>5</td><td class="cell-blue" contenteditable="true">Chi phát triển bản thân khác</td></tr>
+              <tbody id="tbody-learning">
+                <!-- Được render tự động từ JS -->
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG 4: DANH MỤC SẢN PHẨM ĐẦU TƯ -->
+          <!-- BẢNG 4: DANH MỤC ĐẦU TƯ (TÍNH TỶ SUẤT KỲ VỌNG) -->
           <div class="sheet-table-wrap">
             <table class="excel-table" id="table-invest">
               <thead>
@@ -213,8 +189,7 @@
                     <div class="table-header-flex">
                       <span class="title">Danh mục sản phẩm đầu tư</span>
                       <button class="btn-table-add" onclick="addInvestRow()" title="Thêm danh mục">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="btn-text">Thêm</span>
+                        <i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span>
                       </button>
                     </div>
                   </th>
@@ -222,56 +197,46 @@
                 <tr class="header-sub-green">
                   <th style="width: 36px;">#</th>
                   <th>Khoản mục</th>
-                  <th style="width: 135px;">Mức sinh lời TB 5 năm</th>
+                  <th style="width: 140px;">Mức sinh lời TB 5 năm</th>
                   <th style="width: 60px;">Rủi ro</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr><td>1</td><td class="cell-blue" contenteditable="true">ETF - ETFVFM</td><td class="text-right cell-blue" contenteditable="true">13%</td><td class="text-right cell-blue" contenteditable="true">18%</td></tr>
-                <tr><td>2</td><td class="cell-blue" contenteditable="true">ETF - ETFFINLEAD</td><td class="text-right cell-blue" contenteditable="true">15%</td><td class="text-right cell-blue" contenteditable="true">20%</td></tr>
-                <tr><td>3</td><td class="cell-blue" contenteditable="true">DCBC</td><td class="text-right cell-blue" contenteditable="true">16%</td><td class="text-right cell-blue" contenteditable="true">20%</td></tr>
-                <tr><td>4</td><td class="cell-blue excel-active-cell" contenteditable="true">DCDS</td><td class="text-right cell-blue" contenteditable="true">11%</td><td class="text-right cell-blue" contenteditable="true">10%</td></tr>
-                <tr><td>5</td><td class="cell-blue" contenteditable="true">DCBF</td><td class="text-right cell-blue" contenteditable="true">9%</td><td class="text-right cell-blue" contenteditable="true">8%</td></tr>
-                <tr><td>6</td><td class="cell-blue" contenteditable="true">Trái phiếu Techcombank</td><td class="text-right cell-blue" contenteditable="true">11%</td><td class="text-right cell-blue" contenteditable="true">6%</td></tr>
-                <tr><td>7</td><td class="cell-blue" contenteditable="true">Trái phiếu FE Credit</td><td class="text-right cell-blue" contenteditable="true">10%</td><td class="text-right cell-blue" contenteditable="true">8%</td></tr>
-                <tr><td>8</td><td class="cell-blue" contenteditable="true">Finhay</td><td class="text-right cell-blue" contenteditable="true">6%</td><td class="text-right cell-blue" contenteditable="true">7%</td></tr>
-                <tr><td>9</td><td class="cell-blue" contenteditable="true">Bảo hiểm thuần túy</td><td class="text-right cell-blue" contenteditable="true">4%</td><td class="text-right cell-blue" contenteditable="true">5%</td></tr>
-                <tr><td>10</td><td class="cell-blue" contenteditable="true">BH liên kết đầu tư</td><td class="text-right cell-blue" contenteditable="true">12%</td><td class="text-right cell-blue" contenteditable="true">5%</td></tr>
-                <tr><td>11</td><td class="cell-blue" contenteditable="true">Tiền gửi ngân hàng</td><td class="text-right cell-blue" contenteditable="true">5%</td><td class="text-right cell-blue" contenteditable="true">2%</td></tr>
-                <tr><td>12</td><td class="cell-blue" contenteditable="true">Cổ phiếu riêng lẻ</td><td class="text-right cell-blue" contenteditable="true">12%</td><td class="text-right cell-blue" contenteditable="true">6%</td></tr>
+              <tbody id="tbody-invest">
+                <!-- Được render tự động từ JS -->
               </tbody>
             </table>
           </div>
+
         </div>
       </div>
 
-      <!-- ==================== TAB 2: DASHBOARD (TỔNG HỢP THEO CASE STUDY) ==================== -->
+      <!-- ==================== TAB 2: DASHBOARD (TỰ ĐỘNG TỔNG HỢP TỪ CÁC TAB KHÁC) ==================== -->
       <div id="tab-dashboard" class="tab-pane">
         <div class="stat-cards">
           <div class="stat-card">
-            <div class="stat-label">Tổng tiết kiệm cần đạt</div>
-            <div class="stat-value text-blue">2,850.00 tr</div>
-            <div class="stat-sub">Mục tiêu tài chính trọn đời</div>
+            <div class="stat-label">Tổng tiết kiệm cần đạt (Mục tiêu)</div>
+            <div class="stat-value text-blue" id="dash-target-savings">2,850.00 tr</div>
+            <div class="stat-sub">Tự động liên kết từ Mục tiêu đầu tư</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Tỷ suất sinh lời TB ước tính</div>
-            <div class="stat-value text-green">9.97%/năm</div>
-            <div class="stat-sub">Dựa trên danh mục phân bổ</div>
+            <div class="stat-value text-green" id="dash-expected-return">9.97%/năm</div>
+            <div class="stat-sub">Tự tính TB từ Danh mục đầu tư</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Tổng thu nhập năm <span class="dynamic-year">2023</span></div>
-            <div class="stat-value text-green">329.40 tr</div>
-            <div class="stat-sub">Bình quân ~27.45 tr/tháng</div>
+            <div class="stat-value text-green" id="dash-total-income">0.00 tr</div>
+            <div class="stat-sub" id="dash-avg-income">Bình quân ~0 tr/tháng</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">Tổng chi tiêu năm <span class="dynamic-year">2023</span></div>
-            <div class="stat-value text-red">223.75 tr</div>
-            <div class="stat-sub">Chiếm 67.9% tổng thu</div>
+            <div class="stat-value text-red" id="dash-total-expense">0.00 tr</div>
+            <div class="stat-sub" id="dash-expense-ratio">Chiếm 0% tổng thu</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Tiết kiệm năm <span class="dynamic-year">2023</span></div>
-            <div class="stat-value text-blue">105.65 tr</div>
-            <div class="stat-sub">Tỷ lệ tích lũy: 32.1%</div>
+            <div class="stat-label">Tiết kiệm tích lũy năm <span class="dynamic-year">2023</span></div>
+            <div class="stat-value text-blue" id="dash-total-savings">0.00 tr</div>
+            <div class="stat-sub" id="dash-savings-rate">Tỷ lệ tích lũy: 0%</div>
           </div>
         </div>
 
@@ -294,117 +259,100 @@
       <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN ==================== -->
       <div id="tab-muctieu-bt" class="tab-pane">
         <div class="target-container">
-          <!-- KHỐI 1: THỜI ĐIỂM / NỘI DUNG TỔNG THỂ -->
+          
           <div class="target-section">
             <table class="target-table">
               <thead>
                 <tr>
-                  <th style="width: 140px;" class="italic-head">Thời điểm</th>
+                  <th style="width: 140px;" class="italic-head">Thời điểm (Tuổi)</th>
                   <th class="italic-head">Nội dung</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="cell-green-light text-center font-bold" contenteditable="true">50</td>
+                  <td class="cell-green-light text-center font-bold cell-blue" id="target-max-age" contenteditable="true">50</td>
                   <td class="cell-green-light cell-blue font-semibold" contenteditable="true">Từng bước đạt mục tiêu tài chính trong tương lai</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- KHỐI 2: MỤC TIÊU TRẢ NỢ -->
+          <!-- MỤC TIÊU TRẢ NỢ -->
           <div class="target-section">
-            <table class="target-table">
+            <table class="target-table" id="table-debt-target">
               <thead>
                 <tr>
                   <th style="width: 130px;" class="italic-head">Mục tiêu trả nợ</th>
                   <th style="width: 140px;" class="italic-head">Thời điểm (tuổi)</th>
                   <th class="italic-head">Nội dung</th>
-                  <th style="width: 140px;" class="italic-head text-center">Giá trị</th>
+                  <th style="width: 140px;" class="italic-head text-center">Giá trị (tr)</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td class="cell-green-light text-center font-bold">1</td>
-                  <td class="cell-green-light text-center cell-blue" contenteditable="true">35</td>
-                  <td class="cell-green-light cell-blue" contenteditable="true">Vay mua chung cư</td>
-                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td>
-                </tr>
-                <tr>
-                  <td class="cell-green-light text-center font-bold">2</td>
-                  <td class="cell-green-light text-center cell-blue" contenteditable="true"></td>
-                  <td class="cell-green-light cell-blue" contenteditable="true"></td>
-                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true"></td>
-                </tr>
-                <tr>
-                  <td class="cell-green-light text-center font-bold">3</td>
-                  <td class="cell-green-light text-center cell-blue" contenteditable="true"></td>
-                  <td class="cell-green-light cell-blue" contenteditable="true"></td>
-                  <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true"></td>
-                </tr>
+              <tbody id="tbody-debt-target">
+                <!-- Render từ JS -->
               </tbody>
+              <tfoot>
+                <tr class="bg-total-row">
+                  <td colspan="3" class="font-bold text-right" style="padding-right: 15px;">Tổng nợ cần trả:</td>
+                  <td class="text-right text-red font-bold" id="sum-debt-target">500 tr</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
 
-          <!-- KHỐI 3: MỤC TIÊU ĐẦU TƯ -->
+          <!-- MỤC TIÊU ĐẦU TƯ (LIÊN KẾT TRỰC TIẾP LÊN DASHBOARD) -->
           <div class="target-section">
-            <table class="target-table">
+            <table class="target-table" id="table-invest-target">
               <thead>
                 <tr>
                   <th style="width: 130px;" class="italic-head">Mục tiêu đầu tư</th>
                   <th style="width: 140px;" class="italic-head">Thời điểm (tuổi)</th>
                   <th class="italic-head">Nội dung</th>
-                  <th style="width: 140px;" class="italic-head text-center">Giá trị</th>
+                  <th style="width: 140px;" class="italic-head text-center">Giá trị (tr)</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr><td class="cell-green-light text-center font-bold">4</td><td class="cell-green-light text-center cell-blue" contenteditable="true">25</td><td class="cell-green-light cell-blue" contenteditable="true">Du lịch xuyên Thái Lan</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">50</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">5</td><td class="cell-green-light text-center cell-blue" contenteditable="true">26</td><td class="cell-green-light cell-blue" contenteditable="true">Quỹ dự phòng tài chính</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">100</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">6</td><td class="cell-green-light text-center cell-blue" contenteditable="true">28</td><td class="cell-green-light cell-blue" contenteditable="true">Đám cưới</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">200</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">7</td><td class="cell-green-light text-center cell-blue" contenteditable="true">30</td><td class="cell-green-light cell-blue" contenteditable="true">Khởi nghiệp</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">8</td><td class="cell-green-light text-center cell-blue" contenteditable="true">38</td><td class="cell-green-light cell-blue" contenteditable="true">Mua chung cư</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">1,500</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">9</td><td class="cell-green-light text-center cell-blue" contenteditable="true">46</td><td class="cell-green-light cell-blue" contenteditable="true">Cho con đi học đại học</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td></tr>
-                <tr><td class="cell-green-light text-center font-bold">10</td><td class="cell-green-light text-center cell-blue" contenteditable="true">50</td><td class="cell-green-light cell-blue" contenteditable="true">Hưu trí</td><td class="cell-green-light text-right cell-blue font-bold" contenteditable="true">500</td></tr>
+              <tbody id="tbody-invest-target">
+                <!-- Render từ JS -->
               </tbody>
+              <tfoot>
+                <tr class="bg-total-row">
+                  <td colspan="3" class="font-bold text-right" style="padding-right: 15px;">Tổng giá trị mục tiêu cần đạt:</td>
+                  <td class="text-right text-blue font-bold" id="sum-invest-target">2,850 tr</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
 
-          <!-- KHỐI 4: TỶ LỆ GIÁ TRỊ (40%) -->
+          <!-- TỶ LỆ GIÁ TRỊ TỰ ĐỘNG -->
           <div class="target-section">
             <table class="target-table">
-              <thead>
-                <tr><th class="italic-head text-center">Giá trị</th></tr>
-              </thead>
+              <thead><tr><th class="italic-head text-center">Tỷ lệ giá trị đầu tư / Tổng giá trị</th></tr></thead>
               <tbody>
-                <tr><td class="cell-green-light text-center cell-blue font-bold" contenteditable="true">40%</td></tr>
+                <tr><td class="cell-green-light text-center text-calc-black font-bold" id="val-invest-ratio">85.07%</td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- KHỐI 5: PHÁT TRIỂN / THẾ MẠNH BẢN THÂN -->
+          <!-- THẾ MẠNH & MÔI TRƯỜNG -->
           <div class="target-section">
             <table class="target-table">
               <thead><tr><th class="italic-head text-center">Nội dung thế mạnh & định hướng</th></tr></thead>
               <tbody>
                 <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Sẵn sàng học hỏi cái mới</td></tr>
                 <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Nhiệt huyết trong công việc</td></tr>
-                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- KHỐI 6: NGUỒN LỰC GIA ĐÌNH -->
           <div class="target-section">
             <table class="target-table">
               <thead><tr><th class="italic-head text-center">Nội dung hỗ trợ từ gia đình</th></tr></thead>
               <tbody>
                 <tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">Ba mẹ có hỗ trợ mua chung cư , lo đám cưới</td></tr>
-                <tr><td class="cell-green-light" contenteditable="true"></td></tr>
               </tbody>
             </table>
           </div>
 
-          <!-- KHỐI 7: MÔI TRƯỜNG LÀM VIỆC -->
           <div class="target-section">
             <table class="target-table">
               <thead><tr><th class="italic-head text-center">Nội dung môi trường nghề nghiệp</th></tr></thead>
@@ -416,14 +364,14 @@
             </table>
           </div>
 
-          <!-- KHỐI 8: KẾT QUẢ KHẢO SÁT & NÚT LINK KHẢO SÁT -->
+          <!-- KẾT QUẢ KHẢO SÁT & NÚT LINK TỰ ĐỘNG CHUYỂN TAB -->
           <div class="target-section survey-result-section">
-            <div class="survey-result-title">Kết quả</div>
+            <div class="survey-result-title">Kết quả khảo sát</div>
             <div class="survey-row">
               <button class="btn-survey-link" onclick="goToSurveyTab()" title="Nhấp để đến Bảng Khảo Sát">
                 Link khảo sát
               </button>
-              <div class="survey-desc font-bold text-black" contenteditable="true">
+              <div class="survey-desc font-bold text-black" id="survey-result-risk">
                 Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình
               </div>
             </div>
@@ -431,11 +379,12 @@
               <button class="btn-survey-link" onclick="goToSurveyTab()" title="Nhấp để đến Bảng Khảo Sát">
                 Link khảo sát
               </button>
-              <div class="survey-desc font-bold text-black" contenteditable="true">
+              <div class="survey-desc font-bold text-black" id="survey-result-context">
                 Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -447,36 +396,46 @@
           <table class="excel-table-bordered">
             <thead>
               <tr class="bg-header-green">
-                <th colspan="2">Mục tiêu trả nợ 1: Vay mua chung cư</th>
-                <th colspan="2">Thông số khoản vay</th>
+                <th colspan="2">Thông số mục tiêu trả nợ</th>
+                <th colspan="2">Tính toán tự động</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td style="width: 30%;">Năm bắt đầu</td><td class="cell-blue" contenteditable="true">2037</td><td style="width: 30%;">Lãi suất vay (năm)</td><td class="cell-blue text-right" contenteditable="true">8.0%</td></tr>
-              <tr><td>Năm kết thúc</td><td class="cell-blue" contenteditable="true">2052</td><td>Số tiền nợ đã thanh toán trước đó</td><td class="cell-blue text-right" contenteditable="true">400 tr</td></tr>
-              <tr><td>Giá trị khoản nợ</td><td class="cell-blue text-right font-bold" contenteditable="true">500 tr</td><td>Mục tiêu thanh toán hiện tại</td><td class="text-right text-red font-bold">100 tr</td></tr>
+              <tr>
+                <td style="width: 25%;">Năm bắt đầu vay</td>
+                <td class="cell-blue" id="debt-start-year" contenteditable="true">2037</td>
+                <td style="width: 25%;">Lãi suất vay (%/năm)</td>
+                <td class="cell-blue text-right" id="debt-rate" contenteditable="true">8.0%</td>
+              </tr>
+              <tr>
+                <td>Năm kết thúc</td>
+                <td class="cell-blue" id="debt-end-year" contenteditable="true">2052</td>
+                <td>Thời gian vay</td>
+                <td class="text-right text-calc-black font-bold" id="debt-duration">15 năm</td>
+              </tr>
+              <tr>
+                <td>Giá trị khoản nợ (Gốc ban đầu)</td>
+                <td class="cell-blue text-right font-bold" id="debt-principal" contenteditable="true">500.0 tr</td>
+                <td>Ước tính trả góp hàng năm (Gốc + Lãi)</td>
+                <td class="text-right text-red font-bold" id="debt-annual-pmt">58.42 tr/năm</td>
+              </tr>
             </tbody>
           </table>
 
-          <div class="sheet-title-banner mt-4">PHẦN 2: LỘ TRÌNH TÍCH LŨY VÀ TỶ LỆ TRẢ NỢ THEO TỪNG NĂM</div>
-          <table class="excel-table-bordered">
+          <div class="sheet-title-banner mt-4">PHẦN 2: LỘ TRÌNH THANH TOÁN THEO TỪNG NĂM (TỰ TÍNH THEO NIÊN KIM)</div>
+          <table class="excel-table-bordered" id="table-amortization">
             <thead>
               <tr class="bg-header-orange">
                 <th>Năm</th>
-                <th>Tuổi</th>
-                <th>Dư nợ đầu kỳ</th>
-                <th>Gốc cần trả</th>
-                <th>Lãi phát sinh</th>
-                <th>Tổng thanh toán</th>
-                <th>Dư nợ cuối kỳ</th>
+                <th>Dư nợ đầu kỳ (tr)</th>
+                <th>Gốc trả trong năm (tr)</th>
+                <th>Lãi phát sinh (tr)</th>
+                <th>Tổng thanh toán (tr)</th>
+                <th>Dư nợ cuối kỳ (tr)</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td>2037</td><td>35</td><td class="text-right">500.0</td><td class="text-right cell-blue">25.0</td><td class="text-right">40.0</td><td class="text-right font-bold">65.0</td><td class="text-right">475.0</td></tr>
-              <tr><td>2038</td><td>36</td><td class="text-right">475.0</td><td class="text-right cell-blue">25.0</td><td class="text-right">38.0</td><td class="text-right font-bold">63.0</td><td class="text-right">450.0</td></tr>
-              <tr><td>2039</td><td>37</td><td class="text-right">450.0</td><td class="text-right cell-blue">25.0</td><td class="text-right">36.0</td><td class="text-right font-bold">61.0</td><td class="text-right">425.0</td></tr>
-              <tr><td>2040</td><td>38</td><td class="text-right">425.0</td><td class="text-right cell-blue">25.0</td><td class="text-right">34.0</td><td class="text-right font-bold">59.0</td><td class="text-right">400.0</td></tr>
-              <tr><td>...</td><td>...</td><td class="text-center" colspan="5">Lộ trình tính toán trả góp theo niên kim 15 năm</td></tr>
+            <tbody id="tbody-amortization">
+              <!-- Render tự động qua JS -->
             </tbody>
           </table>
         </div>
@@ -486,10 +445,10 @@
       <div id="tab-candoi" class="tab-pane">
         <div class="custom-sheet-container">
           <div class="sheet-note-box">
-            <i class="fa-solid fa-circle-info"></i> <strong>Quy ước:</strong> Tuổi bắt đầu có thu nhập là 22 tuổi. Phân bổ tài sản được tối ưu hóa theo mô hình vòng đời tài chính.
+            <i class="fa-solid fa-circle-info"></i> <strong>Quy ước:</strong> Tuổi bắt đầu có thu nhập là 22 tuổi. Tỷ trọng tài sản đầu tư tự động điều chỉnh giảm rủi ro khi tuổi càng lớn.
           </div>
 
-          <div class="sheet-title-banner">PHẦN 1: LỘ TRÌNH TÀI CHÍNH CÁ NHÂN TỔNG THỂ & PHÂN BỔ CÔNG CỤ ĐẦU TƯ</div>
+          <div class="sheet-title-banner">PHẦN 1: LỘ TRÌNH TÀI CHÍNH CÁ NHÂN & PHÂN BỔ TÀI SẢN THEO ĐỘ TUỔI</div>
           
           <table class="excel-table-bordered">
             <thead>
@@ -501,38 +460,42 @@
               <tr class="bg-header-light-green">
                 <th>Cổ phiếu</th>
                 <th>Trái phiếu</th>
-                <th>Bảo hiểm</th>
+                <th>Bảo hiểm & Khác</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td class="text-center font-bold">21</td><td class="text-right cell-blue">6.40</td><td class="text-right">23.6%</td><td class="text-right">34.5%</td><td class="text-right">8.5%</td></tr>
-              <tr><td class="text-center font-bold">26</td><td class="text-right cell-blue">28.50</td><td class="text-right">56.8%</td><td class="text-right">20.6%</td><td class="text-right">5.7%</td></tr>
-              <tr><td class="text-center font-bold">30</td><td class="text-right cell-blue">38.20</td><td class="text-right">55.0%</td><td class="text-right">25.0%</td><td class="text-right">7.0%</td></tr>
-              <tr><td class="text-center font-bold">35</td><td class="text-right cell-blue">52.00</td><td class="text-right">45.0%</td><td class="text-right">35.0%</td><td class="text-right">8.0%</td></tr>
-              <tr><td class="text-center font-bold">40</td><td class="text-right cell-blue">65.00</td><td class="text-right">35.0%</td><td class="text-right">45.0%</td><td class="text-right">10.0%</td></tr>
-              <tr><td class="text-center font-bold">50</td><td class="text-right cell-blue">80.00</td><td class="text-right">20.0%</td><td class="text-right">60.0%</td><td class="text-right">12.0%</td></tr>
+              <tr><td class="text-center font-bold">21</td><td class="text-right cell-blue" contenteditable="true">6.40</td><td class="text-right">56.8%</td><td class="text-right">34.7%</td><td class="text-right">8.5%</td></tr>
+              <tr><td class="text-center font-bold">26</td><td class="text-right cell-blue" contenteditable="true">28.50</td><td class="text-right">55.0%</td><td class="text-right">39.3%</td><td class="text-right">5.7%</td></tr>
+              <tr><td class="text-center font-bold">30</td><td class="text-right cell-blue" contenteditable="true">38.20</td><td class="text-right">50.0%</td><td class="text-right">43.0%</td><td class="text-right">7.0%</td></tr>
+              <tr><td class="text-center font-bold">35</td><td class="text-right cell-blue" contenteditable="true">52.00</td><td class="text-right">40.0%</td><td class="text-right">52.0%</td><td class="text-right">8.0%</td></tr>
+              <tr><td class="text-center font-bold">40</td><td class="text-right cell-blue" contenteditable="true">65.00</td><td class="text-right">30.0%</td><td class="text-right">60.0%</td><td class="text-right">10.0%</td></tr>
+              <tr><td class="text-center font-bold">50</td><td class="text-right cell-blue" contenteditable="true">80.00</td><td class="text-right">15.0%</td><td class="text-right">73.0%</td><td class="text-right">12.0%</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- ==================== TAB 6: KẾ HOẠCH THU NHẬP & CHI TIÊU ==================== -->
+      <!-- ==================== TAB 6: KẾ HOẠCH THU NHẬP & CHI TIÊU HÀNG THÁNG ==================== -->
       <div id="tab-kehoach" class="tab-pane">
         <div class="custom-sheet-container">
-          <div class="sheet-title-banner">PHẦN 1: KẾ HOẠCH THU NHẬP TRONG THÁNG (CHUẨN BỊ MẪU)</div>
+          <div class="sheet-title-banner">PHẦN 1: KẾ HOẠCH THU NHẬP DỰ KIẾN TRONG THÁNG</div>
           <table class="excel-table-bordered">
             <thead>
               <tr class="bg-header-green">
                 <th style="width: 50px;">#</th>
-                <th>Khoản mục</th>
-                <th style="width: 200px;">Kế hoạch thu nhập (tr)</th>
+                <th>Khoản mục thu nhập</th>
+                <th style="width: 220px;">Dự toán thu nhập (tr)</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td class="text-center">1</td><td>Lương từ công ty</td><td class="text-right cell-blue font-bold" contenteditable="true">20.0</td></tr>
-              <tr><td class="text-center">2</td><td>Thu nhập khác</td><td class="text-right cell-blue font-bold" contenteditable="true">10.0</td></tr>
-              <tr class="bg-total-row"><td colspan="2" class="font-bold">Tổng thu nhập dự kiến</td><td class="text-right text-green font-bold">30.0 tr</td></tr>
+            <tbody id="tbody-plan-income">
+              <!-- Render tự động -->
             </tbody>
+            <tfoot>
+              <tr class="bg-total-row">
+                <td colspan="2" class="font-bold">Tổng thu nhập dự kiến hàng tháng</td>
+                <td class="text-right text-green font-bold" id="plan-sum-income">30.00 tr</td>
+              </tr>
+            </tfoot>
           </table>
 
           <div class="sheet-title-banner mt-4">PHẦN 2: KẾ HOẠCH CHI TIÊU HÀNG THÁNG</div>
@@ -540,48 +503,39 @@
             <thead>
               <tr class="bg-header-orange">
                 <th style="width: 50px;">#</th>
-                <th>Khoản mục</th>
-                <th style="width: 200px;">Kế hoạch chi tiêu (tr)</th>
-                <th>Diễn giải</th>
+                <th>Khoản mục chi tiêu</th>
+                <th style="width: 220px;">Dự toán chi tiêu (tr)</th>
               </tr>
             </thead>
-            <tbody>
-              <tr><td class="text-center">1</td><td>Mua thực phẩm</td><td class="text-right cell-blue" contenteditable="true">5.0</td><td>Chợ, siêu thị</td></tr>
-              <tr><td class="text-center">2</td><td>Mua đồ dùng trong nhà</td><td class="text-right cell-blue" contenteditable="true">0.5</td><td>Đồ gia dụng</td></tr>
-              <tr><td class="text-center">3</td><td>Đi ăn ở ngoài</td><td class="text-right cell-blue" contenteditable="true">2.0</td><td>Cà phê, ăn tiệm</td></tr>
-              <tr><td class="text-center">4</td><td>Chi tiền phát triển bản thân</td><td class="text-right cell-blue" contenteditable="true">1.5</td><td>Mua sách, khóa học</td></tr>
-              <tr><td class="text-center">5</td><td>Chi tiền bảo hiểm</td><td class="text-right cell-blue" contenteditable="true">0.0</td><td>Theo năm</td></tr>
-              <tr><td class="text-center">6</td><td>Chi tiền điện, nước, internet, xăng xe</td><td class="text-right cell-blue" contenteditable="true">2.0</td><td>Hóa đơn cố định</td></tr>
-              <tr><td class="text-center">7</td><td>Chi trả nợ</td><td class="text-right cell-blue" contenteditable="true">6.5</td><td>Khoản vay</td></tr>
-              <tr><td class="text-center">8</td><td>Các khoản chi phí khác</td><td class="text-right cell-blue" contenteditable="true">1.0</td><td>Dự phòng</td></tr>
-              <tr class="bg-total-row"><td colspan="2" class="font-bold">Tổng chi tiêu dự kiến</td><td class="text-right text-red font-bold">18.5 tr</td><td></td></tr>
-              <tr class="bg-total-save"><td colspan="2" class="font-bold">Dự kiến tiết kiệm hàng tháng (Thu - Chi)</td><td class="text-right text-blue font-bold">11.5 tr</td><td>Tỷ lệ 38.3%</td></tr>
+            <tbody id="tbody-plan-expense">
+              <!-- Render tự động -->
             </tbody>
+            <tfoot>
+              <tr class="bg-total-row">
+                <td colspan="2" class="font-bold">Tổng chi tiêu dự kiến hàng tháng</td>
+                <td class="text-right text-red font-bold" id="plan-sum-expense">18.50 tr</td>
+              </tr>
+              <tr class="bg-total-save">
+                <td colspan="2" class="font-bold">Dự kiến tiết kiệm hàng tháng (Thu - Chi)</td>
+                <td class="text-right text-blue font-bold" id="plan-sum-savings">11.50 tr (38.3%)</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
 
-      <!-- ==================== TAB 7: THEO DÕI THÁNG (T1 -> T12) ==================== -->
+      <!-- ==================== TAB 7: THEO DÕI THU CHI 12 THÁNG ==================== -->
       <div id="tab-month" class="tab-pane">
         <div class="custom-sheet-container">
+          <!-- THANH CHỌN THÁNG T1 ĐẾN T12 -->
           <div class="month-selector-bar">
-            <span>Chọn tháng theo dõi:</span>
-            <div class="month-buttons">
-              <button class="btn-m active" onclick="switchMonth(1)">T1</button>
-              <button class="btn-m" onclick="switchMonth(2)">T2</button>
-              <button class="btn-m" onclick="switchMonth(3)">T3</button>
-              <button class="btn-m" onclick="switchMonth(4)">T4</button>
-              <button class="btn-m" onclick="switchMonth(5)">T5</button>
-              <button class="btn-m" onclick="switchMonth(6)">T6</button>
-              <button class="btn-m" onclick="switchMonth(7)">T7</button>
-              <button class="btn-m" onclick="switchMonth(8)">T8</button>
-              <button class="btn-m" onclick="switchMonth(9)">T9</button>
-              <button class="btn-m" onclick="switchMonth(10)">T10</button>
-              <button class="btn-m" onclick="switchMonth(11)">T11</button>
-              <button class="btn-m" onclick="switchMonth(12)">T12</button>
+            <span><i class="fa-regular fa-calendar-check"></i> Chọn tháng theo dõi:</span>
+            <div class="month-buttons" id="month-btn-group">
+              <!-- 12 nút T1 -> T12 được sinh tự động -->
             </div>
           </div>
 
+          <!-- THẺ TỔNG HỢP CỦA THÁNG ĐƯỢC CHỌN -->
           <div class="stat-cards mt-3">
             <div class="stat-card">
               <div class="stat-label">Tổng thu nhập <span id="m-name-thu">Tháng 1</span></div>
@@ -592,30 +546,54 @@
               <div class="stat-value text-red" id="m-val-chi">17.50 tr</div>
             </div>
             <div class="stat-card">
-              <div class="stat-label">Tiết kiệm thực tế <span id="m-name-tk">Tháng 1</span></div>
+              <div class="stat-label">Tích lũy tiết kiệm <span id="m-name-tk">Tháng 1</span></div>
               <div class="stat-value text-blue" id="m-val-tk">6.50 tr</div>
             </div>
           </div>
 
-          <div class="sheet-title-banner mt-3">NHẬT KÝ CHI TIẾT THU - CHI TRONG THÁNG</div>
-          <table class="excel-table-bordered">
-            <thead>
-              <tr class="bg-header-green">
-                <th style="width: 50px;">Ngày</th>
-                <th>Khoản mục</th>
-                <th style="width: 120px;">Phân loại</th>
-                <th style="width: 140px;">Số tiền (tr)</th>
-                <th>Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td class="text-center">05/01</td><td>Lương từ công ty</td><td class="text-center text-green font-bold">Thu nhập</td><td class="text-right cell-blue">20.0</td><td>Đã chuyển khoản</td></tr>
-              <tr><td class="text-center">10/01</td><td>Thu nhập Freelance</td><td class="text-center text-green font-bold">Thu nhập</td><td class="text-right cell-blue">4.0</td><td>Đối tác thanh toán</td></tr>
-              <tr><td class="text-center">12/01</td><td>Tiền thuê nhà & điện nước</td><td class="text-center text-red font-bold">Chi phí</td><td class="text-right cell-blue">6.5</td><td>Định kỳ</td></tr>
-              <tr><td class="text-center">18/01</td><td>Mua thực phẩm siêu thị</td><td class="text-center text-red font-bold">Chi phí</td><td class="text-right cell-blue">4.5</td><td>Thực phẩm ăn uống</td></tr>
-              <tr><td class="text-center">25/01</td><td>Chi tiền trả nợ ngân hàng</td><td class="text-center text-red font-bold">Chi phí</td><td class="text-right cell-blue">6.5</td><td>Gốc + lãi</td></tr>
-            </tbody>
-          </table>
+          <!-- BẢNG NHẬP THU CHI CHI TIẾT TRONG THÁNG (SỬA LÀ TỰ ĐỒNG BỘ LÊN DASHBOARD) -->
+          <div class="sheet-title-banner mt-3">
+            BẢNG THEO DÕI CÁC KHOẢN THU - CHI TRONG <span id="m-title-detail">THÁNG 1</span>
+          </div>
+          
+          <div class="tables-grid">
+            <!-- Thu nhập tháng -->
+            <div class="sheet-card">
+              <div class="card-head">
+                <h3><i class="fa-solid fa-arrow-down text-green"></i> Thu nhập tháng này</h3>
+              </div>
+              <table class="excel-table">
+                <thead>
+                  <tr class="header-sub-green">
+                    <th>Khoản mục</th>
+                    <th style="width: 120px;">Số tiền (tr)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-month-income">
+                  <!-- Render từ JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Chi tiêu tháng -->
+            <div class="sheet-card">
+              <div class="card-head">
+                <h3><i class="fa-solid fa-arrow-up text-red"></i> Chi tiêu tháng này</h3>
+              </div>
+              <table class="excel-table">
+                <thead>
+                  <tr class="header-sub-orange">
+                    <th>Khoản mục</th>
+                    <th style="width: 120px;">Số tiền (tr)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-month-expense">
+                  <!-- Render từ JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -623,8 +601,8 @@
       <div id="tab-khaosat" class="tab-pane">
         <div class="survey-sheet-wrapper">
           <div class="survey-sheet-header">
-            <h2>BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN & KHẨU VỊ RỦI RO ĐẦU TƯ</h2>
-            <p>Trích xuất đầy đủ từ case study Excel. Chỉ chọn 1 đáp án cho mỗi câu hỏi bên dưới:</p>
+            <h2>BẢNG KHẢO SÁT ĐÁNH GIÁ MỨC ĐỘ CHỊU RỦI RO & HOÀN CẢNH CÁ NHÂN</h2>
+            <p>Chọn các câu trả lời bên dưới. Kết quả và nhận định phân bổ sẽ tự động nhảy về tab <strong>Mục tiêu bản thân</strong>.</p>
           </div>
 
           <div class="survey-questions-grid">
@@ -634,7 +612,7 @@
               <label class="survey-option"><input type="radio" name="ks_q1" value="2"> 2 mục tiêu</label>
               <label class="survey-option"><input type="radio" name="ks_q1" value="3"> 3 mục tiêu</label>
               <label class="survey-option"><input type="radio" name="ks_q1" value="4"> 4 mục tiêu</label>
-              <label class="survey-option"><input type="radio" name="ks_q1" value="5" checked> &gt; 4 mục tiêu (Đã chọn trong Excel)</label>
+              <label class="survey-option"><input type="radio" name="ks_q1" value="5" checked> &gt; 4 mục tiêu</label>
             </div>
 
             <div class="survey-card">
@@ -647,7 +625,7 @@
             </div>
 
             <div class="survey-card">
-              <h3>Câu 3: Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình?</h3>
+              <h3>Câu 3: Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư?</h3>
               <label class="survey-option"><input type="radio" name="ks_q3" value="1"> Hơn 20 năm</label>
               <label class="survey-option"><input type="radio" name="ks_q3" value="2"> 11–20 năm</label>
               <label class="survey-option"><input type="radio" name="ks_q3" value="3" checked> 6–10 năm</label>
@@ -657,15 +635,22 @@
 
             <div class="survey-card">
               <h3>Câu 4: Hãy mô tả quan điểm của bạn đối với mức sinh lời và rủi ro?</h3>
-              <label class="survey-option"><input type="radio" name="ks_q4" value="1"> Vấn đề quan tâm nhất là hạn chế rủi ro, chấp nhận sinh lời thấp.</label>
-              <label class="survey-option"><input type="radio" name="ks_q4" value="2"> Sẵn sàng chấp nhận rủi ro vừa phải để đạt sinh lời tốt.</label>
-              <label class="survey-option"><input type="radio" name="ks_q4" value="3" checked> Chủ yếu quan tâm đến việc tối đa hóa mức sinh lời để đạt mục tiêu kế hoạch.</label>
+              <label class="survey-option"><input type="radio" name="ks_q4" value="1"> Ưu tiên hạn chế rủi ro tối đa, chấp nhận mức sinh lời thấp.</label>
+              <label class="survey-option"><input type="radio" name="ks_q4" value="2" checked> Chấp nhận rủi ro đầu tư vừa phải để đạt mức sinh lời tốt.</label>
+              <label class="survey-option"><input type="radio" name="ks_q4" value="3"> Tối đa hóa mức sinh lời, sẵn sàng chấp nhận biến động mạnh.</label>
+            </div>
+
+            <div class="survey-card">
+              <h3>Câu 5: Hoàn cảnh tài chính và gia đình hiện tại?</h3>
+              <label class="survey-option"><input type="radio" name="ks_q5" value="1"> Khó khăn, nhiều áp lực chu cấp người thân.</label>
+              <label class="survey-option"><input type="radio" name="ks_q5" value="2" checked> Điều kiện bình thường, gia đình hỗ trợ một phần khi cần.</label>
+              <label class="survey-option"><input type="radio" name="ks_q5" value="3"> Rất thuận lợi, nền tảng tài chính gia đình vững chắc.</label>
             </div>
           </div>
 
           <div class="survey-action-box">
             <button class="btn-save-survey" onclick="saveSurveyAndBack()">
-              <i class="fa-solid fa-check"></i> Lưu kết quả & Quay về Mục tiêu bản thân
+              <i class="fa-solid fa-check"></i> Lưu kết luận & Đồng bộ về Mục tiêu bản thân
             </button>
           </div>
         </div>
@@ -674,7 +659,7 @@
     </section>
   </main>
 
-  <!-- Link file JS độc lập -->
+  <!-- Link file JS -->
   <script src="./script.js"></script>
 </body>
 </html>
