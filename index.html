@@ -3,539 +3,249 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng Quản Lý Tài Chính Cá Nhân</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts & Lucide Icons -->
+  <title>Bảng Quản Lý Tài Chính</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Chart.js for interactive dashboard preview -->
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    * {
-      font-family: 'Be Vietnam Pro', sans-serif;
-    }
-    /* Spreadsheet style table customization */
-    .sheet-table {
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-    .sheet-table th, .sheet-table td {
-      border-right: 1px solid #cbd5e1;
-      border-bottom: 1px solid #cbd5e1;
-    }
-    .sheet-table tr th:first-child, .sheet-table tr td:first-child {
-      border-left: 1px solid #cbd5e1;
-    }
-    .sheet-table tr:first-child th {
-      border-top: 1px solid #cbd5e1;
-    }
-    /* Custom scrollbar for spreadsheet view */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 text-slate-800 h-screen flex flex-col overflow-hidden select-none">
+<body>
 
-  <!-- TOP ORANGE BAR (Thanh ngang màu cam chạy ngang cả template như ảnh) -->
-  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white shadow-md relative z-20 flex items-center justify-between px-6 py-2 h-14 border-b border-orange-600">
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-1.5 px-3 py-1 bg-black/15 backdrop-blur-sm rounded-lg border border-white/20">
-        <span class="text-xs uppercase tracking-widest font-bold text-amber-100">Bảng Tính Tài Chính</span>
-      </div>
-      <div class="h-4 w-[1px] bg-white/30 hidden sm:block"></div>
-      <span id="page-subtitle" class="text-xs text-orange-100 hidden sm:inline">Trang thiết lập danh mục & từ khóa định mức</span>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="diamond-icon">💎</span>
+      <span>TÀI CHÍNH</span>
     </div>
 
-    <!-- Tiêu đề lớn chính giữa thanh cam như hình chụp -->
-    <div class="absolute inset-x-0 mx-auto text-center pointer-events-none">
-      <h1 id="top-title" class="font-black text-xl sm:text-2xl tracking-wider uppercase text-white drop-shadow-sm inline-block">
-        TỪ KHÓA
-      </h1>
-    </div>
-
-    <div class="flex items-center gap-2">
-      <button onclick="exportData()" class="text-xs font-semibold px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white rounded-md transition flex items-center gap-1.5 border border-white/20">
-        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-        <span class="hidden md:inline">Xuất File</span>
+    <nav class="nav-menu">
+      <button class="nav-item active" data-tab="tab-tukhoa">
+        <span>Từ khoá</span>
       </button>
-      <button onclick="toggleDarkModeHint()" class="p-1.5 hover:bg-white/20 rounded-md transition text-white" title="Trợ giúp">
-        <i data-lucide="help-circle" class="w-4 h-4"></i>
+      <button class="nav-item" data-tab="tab-dashboard">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Dashboard</span>
       </button>
-    </div>
-  </header>
+      <button class="nav-item" data-tab="tab-muctieu-bt">
+        <span>Mục tiêu bản thân</span>
+      </button>
+      <button class="nav-item" data-tab="tab-muctieu-tc">
+        <span>Mục tiêu tài chính</span>
+      </button>
+      <button class="nav-item" data-tab="tab-candoi">
+        <span>Cân đối & Lộ trình nghề nghiệp</span>
+      </button>
+      <button class="nav-item" data-tab="tab-kehoach">
+        <span>Kế hoạch thu nhập & chi tiêu</span>
+      </button>
 
-  <!-- BODY WRAPPER: SIDEBAR + CONTENT AREA -->
-  <div class="flex-1 flex overflow-hidden">
+
+      <button class="nav-item" data-tab="tab-thang1"><span>Theo dõi tháng 1</span></button>
+      <button class="nav-item" data-tab="tab-thang2"><span>Theo dõi tháng 2</span></button>
+      <button class="nav-item" data-tab="tab-thang3"><span>Theo dõi tháng 3</span></button>
+      <button class="nav-item" data-tab="tab-thang4"><span>Theo dõi tháng 4</span></button>
+      <button class="nav-item" data-tab="tab-thang5"><span>Theo dõi tháng 5</span></button>
+      <button class="nav-item" data-tab="tab-thang6"><span>Theo dõi tháng 6</span></button>
+      <button class="nav-item" data-tab="tab-thang7"><span>Theo dõi tháng 7</span></button>
+      <button class="nav-item" data-tab="tab-thang8"><span>Theo dõi tháng 8</span></button>
+      <button class="nav-item" data-tab="tab-thang9"><span>Theo dõi tháng 9</span></button>
+      <button class="nav-item" data-tab="tab-thang10"><span>Theo dõi tháng 10</span></button>
+      <button class="nav-item" data-tab="tab-thang11"><span>Theo dõi tháng 11</span></button>
+      <button class="nav-item" data-tab="tab-thang12"><span>Theo dõi tháng 12</span></button>
+
+      <button class="nav-item" data-tab="tab-khaosat">
+        <span>Bảng khảo sát</span>
+      </button>
+    </nav>
+  </aside>
+
+
+  <main class="main-content">
     
-    <!-- LEFT SIDEBAR: Thanh dọc màu xanh lá đậm (#14532d) -->
-    <aside class="w-56 sm:w-64 bg-[#14532d] text-white flex flex-col shadow-xl z-10 shrink-0">
+    <header class="orange-banner">
+      <h1 id="current-title">TỪ KHÓA</h1>
+      <div class="banner-subtext">Hệ thống danh mục thiết lập ban đầu</div>
+    </header>
+
+    <section class="content-body">
       
-      <!-- Brand Logo / Header góc trên trái -->
-      <div class="p-4 flex items-center gap-2.5 border-b border-emerald-800/80 bg-[#0f3f22]">
-        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-inner">
-          <i data-lucide="gem" class="w-5 h-5 text-teal-300"></i>
-        </div>
-        <div>
-          <h2 class="font-extrabold tracking-wider text-sm uppercase text-emerald-100">TÀI CHÍNH</h2>
-          <p class="text-[10px] text-emerald-400 font-medium">Bản Quyền Quản Trị Vốn</p>
-        </div>
-      </div>
-
-      <!-- Menu Items dạng Pill tròn như mẫu ảnh -->
-      <nav id="nav-container" class="flex-1 overflow-y-auto px-3 py-3 space-y-1 text-xs font-medium">
-        <!-- Javascript will inject or manage active states here -->
-      </nav>
-
-      <!-- Sidebar Footer -->
-      <div class="p-3 border-t border-emerald-800/80 text-[11px] text-emerald-400/80 flex items-center justify-between bg-[#0e3a20]">
-        <span>Chế độ: Đang chỉnh sửa</span>
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      </div>
-    </aside>
-
-    <!-- MAIN SPREADSHEET CANVAS -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-white">
       
-      <!-- Mini Subheader: Thanh điều khiển & Chế độ xem -->
-      <div class="bg-slate-50 border-b border-slate-200 px-6 py-2 flex items-center justify-between text-xs text-slate-600">
-        <div class="flex items-center gap-2">
-          <span class="font-semibold text-slate-700 flex items-center gap-1">
-            <i data-lucide="table-properties" class="w-3.5 h-3.5 text-orange-600"></i>
-            Trang tính trực quan
-          </span>
-          <span class="text-slate-300">|</span>
-          <span class="text-slate-500 italic">Nhấp đúp vào ô để chỉnh sửa giá trị trực tiếp</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="px-2 py-0.5 rounded bg-orange-100 text-orange-800 text-[11px] font-semibold border border-orange-200">
-            Tự động lưu: Bật
-          </span>
-        </div>
-      </div>
-
-      <!-- CONTENT PANELS -->
-      <div class="flex-1 overflow-auto p-4 sm:p-6 bg-slate-100/60" id="main-content-area">
+      <div id="tab-tukhoa" class="tab-pane active">
+        <div class="tables-grid">
+          
         
-        <!-- ================= TAB 1: TỪ KHÓA (GIỐNG HÌNH ẢNH GỐC) ================= -->
-        <div id="tab-keywords" class="tab-panel">
-          <div class="mb-4 flex items-center justify-between">
-            <div>
-              <h3 class="text-base font-bold text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                Danh Mục Phân Bổ & Định Mức Thu - Chi
-              </h3>
-              <p class="text-xs text-slate-500">Các hạng mục chuẩn bị phân bổ ngân sách theo phương pháp quản lý dòng tiền</p>
+          <div class="sheet-card">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-list-ul"></i> Chi tiết chi phí thường nhật</h3>
+              <button class="btn-add" onclick="addRow('table-expenses')"><i class="fa-solid fa-plus"></i> Thêm hàng</button>
             </div>
-            <button onclick="addRowToTable1()" class="px-3 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-800 text-white font-medium rounded shadow-sm flex items-center gap-1 transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Thêm Dòng
-            </button>
+            <table class="excel-table" id="table-expenses">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Khoản mục chi tiêu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td contenteditable="true">Mua sắm trang phục</td></tr>
+                <tr><td>2</td><td contenteditable="true">Mỹ phẩm, đồ trang điểm</td></tr>
+                <tr><td>3</td><td contenteditable="true">Gặp gỡ bạn bè, đối tác</td></tr>
+                <tr><td>4</td><td contenteditable="true">Chi phí bảo hiểm sức khỏe</td></tr>
+                <tr><td>5</td><td contenteditable="true">Chi tiêu ăn uống hằng ngày</td></tr>
+                <tr><td>6</td><td contenteditable="true">Chi phí điện, nước, internet, gửi xe</td></tr>
+                <tr><td>7</td><td contenteditable="true">Chi tiêu giải trí, xem phim</td></tr>
+                <tr><td>8</td><td contenteditable="true">Chi phí xăng xe, di chuyển</td></tr>
+                <tr><td>9</td><td contenteditable="true">Chi tiêu quà biếu, đám tiệc</td></tr>
+                <tr><td>10</td><td contenteditable="true">Chi tiêu gia đình, mua sắm đồ dùng</td></tr>
+                <tr><td>11</td><td contenteditable="true">Chi phí dự phòng phát sinh</td></tr>
+                <tr><td>12</td><td contenteditable="true">Chi tiêu phát triển bản thân</td></tr>
+                <tr><td>13</td><td contenteditable="true">Chi tiêu du lịch, nghỉ dưỡng</td></tr>
+                <tr><td>14</td><td contenteditable="true">Chi phí y tế thuốc men</td></tr>
+                <tr><td>15</td><td contenteditable="true">Chi trả các khoản vay ngắn hạn</td></tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Lưới 4 bảng tính song song như trong hình ảnh -->
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-            
-            <!-- BẢNG 1: CHI PHÍ THIẾT YẾU / KHOẢN MỤC -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div class="bg-amber-100/90 text-amber-950 font-bold text-xs uppercase px-3 py-2 border-b border-amber-300 text-center tracking-wide">
-                Khoản Mục Chi Phí
-              </div>
-              <div class="overflow-x-auto max-h-[520px]">
-                <table class="sheet-table w-full text-xs">
-                  <thead class="bg-amber-50 text-slate-700 font-semibold sticky top-0">
-                    <tr>
-                      <th class="w-10 py-1.5 text-center bg-amber-100/70">#</th>
-                      <th class="py-1.5 px-3 text-left">Khoản Mục Chi Tiêu</th>
-                    </tr>
-                  </thead>
-                  <tbody id="table-expense-body" class="divide-y divide-slate-200">
-                    <!-- Dynamic Rows populated in script -->
-                  </tbody>
-                </table>
-              </div>
+          <!-- BẢNG 2: KHOẢN MỤC THU NHẬP -->
+          <div class="sheet-card">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-wallet"></i> Nguồn thu nhập</h3>
+              <button class="btn-add" onclick="addRow('table-income')"><i class="fa-solid fa-plus"></i> Thêm</button>
             </div>
-
-            <!-- BẢNG 2: THU NHẬP -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div class="bg-emerald-100 text-emerald-950 font-bold text-xs uppercase px-3 py-2 border-b border-emerald-300 text-center tracking-wide">
-                Khoản Mục Thu Nhập
-              </div>
-              <div class="overflow-x-auto max-h-[520px]">
-                <table class="sheet-table w-full text-xs">
-                  <thead class="bg-emerald-50 text-slate-700 font-semibold sticky top-0">
-                    <tr>
-                      <th class="w-10 py-1.5 text-center bg-emerald-100/70">#</th>
-                      <th class="py-1.5 px-3 text-left">Nguồn Thu Nhập</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">1</td><td class="px-3 py-1.5" contenteditable="true">Lương cố định hàng kỳ</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">2</td><td class="px-3 py-1.5" contenteditable="true">Thu nhập kinh doanh thêm</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">3</td><td class="px-3 py-1.5" contenteditable="true">Cổ tức & Đầu tư sinh lời</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">4</td><td class="px-3 py-1.5" contenteditable="true">Thưởng KPI & Dự án</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">5</td><td class="px-3 py-1.5" contenteditable="true">Thu nhập thụ động khác</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">6</td><td class="px-3 py-1.5" contenteditable="true">Hoàn tiền & Khuyến mãi</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">7</td><td class="px-3 py-1.5" contenteditable="true">-</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- BẢNG 3: ĐÀO TẠO & PHÁT TRIỂN / DỰ PHÒNG -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div class="bg-amber-100/90 text-amber-950 font-bold text-xs uppercase px-3 py-2 border-b border-amber-300 text-center tracking-wide">
-                Khoản Mục Học Tập & Dự Phòng
-              </div>
-              <div class="overflow-x-auto max-h-[520px]">
-                <table class="sheet-table w-full text-xs">
-                  <thead class="bg-amber-50 text-slate-700 font-semibold sticky top-0">
-                    <tr>
-                      <th class="w-10 py-1.5 text-center bg-amber-100/70">#</th>
-                      <th class="py-1.5 px-3 text-left">Hạng Mục</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">1</td><td class="px-3 py-1.5" contenteditable="true">Học phí chuyên môn ngắn hạn</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">2</td><td class="px-3 py-1.5" contenteditable="true">Khóa học dài hạn / Chứng chỉ</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">3</td><td class="px-3 py-1.5" contenteditable="true">Sách & Công cụ phần mềm</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">4</td><td class="px-3 py-1.5" contenteditable="true">Tham gia hội thảo / Mentor</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">5</td><td class="px-3 py-1.5" contenteditable="true">Quỹ dự phòng khẩn cấp</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">6</td><td class="px-3 py-1.5" contenteditable="true">Bảo hiểm sức khỏe bổ trợ</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">7</td><td class="px-3 py-1.5" contenteditable="true">Bảo trì bảo dưỡng thiết bị</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">8</td><td class="px-3 py-1.5" contenteditable="true">-</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- BẢNG 4: DANH MỤC ĐẦU TƯ & HIỆU SUẤT SINH LỜI -->
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-              <div class="bg-emerald-100 text-emerald-950 font-bold text-xs uppercase px-3 py-2 border-b border-emerald-300 text-center tracking-wide">
-                Hiệu Suất Đầu Tư Kì Vọng
-              </div>
-              <div class="overflow-x-auto max-h-[520px]">
-                <table class="sheet-table w-full text-xs">
-                  <thead class="bg-emerald-50 text-slate-700 font-semibold sticky top-0">
-                    <tr>
-                      <th class="w-8 py-1.5 text-center bg-emerald-100/70">#</th>
-                      <th class="py-1.5 px-2 text-left">Khoản Mục</th>
-                      <th class="w-16 py-1.5 text-center bg-emerald-50">Kỳ vọng</th>
-                      <th class="w-14 py-1.5 text-center bg-emerald-50">Thực tế</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-200">
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">1</td><td class="px-2 py-1 font-medium" contenteditable="true">ETF - E1VFVN30</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">15%</td><td class="text-center text-slate-600" contenteditable="true">18%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">2</td><td class="px-2 py-1 font-medium" contenteditable="true">ETF - FUESSVFL</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">16%</td><td class="text-center text-slate-600" contenteditable="true">20%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">3</td><td class="px-2 py-1 font-medium bg-emerald-50/40" contenteditable="true">Quỹ Mở DCDS</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">14%</td><td class="text-center text-slate-600" contenteditable="true">16%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">4</td><td class="px-2 py-1 font-medium" contenteditable="true">Quỹ Mở DCDE</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">11%</td><td class="text-center text-slate-600" contenteditable="true">10%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">5</td><td class="px-2 py-1 font-medium" contenteditable="true">Quỹ Mở DCDF</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">9%</td><td class="text-center text-slate-600" contenteditable="true">8%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">6</td><td class="px-2 py-1 font-medium" contenteditable="true">Trái Phiếu Techcom</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">11%</td><td class="text-center text-slate-600" contenteditable="true">9%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">7</td><td class="px-2 py-1 font-medium" contenteditable="true">Trái Phiếu FE Credit</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">10%</td><td class="text-center text-slate-600" contenteditable="true">8%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">8</td><td class="px-2 py-1 font-medium" contenteditable="true">Finhay Tích Lũy</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">6%</td><td class="text-center text-slate-600" contenteditable="true">7%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">9</td><td class="px-2 py-1 font-medium" contenteditable="true">Bảo hiểm liên kết</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">4%</td><td class="text-center text-slate-600" contenteditable="true">5%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">10</td><td class="px-2 py-1 font-medium" contenteditable="true">Tiết Kiệm Ngân Hàng</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">5%</td><td class="text-center text-slate-600" contenteditable="true">5%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">11</td><td class="px-2 py-1 font-medium" contenteditable="true">Cổ Phiếu Riêng Lẻ</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">12%</td><td class="text-center text-slate-600" contenteditable="true">6%</td></tr>
-                    <tr class="hover:bg-amber-50/50 transition"><td class="text-center font-semibold bg-slate-50 text-slate-500 py-1">12</td><td class="px-2 py-1 font-medium" contenteditable="true">Sản phẩm 1</td><td class="text-center text-emerald-700 font-semibold" contenteditable="true">8%</td><td class="text-center text-slate-600" contenteditable="true">8%</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
+            <table class="excel-table" id="table-income">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Khoản mục</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td contenteditable="true">Lương cố định hằng tháng</td></tr>
+                <tr><td>2</td><td contenteditable="true">Thu nhập làm thêm, freelancer</td></tr>
+                <tr><td>3</td><td contenteditable="true">Lợi nhuận kinh doanh riêng</td></tr>
+                <tr><td>4</td><td contenteditable="true">Cổ tức & Lãi tiền gửi</td></tr>
+                <tr><td>5</td><td contenteditable="true">Thưởng KPI, hoa hồng dự án</td></tr>
+                <tr><td>6</td><td contenteditable="true">Thu nhập thụ động khác</td></tr>
+                <tr><td>7</td><td contenteditable="true">Quà tặng / Tài trợ gia đình</td></tr>
+              </tbody>
+            </table>
           </div>
 
-          <!-- Ghi chú Legend ở góc dưới như trong hình -->
-          <div class="mt-8 flex justify-center">
-            <div class="border border-slate-300 bg-white shadow-sm px-8 py-3 rounded-md text-xs font-semibold text-slate-600 tracking-wide">
-              Legend / Bảng Chú Thích & Quy Chuẩn Mã Số
+          
+          <div class="sheet-card">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-graduation-cap"></i> Học tập & Phát triển</h3>
+              <button class="btn-add" onclick="addRow('table-learning')"><i class="fa-solid fa-plus"></i> Thêm</button>
             </div>
+            <table class="excel-table" id="table-learning">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Khoản mục</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td contenteditable="true">Học ngoại ngữ (IELTS/TOEIC)</td></tr>
+                <tr><td>2</td><td contenteditable="true">Khóa học kỹ năng chuyên môn</td></tr>
+                <tr><td>3</td><td contenteditable="true">Khóa học đầu tư tài chính</td></tr>
+                <tr><td>4</td><td contenteditable="true">Tham gia câu lạc bộ, hội thảo</td></tr>
+                <tr><td>5</td><td contenteditable="true">Chi phí mua sách & tài liệu học</td></tr>
+                <tr><td>6</td><td contenteditable="true">Thi lấy chứng chỉ quốc tế</td></tr>
+                <tr><td>7</td><td contenteditable="true">Đào tạo kỹ năng mềm, lãnh đạo</td></tr>
+              </tbody>
+            </table>
           </div>
+
+
+          <div class="sheet-card">
+            <div class="card-head">
+              <h3><i class="fa-solid fa-arrow-trend-up"></i> Danh mục phân bổ tài sản đầu tư</h3>
+              <button class="btn-add" onclick="addRowInvest('table-invest')"><i class="fa-solid fa-plus"></i> Thêm danh mục</button>
+            </div>
+            <table class="excel-table" id="table-invest">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">#</th>
+                  <th>Mã / Tên danh mục</th>
+                  <th style="width: 110px;">Hiệu suất TB</th>
+                  <th style="width: 100px;">Kỳ vọng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td contenteditable="true">ETF - E1VFVN30</td><td class="text-right" contenteditable="true">15%</td><td class="text-right" contenteditable="true">18%</td></tr>
+                <tr><td>2</td><td contenteditable="true">ETF - FUESSVFL (Lead)</td><td class="text-right" contenteditable="true">17%</td><td class="text-right" contenteditable="true">20%</td></tr>
+                <tr><td>3</td><td contenteditable="true">Quỹ mở DCDS (Dragon Capital)</td><td class="text-right" contenteditable="true">16%</td><td class="text-right" contenteditable="true">20%</td></tr>
+                <tr><td>4</td><td contenteditable="true">Quỹ mở VEOF (VinaCapital)</td><td class="text-right" contenteditable="true">14%</td><td class="text-right" contenteditable="true">18%</td></tr>
+                <tr><td>5</td><td contenteditable="true">Trái phiếu Techcombank</td><td class="text-right" contenteditable="true">9.5%</td><td class="text-right" contenteditable="true">9.5%</td></tr>
+                <tr><td>6</td><td contenteditable="true">Trái phiếu doanh nghiệp AAA</td><td class="text-right" contenteditable="true">10.2%</td><td class="text-right" contenteditable="true">10%</td></tr>
+                <tr><td>7</td><td contenteditable="true">Vàng miếng SJC tích sản</td><td class="text-right" contenteditable="true">8.5%</td><td class="text-right" contenteditable="true">8%</td></tr>
+                <tr><td>8</td><td contenteditable="true">Cổ phiếu bluechips đầu ngành</td><td class="text-right" contenteditable="true">12%</td><td class="text-right" contenteditable="true">15%</td></tr>
+                <tr><td>9</td><td contenteditable="true">Tiết kiệm ngân hàng kỳ hạn</td><td class="text-right" contenteditable="true">6.0%</td><td class="text-right" contenteditable="true">6.0%</td></tr>
+              </tbody>
+            </table>
+          </div>
+
         </div>
 
-        <!-- ================= TAB 2: DASHBOARD (TỔNG QUAN PHÂN TÍCH) ================= -->
-        <div id="tab-dashboard" class="tab-panel hidden space-y-6">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <span class="text-xs font-medium text-slate-500">Tổng Thu Nhập Tháng</span>
-              <div class="text-2xl font-bold text-slate-800 mt-1">45.000.000 ₫</div>
-              <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-                <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +8.5% so với tháng trước
-              </span>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <span class="text-xs font-medium text-slate-500">Chi Tiêu Thực Tế</span>
-              <div class="text-2xl font-bold text-orange-600 mt-1">18.450.000 ₫</div>
-              <span class="text-[11px] text-slate-500 font-medium mt-1">Đạt 41% mức trần cho phép</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <span class="text-xs font-medium text-slate-500">Tỷ Lệ Tiết Kiệm & Đầu Tư</span>
-              <div class="text-2xl font-bold text-emerald-700 mt-1">59.0%</div>
-              <span class="text-[11px] text-emerald-600 font-semibold mt-1">Vượt mục tiêu chuẩn 50%</span>
-            </div>
-            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-              <span class="text-xs font-medium text-slate-500">Tổng Tài Sản Tích Lũy</span>
-              <div class="text-2xl font-bold text-blue-700 mt-1">420.000.000 ₫</div>
-              <span class="text-[11px] text-blue-600 font-semibold mt-1">Đang tăng trưởng ổn định</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <h4 class="font-bold text-sm text-slate-800 mb-4 flex items-center gap-2">
-                <i data-lucide="pie-chart" class="w-4 h-4 text-orange-500"></i> Phân Bổ Chi Tiêu Theo Danh Mục
-              </h4>
-              <div class="h-64 relative">
-                <canvas id="expenseChart"></canvas>
-              </div>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <h4 class="font-bold text-sm text-slate-800 mb-4 flex items-center gap-2">
-                <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-600"></i> Dòng Tiền Thu - Chi Các Tháng
-              </h4>
-              <div class="h-64 relative">
-                <canvas id="cashflowChart"></canvas>
-              </div>
-            </div>
+        <div class="legend-box-container">
+          <div class="legend-pill">
+            <i class="fa-solid fa-circle-info"></i> Ghi chú (Legend): Nhấp đúp vào ô để sửa trực tiếp văn bản
           </div>
         </div>
-
-        <!-- ================= TAB GENERIC (Cho các mục còn lại) ================= -->
-        <div id="tab-generic" class="tab-panel hidden bg-white rounded-xl border border-slate-200 p-8 shadow-sm text-center">
-          <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto text-orange-600 mb-4">
-            <i data-lucide="file-spreadsheet" class="w-8 h-8"></i>
-          </div>
-          <h3 id="generic-sheet-name" class="text-lg font-bold text-slate-800 uppercase">MỤC TIÊU BẢN THÂN</h3>
-          <p class="text-xs text-slate-500 max-w-md mx-auto mt-2">
-            Trang tính đang sẵn sàng cho việc cập nhật dữ liệu hàng tháng. Bạn có thể thêm công thức và liên kết trực tiếp với bảng Từ Khóa.
-          </p>
-          <div class="mt-6 flex justify-center gap-3">
-            <button onclick="switchTab('tu-khoa')" class="px-4 py-2 bg-emerald-800 text-white rounded-lg text-xs font-semibold hover:bg-emerald-900 transition">
-              Quay lại Bảng Từ Khóa
-            </button>
-            <button onclick="switchTab('dashboard')" class="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-semibold hover:bg-orange-700 transition">
-              Xem Báo Cáo Dashboard
-            </button>
-          </div>
-        </div>
-
       </div>
-    </main>
-  </div>
 
-  <!-- NOTIFICATION TOAST -->
-  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-xl opacity-0 transition-opacity pointer-events-none z-50 flex items-center gap-2">
-    <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-    <span id="toast-msg">Đã cập nhật dữ liệu thành công!</span>
-  </div>
 
-  <!-- SCRIPT LOGIC -->
-  <script>
-    // Dữ liệu danh sách menu giống bảng mẫu
-    const navItems = [
-      { id: 'tu-khoa', label: 'Từ khoá', icon: 'key' },
-      { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
-      { id: 'muc-tieu-ban-than', label: 'Mục tiêu bản thân', icon: 'user' },
-      { id: 'muc-tieu-tai-chinh', label: 'Mục tiêu tài chính', icon: 'target' },
-      { id: 'can-doi-nghe-nghiep', label: 'Cân đối lộ trình nghề nghiệp', icon: 'git-merge' },
-      { id: 'ke-hoach-thu-chi', label: 'Kế hoạch thu nhập & chi tiêu', icon: 'wallet' },
-      { id: 'thang-1', label: 'Theo dõi tháng 1', icon: 'calendar' },
-      { id: 'thang-2', label: 'Theo dõi tháng 2', icon: 'calendar' },
-      { id: 'thang-3', label: 'Theo dõi tháng 3', icon: 'calendar' },
-      { id: 'thang-4', label: 'Theo dõi tháng 4', icon: 'calendar' },
-      { id: 'thang-5', label: 'Theo dõi tháng 5', icon: 'calendar' },
-      { id: 'thang-6', label: 'Theo dõi tháng 6', icon: 'calendar' },
-      { id: 'thang-7', label: 'Theo dõi tháng 7', icon: 'calendar' },
-      { id: 'thang-8', label: 'Theo dõi tháng 8', icon: 'calendar' },
-      { id: 'thang-9', label: 'Theo dõi tháng 9', icon: 'calendar' },
-      { id: 'thang-10', label: 'Theo dõi tháng 10', icon: 'calendar' },
-      { id: 'thang-11', label: 'Theo dõi tháng 11', icon: 'calendar' },
-      { id: 'thang-12', label: 'Theo dõi tháng 12', icon: 'calendar' },
-      { id: 'bang-khao-sat', label: 'Bảng khảo sát', icon: 'clipboard-list' },
-    ];
+      <div id="tab-dashboard" class="tab-pane">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-label">Tổng thu nhập tháng</div>
+            <div class="stat-value text-green">45,000,000 đ</div>
+            <div class="stat-sub">+12% so với tháng trước</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tổng chi tiêu tháng</div>
+            <div class="stat-value text-red">21,450,000 đ</div>
+            <div class="stat-sub">47.6% trên tổng thu</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tích lũy & Đầu tư</div>
+            <div class="stat-value text-blue">23,550,000 đ</div>
+            <div class="stat-sub">Đạt 52.4% mục tiêu</div>
+          </div>
+        </div>
 
-    // Dữ liệu mẫu các khoản chi bảng 1 (theo hình ảnh)
-    const initialExpenseItems = [
-      "Hóa đơn điện",
-      "Mua sắm dùng trong nhà",
-      "Người giúp việc",
-      "Chi phí phát triển bản thân",
-      "Chi phí con cái",
-      "Chi phí điện, nước, internet, điện thoại, xăng xe",
-      "Chi phí giải trí, quà tặng",
-      "Chi phí cho mẹ",
-      "Chi phí 1",
-      "Chi phí cho gia đình",
-      "Chi phí 2",
-      "Chi phí 3",
-      "Chi phí 4",
-      "Chi phí 5"
-    ];
+        <div class="charts-wrapper">
+          <div class="chart-card">
+            <h3>Cơ cấu phân bổ ngân sách</h3>
+            <div class="chart-container">
+              <canvas id="pieChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3>Thu nhập vs Chi tiêu 6 tháng gần nhất (Triệu VNĐ)</h3>
+            <div class="chart-container">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    let currentTab = 'tu-khoa';
-    let expenseData = [...initialExpenseItems];
-    let chartsInitialized = false;
 
-    // Render danh sách menu sidebar
-    function renderSidebar() {
-      const container = document.getElementById('nav-container');
-      container.innerHTML = navItems.map(item => {
-        const isActive = item.id === currentTab;
-        const activeClass = isActive 
-          ? 'bg-emerald-600 text-white font-semibold shadow-inner border border-emerald-400/40 translate-x-1' 
-          : 'text-emerald-100/90 hover:bg-emerald-800/80 hover:text-white';
-        
-        return `
-          <button 
-            onclick="switchTab('${item.id}')"
-            class="w-full text-left px-3.5 py-2 rounded-full transition-all duration-150 flex items-center gap-2.5 ${activeClass}">
-            <i data-lucide="${item.icon}" class="w-3.5 h-3.5 opacity-80"></i>
-            <span class="truncate">${item.label}</span>
-          </button>
-        `;
-      }).join('');
-      lucide.createIcons();
-    }
+      <div id="tab-generic" class="tab-pane">
+        <div class="empty-state">
+          <i class="fa-regular fa-folder-open empty-icon"></i>
+          <h2 id="empty-title">Nội dung trang</h2>
+          <p>Mẫu trang tính đã sẵn sàng kết nối dữ liệu chi tiết cho mục này.</p>
+        </div>
+      </div>
 
-    // Render Bảng 1: Chi phí
-    function renderExpenseTable() {
-      const tbody = document.getElementById('table-expense-body');
-      tbody.innerHTML = expenseData.map((item, index) => `
-        <tr class="hover:bg-amber-50/50 transition">
-          <td class="text-center font-semibold bg-slate-50 text-slate-500 py-1.5">${index + 1}</td>
-          <td class="px-3 py-1.5 outline-none focus:bg-amber-100" contenteditable="true" onblur="updateExpenseItem(${index}, this.innerText)">${item}</td>
-        </tr>
-      `).join('');
-    }
+    </section>
+  </main>
 
-    function updateExpenseItem(index, val) {
-      expenseData[index] = val.trim();
-      showToast("Đã lưu mục: " + val);
-    }
 
-    function addRowToTable1() {
-      const count = expenseData.length + 1;
-      expenseData.push(`Khoản mục mới #${count}`);
-      renderExpenseTable();
-      showToast("Đã thêm hàng mới vào bảng chi phí");
-    }
-
-    // Chuyển Tab và cập nhật Tiêu đề cam
-    function switchTab(tabId) {
-      currentTab = tabId;
-      renderSidebar();
-
-      const item = navItems.find(i => i.id === tabId);
-      const topTitle = document.getElementById('top-title');
-      const subtitle = document.getElementById('page-subtitle');
-      
-      topTitle.innerText = item ? item.label.toUpperCase() : 'TỪ KHÓA';
-      
-      // Ẩn tất cả tab panels
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
-
-      if (tabId === 'tu-khoa') {
-        document.getElementById('tab-keywords').classList.remove('hidden');
-        subtitle.innerText = 'Trang thiết lập danh mục & từ khóa định mức';
-      } else if (tabId === 'dashboard') {
-        document.getElementById('tab-dashboard').classList.remove('hidden');
-        subtitle.innerText = 'Báo cáo trực quan hiệu quả tích lũy và dòng tiền';
-        initChartsIfNeeded();
-      } else {
-        const generic = document.getElementById('tab-generic');
-        generic.classList.remove('hidden');
-        document.getElementById('generic-sheet-name').innerText = item ? item.label : '';
-        subtitle.innerText = `Theo dõi chi tiết & kế hoạch: ${item ? item.label : ''}`;
-      }
-    }
-
-    // Hiển thị thông báo Toast
-    function showToast(msg) {
-      const toast = document.getElementById('toast');
-      const toastMsg = document.getElementById('toast-msg');
-      toastMsg.innerText = msg;
-      toast.classList.remove('opacity-0');
-      toast.classList.add('opacity-100');
-      setTimeout(() => {
-        toast.classList.remove('opacity-100');
-        toast.classList.add('opacity-0');
-      }, 2000);
-    }
-
-    function exportData() {
-      showToast("Đang chuẩn bị trích xuất dữ liệu bảng tính...");
-    }
-
-    function toggleDarkModeHint() {
-      showToast("Hệ thống bảng tính Excel Web: Tương thích tốt trên máy tính & tablet");
-    }
-
-    // Khởi tạo đồ thị cho tab Dashboard
-    function initChartsIfNeeded() {
-      if (chartsInitialized) return;
-      chartsInitialized = true;
-
-      // Donut Chart - Chi tiêu
-      const ctx1 = document.getElementById('expenseChart').getContext('2d');
-      new Chart(ctx1, {
-        type: 'doughnut',
-        data: {
-          labels: ['Thiết Yếu', 'Học Tập', 'Giải Trí', 'Gia Đình', 'Dự Phòng'],
-          datasets: [{
-            data: [45, 15, 12, 18, 10],
-            backgroundColor: ['#ea580c', '#10b981', '#f59e0b', '#0284c7', '#6366f1'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'right' }
-          }
-        }
-      });
-
-      // Bar Chart - Thu Chi
-      const ctx2 = document.getElementById('cashflowChart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-          datasets: [
-            { label: 'Thu Nhập', data: [38, 40, 42, 41, 44, 45], backgroundColor: '#10b981', borderRadius: 4 },
-            { label: 'Chi Tiêu', data: [17, 19, 18, 16, 20, 18.5], backgroundColor: '#f97316', borderRadius: 4 }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' }
-          }
-        }
-      });
-    }
-
-    // Khởi động trang ban đầu
-    window.addEventListener('DOMContentLoaded', () => {
-      renderSidebar();
-      renderExpenseTable();
-      lucide.createIcons();
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
