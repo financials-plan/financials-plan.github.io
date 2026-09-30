@@ -71,7 +71,6 @@ const AppState = {
     { name: 'Chi tiền cho tặng gia đình', plan: 1.0, note: '' }
   ],
 
-  // Ma trận số liệu chính xác 100% từ Dashboard của file XLSX
   matrixIncome: {
     'Lương từ công ty': [20, 25, 18, 20, 25, 20, 20, 20, 20, 20, 20, 25],
     'Thu nhập khác': [4, 4.5, 5.7, 3.9, 7.8, 7.5, 9.0, 5.0, 7.0, 8.0, 4.0, 10.0]
@@ -191,38 +190,6 @@ window.switchMonthTab = function(m) {
   renderMonthView(m);
 };
 
-// ==================== TƯƠNG TÁC CHỌN ĐÁP ÁN BẢNG KHẢO SÁT ====================
-window.selectSurveyOption = function(rowEl) {
-  let prev = rowEl.previousElementSibling;
-  while (prev && prev.classList.contains('opt-row')) {
-    prev.classList.remove('selected');
-    const checkCell = prev.querySelector('.check-col');
-    if (checkCell) {
-      checkCell.textContent = '';
-      checkCell.classList.remove('mark-x');
-    }
-    prev = prev.previousElementSibling;
-  }
-  
-  let next = rowEl.nextElementSibling;
-  while (next && next.classList.contains('opt-row')) {
-    next.classList.remove('selected');
-    const checkCell = next.querySelector('.check-col');
-    if (checkCell) {
-      checkCell.textContent = '';
-      checkCell.classList.remove('mark-x');
-    }
-    next = next.nextElementSibling;
-  }
-
-  rowEl.classList.add('selected');
-  const activeCheck = rowEl.querySelector('.check-col');
-  if (activeCheck) {
-    activeCheck.textContent = 'x';
-    activeCheck.classList.add('mark-x');
-  }
-};
-
 // ==================== ĐỒ THỊ SPARKLINE ====================
 function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
   if (!arr || arr.length === 0) return '';
@@ -279,6 +246,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Tự động đồng bộ nhận định khảo sát sang tab Mục tiêu bản thân khi chọn dotbox
+  document.addEventListener('change', (e) => {
+    if (e.target && e.target.name === 'ks1_4') {
+      const val = e.target.value;
+      const riskEl = document.getElementById('survey-result-risk');
+      if (riskEl) {
+        if (val === '1') {
+          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người thận trọng, ưu tiên bảo toàn vốn, nên duy trì tài sản an toàn cao.';
+        } else if (val === '4') {
+          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người ưa mạo hiểm, ưu tiên tăng trưởng, sẵn sàng đón nhận biến động mạnh.';
+        } else {
+          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.';
+        }
+      }
+    }
+
+    if (e.target && e.target.name === 'ks2_9') {
+      const contextEl = document.getElementById('survey-result-context');
+      if (contextEl) {
+        if (e.target.value === '3') {
+          contextEl.textContent = 'Kết quả khảo sát hoàn cảnh: Bạn tự chủ tài chính từ sớm, có tính độc lập cao trong việc xây dựng lộ trình tích lũy.';
+        } else {
+          contextEl.textContent = 'Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.';
+        }
+      }
+    }
+  });
 });
 
 function syncYearLabels() {
