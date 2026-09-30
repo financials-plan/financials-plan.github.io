@@ -89,7 +89,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== VÙNG NỘI DUNG CHÍNH (CĂN GIỮA) ==================== */
+/* ==================== VÙNG NỘI DUNG CHÍNH ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -257,7 +257,7 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== BẢNG CHUẨN SPREADSHEET (TỪ KHÓA) ==================== */
+/* ==================== BẢNG CHUẨN SPREADSHEET ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
@@ -335,7 +335,7 @@ body {
   margin-left: 20px;
 }
 
-/* NÚT THÊM (+) HOVER MỞ RỘNG */
+/* NÚT THÊM & NÚT XÓA */
 .btn-table-add {
   display: inline-flex;
   align-items: center;
@@ -387,6 +387,19 @@ body {
 
 .btn-table-add:hover i {
   transform: rotate(90deg);
+}
+
+.btn-table-del {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: color 0.15s ease;
+}
+
+.btn-table-del:hover {
+  color: #dc2626;
 }
 
 .excel-table td:first-child {
@@ -593,7 +606,7 @@ body {
   margin: 0 auto;
 }
 
-/* ==================== KHUNG CONTAINER CHO CÁC SHEET ==================== */
+/* ==================== CONTAINER CHO CÁC SHEET ==================== */
 .custom-sheet-container {
   width: 100%;
   max-width: 1080px;
