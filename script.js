@@ -71,6 +71,7 @@ const AppState = {
     { name: 'Chi tiền cho tặng gia đình', plan: 1.0, note: '' }
   ],
 
+  // Ma trận số liệu chính xác 100% từ Dashboard của file XLSX
   matrixIncome: {
     'Lương từ công ty': [20, 25, 18, 20, 25, 20, 20, 20, 20, 20, 20, 25],
     'Thu nhập khác': [4, 4.5, 5.7, 3.9, 7.8, 7.5, 9.0, 5.0, 7.0, 8.0, 4.0, 10.0]
@@ -188,6 +189,38 @@ window.switchMonthTab = function(m) {
   if (monthPane) monthPane.classList.add('active');
 
   renderMonthView(m);
+};
+
+// ==================== TƯƠNG TÁC CHỌN ĐÁP ÁN BẢNG KHẢO SÁT ====================
+window.selectSurveyOption = function(rowEl) {
+  let prev = rowEl.previousElementSibling;
+  while (prev && prev.classList.contains('opt-row')) {
+    prev.classList.remove('selected');
+    const checkCell = prev.querySelector('.check-col');
+    if (checkCell) {
+      checkCell.textContent = '';
+      checkCell.classList.remove('mark-x');
+    }
+    prev = prev.previousElementSibling;
+  }
+  
+  let next = rowEl.nextElementSibling;
+  while (next && next.classList.contains('opt-row')) {
+    next.classList.remove('selected');
+    const checkCell = next.querySelector('.check-col');
+    if (checkCell) {
+      checkCell.textContent = '';
+      checkCell.classList.remove('mark-x');
+    }
+    next = next.nextElementSibling;
+  }
+
+  rowEl.classList.add('selected');
+  const activeCheck = rowEl.querySelector('.check-col');
+  if (activeCheck) {
+    activeCheck.textContent = 'x';
+    activeCheck.classList.add('mark-x');
+  }
 };
 
 // ==================== ĐỒ THỊ SPARKLINE ====================
