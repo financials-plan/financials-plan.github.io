@@ -12,12 +12,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- CSS -->
+  <!-- Link file CSS -->
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC XANH LÁ ĐẬM -->
+  <!-- SIDEBAR DỌC MÀU XANH LÁ ĐẬM -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="diamond-icon">💎</span>
@@ -44,7 +44,7 @@
         <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- 12 NÚT THÁNG RIÊNG BIỆT T1 -> T12 -->
+      <!-- 12 NÚT THÁNG TÁCH BIỆT -->
       <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Theo dõi tháng 1</span></button>
       <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Theo dõi tháng 2</span></button>
       <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Theo dõi tháng 3</span></button>
@@ -64,16 +64,16 @@
     </nav>
   </aside>
 
-  <!-- NỘI DUNG CHÍNH -->
+  <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải banner màu cam -->
+    <!-- Dải banner cam chạy ngang -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">Đơn vị: triệu đồng</span>
     </header>
 
-    <!-- KHU VỰC CÁC TAB -->
+    <!-- NỘI DUNG CÁC TAB -->
     <section class="content-body">
       
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
@@ -205,10 +205,9 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 2: DASHBOARD (NGUYÊN BẢN THEO ẢNH BẢNG TÍNH) ==================== -->
+      <!-- ==================== TAB 2: DASHBOARD ==================== -->
       <div id="tab-dashboard" class="tab-pane">
-        
-        <!-- HÀNG THẺ CHỈ SỐ KPI CHÍNH -->
+        <!-- HÀNG THẺ KPI TỔNG QUAN -->
         <div class="stat-cards">
           <div class="stat-card">
             <div class="stat-label">Tổng tiết kiệm cần đạt</div>
@@ -249,9 +248,8 @@
           </div>
         </div>
 
-        <!-- 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN THEO ẢNH BẠN GỬI -->
+        <!-- 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN XLSX -->
         <div class="dashboard-matrix-container">
-          
           <!-- BẢNG 1: THU NHẬP 12 THÁNG -->
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-income">
@@ -370,7 +368,6 @@
               </tfoot>
             </table>
           </div>
-
         </div>
       </div>
 
@@ -395,7 +392,7 @@
           </div>
 
           <div class="target-section">
-            <table class="target-table">
+            <table class="target-table" id="table-debt-target">
               <thead>
                 <tr>
                   <th style="width: 140px;" class="italic-head">
@@ -414,7 +411,7 @@
           </div>
 
           <div class="target-section">
-            <table class="target-table">
+            <table class="target-table" id="table-invest-target">
               <thead>
                 <tr>
                   <th style="width: 140px;" class="italic-head">
@@ -670,62 +667,265 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 8: BẢNG KHẢO SÁT ==================== -->
+      <!-- ==================== TAB 8: BẢNG KHẢO SÁT (CHUẨN MẪU XLSX) ==================== -->
       <div id="tab-khaosat" class="tab-pane">
-        <div class="survey-sheet-wrapper">
-          <div class="survey-sheet-header">
-            <h2>BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN (CHỈ CHỌN 1 ĐÁP ÁN CHO MỖI CÂU HỎI)</h2>
-            <p>Khảo sát 1: Khả năng chịu đựng rủi ro đầu tư & Hoàn cảnh</p>
-          </div>
-
-          <div class="survey-questions-grid">
-            <div class="survey-card">
-              <h3>1. Bạn có bao nhiêu mục tiêu tài chính?</h3>
-              <label class="survey-option"><input type="radio" name="ks1" value="1"> 1</label>
-              <label class="survey-option"><input type="radio" name="ks1" value="2"> 2</label>
-              <label class="survey-option"><input type="radio" name="ks1" value="3"> 3</label>
-              <label class="survey-option"><input type="radio" name="ks1" value="4"> 4</label>
-              <label class="survey-option"><input type="radio" name="ks1" value="5" checked> &gt;4</label>
-            </div>
-
-            <div class="survey-card">
-              <h3>2. Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?</h3>
-              <label class="survey-option"><input type="radio" name="ks2" value="1"> Không</label>
-              <label class="survey-option"><input type="radio" name="ks2" value="2"> Dưới 2%</label>
-              <label class="survey-option"><input type="radio" name="ks2" value="3"> Lớn hơn 2%, nhưng nhỏ hơn 4%</label>
-              <label class="survey-option"><input type="radio" name="ks2" value="4"> Lớn hơn 4%, nhưng nhỏ hơn 6%</label>
-              <label class="survey-option"><input type="radio" name="ks2" value="5" checked> Lớn hơn 6%</label>
-            </div>
-
-            <div class="survey-card">
-              <h3>3. Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình?</h3>
-              <label class="survey-option"><input type="radio" name="ks3" value="1"> Hơn 20 năm</label>
-              <label class="survey-option"><input type="radio" name="ks3" value="2"> 11–20 năm</label>
-              <label class="survey-option"><input type="radio" name="ks3" value="3" checked> 6–10 năm</label>
-              <label class="survey-option"><input type="radio" name="ks3" value="4"> 1–5 năm</label>
-              <label class="survey-option"><input type="radio" name="ks3" value="5"> Ngay lập tức</label>
-            </div>
-
-            <div class="survey-card">
-              <h3>4. Hãy mô tả quan điểm của bạn đối với vấn đề mức sinh lời và rủi ro từ việc đầu tư?</h3>
-              <label class="survey-option"><input type="radio" name="ks4" value="1"> Hạn chế tối đa rủi ro, chấp nhận sinh lời thấp.</label>
-              <label class="survey-option"><input type="radio" name="ks4" value="2" checked> Chấp nhận rủi ro vừa phải để đạt mức sinh lời hợp lý.</label>
-              <label class="survey-option"><input type="radio" name="ks4" value="3"> Tối đa hóa mức sinh lời để đạt được mục tiêu kế hoạch.</label>
-            </div>
-          </div>
-
-          <div class="survey-action-box">
-            <button class="btn-save-survey" onclick="switchTab('tab-muctieu-bt')">
-              <i class="fa-solid fa-arrow-left"></i> Quay về phần mục tiêu bản thân
+        <div class="survey-excel-container">
+          
+          <div class="survey-top-header">
+            <div class="survey-main-title">Bảng khảo sát đánh giá bản thân (Chỉ chọn 1 đáp án cho mỗi câu hỏi)</div>
+            <button class="btn-back-target" onclick="switchTab('tab-muctieu-bt')">
+              Quay về phần<br>mục tiêu bản thân
             </button>
           </div>
+
+          <!-- PHẦN 1: KHẢO SÁT RỦI RO ĐẦU TƯ -->
+          <div class="survey-banner-green">
+            Khảo sát 1: Khả năng chịu đựng rủi ro đầu tư
+          </div>
+
+          <table class="survey-excel-table">
+            <thead>
+              <tr class="thead-sub">
+                <th style="width: 45px;">#</th>
+                <th style="text-align: left; padding-left: 14px;">Nội dung</th>
+                <th style="width: 160px;">Đánh dấu X để lựa chọn</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- CÂU 1 -->
+              <tr class="q-row"><td class="text-center font-bold">1</td><td class="font-bold">Bạn có bao nhiêu mục tiêu tài chính?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>1</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>2</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>3</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>4</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>&gt;4</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 2 -->
+              <tr class="q-row"><td class="text-center font-bold">2</td><td class="font-bold">Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Không</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Dưới 2%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Lớn hơn 2%, nhưng nhỏ hơn 4%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Lớn hơn 4%, nhưng nhỏ hơn 6%</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Lớn hơn 6%</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 3 -->
+              <tr class="q-row"><td class="text-center font-bold">3</td><td class="font-bold">Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình để phục vụ cho mục đích?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Hơn 20 năm</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>11–20 năm</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>6–10 năm</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>1–5 năm</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Ngay lập tức</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 4 -->
+              <tr class="q-row"><td class="text-center font-bold">4</td><td class="font-bold">Hãy mô tả quan điểm của bạn đối với vấn đề mức sinh lời và rủi ro từ việc đầu tư?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Vấn đề bạn quan tâm nhất là hạn chế rủi ro. Bạn sẵn sàng chấp nhận mức sinh lời thấp để hạn chế tối đa rủi ro thua lỗ</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bạn sẵn sàng chấp nhận khả năng rủi ro đầu tư để đạt mức sinh lời vừa phải</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Bạn chủ yếu quan tâm đến việc tối đa hóa mức sinh lời để có thể đạt được mục tiêu như kế hoạch</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bạn sẵn sàng chấp rủi ro cao để sớm đạt được mục tiêu tài chính của mình</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 5: BIỂU ĐỒ 3 DANH MỤC X - Y - Z -->
+              <tr class="q-row"><td class="text-center font-bold">5</td><td class="font-bold">Biểu đồ bên dưới cho thấy mức sinh lời trung bình của ba danh mục đầu tư trong thời gian 20 năm. Danh mục nào theo bạn là phù hợp với bạn nhất?</td><td></td></tr>
+              <tr>
+                <td></td>
+                <td colspan="2" class="p-0">
+                  <div class="survey-portfolio-charts">
+                    <div class="portfolio-box">
+                      <div class="pf-title">Danh mục X - Lợi nhuận TB hàng năm = 8%</div>
+                      <div class="pf-mock-chart">
+                        <div class="bar" style="height: 15px;"></div><div class="bar" style="height: 18px;"></div><div class="bar" style="height: 20px;"></div><div class="bar" style="height: 22px;"></div><div class="bar" style="height: 25px;"></div><div class="bar" style="height: 22px;"></div><div class="bar" style="height: 20px;"></div><div class="bar" style="height: 18px;"></div><div class="bar" style="height: 16px;"></div>
+                      </div>
+                    </div>
+                    <div class="portfolio-box">
+                      <div class="pf-title">Danh mục Y - Lợi nhuận TB hàng năm = 12%</div>
+                      <div class="pf-mock-chart">
+                        <div class="bar" style="height: 25px;"></div><div class="bar" style="height: 22px;"></div><div class="bar down" style="height: 10px;"></div><div class="bar" style="height: 48px;"></div><div class="bar" style="height: 38px;"></div><div class="bar down" style="height: 8px;"></div><div class="bar" style="height: 24px;"></div><div class="bar" style="height: 28px;"></div>
+                      </div>
+                    </div>
+                    <div class="portfolio-box">
+                      <div class="pf-title">Danh mục Z - Lợi nhuận TB hàng năm = 16%</div>
+                      <div class="pf-mock-chart">
+                        <div class="bar" style="height: 60px;"></div><div class="bar down" style="height: 16px;"></div><div class="bar" style="height: 40px;"></div><div class="bar" style="height: 52px;"></div><div class="bar down" style="height: 22px;"></div><div class="bar" style="height: 45px;"></div><div class="bar" style="height: 55px;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư X</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư Y</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư Z</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 6: BẢNG KỲ VỌNG & LỖ TIỀM NĂNG -->
+              <tr class="q-row"><td class="text-center font-bold">6</td><td class="font-bold">Rủi ro danh mục đầu tư bị giảm giá trị (có mức sinh lời âm) thường là mối quan tâm hàng đầu của các nhà đầu tư. Bảng sau mô tả bốn danh mục đầu tư với giá trị dự kiến và khả năng lỗ tiềm năng. Hãy cho biết bạn cảm thấy thoải mái khi lựa chọn danh mục nào nhất?</td><td></td></tr>
+              <tr>
+                <td></td>
+                <td colspan="2" class="p-2">
+                  <table class="sub-table-q6">
+                    <thead>
+                      <tr><th>Danh mục đầu tư</th><th>Giá trị kỳ vọng của 100 triệu sau một năm</th><th>Khả năng lỗ sau một năm</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Danh mục A</td><td class="text-center">107 triệu</td><td class="text-center">19%</td></tr>
+                      <tr><td>Danh mục B</td><td class="text-center">108 triệu</td><td class="text-center">23%</td></tr>
+                      <tr><td>Danh mục C</td><td class="text-center">109 triệu</td><td class="text-center">26%</td></tr>
+                      <tr><td>Danh mục D</td><td class="text-center">110 triệu</td><td class="text-center">28%</td></tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư A</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư B</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư C</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Danh mục đầu tư D</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 7 -->
+              <tr class="q-row"><td class="text-center font-bold">7</td><td class="font-bold">Lạm phát có thể làm sụt giảm mức sinh lời thực tế từ danh mục đầu tư theo thời gian. Thông tin nào sau đây thể hiện quan điểm của bạn về nỗi lo lạm phát?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bạn muốn giảm thiểu những biến động trong ngắn hạn cho danh mục đầu tư của mình càng nhiều càng tốt, việc cao hơn mức lạm phát hàng năm đáng kể không quá quan trọng</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Muốn một danh mục đầu tư cao hơn mức lạm phát vừa phải và sẵn sàng chấp nhận mức sụt giảm vừa phải trong ngắn hạn để đạt được mục tiêu này</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Mức sinh lời của danh mục có thể vượt xa mức lạm phát trong dài hạn và bạn sẵn sàng chấp nhận những mức sụt giảm có thể trong ngắn hạn để đạt được mục tiêu này</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 8 -->
+              <tr class="q-row"><td class="text-center font-bold">8</td><td class="font-bold">Việc đầu tư đôi khi phải đối mặt với những khoản lỗ. Bạn nghĩ gì về những giai đoạn có những khoản lỗ cho danh mục của mình?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bạn sẽ bán các khoản đầu tư ngay lập tức nếu mức giảm đáng kể xảy ra</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Mặc dù việc sụt giảm khiến bạn không thoải mái nhưng bạn sẵn sàng chờ đợi giai đoạn phục hồi phía sau</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bạn chịu được việc danh mục sụt giảm và hoàn có thể duy trì trạng thái đầu tư của danh mục trong một năm</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Cho dù danh mục đầu tư của bạn có sụt giảm trong vài năm tuy nhiên bạn đủ nhận thức để kiên định với mục tiêu dài hạn ban đầu</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 9 -->
+              <tr class="q-row"><td class="text-center font-bold">9</td><td class="font-bold">Giá trị đầu tư tài sản hiện tại của bạn là?</td><td></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Dưới 200 triệu đồng</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>200 triệu đồng – 500 triệu đồng</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>500 triệu đến 1 tỷ đồng</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Từ 1-2 tỷ đồng</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Hơn 2 tỷ đồng</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 10 -->
+              <tr class="q-row"><td class="text-center font-bold">10</td><td class="font-bold">Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Dưới 10%</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>10-20%</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>20-30%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>30-50%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&gt;50%</td><td class="check-col"></td></tr>
+            </tbody>
+          </table>
+
+          <!-- KẾT QUẢ KHẢO SÁT 1 -->
+          <div class="survey-result-green-bar">
+            Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình
+          </div>
+
+          <!-- PHẦN 2: KHẢO SÁT HOÀN CẢNH -->
+          <div class="survey-banner-green mt-4">
+            Khảo sát 2: Hoàn cảnh
+          </div>
+
+          <table class="survey-excel-table">
+            <thead>
+              <tr class="thead-sub">
+                <th style="width: 45px;">#</th>
+                <th style="text-align: left; padding-left: 14px;">Nội dung</th>
+                <th style="width: 160px;">Đánh dấu X để lựa chọn</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- CÂU 1 -->
+              <tr class="q-row"><td class="text-center font-bold">1</td><td class="font-bold">Tỷ lệ trích thu nhập hàng tháng của bạn để gởi về cho gia đình?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&gt;30%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>20-30%</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>10-20%</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>0-10%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>0%</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 2 -->
+              <tr class="q-row"><td class="text-center font-bold">2</td><td class="font-bold">Mức thu nhập của vợ/chồng của bạn so với bạn?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&lt;50%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>50-70%</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>70-100%</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>100-150%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>150-300%</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 3 -->
+              <tr class="q-row"><td class="text-center font-bold">3</td><td class="font-bold">Tần suất bạn quan tâm đến mạng xã hội mỗi ngày?</td><td></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>3-4 giờ</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>2-3 giờ</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>1-2 giờ</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>30 phút - 60 phút</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&lt;30 phút</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 4 -->
+              <tr class="q-row"><td class="text-center font-bold">4</td><td class="font-bold">Số lượng bạn bè của bạn trên Facebook?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&lt;100</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>100-200</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>200-400</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>400-800</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>&gt;800</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 5 -->
+              <tr class="q-row"><td class="text-center font-bold">5</td><td class="font-bold">Bạn xây dựng như thế nào về kế hoạch đầu mỗi năm?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Chưa bao giờ</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Hiếm khi</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Tùy hứng</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Thường xuyên</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Hầu như năm nào cũng lập</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 6 -->
+              <tr class="q-row"><td class="text-center font-bold">6</td><td class="font-bold">Bạn có bao nhiêu em nhỏ trong gia đình còn đi học?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>4</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>3</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>2</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>1</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>0</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 7 -->
+              <tr class="q-row"><td class="text-center font-bold">7</td><td class="font-bold">Bạn nghĩ gì về việc tích lũy một lượng tài sản nhất định để lại cho con cái?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Chỉ hỗ trợ con cái chi phí giáo dục</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Trang bị các phương tiện cơ bản</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Để lại các tài sản lớn cho con cái</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Tích lũy nhiều nhất có thể</td><td class="check-col mark-x">x</td></tr>
+
+              <!-- CÂU 8 -->
+              <tr class="q-row"><td class="text-center font-bold">8</td><td class="font-bold">Bạn đánh giá sức khỏe của mình như thế nào so với bạn bè và những người khác?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Kém hơn rất nhiều</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Kém hơn</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Bằng mức trung bình</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Tốt hơn</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Tốt hơn rất nhiều</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 9 -->
+              <tr class="q-row"><td class="text-center font-bold">9</td><td class="font-bold">Mô tả tình hình tài chính của bạn khi bạn còn đi học?</td><td></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Phụ thuộc hoàn toàn vào gia đình</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Gia đình hỗ trợ học phí và vẫn phải đi làm thêm</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Tự đi làm thêm để lo cho mình</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 10 -->
+              <tr class="q-row"><td class="text-center font-bold">10</td><td class="font-bold">Bạn đánh giá như thế nào trong mức chênh lệch thu nhập của những người làm trong công ty của mình?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Không đáng kể</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>Chênh lệch vừa phải</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Tương đối lớn</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Rất lớn</td><td class="check-col"></td></tr>
+
+              <!-- CÂU 11 -->
+              <tr class="q-row"><td class="text-center font-bold">11</td><td class="font-bold">Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?</td><td></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>Gần như không tăng</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&lt;5%</td><td class="check-col"></td></tr>
+              <tr class="opt-row selected" onclick="selectSurveyOption(this)"><td></td><td>5-10%</td><td class="check-col mark-x">x</td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>10-20%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>20-30%</td><td class="check-col"></td></tr>
+              <tr class="opt-row" onclick="selectSurveyOption(this)"><td></td><td>&gt;30%</td><td class="check-col"></td></tr>
+            </tbody>
+          </table>
+
+          <!-- KẾT QUẢ KHẢO SÁT 2 -->
+          <div class="survey-result-green-bar mb-4">
+            Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn
+          </div>
+
         </div>
       </div>
 
     </section>
   </main>
 
-  <!-- JS -->
+  <!-- Link file JS độc lập -->
   <script src="./script.js"></script>
 </body>
 </html>
