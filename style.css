@@ -19,7 +19,7 @@ body {
 .sidebar {
   width: 220px;
   background-color: #0e5627;
-  color: white;
+  color: #ffffff;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -89,7 +89,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== VÙNG NỘI DUNG ==================== */
+/* ==================== VÙNG NỘI DUNG CHÍNH (CĂN GIỮA) ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -124,6 +124,7 @@ body {
   color: #000000;
 }
 
+/* TỰ ĐỘNG CĂN GIỮA TOÀN TRANG */
 .content-body {
   flex: 1;
   overflow-x: auto;
@@ -154,7 +155,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================== THÔNG TIN TOP ==================== */
+/* ==================== TOP INFO: NĂM, TUỔI & QUY ƯỚC ==================== */
 .top-info-row {
   display: flex;
   align-items: flex-start;
@@ -670,29 +671,30 @@ body {
 .mt-3 { margin-top: 14px; }
 .mt-4 { margin-top: 20px; }
 
-/* ==================== BẢNG KHẢO SÁT CHUẨN MẪU XLSX ==================== */
-.survey-excel-container {
+/* ==================== BẢNG KHẢO SÁT CHUẨN DOTBOX TRẮC NGHIỆM ==================== */
+.survey-dotbox-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 980px;
   margin: 0 auto;
   background: #ffffff;
-  padding: 16px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 20px 24px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .survey-top-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  gap: 16px;
 }
 
 .survey-main-title {
   font-size: 1.15rem;
   font-weight: 800;
   color: #000000;
-  letter-spacing: 0.2px;
+  line-height: 1.35;
 }
 
 .btn-back-target {
@@ -701,97 +703,157 @@ body {
   border: 1px solid #c97d1b;
   font-weight: 700;
   font-size: 0.8rem;
-  padding: 6px 14px;
+  padding: 6px 16px;
   cursor: pointer;
   line-height: 1.25;
   text-align: center;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .btn-back-target:hover {
   background-color: #e58f20;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
 }
 
 .survey-banner-green {
   background-color: #246a35;
   color: #ffffff;
   font-weight: 800;
-  font-size: 0.92rem;
-  padding: 8px 14px;
-  margin-bottom: 4px;
-  border-radius: 2px;
-}
-
-.survey-excel-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.78rem;
-  margin-bottom: 10px;
-  background-color: #ffffff;
-}
-
-.survey-excel-table th, 
-.survey-excel-table td {
-  border: 1px solid #b7b7b7;
-  padding: 5px 10px;
-}
-
-.survey-excel-table .thead-sub th {
-  background-color: #ffffff;
-  font-style: italic;
-  font-weight: 700;
-  color: #000000;
-  border-bottom: 2px solid #246a35;
-  padding: 6px 10px;
-}
-
-.survey-excel-table .q-row td {
-  background-color: #f0f0f0;
-  font-weight: 700;
-  color: #000000;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
-
-.survey-excel-table .opt-row {
-  cursor: pointer;
-  transition: background-color 0.1s ease;
-}
-
-.survey-excel-table .opt-row:hover {
-  background-color: #f0fdf4;
-}
-
-.survey-excel-table .opt-row.selected {
-  background-color: #ffffff;
-}
-
-.check-col {
-  text-align: center;
-  font-weight: 800;
-  width: 160px;
-}
-
-.mark-x {
-  color: #0070c0 !important;
   font-size: 0.95rem;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
+.survey-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.survey-q-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 14px 18px;
+  transition: border-color 0.15s ease;
+}
+
+.survey-q-card:hover {
+  border-color: #cbd5e1;
+}
+
+.q-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.q-num {
+  background-color: #0e5627;
+  color: #ffffff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* THIẾT KẾ RADIO BUTTON DẠNG DOTBOX */
+.dotbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background-color 0.12s ease;
+  user-select: none;
+}
+
+.dotbox-label:hover {
+  background-color: #f1f5f9;
+}
+
+.dotbox-label input[type="radio"] {
+  display: none;
+}
+
+.dot-custom {
+  width: 17px;
+  height: 17px;
+  border: 2px solid #94a3b8;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  background-color: #ffffff;
+}
+
+.dotbox-label input[type="radio"]:checked + .dot-custom {
+  border-color: #0e5627;
+  background-color: #ffffff;
+}
+
+.dotbox-label input[type="radio"]:checked + .dot-custom::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0e5627;
+}
+
+.dotbox-label:has(input[type="radio"]:checked) {
+  background-color: #f0fdf4;
+  color: #0e5627;
+  font-weight: 600;
+}
+
+/* Biểu đồ mini câu 5 */
 .survey-portfolio-charts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   padding: 10px;
-  background-color: #fafafa;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  margin-bottom: 8px;
 }
 
 .portfolio-box {
   background: #ffffff;
   border: 1px solid #cbd5e1;
   padding: 8px;
-  border-radius: 3px;
+  border-radius: 4px;
   text-align: center;
 }
 
@@ -822,41 +884,49 @@ body {
   background-color: #dc2626;
 }
 
+/* Bảng câu 6 */
+.sub-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
 .sub-table-q6 {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.76rem;
-  margin: 6px 0;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
 }
 
 .sub-table-q6 th {
   background-color: #0e5627;
   color: #ffffff;
   font-weight: 700;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 1px solid #cbd5e1;
   text-align: center;
 }
 
 .sub-table-q6 td {
   border: 1px solid #cbd5e1;
-  padding: 4px 8px;
+  padding: 5px 8px;
 }
 
+/* Thanh kết quả khảo sát */
 .survey-result-green-bar {
   background-color: #246a35;
   color: #ffffff;
   font-weight: 800;
-  font-size: 0.84rem;
-  padding: 8px 14px;
-  border-radius: 2px;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 4px;
+  margin-top: 10px;
   margin-bottom: 14px;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-.p-0 { padding: 0 !important; }
-.p-2 { padding: 8px !important; }
+.mt-2 { margin-top: 8px; }
 
 /* ==================== THẺ STATS & CHARTS ==================== */
 .stat-cards {
