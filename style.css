@@ -19,7 +19,7 @@ body {
 .sidebar {
   width: 220px;
   background-color: #0e5627;
-  color: #ffffff;
+  color: white;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -89,7 +89,7 @@ body {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* ==================== VÙNG NỘI DUNG CHÍNH (ĐÃ CĂN GIỮA) ==================== */
+/* ==================== VÙNG NỘI DUNG ==================== */
 .main-content {
   flex: 1;
   display: flex;
@@ -124,7 +124,6 @@ body {
   color: #000000;
 }
 
-/* CONTENT BODY TỰ ĐỘNG CĂN GIỮA TOÀN BỘ CÁC TRANG */
 .content-body {
   flex: 1;
   overflow-x: auto;
@@ -132,21 +131,21 @@ body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Luôn giữ trục trung tâm */
+  align-items: center;
   width: 100%;
 }
 
 .tab-pane {
   display: none;
   width: 100%;
-  max-width: 1360px; /* Độ rộng tiêu chuẩn để bảng hiển thị rộng rãi, cân xứng */
+  max-width: 1360px;
   margin: 0 auto;
 }
 
 .tab-pane.active {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Căn giữa nội dung bên trong của từng tab */
+  align-items: center;
   animation: fadeIn 0.18s ease-in-out;
 }
 
@@ -155,11 +154,11 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================== THÔNG TIN TOP (TAB TỪ KHÓA) ==================== */
+/* ==================== THÔNG TIN TOP ==================== */
 .top-info-row {
   display: flex;
-  align-items: center;
-  justify-content: center; /* Căn giữa 3 khối Năm, Tuổi, Quy ước */
+  align-items: flex-start;
+  justify-content: center;
   gap: 28px;
   margin-bottom: 24px;
   width: 100%;
@@ -257,11 +256,11 @@ body {
 .text-black-rule { color: #000000; font-weight: 600; }
 .text-red-rule { color: #c00000; font-weight: 600; }
 
-/* ==================== BẢNG SPREADSHEET (TỪ KHÓA - CĂN GIỮA) ==================== */
+/* ==================== BẢNG CHUẨN SPREADSHEET (TỪ KHÓA) ==================== */
 .sheet-tables-container {
   display: flex;
   align-items: flex-start;
-  justify-content: center; /* Luôn căn giữa 4 bảng khi co giãn cửa sổ */
+  justify-content: center;
   gap: 18px;
   width: 100%;
   flex-wrap: wrap;
@@ -419,11 +418,11 @@ body {
   background-color: #ffffff;
 }
 
-/* ==================== MỤC TIÊU BẢN THÂN (CĂN GIỮA) ==================== */
+/* ==================== MỤC TIÊU BẢN THÂN ==================== */
 .target-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Căn giữa */
+  align-items: center;
   gap: 18px;
   width: 100%;
   max-width: 980px;
@@ -526,7 +525,7 @@ body {
   border-radius: 3px;
 }
 
-/* ==================== BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD (CĂN GIỮA) ==================== */
+/* ==================== BẢNG MA TRẬN 12 THÁNG TRÊN DASHBOARD ==================== */
 .dashboard-matrix-container {
   width: 100%;
   max-width: 1240px;
@@ -593,11 +592,11 @@ body {
   margin: 0 auto;
 }
 
-/* ==================== KHUNG CONTAINER CHO CÁC TRANG CÒN LẠI (CĂN GIỮA) ==================== */
+/* ==================== KHUNG CONTAINER CHO CÁC SHEET ==================== */
 .custom-sheet-container {
   width: 100%;
   max-width: 1080px;
-  margin: 0 auto; /* Tự động ra giữa trang */
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -671,84 +670,195 @@ body {
 .mt-3 { margin-top: 14px; }
 .mt-4 { margin-top: 20px; }
 
-/* ==================== BẢNG KHẢO SÁT (CĂN GIỮA) ==================== */
-.survey-sheet-wrapper {
-  background: #ffffff;
-  padding: 24px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+/* ==================== BẢNG KHẢO SÁT CHUẨN MẪU XLSX ==================== */
+.survey-excel-container {
   width: 100%;
-  max-width: 850px;
+  max-width: 1100px;
   margin: 0 auto;
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.survey-sheet-header h2 {
-  font-size: 1.05rem;
-  color: #0e5627;
-  margin-bottom: 6px;
-  font-weight: 800;
-}
-
-.survey-sheet-header p {
-  font-size: 0.82rem;
-  color: #4b5563;
-  margin-bottom: 20px;
-}
-
-.survey-questions-grid {
+.survey-top-header {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
-.survey-card {
-  border: 1px solid #e5e7eb;
-  padding: 14px;
-  background-color: #f9fafb;
-  border-radius: 4px;
+.survey-main-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.2px;
 }
 
-.survey-card h3 {
-  font-size: 0.88rem;
-  color: #111827;
-  margin-bottom: 8px;
+.btn-back-target {
+  background-color: #f29b28;
+  color: #000000;
+  border: 1px solid #c97d1b;
   font-weight: 700;
-}
-
-.survey-option {
-  display: block;
   font-size: 0.8rem;
-  margin-bottom: 6px;
+  padding: 6px 14px;
   cursor: pointer;
+  line-height: 1.25;
+  text-align: center;
+  border-radius: 3px;
+  transition: all 0.15s ease;
 }
 
-.survey-option input {
-  margin-right: 8px;
+.btn-back-target:hover {
+  background-color: #e58f20;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
-.survey-action-box {
-  margin-top: 20px;
-  text-align: right;
+.survey-banner-green {
+  background-color: #246a35;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 8px 14px;
+  margin-bottom: 4px;
+  border-radius: 2px;
 }
 
-.btn-save-survey {
-  background-color: #0e5627;
-  color: white;
+.survey-excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+}
+
+.survey-excel-table th, 
+.survey-excel-table td {
+  border: 1px solid #b7b7b7;
+  padding: 5px 10px;
+}
+
+.survey-excel-table .thead-sub th {
+  background-color: #ffffff;
+  font-style: italic;
   font-weight: 700;
-  font-size: 0.85rem;
-  padding: 8px 18px;
-  border: none;
-  border-radius: 4px;
+  color: #000000;
+  border-bottom: 2px solid #246a35;
+  padding: 6px 10px;
+}
+
+.survey-excel-table .q-row td {
+  background-color: #f0f0f0;
+  font-weight: 700;
+  color: #000000;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.survey-excel-table .opt-row {
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.1s ease;
 }
 
-.btn-save-survey:hover {
-  background-color: #166534;
+.survey-excel-table .opt-row:hover {
+  background-color: #f0fdf4;
 }
 
-/* ==================== THẺ THỐNG KÊ STATS & BIỂU ĐỒ (CĂN GIỮA) ==================== */
+.survey-excel-table .opt-row.selected {
+  background-color: #ffffff;
+}
+
+.check-col {
+  text-align: center;
+  font-weight: 800;
+  width: 160px;
+}
+
+.mark-x {
+  color: #0070c0 !important;
+  font-size: 0.95rem;
+}
+
+.survey-portfolio-charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 10px;
+  background-color: #fafafa;
+}
+
+.portfolio-box {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 8px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.pf-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #334155;
+}
+
+.pf-mock-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 65px;
+  border-bottom: 1px solid #94a3b8;
+  padding-bottom: 2px;
+}
+
+.pf-mock-chart .bar {
+  width: 7px;
+  background-color: #16a34a;
+  border-radius: 1px 1px 0 0;
+}
+
+.pf-mock-chart .bar.down {
+  background-color: #dc2626;
+}
+
+.sub-table-q6 {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  margin: 6px 0;
+}
+
+.sub-table-q6 th {
+  background-color: #0e5627;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 5px 8px;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+}
+
+.sub-table-q6 td {
+  border: 1px solid #cbd5e1;
+  padding: 4px 8px;
+}
+
+.survey-result-green-bar {
+  background-color: #246a35;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.84rem;
+  padding: 8px 14px;
+  border-radius: 2px;
+  margin-bottom: 14px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.p-0 { padding: 0 !important; }
+.p-2 { padding: 8px !important; }
+
+/* ==================== THẺ STATS & CHARTS ==================== */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
