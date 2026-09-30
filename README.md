@@ -1,12 +1,5 @@
 # Personal Financial Planning & Wealth Management Dashboard
 > **Hệ thống Quản lý & Hoạch định Lộ trình Tài chính Cá nhân Toàn diện**
-
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5)
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Chart.js](https://img.shields.io/badge/Chart.js-v4.x-FF6384?style=flat-square&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
-
 ---
 
 ## 📌 Tổng Quan Dự Án (Executive Summary)
@@ -46,18 +39,6 @@
 ### 6. Theo dõi & Đối soát Ngân sách Chi tiết 12 Tháng (Reconciliation)
 * Nhật ký thu - chi chi tiết theo từng ngày phát sinh.
 * Bảng đối soát tự động giữa **Kế hoạch (Plan)** và **Thực tế (Actual)** kèm chênh lệch (Variance Analysis) và ghi chú nguyên nhân.
-
----
-
-## 🛠 Công Nghệ Sử Dụng (Tech Stack)
-
-| Công nghệ | Vai trò trong hệ thống |
-| :--- | :--- |
-| **HTML5 (Semantic)** | Cấu trúc giao diện, tối ưu layout Dashboard & Bảng biểu |
-| **CSS3 (Flexbox & CSS Grid)** | Thiết kế UI/UX đồng bộ chuẩn corporate font (Montserrat), responsive layout |
-| **Vanilla JavaScript (ES6+)** | Quản lý trạng thái tập trung (`AppState`), thuật toán tài chính và reactive DOM rendering |
-| **Chart.js** | Thư viện kết xuất biểu đồ động trên Canvas |
-| **Font Awesome 6.5** | Bộ icon trực quan hóa danh mục và điều hướng |
 
 ---
 
