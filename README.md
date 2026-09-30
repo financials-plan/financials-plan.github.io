@@ -1,51 +1,84 @@
 # Personal Financial Planning & Wealth Management Dashboard
 > **Hệ thống Quản lý & Hoạch định Lộ trình Tài chính Cá nhân Toàn diện**
+
 ---
 
 ## 📌 Tổng Quan Dự Án (Executive Summary)
 
-**Personal Financial Planning Dashboard** là ứng dụng web tương tác đơn trang (Single-Page Application - SPA) được xây dựng theo mô hình spreadsheet chuyên sâu. Ứng dụng mô phỏng lại toàn bộ quy trình hoạch định tài chính cá nhân tiêu chuẩn: từ việc thiết lập các danh mục thu/chi, đánh giá mức độ chấp nhận rủi ro và bối cảnh cá nhân, lên kế hoạch dòng tiền 12 tháng, cho đến bài toán khấu hao niên kim (Amortization) và tối ưu hóa danh mục phân bổ tài sản theo độ tuổi.
+**Personal Financial Planning Dashboard** là giải pháp Single-Page Application (SPA) mô phỏng chính xác bảng tính Excel mẫu về hoạch định tài chính cá nhân. Ứng dụng tích hợp các mô hình tính toán tài chính tiêu chuẩn nhằm kiểm soát dòng tiền vào (Inflows), dòng tiền ra (Outflows), lập kế hoạch ngân sách và lộ trình phân bổ tài sản dài hạn.
 
 ---
 
-## 🚀 Các Tính Năng Cốt Lõi (Key Features)
+## 📐 Cơ Sở Các Công Thức Tài Chính Được Ứng Dụng
 
-### 1. Quản lý Danh mục & Cấu hình Cơ sở (Master Data Setup)
-* **Quy ước nhập liệu chuẩn bảng tính:** Phân định rõ ràng giữa ô nhập liệu (`#0070c0` - Blue), kết quả tính toán trung gian (`#000000` - Black) và chỉ số tài chính trọng yếu (`#c00000` - Red).
-* **Đồng bộ thời gian thực:** Cập nhật tự động giữa năm bắt đầu theo dõi, độ tuổi hiện tại và năm sinh.
-* **Danh mục tùy biến linh hoạt:** Cho phép thêm/sửa trực tiếp (Inline Editing) danh mục Thu nhập, Chi phí sinh hoạt, Kế hoạch đào tạo và Danh mục sản phẩm đầu tư (cùng tỷ suất sinh lời/rủi ro kỳ vọng).
+### 1. Dòng Tiền Ròng & Tỷ Lệ Tiết Kiệm (Cash Flow & Savings Rate)
+* **Dòng tiền ròng tháng $m$ (Net Cash Flow):**
+  $$\text{NCF}_m = \text{Total Inflow}_m - \text{Total Outflow}_m$$
+* **Tỷ lệ tiết kiệm thực tế (Savings Rate):**
+  $$\text{Savings Rate} = \frac{\sum_{m=1}^{12} \text{NCF}_m}{\sum_{m=1}^{12} \text{Total Inflow}_m} \times 100\%$$
+* **Tỷ lệ chi tiêu trên thu nhập (Expense-to-Income Ratio):**
+  $$\text{Expense Ratio} = \frac{\sum_{m=1}^{12} \text{Total Outflow}_m}{\sum_{m=1}^{12} \text{Total Inflow}_m} \times 100\%$$
 
-### 2. Dashboard Phân tích & Trực quan hóa Dòng tiền (Financial Analytics)
-* **Thẻ chỉ số hiệu suất (KPI Metric Cards):** Theo dõi tổng tài sản mục tiêu, tỷ suất sinh lời trung bình, tổng thu nhập - chi tiêu thực tế, số dư tích lũy và tỷ lệ tiết kiệm (Savings Rate).
-* **Đồ thị động (Chart.js):** 
-  * Biểu đồ Doughnut phân bổ tỷ trọng chi tiêu thực tế theo từng nhóm hạng mục.
-  * Biểu đồ cột ghép (Grouped Bar Chart) so sánh trực quan dòng tiền Thu nhập vs Chi tiêu qua 12 tháng.
-* **Ma trận 12 tháng & Sparklines:** Hiển thị chi tiết dòng tiền 12 tháng kèm đồ thị xu hướng Sparkline SVG nội tuyến cho từng danh mục.
+---
 
-### 3. Khảo sát Hành vi & Khẩu vị Rủi ro (Risk Profiling & Assessment)
-* **Bộ trắc nghiệm chuẩn hóa 2 phần:**
-  * *Khảo sát 1:* Đánh giá khả năng chịu đựng rủi ro đầu tư (khung thời gian đầu tư, phản ứng trước biến động thị trường, danh mục mục tiêu).
-  * *Khảo sát 2:* Đánh giá bối cảnh tài chính, áp lực gia đình và tốc độ tăng trưởng thu nhập.
-* Tự động chấm điểm và kết xuất khuyến nghị chiến lược đầu tư (An toàn / Cân bằng / Tăng trưởng) đồng bộ sang kế hoạch mục tiêu.
-
-### 4. Mô hình Tính toán Niên kim Trả góp (Loan Amortization Schedule)
-* Tính toán số tiền trả góp hàng năm theo công thức niên kim cố định:
+### 2. Mô Hình Thanh Toán Niên Kim Cố Định (Fixed Loan Amortization Schedule)
+Bài toán xác định số tiền trả góp hàng năm (gốc + lãi đều) cho khoản vay mua nhà/chung cư:
+* **Công thức PMT (Periodic Payment):**
   $$\text{PMT} = P \times \frac{r(1+r)^n}{(1+r)^n - 1}$$
-* Lập lịch trình thanh toán chi tiết: Phân tách rõ ràng giữa dư nợ gốc đầu kỳ, phần nợ gốc đã trả, lãi phát sinh thực tế và số dư nợ cuối kỳ cho từng năm.
-
-### 5. Lộ trình Phân bổ Tài sản theo Độ tuổi (Asset Allocation Life-Cycle)
-* Tự động cân đối tỷ trọng danh mục đầu tư (Cổ phiếu, Trái phiếu, Bảo hiểm) và mục tiêu thu nhập cần đạt tương ứng theo các mốc tuổi vàng: 21, 26, 30, 35, 40, 50.
-
-### 6. Theo dõi & Đối soát Ngân sách Chi tiết 12 Tháng (Reconciliation)
-* Nhật ký thu - chi chi tiết theo từng ngày phát sinh.
-* Bảng đối soát tự động giữa **Kế hoạch (Plan)** và **Thực tế (Actual)** kèm chênh lệch (Variance Analysis) và ghi chú nguyên nhân.
+  *Trong đó:*
+  * $P$: Dư nợ gốc ban đầu (Principal).
+  * $r$: Lãi suất vay danh nghĩa theo năm.
+  * $n$: Số năm vay còn lại ($n = \text{Năm kết thúc} - \text{Năm bắt đầu} + 1$).
+* **Lộ trình khấu hao từng kỳ $t$ ($t = 1 \dots n$):**
+  * Lãi phát sinh trong kỳ:
+    $$\text{Interest}_t = \text{Balance}_{t-1} \times r$$
+  * Nợ gốc trả trong kỳ:
+    $$\text{Principal Paid}_t = \text{PMT} - \text{Interest}_t$$
+  * Dư nợ cuối kỳ:
+    $$\text{Balance}_t = \text{Balance}_{t-1} - \text{Principal Paid}_t$$
 
 ---
 
-## 📁 Cấu Trúc Thư Mục (Project Structure)
+### 3. Tỷ Suất Sinh Lời Kỳ Vọng Danh Mục Đầu Tư (Expected Portfolio Return)
+* **Tỷ suất sinh lời bình quân số học (Arithmetic Mean Return):**
+  $$\bar{R} = \frac{1}{K} \sum_{k=1}^K R_k$$
+  *Trong đó:* $K$ là số lượng sản phẩm đầu tư trong danh mục khảo sát, $R_k$ là mức sinh lời trung bình 5 năm của sản phẩm thứ $k$.
 
-```text
-├── index.html        # Giao diện SPA chính (Tabs, Tables, Modals, Forms)
-├── style.css         # Toàn bộ stylesheet, layout bảng tính, theme bảng màu
-├── script.js         # State management, nghiệp vụ tài chính, render logic & Chart.js
-└── README.md         # Tài liệu dự án
+---
+
+### 4. Đối Soát Ngân Sách & Lũy Kế Chênh Lệch (Budget Variance Analysis)
+* **Chênh lệch thu nhập:**
+  $$\Delta \text{Income} = \text{Actual Income} - \text{Planned Income}$$
+* **Chênh lệch chi tiêu (Tiết kiệm ngân sách):**
+  $$\Delta \text{Expense} = \text{Planned Expense} - \text{Actual Expense}$$
+* **Lũy kế chênh lệch chi tiêu đến tháng $M$ (Cumulative Variance):**
+  $$\text{CumDiff}_M = \sum_{m=1}^M (\text{Planned Expense}_m - \text{Actual Expense}_m)$$
+  * $\text{CumDiff} > 0$: Chi tiêu thực tế thấp hơn định mức (thặng dư ngân sách).
+  * $\text{CumDiff} < 0$: Chi tiêu vượt định mức kế hoạch (bội chi ngân sách).
+
+---
+
+### 5. Khảo Sát Đánh Giá Hành Vi & Khẩu Vị Rủi Ro (Risk Profiling & Context Scoring)
+* **Khảo sát 1 - Khả năng chịu đựng rủi ro (10 câu trắc nghiệm dot-box):**
+  * Điểm $\le 18$: Nhà đầu tư thận trọng (Risk Averse) $\rightarrow$ Ưu tiên tiền gửi, trái phiếu, bảo toàn vốn.
+  * $19 \le$ Điểm $\le 32$: Nhà đầu tư trung lập (Moderate/Neutral) $\rightarrow$ Phân bổ cân bằng cổ phiếu/trái phiếu.
+  * Điểm $\ge 33$: Nhà đầu tư tăng trưởng mạo hiểm (Aggressive) $\rightarrow$ Tối đa hóa tỷ trọng cổ phiếu, quỹ ETF.
+* **Khảo sát 2 - Bối cảnh & Áp lực tài chính (11 câu trắc nghiệm dot-box):**
+  * Đánh giá gánh nặng gia đình, tính chủ động thu nhập và mức độ hỗ trợ người thân để xác định quy mô quỹ khẩn cấp.
+
+---
+
+## 🛠️ Hướng Dẫn Sử Dụng & Đồng Bộ Dữ Liệu
+
+1. **Khởi chạy trực tiếp:** Mở file `index.html` trên bất kỳ trình duyệt web hiện đại nào (Chrome, Firefox, Edge, Safari).
+2. **Cơ chế đồng bộ thời gian thực:**
+   * Thay đổi năm hoặc tuổi ở Tab **Từ khóa** sẽ tự động cập nhật nhãn năm trên toàn bộ giao diện và bảng niên kim.
+   * Thêm/sửa số tiền thực tế tại các tab **Theo dõi tháng 1..12** sẽ ngay lập tức tính lại bảng ma trận tổng hợp trên **Dashboard**, cập nhật biểu đồ Chart.js và đường xu hướng Sparkline SVG.
+   * Khi chọn các nút trắc nghiệm dạng dot-box ở Tab **Bảng khảo sát**, kết quả phân loại sẽ tự động kết xuất sang Tab **Mục tiêu bản thân**.
+
+---
+
+## 📝 Ghi Chú Cần Cung Cấp Ảnh Chụp Bổ Sung (Nghiệp Vụ Excel Mẫu)
+Nếu file Excel gốc có chứa các công thức đặc thù sau đây mà bạn muốn đưa vào chính xác tuyệt đối, vui lòng chụp ảnh màn hình thanh công thức (Formula Bar) của các ô tương ứng:
+1. **Sheet "Cân đối lộ trình nghề nghiệp":** Công thức nội suy tỷ trọng Cổ phiếu / Trái phiếu / Bảo hiểm theo độ tuổi (hiện đang dùng bảng tham chiếu tĩnh theo các mốc tuổi 21, 26, 30, 35, 40, 50).
+2. **Bảng "Chi phí phát triển bản thân" (Dashboard):** Công thức trích lọc tự động từ danh mục chi tiết tháng sang ma trận 12 tháng (hiện ma trận đang tổng hợp theo từng danh mục con).
