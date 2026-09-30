@@ -1,5 +1,5 @@
 /**
- * TOÀN BỘ LOGIC REACTIVE & ĐIỀU HƯỚNG TÀI CHÍNH TOÀN DIỆN
+ * TOÀN BỘ LOGIC REACTIVE, TÍNH TOÁN TÀI CHÍNH & RENDER BIỂU ĐỒ
  */
 
 const AppState = {
@@ -138,37 +138,21 @@ const AppState = {
 for (let m = 2; m <= 12; m++) {
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { 
-      incomes: [], 
-      expenses: [], 
+      incomes: [
+        { date: `15/${m < 10 ? '0' + m : m}/2026`, cat: 'Lương bố', desc: 'Lương định kỳ', val: 25.0 },
+        { date: `30/${m < 10 ? '0' + m : m}/2026`, cat: 'Thu nhập từ kinh doanh của mẹ', desc: 'Kinh doanh', val: 10.0 }
+      ], 
+      expenses: [
+        { date: `01/${m < 10 ? '0' + m : m}/2026`, cat: 'Mua thực phẩm', desc: 'Đi chợ', val: 5.5 },
+        { date: `10/${m < 10 ? '0' + m : m}/2026`, cat: 'Chi tiền trả nợ', desc: 'Khoản vay', val: 8.5 },
+        { date: `15/${m < 10 ? '0' + m : m}/2026`, cat: 'Chi tiền điện, nước, internet, điện thoại, xăng xe', desc: 'Hóa đơn', val: 1.8 }
+      ], 
       reconIncomeNotes: {}, 
       reconExpenseNotes: {}, 
-      learningDetails: [] 
+      learningDetails: [
+        { date: `05/${m < 10 ? '0' + m : m}/2026`, cat: 'Mua sách', desc: 'Sách chuyên môn', val: 0.20, expRes: 'Nghiên cứu', actRes: 'Ứng dụng' }
+      ] 
     };
-    const monthStr = m < 10 ? `0${m}` : `${m}`;
-
-    Object.keys(AppState.matrixIncome).forEach(cat => {
-      const val = (AppState.matrixIncome[cat] && AppState.matrixIncome[cat][m - 1]) || 0;
-      if (val > 0) {
-        AppState.monthlyDetails[m].incomes.push({
-          date: `15/${monthStr}/2026`,
-          cat: cat,
-          desc: `Thu nhập định kỳ ${cat}`,
-          val: val
-        });
-      }
-    });
-
-    Object.keys(AppState.matrixExpense).forEach(cat => {
-      const val = (AppState.matrixExpense[cat] && AppState.matrixExpense[cat][m - 1]) || 0;
-      if (val > 0) {
-        AppState.monthlyDetails[m].expenses.push({
-          date: `05/${monthStr}/2026`,
-          cat: cat,
-          desc: `Chi phí ${cat}`,
-          val: val
-        });
-      }
-    });
   }
 }
 
@@ -245,18 +229,32 @@ window.switchMonthTab = function(m) {
   if (monthPane) monthPane.classList.add('active');
 
   renderMonthView(m);
+  setTimeout(() => {
+    renderMonthHorizontalBarChart();
+  }, 60);
 };
 
 // Chuyển giữa Phần 1 và Phần 2 của tháng
 window.switchMonthSection = function(secNum) {
-  document.querySelectorAll('.btn-sub-nav').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.month-section-pane').forEach(p => p.classList.remove('active'));
-  
-  const btn = document.getElementById(`btn-month-sec${secNum}`);
-  const pane = document.getElementById(`month-sec-${secNum}`);
-  if (btn) btn.classList.add('active');
-  if (pane) pane.classList.add('active');
-  if (secNum === 1) renderMonthHorizontalBarChart();
+  const btn1 = document.getElementById('btn-month-sec1');
+  const btn2 = document.getElementById('btn-month-sec2');
+  const pane1 = document.getElementById('month-sec-1');
+  const pane2 = document.getElementById('month-sec-2');
+
+  if (secNum === 1) {
+    if (btn1) btn1.classList.add('active');
+    if (btn2) btn2.classList.remove('active');
+    if (pane1) pane1.classList.add('active');
+    if (pane2) pane2.classList.remove('active');
+    setTimeout(() => {
+      renderMonthHorizontalBarChart();
+    }, 50);
+  } else {
+    if (btn2) btn2.classList.add('active');
+    if (btn1) btn1.classList.remove('active');
+    if (pane2) pane2.classList.add('active');
+    if (pane1) pane1.classList.remove('active');
+  }
 };
 
 // Tạo đồ thị xu hướng Sparkline SVG
@@ -720,13 +718,12 @@ function renderMonthView(m) {
 
   // 4. Render Phần 2: Phát triển bản thân
   renderMonthLearningSection(m);
-
-  // 5. Vẽ Biểu đồ thanh ngang
-  renderMonthHorizontalBarChart();
 }
 
 function renderReconciliationTable(m) {
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [] };
+  if (!mData.reconIncomeNotes) mData.reconIncomeNotes = {};
+  if (!mData.reconExpenseNotes) mData.reconExpenseNotes = {};
 
   const actIncMap = {};
   mData.incomes.forEach(x => { actIncMap[x.cat] = (actIncMap[x.cat] || 0) + x.val; });
@@ -753,8 +750,8 @@ function renderReconciliationTable(m) {
         <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">
           ${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconIncReason(${m}, '${p.name}', this.innerText)">${note.reason}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconIncAction(${m}, '${p.name}', this.innerText)">${note.action}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconIncReason(${m}, '${p.name}', this.innerText)">${note.reason || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconIncAction(${m}, '${p.name}', this.innerText)">${note.action || ''}</td>
       </tr>
     `;
   });
@@ -794,8 +791,8 @@ function renderReconciliationTable(m) {
         <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">
           ${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconExpReason(${m}, '${p.name}', this.innerText)">${note.reason}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconExpAction(${m}, '${p.name}', this.innerText)">${note.action}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconExpReason(${m}, '${p.name}', this.innerText)">${note.reason || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconExpAction(${m}, '${p.name}', this.innerText)">${note.action || ''}</td>
       </tr>
     `;
   });
@@ -830,7 +827,7 @@ function renderReconciliationTable(m) {
 window.addMonthDetailIncomeRow = function() {
   const m = AppState.currentMonth;
   if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
-  const firstCat = AppState.incomeList[0] || 'Thu nhập khác';
+  const firstCat = AppState.planIncome[0]?.name || 'Lương bố';
   AppState.monthlyDetails[m].incomes.push({ 
     date: `15/1/2026`, 
     cat: firstCat, 
@@ -838,13 +835,14 @@ window.addMonthDetailIncomeRow = function() {
     val: 2.0 
   });
   renderMonthView(m);
+  renderMonthHorizontalBarChart();
   recalculateAll();
 };
 
 window.addMonthDetailExpenseRow = function() {
   const m = AppState.currentMonth;
   if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
-  const firstCat = AppState.expenses[0] || 'Mua thực phẩm';
+  const firstCat = AppState.planExpense[0]?.name || 'Mua thực phẩm';
   AppState.monthlyDetails[m].expenses.push({ 
     date: `10/1/2026`, 
     cat: firstCat, 
@@ -852,6 +850,7 @@ window.addMonthDetailExpenseRow = function() {
     val: 1.0 
   });
   renderMonthView(m);
+  renderMonthHorizontalBarChart();
   recalculateAll();
 };
 
@@ -859,6 +858,7 @@ window.deleteMonthIncomeRow = function(m, i) {
   if (AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m].incomes.splice(i, 1);
     renderMonthView(m);
+    renderMonthHorizontalBarChart();
     recalculateAll();
   }
 };
@@ -867,15 +867,16 @@ window.deleteMonthExpenseRow = function(m, i) {
   if (AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m].expenses.splice(i, 1);
     renderMonthView(m);
+    renderMonthHorizontalBarChart();
     recalculateAll();
   }
 };
 
 window.updateMonthIncDate = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].date = text.trim(); };
-window.updateMonthIncCat = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].cat = text.trim(); recalculateAll(); };
+window.updateMonthIncCat = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].cat = text.trim(); recalculateAll(); renderMonthView(m); };
 window.updateMonthIncDesc = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].desc = text.trim(); };
 window.updateMonthExpDate = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].date = text.trim(); };
-window.updateMonthExpCat = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].cat = text.trim(); recalculateAll(); };
+window.updateMonthExpCat = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].cat = text.trim(); recalculateAll(); renderMonthView(m); renderMonthHorizontalBarChart(); };
 window.updateMonthExpDesc = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].desc = text.trim(); };
 
 window.updateMonthIncVal = function(m, i, text) {
@@ -883,7 +884,7 @@ window.updateMonthIncVal = function(m, i, text) {
     AppState.monthlyDetails[m].incomes[i].val = parseFloat(text) || 0;
   }
   recalculateAll();
-  renderReconciliationTable(m);
+  renderMonthView(m);
 };
 
 window.updateMonthExpVal = function(m, i, text) {
@@ -891,7 +892,8 @@ window.updateMonthExpVal = function(m, i, text) {
     AppState.monthlyDetails[m].expenses[i].val = parseFloat(text) || 0;
   }
   recalculateAll();
-  renderReconciliationTable(m);
+  renderMonthView(m);
+  renderMonthHorizontalBarChart();
 };
 
 window.updateReconIncReason = function(m, cat, val) {
@@ -968,12 +970,12 @@ window.addMonthLearningRow = function() {
     expRes: 'Bổ sung kiến thức',
     actRes: 'Nâng cao trình độ'
   });
-  renderMonthView(m);
+  renderMonthLearningSection(m);
 };
 
 window.deleteMonthLearningRow = function(m, i) {
   AppState.monthlyDetails[m].learningDetails.splice(i, 1);
-  renderMonthView(m);
+  renderMonthLearningSection(m);
 };
 
 window.updateLearnDate = function(m, i, t) { AppState.monthlyDetails[m].learningDetails[i].date = t.trim(); };
@@ -1001,18 +1003,24 @@ function renderMonthHorizontalBarChart() {
     catSums[x.cat] = (catSums[x.cat] || 0) + x.val;
   });
 
+  // Thứ tự hiển thị từ dưới lên trên chuẩn như Excel
   const labels = AppState.planExpense.map(p => p.name).reverse();
   const data = labels.map(name => catSums[name] || 0);
 
-  if (monthBarChartInstance) monthBarChartInstance.destroy();
+  if (monthBarChartInstance) {
+    monthBarChartInstance.destroy();
+    monthBarChartInstance = null;
+  }
+
   monthBarChartInstance = new Chart(canvas.getContext('2d'), {
     type: 'bar',
     data: {
       labels: labels,
       datasets: [{
+        label: 'Chi phí thực tế',
         data: data,
         backgroundColor: '#f29b28',
-        borderRadius: 2,
+        borderRadius: 3,
         barPercentage: 0.65
       }]
     },
@@ -1020,11 +1028,21 @@ function renderMonthHorizontalBarChart() {
       indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          titleFont: { family: 'Montserrat', size: 11, weight: 'bold' },
+          bodyFont: { family: 'Montserrat', size: 11 },
           callbacks: {
-            label: (ctx) => ` ${ctx.raw.toFixed(1)} tr`
+            label: function(ctx) {
+              return ` Thực tế: ${ctx.parsed.x.toFixed(1)} triệu`;
+            }
           }
         }
       },
