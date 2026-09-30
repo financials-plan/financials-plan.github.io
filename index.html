@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Link file CSS -->
+  <!-- Link file CSS độc lập -->
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -44,7 +44,7 @@
         <span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- 12 NÚT THÁNG TÁCH BIỆT -->
+      <!-- 12 NÚT THÁNG TÁCH BIỆT NGUYÊN BẢN XLSX -->
       <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Theo dõi tháng 1</span></button>
       <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Theo dõi tháng 2</span></button>
       <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Theo dõi tháng 3</span></button>
@@ -67,13 +67,13 @@
   <!-- VÙNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <!-- Dải banner cam chạy ngang -->
+    <!-- Dải banner cam -->
     <header class="orange-banner">
       <h1 id="current-title">TỪ KHÓA</h1>
       <span class="unit-text">Đơn vị: triệu đồng</span>
     </header>
 
-    <!-- NỘI DUNG CÁC TAB -->
+    <!-- NỘI DUNG SHEET -->
     <section class="content-body">
       
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
@@ -207,7 +207,7 @@
 
       <!-- ==================== TAB 2: DASHBOARD ==================== -->
       <div id="tab-dashboard" class="tab-pane">
-        <!-- HÀNG THẺ KPI TỔNG QUAN -->
+        <!-- HÀNG THẺ CHỈ SỐ KPI CHÍNH -->
         <div class="stat-cards">
           <div class="stat-card">
             <div class="stat-label">Tổng tiết kiệm cần đạt</div>
@@ -248,8 +248,9 @@
           </div>
         </div>
 
-        <!-- 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN XLSX -->
+        <!-- 4 BẢNG MA TRẬN 12 THÁNG NGUYÊN BẢN THEO ẢNH XLSX -->
         <div class="dashboard-matrix-container">
+          
           <!-- BẢNG 1: THU NHẬP 12 THÁNG -->
           <div class="table-scroll-x">
             <table class="excel-matrix-table" id="table-db-income">
@@ -368,6 +369,7 @@
               </tfoot>
             </table>
           </div>
+
         </div>
       </div>
 
@@ -667,11 +669,10 @@
         </div>
       </div>
 
-<!-- ==================== TAB 8: BẢNG KHẢO SÁT (DÙNG DOTBOX TRẮC NGHIỆM) ==================== -->
+      <!-- ==================== TAB 8: BẢNG KHẢO SÁT (DÙNG DOTBOX TRẮC NGHIỆM) ==================== -->
       <div id="tab-khaosat" class="tab-pane">
         <div class="survey-dotbox-container">
           
-          <!-- THANH TIÊU ĐỀ ĐẦU BẢNG KHẢO SÁT -->
           <div class="survey-top-header">
             <div class="survey-main-title">Bảng khảo sát đánh giá bản thân (Chỉ chọn 1 đáp án cho mỗi câu hỏi)</div>
             <button class="btn-back-target" onclick="switchTab('tab-muctieu-bt')">
@@ -679,7 +680,7 @@
             </button>
           </div>
 
-          <!-- ================= PHẦN 1 ================= -->
+          <!-- PHẦN 1 -->
           <div class="survey-banner-green">
             Khảo sát 1: Khả năng chịu đựng rủi ro đầu tư
           </div>
@@ -837,7 +838,7 @@
             Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình
           </div>
 
-          <!-- ================= PHẦN 2 ================= -->
+          <!-- PHẦN 2 -->
           <div class="survey-banner-green mt-4">
             Khảo sát 2: Hoàn cảnh
           </div>
@@ -980,6 +981,7 @@
 
         </div>
       </div>
+
     </section>
   </main>
 
