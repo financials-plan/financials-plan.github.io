@@ -424,6 +424,7 @@ body {
 .font-semibold { font-weight: 600; }
 .font-medium { font-weight: 500; }
 .ml-2 { margin-left: 8px; }
+.mb-3 { margin-bottom: 12px; }
 .mb-4 { margin-bottom: 24px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 
@@ -616,6 +617,10 @@ body {
   align-items: center;
 }
 
+.custom-sheet-container.full-width-sheet {
+  max-width: 1260px;
+}
+
 .custom-sheet-container > * {
   width: 100%;
 }
@@ -645,14 +650,13 @@ body {
   border-collapse: collapse;
   font-size: 0.8rem;
   background-color: #ffffff;
-  margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .excel-table-bordered th, 
 .excel-table-bordered td {
   border: 1px solid #cbd5e1;
-  padding: 6px 10px;
+  padding: 5px 8px;
 }
 
 .bg-header-green th {
@@ -1010,4 +1014,167 @@ body {
 .chart-container {
   height: 250px;
   position: relative;
+}
+
+/* ==================== SUB-NAV CHO SHEET THÁNG ==================== */
+.sub-nav-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.btn-sub-nav {
+  background-color: #0e5627;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 5px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sub-nav.active {
+  background-color: #0b4620;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+  border: 1px solid #ffffff;
+}
+
+.month-section-pane {
+  display: none;
+  width: 100%;
+}
+
+.month-section-pane.active {
+  display: block;
+}
+
+.sheet-title-text {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #000000;
+}
+
+/* ==================== GRID 3 KPI BOX VÀ BIỂU ĐỒ ==================== */
+.month-top-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: stretch;
+  background: #ffffff;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.month-kpi-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+}
+
+.kpi-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 48px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.kpi-box .kpi-lbl {
+  flex: 1;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.kpi-box .kpi-val {
+  background-color: #e2e8f0;
+  color: #000000;
+  width: 65px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.box-green .kpi-lbl { background-color: #0e5627; }
+.box-orange .kpi-lbl { background-color: #f29b28; }
+.box-red .kpi-lbl { background-color: #c00000; }
+
+.month-chart-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-box-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: #1e293b;
+}
+
+.month-bar-canvas-wrap {
+  flex: 1;
+  min-height: 180px;
+  position: relative;
+}
+
+/* ==================== 2 CỘT SONG SONG SIDE-BY-SIDE ==================== */
+.side-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.side-table-col {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.table-header-bar {
+  padding: 6px 12px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.green-bar {
+  background-color: #0e5627;
+  color: #ffffff;
+}
+
+.orange-bar {
+  background-color: #f29b28;
+  color: #000000;
+}
+
+/* ==================== PHẦN 2: PHÁT TRIỂN BẢN THÂN GRID ==================== */
+.learning-grid {
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.learning-left-col,
+.learning-right-col {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
