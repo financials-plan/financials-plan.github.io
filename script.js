@@ -1,5 +1,5 @@
 /**
- * TOÀN BỘ LOGIC REACTIVE & ĐIỀU HƯỚNG BẢNG TÀI CHÍNH
+ * TOÀN BỘ LOGIC REACTIVE & ĐIỀU HƯỚNG TÀI CHÍNH TOÀN DIỆN
  */
 
 const AppState = {
@@ -12,38 +12,37 @@ const AppState = {
     'Mua thực phẩm', 'Mua đồ dùng trong nhà', 'Đi ăn ở ngoài',
     'Chi tiền phát triển bản thân', 'Chi tiền bảo hiểm',
     'Chi tiền điện, nước, internet, điện thoại, xăng xe',
-    'Chi tiền giải trí, quà tặng', 'Chi tiền cho con', 'Chi tiền trả nợ', 'Chi tiền cho tặng gia đình',
-    'Chi tiêu 1', 'Chi tiêu 2', 'Chi tiêu 3', 'Chi tiêu 4', 'Chi tiêu 5'
+    'Chi tiền giải trí, quà tặng', 'Chi tiền cho con', 'Chi tiền trả nợ', 'Chi tiền cho tặng gia đình'
   ],
   incomeList: ['Lương từ công ty', 'Thu nhập khác'],
   planList: ['Mua sách', 'Khóa học ngắn hạn', 'Khóa học dài hạn', 'Tham gia các buổi diễn thuyết', 'Chi phát triển bản thân khác'],
 
   investProducts: [
-    { name: 'ETF - ETFVFM', returnRate: 13, risk: 18 },
-    { name: 'ETF - ETFFINLEAD', returnRate: 15, risk: 20 },
-    { name: 'DCBC', returnRate: 16, risk: 20 },
-    { name: 'DCDS', returnRate: 11, risk: 10 },
-    { name: 'DCBF', returnRate: 9, risk: 8 },
-    { name: 'Trái phiếu Techcombank', returnRate: 11, risk: 6 },
-    { name: 'Trái phiếu FE Credit', returnRate: 10, risk: 8 },
-    { name: 'Finhay', returnRate: 6, risk: 7 },
-    { name: 'Bảo hiểm thuần túy', returnRate: 4, risk: 5 },
-    { name: 'BH liên kết đầu tư', returnRate: 12, risk: 5 },
-    { name: 'Tiền gửi ngân hàng', returnRate: 5, risk: 2 },
-    { name: 'Cổ phiếu riêng lẻ', returnRate: 12, risk: 6 }
+    { name: 'ETF - ETFVFM', returnRate: 13.0, risk: 18.0 },
+    { name: 'ETF - ETFFINLEAD', returnRate: 15.0, risk: 20.0 },
+    { name: 'DCBC', returnRate: 16.0, risk: 20.0 },
+    { name: 'DCDS', returnRate: 11.0, risk: 10.0 },
+    { name: 'DCBF', returnRate: 9.0, risk: 8.0 },
+    { name: 'Trái phiếu Techcombank', returnRate: 11.0, risk: 6.0 },
+    { name: 'Trái phiếu FE Credit', returnRate: 10.0, risk: 8.0 },
+    { name: 'Finhay', returnRate: 6.0, risk: 7.0 },
+    { name: 'Bảo hiểm thuần túy', returnRate: 4.0, risk: 5.0 },
+    { name: 'BH liên kết đầu tư', returnRate: 12.0, risk: 5.0 },
+    { name: 'Tiền gửi ngân hàng', returnRate: 5.0, risk: 2.0 },
+    { name: 'Cổ phiếu riêng lẻ', returnRate: 12.0, risk: 6.0 }
   ],
 
   debtTargets: [
-    { age: 35, desc: 'Vay mua chung cư', val: 500 }
+    { age: 35, desc: 'Vay mua chung cư', val: 500.0 }
   ],
   investTargets: [
-    { age: 25, desc: 'Du lịch xuyên Thái Lan', val: 50 },
-    { age: 26, desc: 'Quỹ dự phòng tài chính', val: 100 },
-    { age: 28, desc: 'Đám cưới', val: 200 },
-    { age: 30, desc: 'Khởi nghiệp', val: 500 },
-    { age: 38, desc: 'Mua chung cư', val: 1500 },
-    { age: 46, desc: 'Cho con đi học đại học', val: 500 },
-    { age: 50, desc: 'Hưu trí', val: 500 }
+    { age: 25, desc: 'Du lịch xuyên Thái Lan', val: 50.0 },
+    { age: 26, desc: 'Quỹ dự phòng tài chính', val: 100.0 },
+    { age: 28, desc: 'Đám cưới', val: 200.0 },
+    { age: 30, desc: 'Khởi nghiệp', val: 500.0 },
+    { age: 38, desc: 'Mua chung cư', val: 1500.0 },
+    { age: 46, desc: 'Cho con đi học đại học', val: 500.0 },
+    { age: 50, desc: 'Hưu trí', val: 500.0 }
   ],
 
   skills: ['Sẵn sàng học hỏi cái mới', 'Nhiệt huyết trong công việc'],
@@ -72,8 +71,8 @@ const AppState = {
   ],
 
   matrixIncome: {
-    'Lương từ công ty': [20, 25, 18, 20, 25, 20, 20, 20, 20, 20, 20, 25],
-    'Thu nhập khác': [4, 4.5, 5.7, 3.9, 7.8, 7.5, 9.0, 5.0, 7.0, 8.0, 4.0, 10.0]
+    'Lương từ công ty': [20.0, 25.0, 18.0, 20.0, 25.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 25.0],
+    'Thu nhập khác': [4.0, 4.5, 5.7, 3.9, 7.8, 7.5, 9.0, 5.0, 7.0, 8.0, 4.0, 10.0]
   },
 
   matrixExpense: {
@@ -121,31 +120,70 @@ const AppState = {
   }
 };
 
-// Khởi tạo các tháng T2 -> T12
+// Khởi tạo các tháng 2 đến 12 từ ma trận gốc
 for (let m = 2; m <= 12; m++) {
   if (!AppState.monthlyDetails[m]) {
-    const incComp = (AppState.matrixIncome['Lương từ công ty'] && AppState.matrixIncome['Lương từ công ty'][m - 1]) || 20.0;
-    const incOther = (AppState.matrixIncome['Thu nhập khác'] && AppState.matrixIncome['Thu nhập khác'][m - 1]) || 5.0;
-    const expFood = (AppState.matrixExpense['Mua thực phẩm'] && AppState.matrixExpense['Mua thực phẩm'][m - 1]) || 5.0;
-    const expUtil = (AppState.matrixExpense['Chi tiền điện, nước, internet, điện thoại, xăng xe'] && AppState.matrixExpense['Chi tiền điện, nước, internet, điện thoại, xăng xe'][m - 1]) || 2.0;
-    const expOut = (AppState.matrixExpense['Đi ăn ở ngoài'] && AppState.matrixExpense['Đi ăn ở ngoài'][m - 1]) || 1.5;
+    AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
+    const monthStr = m < 10 ? `0${m}` : `${m}`;
 
-    AppState.monthlyDetails[m] = {
-      incomes: [
-        { date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Lương từ công ty', desc: 'Lương tháng', val: incComp, reason: '' },
-        { date: `30/${m < 10 ? '0' + m : m}/2023`, cat: 'Thu nhập khác', desc: 'Thu nhập ngoài', val: incOther, reason: '' }
-      ],
-      expenses: [
-        { date: `01/${m < 10 ? '0' + m : m}/2023`, cat: 'Mua thực phẩm', desc: 'Tiền chợ', val: expFood, reason: '' },
-        { date: `10/${m < 10 ? '0' + m : m}/2023`, cat: 'Chi tiền trả nợ', desc: 'Gốc + Lãi', val: 6.5, reason: '' },
-        { date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Chi tiền điện, nước, internet, điện thoại, xăng xe', desc: 'Hóa đơn', val: expUtil, reason: '' },
-        { date: `20/${m < 10 ? '0' + m : m}/2023`, cat: 'Đi ăn ở ngoài', desc: 'Cà phê', val: expOut, reason: '' }
-      ]
-    };
+    Object.keys(AppState.matrixIncome).forEach(cat => {
+      const val = (AppState.matrixIncome[cat] && AppState.matrixIncome[cat][m - 1]) || 0;
+      if (val > 0) {
+        AppState.monthlyDetails[m].incomes.push({
+          date: `15/${monthStr}/2023`,
+          cat: cat,
+          desc: `Thu nhập định kỳ ${cat}`,
+          val: val,
+          reason: ''
+        });
+      }
+    });
+
+    Object.keys(AppState.matrixExpense).forEach(cat => {
+      const val = (AppState.matrixExpense[cat] && AppState.matrixExpense[cat][m - 1]) || 0;
+      if (val > 0) {
+        AppState.monthlyDetails[m].expenses.push({
+          date: `05/${monthStr}/2023`,
+          cat: cat,
+          desc: `Chi phí ${cat}`,
+          val: val,
+          reason: ''
+        });
+      }
+    });
   }
 }
 
-// ==================== CÁC HÀM ĐIỀU HƯỚNG TOÀN CỤC ====================
+// ==================== CƠ CHẾ ĐỒNG BỘ 2 CHIỀU GIỮA CHI TIẾT THÁNG & MA TRẬN ====================
+function syncMonthlyDetailsToMatrix() {
+  // Reset ma trận về 0 cho các danh mục hiện hữu
+  Object.keys(AppState.matrixIncome).forEach(cat => {
+    AppState.matrixIncome[cat] = new Array(12).fill(0);
+  });
+  Object.keys(AppState.matrixExpense).forEach(cat => {
+    AppState.matrixExpense[cat] = new Array(12).fill(0);
+  });
+
+  for (let m = 1; m <= 12; m++) {
+    const md = AppState.monthlyDetails[m];
+    if (!md) continue;
+    md.incomes.forEach(item => {
+      if (!AppState.matrixIncome[item.cat]) {
+        AppState.matrixIncome[item.cat] = new Array(12).fill(0);
+      }
+      AppState.matrixIncome[item.cat][m - 1] += item.val;
+    });
+
+    md.expenses.forEach(item => {
+      if (!AppState.matrixExpense[item.cat]) {
+        AppState.matrixExpense[item.cat] = new Array(12).fill(0);
+      }
+      AppState.matrixExpense[item.cat][m - 1] += item.val;
+    });
+  }
+}
+
+// ==================== ĐIỀU HƯỚNG TAB ====================
 window.switchTab = function(tabId) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   const btn = document.getElementById(`btn-${tabId}`);
@@ -169,6 +207,7 @@ window.switchTab = function(tabId) {
   if (targetPane) {
     targetPane.classList.add('active');
     if (tabId === 'tab-dashboard') {
+      renderDashboardMatrices();
       updateDashboardCharts();
     }
   }
@@ -190,13 +229,13 @@ window.switchMonthTab = function(m) {
   renderMonthView(m);
 };
 
-// ==================== ĐỒ THỊ SPARKLINE ====================
+// ==================== ĐỒ THỊ SPARKLINE SVG ====================
 function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
   if (!arr || arr.length === 0) return '';
   const min = Math.min(...arr);
   const max = Math.max(...arr);
   const range = max - min === 0 ? 1 : max - min;
-  const step = width / (arr.length - 1);
+  const step = width / Math.max(1, arr.length - 1);
 
   const points = arr.map((v, i) => {
     const x = i * step;
@@ -211,14 +250,14 @@ function createSparkline(arr, width = 75, height = 18, color = '#0284c7') {
   `;
 }
 
-// ==================== KHỞI TẠO DOM ====================
+// ==================== KHỞI TẠO DOM & LẮNG NGHE SỰ KIỆN ====================
 document.addEventListener('DOMContentLoaded', () => {
   renderSetupTables();
   renderTargetTables();
   renderSkillsFamilyJob();
   renderPlanTables();
-  renderDashboardMatrices();
   renderMonthView(AppState.currentMonth);
+  evaluateSurveys();
   recalculateAll();
 
   // Đổi năm / tuổi
@@ -233,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         AppState.currentAge = AppState.currentYear - AppState.birthYear;
         if (inputAgeEl) inputAgeEl.innerText = AppState.currentAge;
         syncYearLabels();
+        recalculateAll();
       }
     });
   }
@@ -243,35 +283,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isNaN(val) && val > 0 && val < 120) {
         AppState.currentAge = val;
         AppState.birthYear = AppState.currentYear - AppState.currentAge;
+        recalculateAll();
       }
     });
   }
 
-  // Tự động đồng bộ nhận định khảo sát sang tab Mục tiêu bản thân khi chọn dotbox
+  // Lắng nghe thay đổi toàn bộ radio button trong bảng khảo sát
   document.addEventListener('change', (e) => {
-    if (e.target && e.target.name === 'ks1_4') {
-      const val = e.target.value;
-      const riskEl = document.getElementById('survey-result-risk');
-      if (riskEl) {
-        if (val === '1') {
-          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người thận trọng, ưu tiên bảo toàn vốn, nên duy trì tài sản an toàn cao.';
-        } else if (val === '4') {
-          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người ưa mạo hiểm, ưu tiên tăng trưởng, sẵn sàng đón nhận biến động mạnh.';
-        } else {
-          riskEl.textContent = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.';
-        }
-      }
-    }
-
-    if (e.target && e.target.name === 'ks2_9') {
-      const contextEl = document.getElementById('survey-result-context');
-      if (contextEl) {
-        if (e.target.value === '3') {
-          contextEl.textContent = 'Kết quả khảo sát hoàn cảnh: Bạn tự chủ tài chính từ sớm, có tính độc lập cao trong việc xây dựng lộ trình tích lũy.';
-        } else {
-          contextEl.textContent = 'Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.';
-        }
-      }
+    if (e.target && e.target.type === 'radio' && (e.target.name.startsWith('ks1_') || e.target.name.startsWith('ks2_'))) {
+      evaluateSurveys();
     }
   });
 });
@@ -282,77 +302,149 @@ function syncYearLabels() {
   });
 }
 
-// ==================== RENDER 4 BẢNG MA TRẬN 12 THÁNG ====================
+// ==================== RENDER VÀ TÍNH TOÁN BẢNG MA TRẬN DASHBOARD ====================
 function renderDashboardMatrices() {
+  syncMonthlyDetailsToMatrix();
+
+  const incMonthlySums = new Array(12).fill(0);
   const tbInc = document.getElementById('tbody-db-income');
   if (tbInc) {
     let incRows = '';
     Object.entries(AppState.matrixIncome).forEach(([cat, vals]) => {
-      const sum = vals.reduce((a, b) => a + b, 0);
+      const rowSum = vals.reduce((a, b) => a + b, 0);
+      vals.forEach((v, idx) => { incMonthlySums[idx] += v; });
       const cells = vals.map(v => `<td>${v.toFixed(1)}</td>`).join('');
       incRows += `
         <tr>
           <td>${cat}</td>
           ${cells}
-          <td class="font-bold text-green">${sum.toFixed(1)}</td>
-          <td>${createSparkline(vals)}</td>
+          <td class="font-bold text-green">${rowSum.toFixed(1)}</td>
+          <td>${createSparkline(vals, 75, 18, '#16a34a')}</td>
         </tr>
       `;
     });
     tbInc.innerHTML = incRows;
   }
 
+  const expMonthlySums = new Array(12).fill(0);
   const tbExp = document.getElementById('tbody-db-expense');
   if (tbExp) {
     let expRows = '';
     Object.entries(AppState.matrixExpense).forEach(([cat, vals]) => {
-      const sum = vals.reduce((a, b) => a + b, 0);
+      const rowSum = vals.reduce((a, b) => a + b, 0);
+      vals.forEach((v, idx) => { expMonthlySums[idx] += v; });
       const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
       expRows += `
         <tr>
           <td>${cat}</td>
           ${cells}
-          <td class="font-bold text-red">${sum.toFixed(2)}</td>
-          <td>${createSparkline(vals)}</td>
+          <td class="font-bold text-red">${rowSum.toFixed(2)}</td>
+          <td>${createSparkline(vals, 75, 18, '#dc2626')}</td>
         </tr>
       `;
     });
     tbExp.innerHTML = expRows;
   }
 
-  const savArr = [6.5, 10.3, 4.45, 6.65, 16.2, 12.55, 10.75, 2.45, 9.55, 10.05, 6.25, 9.95];
-  const spkSav = document.getElementById('sparkline-savings');
-  if (spkSav) spkSav.innerHTML = createSparkline(savArr, 75, 18, '#2563eb');
+  // Cập nhật tfoot Thu nhập
+  const tfInc = document.getElementById('tfoot-db-income-total');
+  if (tfInc) {
+    const totalYearInc = incMonthlySums.reduce((a, b) => a + b, 0);
+    tfInc.innerHTML = `
+      <td class="font-bold">Tổng thu nhập</td>
+      ${incMonthlySums.map(v => `<td>${v.toFixed(1)}</td>`).join('')}
+      <td class="font-bold text-green">${totalYearInc.toFixed(2)}</td>
+      <td>${createSparkline(incMonthlySums, 75, 18, '#16a34a')}</td>
+    `;
+  }
 
+  // Tính Kế hoạch chi tiêu hàng tháng và lũy kế chênh lệch
+  const totalMonthlyPlanExp = AppState.planExpense.reduce((a, b) => a + b.plan, 0);
+  const planExp12 = new Array(12).fill(totalMonthlyPlanExp);
+  const cumDiff = [];
+  let cumSum = 0;
+  for (let i = 0; i < 12; i++) {
+    const diff = planExp12[i] - expMonthlySums[i];
+    cumSum += diff;
+    cumDiff.push(cumSum);
+  }
+
+  const tfExpTotal = document.getElementById('tfoot-db-expense-total');
+  const tfExpPlan = document.getElementById('tfoot-db-expense-plan');
+  const tfExpDiff = document.getElementById('tfoot-db-expense-cumdiff');
+
+  if (tfExpTotal) {
+    const totalYearExp = expMonthlySums.reduce((a, b) => a + b, 0);
+    tfExpTotal.innerHTML = `
+      <td class="font-bold">Tổng chi tiêu</td>
+      ${expMonthlySums.map(v => `<td>${v.toFixed(2)}</td>`).join('')}
+      <td class="font-bold text-red">${totalYearExp.toFixed(2)}</td>
+      <td>${createSparkline(expMonthlySums, 75, 18, '#dc2626')}</td>
+    `;
+  }
+
+  if (tfExpPlan) {
+    tfExpPlan.innerHTML = `
+      <td>Kế hoạch chi tiêu</td>
+      ${planExp12.map(v => `<td>${v.toFixed(1)}</td>`).join('')}
+      <td>${(totalMonthlyPlanExp * 12).toFixed(1)}</td>
+      <td>-</td>
+    `;
+  }
+
+  if (tfExpDiff) {
+    tfExpDiff.innerHTML = `
+      <td>Lũy kế chênh lệch</td>
+      ${cumDiff.map(v => `<td class="${v >= 0 ? 'text-green font-bold' : 'text-red font-bold'}">${v >= 0 ? '+' : ''}${v.toFixed(2)}</td>`).join('')}
+      <td>-</td>
+      <td>-</td>
+    `;
+  }
+
+  // Dòng Tiết kiệm = Thu nhập - Chi tiêu
+  const savingsMonthly = incMonthlySums.map((inc, i) => inc - expMonthlySums[i]);
+  const totalYearSav = savingsMonthly.reduce((a, b) => a + b, 0);
+  const trSav = document.getElementById('trow-db-savings');
+  if (trSav) {
+    trSav.innerHTML = `
+      <td class="font-bold">Giá trị</td>
+      ${savingsMonthly.map(v => `<td>${v.toFixed(2)}</td>`).join('')}
+      <td class="font-bold text-blue">${totalYearSav.toFixed(2)}</td>
+      <td>${createSparkline(savingsMonthly, 75, 18, '#2563eb')}</td>
+    `;
+  }
+
+  // Bảng chi phí phát triển bản thân
   const tbLrn = document.getElementById('tbody-db-learning');
+  const lrnMonthlySums = new Array(12).fill(0);
   if (tbLrn) {
     let learnRows = '';
     Object.entries(AppState.matrixLearning).forEach(([cat, vals]) => {
       const sum = vals.reduce((a, b) => a + b, 0);
+      vals.forEach((v, idx) => { lrnMonthlySums[idx] += v; });
       const cells = vals.map(v => `<td>${v.toFixed(2)}</td>`).join('');
       learnRows += `
         <tr>
           <td>${cat}</td>
           ${cells}
           <td class="font-bold">${sum.toFixed(2)}</td>
-          <td>${createSparkline(vals)}</td>
+          <td>${createSparkline(vals, 75, 18, '#ea580c')}</td>
         </tr>
       `;
     });
     tbLrn.innerHTML = learnRows;
   }
 
-  const incTotalArr = [24, 29.5, 23.7, 23.9, 32.8, 27.5, 29, 25, 27, 28, 24, 35];
-  const expTotalArr = [17.5, 19.2, 19.25, 17.25, 16.6, 14.95, 18.25, 22.55, 17.45, 17.95, 17.75, 25.05];
-  const lrnTotalArr = [1.1, 2.3, 1.5, 1.3, 2.0, 1.1, 1.1, 3.1, 0.8, 2.1, 1.5, 1.5];
-
-  const spkInc = document.getElementById('sparkline-inc-total');
-  const spkExp = document.getElementById('sparkline-exp-total');
-  const spkLrn = document.getElementById('sparkline-learn-total');
-
-  if (spkInc) spkInc.innerHTML = createSparkline(incTotalArr, 75, 18, '#16a34a');
-  if (spkExp) spkExp.innerHTML = createSparkline(expTotalArr, 75, 18, '#dc2626');
-  if (spkLrn) spkLrn.innerHTML = createSparkline(lrnTotalArr, 75, 18, '#ea580c');
+  const tfLrnTotal = document.getElementById('tfoot-db-learning-total');
+  if (tfLrnTotal) {
+    const totalYearLrn = lrnMonthlySums.reduce((a, b) => a + b, 0);
+    tfLrnTotal.innerHTML = `
+      <td class="font-bold">Tổng</td>
+      ${lrnMonthlySums.map(v => `<td>${v.toFixed(2)}</td>`).join('')}
+      <td class="font-bold text-red">${totalYearLrn.toFixed(2)}</td>
+      <td>${createSparkline(lrnMonthlySums, 75, 18, '#ea580c')}</td>
+    `;
+  }
 }
 
 // ==================== BẢNG TỪ KHÓA ====================
@@ -362,7 +454,7 @@ function renderSetupTables() {
     tbExp.innerHTML = AppState.expenses.map((item, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
       </tr>
     `).join('');
   }
@@ -372,7 +464,7 @@ function renderSetupTables() {
     tbInc.innerHTML = AppState.incomeList.map((item, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
       </tr>
     `).join('');
   }
@@ -382,7 +474,7 @@ function renderSetupTables() {
     tbLrn.innerHTML = AppState.planList.map((item, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanListItem(${idx}, this.innerText)">${item}</td>
       </tr>
     `).join('');
   }
@@ -392,25 +484,77 @@ function renderSetupTables() {
     tbInv.innerHTML = AppState.investProducts.map((p, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td class="cell-blue ${p.name === 'DCDS' ? 'excel-active-cell' : ''}" contenteditable="true">${p.name}</td>
-        <td class="text-right cell-blue" contenteditable="true" onblur="updateProductRate(${idx}, this.innerText)">${p.returnRate}%</td>
-        <td class="text-right cell-blue" contenteditable="true">${p.risk}%</td>
+        <td class="cell-blue ${p.name === 'DCDS' ? 'excel-active-cell' : ''}" contenteditable="true" spellcheck="false" onblur="updateInvestName(${idx}, this.innerText)">${p.name}</td>
+        <td class="text-right cell-blue" contenteditable="true" spellcheck="false" onblur="updateProductRate(${idx}, this.innerText)">${p.returnRate.toFixed(1)}%</td>
+        <td class="text-right cell-blue" contenteditable="true" spellcheck="false" onblur="updateProductRisk(${idx}, this.innerText)">${p.risk.toFixed(1)}%</td>
       </tr>
     `).join('');
   }
 }
 
-window.updateExpenseItem = function(idx, val) { AppState.expenses[idx] = val.trim(); recalculateAll(); };
-window.updateIncomeItem = function(idx, val) { AppState.incomeList[idx] = val.trim(); recalculateAll(); };
+window.updateExpenseItem = function(idx, val) { 
+  const oldVal = AppState.expenses[idx];
+  const newVal = val.trim();
+  AppState.expenses[idx] = newVal;
+  if (oldVal !== newVal && AppState.matrixExpense[oldVal]) {
+    AppState.matrixExpense[newVal] = AppState.matrixExpense[oldVal];
+    delete AppState.matrixExpense[oldVal];
+  }
+  recalculateAll(); 
+};
+
+window.updateIncomeItem = function(idx, val) { 
+  const oldVal = AppState.incomeList[idx];
+  const newVal = val.trim();
+  AppState.incomeList[idx] = newVal;
+  if (oldVal !== newVal && AppState.matrixIncome[oldVal]) {
+    AppState.matrixIncome[newVal] = AppState.matrixIncome[oldVal];
+    delete AppState.matrixIncome[oldVal];
+  }
+  recalculateAll(); 
+};
+
+window.updatePlanListItem = function(idx, val) {
+  AppState.planList[idx] = val.trim();
+};
+
+window.updateInvestName = function(idx, val) {
+  AppState.investProducts[idx].name = val.trim();
+};
+
 window.updateProductRate = function(idx, val) {
-  AppState.investProducts[idx].returnRate = parseFloat(val.replace('%', '')) || 0;
+  AppState.investProducts[idx].returnRate = parseFloat(val.replace(/[^0-9.-]/g, '')) || 0;
   recalculateAll();
 };
 
-window.addExpenseRow = function() { AppState.expenses.push(`Khoản chi mới ${AppState.expenses.length + 1}`); renderSetupTables(); };
-window.addIncomeRow = function() { AppState.incomeList.push(`Nguồn thu mới ${AppState.incomeList.length + 1}`); renderSetupTables(); };
-window.addPlanRow = function() { AppState.planList.push(`Kế hoạch mới ${AppState.planList.length + 1}`); renderSetupTables(); };
-window.addInvestRow = function() { AppState.investProducts.push({ name: 'Sản phẩm mới', returnRate: 10, risk: 10 }); renderSetupTables(); recalculateAll(); };
+window.updateProductRisk = function(idx, val) {
+  AppState.investProducts[idx].risk = parseFloat(val.replace(/[^0-9.-]/g, '')) || 0;
+};
+
+window.addExpenseRow = function() { 
+  const name = `Khoản chi mới ${AppState.expenses.length + 1}`;
+  AppState.expenses.push(name); 
+  AppState.matrixExpense[name] = new Array(12).fill(0);
+  renderSetupTables(); 
+};
+
+window.addIncomeRow = function() { 
+  const name = `Nguồn thu mới ${AppState.incomeList.length + 1}`;
+  AppState.incomeList.push(name); 
+  AppState.matrixIncome[name] = new Array(12).fill(0);
+  renderSetupTables(); 
+};
+
+window.addPlanRow = function() { 
+  AppState.planList.push(`Kế hoạch mới ${AppState.planList.length + 1}`); 
+  renderSetupTables(); 
+};
+
+window.addInvestRow = function() { 
+  AppState.investProducts.push({ name: 'Sản phẩm mới', returnRate: 10.0, risk: 10.0 }); 
+  renderSetupTables(); 
+  recalculateAll(); 
+};
 
 // ==================== MỤC TIÊU BẢN THÂN ====================
 function renderTargetTables() {
@@ -419,9 +563,9 @@ function renderTargetTables() {
     tbDebt.innerHTML = AppState.debtTargets.map((d, i) => `
       <tr>
         <td class="cell-green-light text-center font-bold">${i + 1}</td>
-        <td class="cell-green-light text-center cell-blue" contenteditable="true">${d.age}</td>
-        <td class="cell-green-light cell-blue" contenteditable="true">${d.desc}</td>
-        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateDebtTarget(${i}, this.innerText)">${d.val}</td>
+        <td class="cell-green-light text-center cell-blue" contenteditable="true" spellcheck="false" onblur="updateDebtTargetAge(${i}, this.innerText)">${d.age}</td>
+        <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="updateDebtTargetDesc(${i}, this.innerText)">${d.desc}</td>
+        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateDebtTargetVal(${i}, this.innerText)">${d.val.toFixed(2)}</td>
       </tr>
     `).join('');
   }
@@ -430,36 +574,56 @@ function renderTargetTables() {
   if (tbInv) {
     tbInv.innerHTML = AppState.investTargets.map((inv, i) => `
       <tr>
-        <td class="cell-green-light text-center font-bold">${i + 4}</td>
-        <td class="cell-green-light text-center cell-blue" contenteditable="true">${inv.age}</td>
-        <td class="cell-green-light cell-blue" contenteditable="true">${inv.desc}</td>
-        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" onblur="updateInvestTarget(${i}, this.innerText)">${inv.val.toLocaleString()}</td>
+        <td class="cell-green-light text-center font-bold">${i + 1}</td>
+        <td class="cell-green-light text-center cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestTargetAge(${i}, this.innerText)">${inv.age}</td>
+        <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestTargetDesc(${i}, this.innerText)">${inv.desc}</td>
+        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateInvestTargetVal(${i}, this.innerText)">${inv.val.toLocaleString()}</td>
       </tr>
     `).join('');
   }
 }
 
-window.updateDebtTarget = function(i, text) { AppState.debtTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); };
-window.updateInvestTarget = function(i, text) { AppState.investTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; recalculateAll(); };
+window.updateDebtTargetAge = function(i, text) { AppState.debtTargets[i].age = parseInt(text, 10) || 0; };
+window.updateDebtTargetDesc = function(i, text) { AppState.debtTargets[i].desc = text.trim(); };
+window.updateDebtTargetVal = function(i, text) { 
+  AppState.debtTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; 
+  recalculateAll(); 
+};
 
-window.addDebtTargetRow = function() { AppState.debtTargets.push({ age: 35, desc: 'Mục tiêu nợ mới', val: 100 }); renderTargetTables(); recalculateAll(); };
-window.addInvestTargetRow = function() { AppState.investTargets.push({ age: 40, desc: 'Mục tiêu tích lũy mới', val: 200 }); renderTargetTables(); recalculateAll(); };
+window.updateInvestTargetAge = function(i, text) { AppState.investTargets[i].age = parseInt(text, 10) || 0; };
+window.updateInvestTargetDesc = function(i, text) { AppState.investTargets[i].desc = text.trim(); };
+window.updateInvestTargetVal = function(i, text) { 
+  AppState.investTargets[i].val = parseFloat(text.replace(/,/g, '')) || 0; 
+  recalculateAll(); 
+};
+
+window.addDebtTargetRow = function() { 
+  AppState.debtTargets.push({ age: 35, desc: 'Mục tiêu nợ mới', val: 100.0 }); 
+  renderTargetTables(); 
+  recalculateAll(); 
+};
+
+window.addInvestTargetRow = function() { 
+  AppState.investTargets.push({ age: 40, desc: 'Mục tiêu tích lũy mới', val: 200.0 }); 
+  renderTargetTables(); 
+  recalculateAll(); 
+};
 
 function renderSkillsFamilyJob() {
   const tbS = document.getElementById('tbody-skills');
   const tbF = document.getElementById('tbody-family');
   const tbJ = document.getElementById('tbody-job');
 
-  if (tbS) tbS.innerHTML = AppState.skills.map(s => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${s}</td></tr>`).join('');
-  if (tbF) tbF.innerHTML = AppState.family.map(f => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${f}</td></tr>`).join('');
-  if (tbJ) tbJ.innerHTML = AppState.job.map(j => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true">${j}</td></tr>`).join('');
+  if (tbS) tbS.innerHTML = AppState.skills.map(s => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false">${s}</td></tr>`).join('');
+  if (tbF) tbF.innerHTML = AppState.family.map(f => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false">${f}</td></tr>`).join('');
+  if (tbJ) tbJ.innerHTML = AppState.job.map(j => `<tr><td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false">${j}</td></tr>`).join('');
 }
 
 window.addSkillRow = function() { AppState.skills.push('Kỹ năng mới'); renderSkillsFamilyJob(); };
 window.addFamilyRow = function() { AppState.family.push('Hỗ trợ gia đình mới'); renderSkillsFamilyJob(); };
 window.addJobRow = function() { AppState.job.push('Môi trường nghề nghiệp mới'); renderSkillsFamilyJob(); };
 
-// ==================== KẾ HOẠCH HÀNG THÁNG ====================
+// ==================== KẾ HOẠCH HÀNG THÁNG (BUDGET) ====================
 function renderPlanTables() {
   const tbInc = document.getElementById('tbody-plan-inc');
   if (tbInc) {
@@ -467,7 +631,7 @@ function renderPlanTables() {
       <tr>
         <td class="text-center">${i + 1}</td>
         <td>${item.name}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanIncVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updatePlanIncVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
       </tr>
     `).join('');
   }
@@ -478,8 +642,8 @@ function renderPlanTables() {
       <tr>
         <td class="text-center">${i + 1}</td>
         <td>${item.name}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updatePlanExpVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true">${item.note}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updatePlanExpVal(${i}, this.innerText)">${item.plan.toFixed(2)}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false">${item.note}</td>
       </tr>
     `).join('');
   }
@@ -499,10 +663,11 @@ function renderMonthView(m) {
   if (tbInc) {
     tbInc.innerHTML = mData.incomes.map((inc, i) => `
       <tr>
-        <td class="cell-blue text-center" contenteditable="true">${inc.date}</td>
-        <td class="cell-blue" contenteditable="true">${inc.cat}</td>
-        <td class="cell-blue" contenteditable="true">${inc.desc}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(2)}</td>
+        <td class="cell-blue text-center" contenteditable="true" spellcheck="false" onblur="updateMonthIncDate(${m}, ${i}, this.innerText)">${inc.date}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthIncCat(${m}, ${i}, this.innerText)">${inc.cat}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthIncDesc(${m}, ${i}, this.innerText)">${inc.desc}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(2)}</td>
+        <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -511,10 +676,11 @@ function renderMonthView(m) {
   if (tbExp) {
     tbExp.innerHTML = mData.expenses.map((exp, i) => `
       <tr>
-        <td class="cell-blue text-center" contenteditable="true">${exp.date}</td>
-        <td class="cell-blue" contenteditable="true">${exp.cat}</td>
-        <td class="cell-blue" contenteditable="true">${exp.desc}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(2)}</td>
+        <td class="cell-blue text-center" contenteditable="true" spellcheck="false" onblur="updateMonthExpDate(${m}, ${i}, this.innerText)">${exp.date}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthExpCat(${m}, ${i}, this.innerText)">${exp.cat}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthExpDesc(${m}, ${i}, this.innerText)">${exp.desc}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(2)}</td>
+        <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})" title="Xóa dòng"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -525,7 +691,14 @@ function renderMonthView(m) {
 window.addMonthDetailIncomeRow = function() {
   const m = AppState.currentMonth;
   if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
-  AppState.monthlyDetails[m].incomes.push({ date: `15/${m < 10 ? '0' + m : m}/2023`, cat: 'Thu nhập khác', desc: 'Khoản thu mới', val: 2.0, reason: '' });
+  const firstCat = AppState.incomeList[0] || 'Thu nhập khác';
+  AppState.monthlyDetails[m].incomes.push({ 
+    date: `15/${m < 10 ? '0' + m : m}/2023`, 
+    cat: firstCat, 
+    desc: 'Khoản thu mới', 
+    val: 2.0, 
+    reason: '' 
+  });
   renderMonthView(m);
   recalculateAll();
 };
@@ -533,10 +706,41 @@ window.addMonthDetailIncomeRow = function() {
 window.addMonthDetailExpenseRow = function() {
   const m = AppState.currentMonth;
   if (!AppState.monthlyDetails[m]) AppState.monthlyDetails[m] = { incomes: [], expenses: [] };
-  AppState.monthlyDetails[m].expenses.push({ date: `10/${m < 10 ? '0' + m : m}/2023`, cat: 'Mua thực phẩm', desc: 'Khoản chi mới', val: 1.0, reason: '' });
+  const firstCat = AppState.expenses[0] || 'Mua thực phẩm';
+  AppState.monthlyDetails[m].expenses.push({ 
+    date: `10/${m < 10 ? '0' + m : m}/2023`, 
+    cat: firstCat, 
+    desc: 'Khoản chi mới', 
+    val: 1.0, 
+    reason: '' 
+  });
   renderMonthView(m);
   recalculateAll();
 };
+
+window.deleteMonthIncomeRow = function(m, i) {
+  if (AppState.monthlyDetails[m]) {
+    AppState.monthlyDetails[m].incomes.splice(i, 1);
+    renderMonthView(m);
+    recalculateAll();
+  }
+};
+
+window.deleteMonthExpenseRow = function(m, i) {
+  if (AppState.monthlyDetails[m]) {
+    AppState.monthlyDetails[m].expenses.splice(i, 1);
+    renderMonthView(m);
+    recalculateAll();
+  }
+};
+
+window.updateMonthIncDate = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].date = text.trim(); };
+window.updateMonthIncCat = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].cat = text.trim(); recalculateAll(); };
+window.updateMonthIncDesc = function(m, i, text) { AppState.monthlyDetails[m].incomes[i].desc = text.trim(); };
+
+window.updateMonthExpDate = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].date = text.trim(); };
+window.updateMonthExpCat = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].cat = text.trim(); recalculateAll(); };
+window.updateMonthExpDesc = function(m, i, text) { AppState.monthlyDetails[m].expenses[i].desc = text.trim(); };
 
 window.updateMonthIncVal = function(m, i, text) {
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes[i]) {
@@ -554,14 +758,15 @@ window.updateMonthExpVal = function(m, i, text) {
   renderReconciliationTable(m);
 };
 
+// Bảng đối soát Kế hoạch vs Thực tế
 function renderReconciliationTable(m) {
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [] };
 
   const actualIncMap = {};
-  mData.incomes.forEach(x => actualIncMap[x.cat] = (actualIncMap[x.cat] || 0) + x.val);
+  mData.incomes.forEach(x => { actualIncMap[x.cat] = (actualIncMap[x.cat] || 0) + x.val; });
 
   const actualExpMap = {};
-  mData.expenses.forEach(x => actualExpMap[x.cat] = (actualExpMap[x.cat] || 0) + x.val);
+  mData.expenses.forEach(x => { actualExpMap[x.cat] = (actualExpMap[x.cat] || 0) + x.val; });
 
   let rows = '';
   rows += `<tr class="bg-header-green"><th colspan="5" style="text-align: left;">Tổng kết thu nhập</th></tr>`;
@@ -574,7 +779,7 @@ function renderReconciliationTable(m) {
         <td class="text-right">${p.plan.toFixed(2)}</td>
         <td class="text-right cell-blue font-bold">${act.toFixed(2)}</td>
         <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">${diff >= 0 ? '+' : ''}${diff.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true"></td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false"></td>
       </tr>
     `;
   });
@@ -589,7 +794,7 @@ function renderReconciliationTable(m) {
         <td class="text-right">${p.plan.toFixed(2)}</td>
         <td class="text-right cell-blue font-bold">${act.toFixed(2)}</td>
         <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">${diff.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true">${p.note || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false">${p.note || ''}</td>
       </tr>
     `;
   });
@@ -610,19 +815,68 @@ function renderReconciliationTable(m) {
   if (sumSavEl) sumSavEl.textContent = `${savings.toFixed(2)} tr`;
 }
 
-// ==================== CƠ CHẾ TÍNH TOÁN LIÊN KẾT ====================
+// ==================== KHẢO SÁT & CHẤM ĐIỂM HÀNH VI TÀI CHÍNH ====================
+function evaluateSurveys() {
+  // Tính điểm Khảo sát 1: Rủi ro đầu tư (10 câu)
+  let score1 = 0;
+  for (let i = 1; i <= 10; i++) {
+    const checked = document.querySelector(`input[name="ks1_${i}"]:checked`);
+    if (checked) score1 += parseInt(checked.value, 10);
+  }
+
+  let riskText = '';
+  if (score1 <= 18) {
+    riskText = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người thận trọng (Aversion), ưu tiên bảo toàn vốn, nên duy trì tài sản thanh khoản và an toàn cao.';
+  } else if (score1 <= 32) {
+    riskText = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.';
+  } else {
+    riskText = 'Kết quả khảo sát khả năng chịu đựng rủi ro: Bạn là người ưa chuộng mạo hiểm (Risk Seeking), ưu tiên tăng trưởng, sẵn sàng đón nhận biến động thị trường trong ngắn hạn.';
+  }
+
+  const rBar1 = document.getElementById('survey-result-bar-1');
+  const rTextBT = document.getElementById('survey-result-risk');
+  if (rBar1) rBar1.textContent = riskText;
+  if (rTextBT) rTextBT.textContent = riskText;
+
+  // Tính điểm Khảo sát 2: Hoàn cảnh (11 câu)
+  let score2 = 0;
+  for (let i = 1; i <= 11; i++) {
+    const checked = document.querySelector(`input[name="ks2_${i}"]:checked`);
+    if (checked) score2 += parseInt(checked.value, 10);
+  }
+
+  let contextText = '';
+  if (score2 <= 22) {
+    contextText = 'Kết quả khảo sát hoàn cảnh: Bối cảnh tài chính chịu nhiều ràng buộc chi tiêu gia đình, cần ưu tiên quỹ dự phòng thanh khoản lớn.';
+  } else if (score2 <= 38) {
+    contextText = 'Kết quả khảo sát hoàn cảnh: Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.';
+  } else {
+    contextText = 'Kết quả khảo sát hoàn cảnh: Bạn có bối cảnh tài chính thuận lợi và tính tự chủ rất cao để đẩy mạnh tích lũy tài sản đầu tư.';
+  }
+
+  const rBar2 = document.getElementById('survey-result-bar-2');
+  const cTextBT = document.getElementById('survey-result-context');
+  if (rBar2) rBar2.textContent = contextText;
+  if (cTextBT) cTextBT.textContent = contextText;
+}
+
+// ==================== CƠ CHẾ TÍNH TOÁN LIÊN KẾT TOÀN DIỆN ====================
 function recalculateAll() {
+  // 1. Tỷ suất sinh lời bình quân
   const sumRate = AppState.investProducts.reduce((acc, p) => acc + p.returnRate, 0);
   const avgRate = AppState.investProducts.length ? (sumRate / AppState.investProducts.length) : 0;
   const expRateEl = document.getElementById('dash-expected-return');
   if (expRateEl) expRateEl.textContent = `${avgRate.toFixed(2)}%/năm`;
 
+  // 2. Tổng tiết kiệm mục tiêu
   const totalInvest = AppState.investTargets.reduce((a, b) => a + b.val, 0);
   const tgtSavEl = document.getElementById('dash-target-savings');
   if (tgtSavEl) tgtSavEl.textContent = `${totalInvest.toLocaleString()} tr`;
 
+  // 3. Niên kim trả nợ
   calculateAmortization();
 
+  // 4. Kế hoạch thu chi tháng
   const sumPlanInc = AppState.planIncome.reduce((a, b) => a + b.plan, 0);
   const sumPlanExp = AppState.planExpense.reduce((a, b) => a + b.plan, 0);
   const plIncEl = document.getElementById('plan-sum-inc-val');
@@ -630,6 +884,7 @@ function recalculateAll() {
   if (plIncEl) plIncEl.textContent = `${sumPlanInc.toFixed(2)} tr`;
   if (plExpEl) plExpEl.textContent = `${sumPlanExp.toFixed(2)} tr`;
 
+  // 5. Tổng dòng tiền thực tế cả năm từ 12 tháng
   let yearTotalInc = 0;
   let yearTotalExp = 0;
 
@@ -656,25 +911,34 @@ function recalculateAll() {
   if (dExpRat) dExpRat.textContent = `Chiếm ${expRatio.toFixed(1)}% tổng thu`;
   if (dTotSav) dTotSav.textContent = `${yearSavings.toFixed(2)} tr`;
   if (dSavRat) dSavRat.textContent = `Tỷ lệ tích lũy: ${savRate.toFixed(1)}%`;
+
+  renderDashboardMatrices();
+  updateDashboardCharts();
 }
 
+// Tính niên kim theo chuẩn công thức tài chính
 function calculateAmortization() {
   const start = parseInt(document.getElementById('tc-start')?.innerText || '2037', 10);
   const end = parseInt(document.getElementById('tc-end')?.innerText || '2052', 10);
-  const p = parseFloat(document.getElementById('tc-principal')?.innerText || '500') || 500;
-  const r = (parseFloat(document.getElementById('tc-rate')?.innerText || '8.0') || 8.0) / 100;
+  const p = parseFloat(document.getElementById('tc-principal')?.innerText.replace(/[^0-9.-]/g, '') || '500') || 500;
+  const paid = parseFloat(document.getElementById('tc-paid')?.innerText.replace(/[^0-9.-]/g, '') || '400') || 0;
+  const r = (parseFloat(document.getElementById('tc-rate')?.innerText.replace(/[^0-9.-]/g, '') || '8.0') || 8.0) / 100;
   const n = Math.max(1, end - start + 1);
 
   const durEl = document.getElementById('tc-duration');
   if (durEl) durEl.textContent = n;
 
+  const targetEl = document.getElementById('tc-target-val');
+  if (targetEl) targetEl.textContent = Math.max(0, p - paid).toFixed(2);
+
+  // Công thức PMT chuẩn: PMT = P * [r*(1+r)^n] / [(1+r)^n - 1]
   const pmt = p * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
   const pmtEl = document.getElementById('tc-pmt');
   if (pmtEl) pmtEl.textContent = `${pmt.toFixed(2)} tr`;
 
   let bal = p;
   let rows = '';
-  for (let i = 0; i < Math.min(n, 5); i++) {
+  for (let i = 0; i < n; i++) {
     const yr = start + i;
     const age = 35 + i;
     const interest = bal * r;
@@ -694,14 +958,11 @@ function calculateAmortization() {
     `;
     bal = endBal;
   }
-  if (n > 5) {
-    rows += `<tr><td colspan="7" class="text-center font-medium" style="color: #64748b;">... Tính toán niên kim trả góp tự động cho các năm tiếp theo đến ${end}</td></tr>`;
-  }
   const amortEl = document.getElementById('tbody-amortization');
   if (amortEl) amortEl.innerHTML = rows;
 }
 
-// ==================== BIỂU ĐỒ DASHBOARD AN TOÀN ====================
+// ==================== BIỂU ĐỒ DASHBOARD DÒNG TIỀN ====================
 let pieChartInstance = null;
 let barChartInstance = null;
 
@@ -726,41 +987,49 @@ function updateDashboardCharts() {
 
   const pieCtx = document.getElementById('pieChart')?.getContext('2d');
   if (pieCtx) {
-    try {
-      if (pieChartInstance) pieChartInstance.destroy();
-      pieChartInstance = new Chart(pieCtx, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(catSums),
-          datasets: [{
-            data: Object.values(catSums),
-            backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#eab308', '#ec4899', '#6366f1']
-          }]
-        },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-      });
-    } catch (e) {
-      console.warn("Chart render skipped:", e);
-    }
+    if (pieChartInstance) pieChartInstance.destroy();
+    pieChartInstance = new Chart(pieCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(catSums),
+        datasets: [{
+          data: Object.values(catSums),
+          backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#eab308', '#ec4899', '#6366f1', '#06b6d4', '#84cc16']
+        }]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { 
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Montserrat', size: 10 } } } 
+        } 
+      }
+    });
   }
 
   const barCtx = document.getElementById('barChart')?.getContext('2d');
   if (barCtx) {
-    try {
-      if (barChartInstance) barChartInstance.destroy();
-      barChartInstance = new Chart(barCtx, {
-        type: 'bar',
-        data: {
-          labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-          datasets: [
-            { label: 'Thu nhập', data: income12, backgroundColor: '#10b981' },
-            { label: 'Chi tiêu', data: expense12, backgroundColor: '#ef4444' }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'bottom' } } }
-      });
-    } catch (e) {
-      console.warn("Chart render skipped:", e);
-    }
+    if (barChartInstance) barChartInstance.destroy();
+    barChartInstance = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+        datasets: [
+          { label: 'Thu nhập', data: income12, backgroundColor: '#10b981', borderRadius: 2 },
+          { label: 'Chi tiêu', data: expense12, backgroundColor: '#ef4444', borderRadius: 2 }
+        ]
+      },
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        scales: { 
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Montserrat', size: 10 } } },
+          x: { grid: { display: false }, ticks: { font: { family: 'Montserrat', size: 10 } } }
+        }, 
+        plugins: { 
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Montserrat', size: 11 } } } 
+        } 
+      }
+    });
   }
 }
