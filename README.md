@@ -67,18 +67,3 @@ Bài toán xác định số tiền trả góp hàng năm (gốc + lãi đều) 
   * Đánh giá gánh nặng gia đình, tính chủ động thu nhập và mức độ hỗ trợ người thân để xác định quy mô quỹ khẩn cấp.
 
 ---
-
-## 🛠️ Hướng Dẫn Sử Dụng & Đồng Bộ Dữ Liệu
-
-1. **Khởi chạy trực tiếp:** Mở file `index.html` trên bất kỳ trình duyệt web hiện đại nào (Chrome, Firefox, Edge, Safari).
-2. **Cơ chế đồng bộ thời gian thực:**
-   * Thay đổi năm hoặc tuổi ở Tab **Từ khóa** sẽ tự động cập nhật nhãn năm trên toàn bộ giao diện và bảng niên kim.
-   * Thêm/sửa số tiền thực tế tại các tab **Theo dõi tháng 1..12** sẽ ngay lập tức tính lại bảng ma trận tổng hợp trên **Dashboard**, cập nhật biểu đồ Chart.js và đường xu hướng Sparkline SVG.
-   * Khi chọn các nút trắc nghiệm dạng dot-box ở Tab **Bảng khảo sát**, kết quả phân loại sẽ tự động kết xuất sang Tab **Mục tiêu bản thân**.
-
----
-
-## 📝 Ghi Chú Cần Cung Cấp Ảnh Chụp Bổ Sung (Nghiệp Vụ Excel Mẫu)
-Nếu file Excel gốc có chứa các công thức đặc thù sau đây mà bạn muốn đưa vào chính xác tuyệt đối, vui lòng chụp ảnh màn hình thanh công thức (Formula Bar) của các ô tương ứng:
-1. **Sheet "Cân đối lộ trình nghề nghiệp":** Công thức nội suy tỷ trọng Cổ phiếu / Trái phiếu / Bảo hiểm theo độ tuổi (hiện đang dùng bảng tham chiếu tĩnh theo các mốc tuổi 21, 26, 30, 35, 40, 50).
-2. **Bảng "Chi phí phát triển bản thân" (Dashboard):** Công thức trích lọc tự động từ danh mục chi tiết tháng sang ma trận 12 tháng (hiện ma trận đang tổng hợp theo từng danh mục con).
