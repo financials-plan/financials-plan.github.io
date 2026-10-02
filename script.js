@@ -1,5 +1,6 @@
 /**
- * TOÀN BỘ LOGIC REACTIVE, TÍNH TOÁN TÀI CHÍNH, SELECTION SYNC VÀ CHARTS
+ * HỆ THỐNG QUẢN LÝ TÀI CHÍNH CÁ NHÂN CHUYÊN SÂU
+ * Reactive Data Flow, Financial Models, Dynamic Age Sync & Multi-Chart Engine
  */
 
 const AppState = {
@@ -39,16 +40,16 @@ const AppState = {
     { age: 35, desc: "Vay mua chung cư", val: 500.0 }
   ],
   investTargets: [
-    { age: 25, desc: "Du lịch xuyên Thái Lan", val: 50.0 },
-    { age: 26, desc: "Quỹ dự phòng tài chính", val: 100.0 },
-    { age: 28, desc: "Đám cưới", val: 200.0 },
-    { age: 30, desc: "Khởi nghiệp", val: 500.0 },
-    { age: 38, desc: "Mua chung cư", val: 1500.0 },
-    { age: 46, desc: "Cho con đi học đại học", val: 500.0 },
-    { age: 50, desc: "Hưu trí", val: 500.0 }
+    { age: 25, desc: "Du lịch xuyên Thái Lan", pv: 50.0, inflation: 4.0, expectedReturn: 8.0 },
+    { age: 26, desc: "Quỹ dự phòng tài chính", pv: 100.0, inflation: 4.0, expectedReturn: 7.0 },
+    { age: 28, desc: "Đám cưới", pv: 200.0, inflation: 4.5, expectedReturn: 9.0 },
+    { age: 30, desc: "Khởi nghiệp", pv: 500.0, inflation: 4.0, expectedReturn: 12.0 },
+    { age: 38, desc: "Mua chung cư", pv: 1500.0, inflation: 4.5, expectedReturn: 11.0 },
+    { age: 46, desc: "Cho con đi học đại học", pv: 500.0, inflation: 5.0, expectedReturn: 10.0 },
+    { age: 50, desc: "Hưu trí", pv: 800.0, inflation: 4.0, expectedReturn: 9.0 }
   ],
 
-  skillsList: ["Sẵn sàng học hỏi cái mới", "Nhiệt huyết trong công việc"],
+  skillsList: ["Sẵn sàng học hỏi cái mới", "Nhiệt huyết trong công việc", "Ngoại ngữ chuyên ngành vững"],
   familyList: ["Ba mẹ có hỗ trợ mua chung cư , lo đám cưới"],
   jobList: [
     "Môi trường đa quốc gia, có nhiều cơ hội phát triển",
@@ -72,50 +73,56 @@ const AppState = {
   ],
 
   tcGoals: [
-    { id: "g1", name: "Thẻ tín dụng", type: "debt", val: 100.0, paid: 0.0, start: 2026, end: 2028, rate: 8.0, monthly: 3.13 },
-    { id: "g2", name: "Vay vốn kinh doanh", type: "debt", val: 150.0, paid: 30.0, start: 2028, end: 2031, rate: 8.0, monthly: 2.93 },
-    { id: "g3", name: "Vay cải tạo/sửa chữa", type: "debt", val: 400.0, paid: 120.0, start: 2030, end: 2040, rate: 8.0, monthly: 3.20 },
-    { id: "g4", name: "Hoàn thành quỹ học vấn", type: "invest", val: 200.0, paid: 50.0, start: 2024, end: 2027, rate: 8.65, monthly: 3.71 },
-    { id: "g5", name: "Hỗ trợ mẹ mở rộng hoạt động", type: "invest", val: 250.0, paid: 100.0, start: 2028, end: 2031, rate: 8.0, monthly: 3.66 },
-    { id: "g6", name: "Xây quỹ mua ô tô phục vụ gia đình", type: "invest", val: 750.0, paid: 350.0, start: 2030, end: 2042, rate: 8.0, monthly: 4.13 },
-    { id: "g7", name: "Quỹ chăm sóc sức khỏe ba mẹ", type: "invest", val: 400.0, paid: 100.0, start: 2030, end: 2037, rate: 7.5, monthly: 4.17 },
-    { id: "g8", name: "Sửa chữa và nâng cấp nhà ở", type: "invest", val: 700.0, paid: 400.0, start: 2035, end: 2045, rate: 7.0, monthly: 3.27 },
-    { id: "g9", name: "Quỹ tài chính nghỉ hưu cho ba mẹ", type: "invest", val: 800.0, paid: 190.0, start: 2037, end: 2045, rate: 8.0, monthly: 7.94 },
-    { id: "g10", name: "Tài sản tích lũy dài hạn", type: "invest", val: 700.0, paid: 0.0, start: 2030, end: 2045, rate: 8.0, monthly: 6.47 }
+    { id: "g1", name: "Thẻ tín dụng", type: "debt", val: 100.0, paid: 0.0, start: 2026, end: 2028, rate: 8.0, monthly: 3.13, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { id: "g2", name: "Vay vốn kinh doanh", type: "debt", val: 150.0, paid: 30.0, start: 2028, end: 2031, rate: 8.0, monthly: 2.93, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { id: "g3", name: "Vay cải tạo/sửa chữa", type: "debt", val: 400.0, paid: 120.0, start: 2030, end: 2040, rate: 8.0, monthly: 3.20, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { 
+      id: "g4", name: "Hoàn thành quỹ học vấn", type: "invest", val: 200.0, paid: 50.0, start: 2026, end: 2028, rate: 8.65, monthly: 3.71,
+      yearsRetire: 10, monthlyRetire: 5.0, deathFund: 100.0,
+      allocProducts: [
+        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
+        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
+        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
+      ]
+    },
+    { 
+      id: "g5", name: "Cho con đi học đại học", type: "invest", val: 500.0, paid: 0.0, start: 2030, end: 2048, rate: 14.5, monthly: 0.6,
+      yearsRetire: 30, monthlyRetire: 15.0, deathFund: 500.0,
+      allocProducts: [
+        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
+        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
+        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
+      ]
+    },
+    { 
+      id: "g6", name: "Hưu trí an nhàn", type: "invest", val: 800.0, paid: 50.0, start: 2028, end: 2045, rate: 12.0, monthly: 2.1,
+      yearsRetire: 25, monthlyRetire: 12.0, deathFund: 300.0,
+      allocProducts: [
+        { prodName: "ETF - ETFFINLEAD", weight: 40.0, returnRate: 15.0, risk: 20.0 },
+        { prodName: "Trái phiếu Techcombank", weight: 40.0, returnRate: 10.5, risk: 6.0 },
+        { prodName: "Tiền gửi ngân hàng", weight: 20.0, returnRate: 5.0, risk: 2.0 }
+      ]
+    }
   ],
 
-  careerOverview: [
-    { age: 21, incomeNeed: 6.4, stocks: 23.6, bonds: 34.5, ins: 8.5, cash: 33.4, returnNeed: 9.8, skills: "Kỹ năng làm việc nhóm, chuyên môn marketing" },
-    { age: 26, incomeNeed: 28.5, stocks: 56.8, bonds: 20.6, ins: 5.7, cash: 16.9, returnNeed: 12.4, skills: "Kỹ năng leader, quản trị dự án, xây dựng mô hình" },
-    { age: 30, incomeNeed: 38.2, stocks: 55.0, bonds: 25.0, ins: 7.0, cash: 13.0, returnNeed: 11.5, skills: "Kỹ năng lãnh đạo chiến lược, mở rộng quan hệ đối tác" },
-    { age: 35, incomeNeed: 52.0, stocks: 45.0, bonds: 35.0, ins: 8.0, cash: 12.0, returnNeed: 10.2, skills: "Kỹ năng quản lý doanh nghiệp, hoạch định ngân sách lớn" },
-    { age: 40, incomeNeed: 65.0, stocks: 35.0, bonds: 45.0, ins: 10.0, cash: 10.0, returnNeed: 9.5, skills: "Kỹ năng tạo lập cộng đồng, tái cấu trúc tài sản" },
-    { age: 50, incomeNeed: 80.0, stocks: 20.0, bonds: 60.0, ins: 12.0, cash: 8.0, returnNeed: 8.2, skills: "Kỹ năng chuyển giao thế hệ, quản trị danh mục bảo toàn" }
-  ],
+  skillsStore: {
+    0: "Kỹ năng làm việc nhóm, chuyên môn marketing",
+    1: "Kỹ năng leader, quản trị dự án, xây dựng mô hình",
+    2: "Kỹ năng lãnh đạo chiến lược, mở rộng quan hệ đối tác",
+    3: "Kỹ năng quản lý doanh nghiệp, hoạch định ngân sách lớn",
+    4: "Kỹ năng tạo lập cộng đồng, tái cấu trúc tài sản",
+    5: "Kỹ năng chuyển giao thế hệ, quản trị danh mục bảo toàn"
+  },
 
-  careerDetail: [
-    { age: 22, actual: 10.0, route: 12.0 },
-    { age: 23, actual: 15.0, route: 12.0 },
-    { age: 24, actual: 20.0, route: 12.0 },
-    { age: 25, actual: 25.0, route: 15.0 },
-    { age: 26, actual: 28.0, route: 20.0 },
-    { age: 27, actual: 30.0, route: 20.0 },
-    { age: 28, actual: 35.0, route: 20.0 },
-    { age: 29, actual: 38.0, route: 20.0 },
-    { age: 30, actual: 40.0, route: 20.0 },
-    { age: 35, actual: 55.0, route: 30.0 },
-    { age: 40, actual: 70.0, route: 40.0 },
-    { age: 45, actual: 85.0, route: 45.0 },
-    { age: 50, actual: 100.0, route: 50.0 }
-  ],
-
+  careerDetailList: [],
   monthlyDetails: {},
-  matrixIncome: {},
-  matrixExpense: {},
-  matrixLearning: {}
+
+  // Trạng thái lựa chọn khảo sát
+  surveyP1Choices: { 1: 4, 2: 4, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 1, 9: 0, 10: 1 },
+  surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
 };
 
-// Khởi tạo 12 tháng
+// Khởi tạo dữ liệu 12 tháng[cite: 9]
 for (let m = 1; m <= 12; m++) {
   const mStr = m < 10 ? `0${m}` : `${m}`;
   AppState.monthlyDetails[m] = {
@@ -127,43 +134,140 @@ for (let m = 1; m <= 12; m++) {
       { date: `2026-${mStr}-01`, cat: "Mua thực phẩm", desc: "Đi chợ, siêu thị", val: 6.0 },
       { date: `2026-${mStr}-05`, cat: "Đi ăn ở ngoài", desc: "Ăn uống giao lưu", val: 1.8 },
       { date: `2026-${mStr}-10`, cat: "Chi tiền trả nợ", desc: "Khoản nợ định kỳ", val: 6.5 },
-      { date: `2026-${mStr}-15`, cat: "Chi tiền điện, nước, internet, điện thoại, xăng xe", desc: "Hóa đơn", val: 1.8 }
+      { date: `2026-${mStr}-15`, cat: "Chi tiền điện, nước, internet, điện thoại, xăng xe", desc: "Hóa đơn", val: 1.8 },
+      { date: `2026-${mStr}-20`, cat: "Chi tiền phát triển bản thân", desc: "Sách & khóa đào tạo", val: 1.2 }
     ],
     reconIncomeNotes: {},
     reconExpenseNotes: {},
     learningDetails: [
-      { date: `2026-${mStr}-05`, cat: "Mua sách", desc: "Sách tài chính", val: 0.2, expRes: "Bổ sung kiến thức", actRes: "Ứng dụng thực tế" }
+      { date: `2026-${mStr}-05`, cat: "Khóa học ngắn hạn", desc: "Sách tài chính & chuyên ngành", val: 0.4, expRes: "Bổ sung kiến thức", actRes: "Ứng dụng thực tế" },
+      { date: `2026-${mStr}-18`, cat: "Khóa học dài hạn", desc: "Khóa đào tạo kỹ năng", val: 0.8, expRes: "Nâng cao năng lực", actRes: "Hoàn thành chứng chỉ" }
     ]
   };
 }
 
-// Bộ câu hỏi khảo sát chuẩn XLSX
+// Bảng câu hỏi khảo sát 1 (10 câu)[cite: 4, 5, 6]
 const surveyQuestionsPart1 = [
-  { q: "Bạn có bao nhiêu mục tiêu tài chính?", opts: ["1", "2", "3", "4", ">4"], weights: [1, 2, 3, 4, 5], def: 4 },
-  { q: "Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?", opts: ["Không", "Dưới 2%", "Lớn hơn 2%, nhưng nhỏ hơn 4%", "Lớn hơn 4%, nhưng nhỏ hơn 6%", "Lớn hơn 6%"], weights: [1, 2, 3, 4, 5], def: 4 },
-  { q: "Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình để phục vụ cho mục đích?", opts: ["Hơn 20 năm", "11–20 năm", "6–10 năm", "1–5 năm", "Ngay lập tức"], weights: [1, 2, 3, 4, 5], def: 2 },
-  { q: "Hãy mô tả quan điểm của bạn đối với vấn đề mức sinh lời và rủi ro từ việc đầu tư?", opts: ["Hạn chế rủi ro tối đa, chấp nhận sinh lời thấp", "Chấp nhận rủi ro vừa phải để đạt sinh lời vừa phải", "Tối đa hóa mức sinh lời để đạt mục tiêu kế hoạch", "Sẵn sàng chấp nhận rủi ro cao để sớm đạt mục tiêu"], weights: [1, 2, 3, 4], def: 2 },
-  { q: "Biểu đồ mức sinh lời trung bình trong 20 năm của 3 danh mục đầu tư, bạn chọn danh mục nào?", opts: ["Danh mục X (Lợi nhuận TB = 8%, rủi ro thấp)", "Danh mục Y (Lợi nhuận TB = 12%, biến động vừa)", "Danh mục Z (Lợi nhuận TB = 16%, biến động mạnh)"], weights: [1, 2, 3], def: 1 },
-  { q: "Bạn cảm thấy thoải mái khi lựa chọn danh mục rủi ro nào nhất?", opts: ["Danh mục A (Kỳ vọng 107 tr, lỗ tiềm năng 19%)", "Danh mục B (Kỳ vọng 108 tr, lỗ tiềm năng 23%)", "Danh mục C (Kỳ vọng 109 tr, lỗ tiềm năng 26%)", "Danh mục D (Kỳ vọng 110 tr, lỗ tiềm năng 28%)"], weights: [1, 2, 3, 4], def: 1 },
-  { q: "Quan điểm của bạn về nỗi lo lạm phát?", opts: ["Giảm thiểu biến động ngắn hạn, vượt lạm phát không quan trọng", "Muốn cao hơn lạm phát vừa phải và chịu biến động vừa", "Vượt xa lạm phát dài hạn và chấp nhận biến động ngắn hạn"], weights: [1, 2, 3], def: 2 },
-  { q: "Bạn nghĩ gì về những giai đoạn danh mục có những khoản lỗ?", opts: ["Bán các khoản đầu tư ngay lập tức", "Không thoải mái nhưng kiên nhẫn chờ phục hồi", "Chịu được sụt giảm và duy trì trạng thái 1 năm", "Kiên định tuyệt đối với mục tiêu dài hạn"], weights: [1, 2, 3, 4], def: 1 },
-  { q: "Giá trị đầu tư tài sản hiện tại của bạn là?", opts: ["Dưới 200 triệu đồng", "200 triệu – 500 triệu đồng", "500 triệu – 1 tỷ đồng", "Từ 1 – 2 tỷ đồng", "Hơn 2 tỷ đồng"], weights: [1, 2, 3, 4, 5], def: 0 },
-  { q: "Tỷ lệ tiết kiệm hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10 – 20%", "20 – 30%", "30 – 50%", "> 50%"], weights: [1, 2, 3, 4, 5], def: 1 }
+  { q: "Bạn có bao nhiêu mục tiêu tài chính?", opts: ["1", "2", "3", "4", ">4"], weights: [1, 2, 3, 4, 5] },
+  { q: "Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?", opts: ["Không", "Dưới 2%", "Lớn hơn 2%, nhưng nhỏ hơn 4%", "Lớn hơn 4%, nhưng nhỏ hơn 6%", "Lớn hơn 6%"], weights: [1, 2, 3, 4, 5] },
+  { q: "Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình để phục vụ cho mục đích?", opts: ["Hơn 20 năm", "11–20 năm", "6–10 năm", "1–5 năm", "Ngay lập tức"], weights: [1, 2, 3, 4, 5] },
+  { q: "Hãy mô tả quan điểm của bạn đối với vấn đề mức sinh lời và rủi ro từ việc đầu tư?", opts: ["Vấn đề bạn quan tâm nhất là hạn chế rủi ro. Bạn sẵn sàng chấp nhận mức sinh lời thấp để hạn chế tối đa rủi ro thua lỗ", "Bạn sẵn sàng chấp nhận khả năng rủi ro đầu tư để đạt mức sinh lời vừa phải", "Bạn chủ yếu quan tâm đến việc tối đa hóa mức sinh lời để có thể đạt được mục tiêu như kế hoạch", "Bạn sẵn sàng chấp nhận rủi ro cao để sớm đạt được mục tiêu tài chính của mình"], weights: [1, 2, 3, 4] },
+  { q: "Biểu đồ bên dưới cho thấy mức sinh lời trung bình của ba danh mục đầu tư trong thời gian 20 năm. Danh mục nào theo bạn là phù hợp với bạn nhất?", hasCharts: true, opts: ["Danh mục đầu tư X", "Danh mục đầu tư Y", "Danh mục đầu tư Z"], weights: [1, 2, 3] },
+  { q: "Rủi ro danh mục đầu tư bị giảm giá trị (có mức sinh lời âm) thường là mối quan tâm hàng đầu của các nhà đầu tư. Tuy nhiên, để đạt được mức sinh lời cao hơn, nhà đầu tư phải sẵn sàng chấp nhận rủi ro lớn hơn. Bảng sau mô tả bốn các danh mục đầu tư với các thông tin về giá trị dự kiến và khả năng lỗ tiềm năng. Hãy cho biết bạn cảm thấy thoải mái khi lựa chọn danh mục nào nhất?", hasTable: true, opts: ["Danh mục đầu tư A", "Danh mục đầu tư B", "Danh mục đầu tư C", "Danh mục đầu tư D"], weights: [1, 2, 3, 4] },
+  { q: "Lạm phát có thể làm sụt giảm mức sinh lời thực tế từ danh mục đầu tư theo thời gian. Ví dụ, trong một năm điển hình với 3,5% tỷ lệ lạm phát, lợi nhuận 6% trước khi lạm phát sẽ có giá trị lợi nhuận thực chỉ 2,5%. Thông tin nào sau đây thể hiện quan điểm của bạn về nỗi lo lạm phát?", opts: ["Bạn muốn giảm thiểu những biến động trong ngắn hạn cho danh mục đầu tư của mình càng nhiều càng tốt, việc cao hơn mức lạm phát hàng năm đáng kể không quá quan trọng", "Muốn một danh mục đầu tư cao hơn mức lạm phát vừa phải và sẵn sàng chấp nhận mức sụt giảm vừa phải trong ngắn hạn để đạt được mục tiêu này", "Mức sinh lời của danh mục có thể vượt xa mức lạm phát trong dài hạn và bạn sẵn sàng chấp nhận những mức sụt giảm có thể trong ngắn hạn để đạt được mục tiêu này"], weights: [1, 2, 3] },
+  { q: "Việc đầu tư đôi khi phải đối mặt với những khoản lỗ. Bạn nghĩ gì về những giai đoạn có những khoản lỗ cho danh mục của mình?", opts: ["Bạn sẽ bán các khoản đầu tư ngay lập tức nếu mức giảm đáng kể xảy ra", "Mặc dù việc sụt giảm khiến bạn không thoải mái nhưng bạn sẵn sàng chờ đợi giai đoạn phục hồi phía sau", "Bạn chịu được việc danh mục sụt giảm và hoàn có thể duy trì trạng thái đầu tư của danh mục trong một năm", "Cho dù danh mục đầu tư của bạn có sụt giảm trong vài năm tuy nhiên bạn đủ nhận thức để kiên định với mục tiêu dài hạn ban đầu"], weights: [1, 2, 3, 4] },
+  { q: "Giá trị đầu tư tài sản hiện tại của bạn là?", opts: ["Dưới 200 triệu đồng", "200 triệu – 500 triệu đồng", "500 triệu đến 1 tỷ đồng", "Từ 1-2 tỷ đồng", "Hơn 2 tỷ đồng"], weights: [1, 2, 3, 4, 5] },
+  { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10-20%", "20-30%", "30-50%", ">50%"], weights: [1, 2, 3, 4, 5] }
 ];
 
+// Bảng câu hỏi khảo sát 2 (11 câu)[cite: 7, 8, 9]
 const surveyQuestionsPart2 = [
-  { q: "Tỷ lệ trích thu nhập hàng tháng để gửi về cho gia đình?", opts: [">30%", "20-30%", "10-20%", "0-10%", "0%"], weights: [1, 2, 3, 4, 5], def: 2 },
-  { q: "Mức thu nhập của vợ/chồng so với bạn?", opts: ["<50%", "50-70%", "70-100%", "100-150%", "150-300%"], weights: [1, 2, 3, 4, 5], def: 2 },
-  { q: "Tần suất quan tâm đến mạng xã hội mỗi ngày?", opts: ["3-4 giờ", "2-3 giờ", "1-2 giờ", "30-60 phút", "<30 phút"], weights: [1, 2, 3, 4, 5], def: 0 },
-  { q: "Số lượng bạn bè trên mạng xã hội?", opts: ["<100", "100-200", "200-400", "400-800", ">800"], weights: [1, 2, 3, 4, 5], def: 4 },
-  { q: "Cách xây dựng kế hoạch đầu mỗi năm?", opts: ["Chưa bao giờ", "Hiếm khi", "Tùy hứng", "Thường xuyên", "Hầu như năm nào cũng lập"], weights: [1, 2, 3, 4, 5], def: 2 },
-  { q: "Số lượng em nhỏ trong gia đình còn đi học?", opts: ["4 em", "3 em", "2 em", "1 em", "0 em"], weights: [1, 2, 3, 4, 5], def: 4 },
-  { q: "Quan điểm về việc tích lũy tài sản cho con cái?", opts: ["Chỉ hỗ trợ giáo dục", "Trang bị phương tiện cơ bản", "Để lại tài sản lớn", "Tích lũy nhiều nhất có thể"], weights: [2, 3, 4, 5], def: 3 },
-  { q: "Đánh giá sức khỏe bản thân so với bạn bè?", opts: ["Kém hơn rất nhiều", "Kém hơn", "Bằng mức trung bình", "Tốt hơn", "Tốt hơn rất nhiều"], weights: [1, 2, 3, 4, 5], def: 3 },
-  { q: "Tình hình tài chính khi còn đi học?", opts: ["Phụ thuộc hoàn toàn", "Gia đình hỗ trợ học phí và làm thêm", "Tự làm thêm lo cho mình"], weights: [2, 3, 4], def: 0 },
-  { q: "Mức chênh lệch thu nhập của đồng nghiệp cùng công ty?", opts: ["Không đáng kể", "Chênh lệch vừa phải", "Tương đối lớn", "Rất lớn"], weights: [1, 2, 3, 4], def: 1 },
-  { q: "Tốc độ tăng thu nhập trung bình 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6], def: 2 }
+  { q: "Tỷ lệ trích thu nhập hàng tháng của bạn để gửi về cho gia đình?", opts: [">30%", "20-30%", "10-20%", "0-10%", "0%"], weights: [1, 2, 3, 4, 5] },
+  { q: "Mức thu nhập của vợ/chồng của bạn so với bạn?", opts: ["<50%", "50-70%", "70-100%", "100-150%", "150-300%"], weights: [1, 2, 3, 4, 5] },
+  { q: "Tần suất bạn quan tâm đến mạng xã hội mỗi ngày?", opts: ["3-4 giờ", "2-3 giờ", "1-2 giờ", "30 phút - 60 phút", "<30 phút"], weights: [1, 2, 3, 4, 5] },
+  { q: "Số lượng bạn bè của bạn trên Facebook?", opts: ["<100", "100-200", "200-400", "400-800", ">800"], weights: [1, 2, 3, 4, 5] },
+  { q: "Bạn xây dựng như thế nào về kế hoạch đầu mỗi năm?", opts: ["Chưa bao giờ", "Hiếm khi", "Tùy hứng", "Thường xuyên", "Hầu như năm nào cũng lập"], weights: [1, 2, 3, 4, 5] },
+  { q: "Bạn có bao nhiêu em nhỏ trong gia đình còn đi học?", opts: ["4", "3", "2", "1", "0"], weights: [1, 2, 3, 4, 5] },
+  { q: "Bạn nghĩ gì về việc tích lũy một lượng tài sản nhất định để lại cho con cái?", opts: ["Chỉ hỗ trợ con cái chi phí giáo dục", "Trang bị các phương tiện cơ bản", "Để lại các tài sản lớn cho con cái", "Tích lũy nhiều nhất có thể"], weights: [2, 3, 4, 5] },
+  { q: "Bạn đánh giá sức khỏe của mình như thế nào so với bạn bè và những người khác?", opts: ["Kém hơn rất nhiều", "Kém hơn", "Bằng mức trung bình", "Tốt hơn", "Tốt hơn rất nhiều"], weights: [1, 2, 3, 4, 5] },
+  { q: "Mô tả tình hình tài chính của bạn khi bạn khi còn đi học?", opts: ["Phụ thuộc hoàn toàn vào gia đình", "Gia đình hỗ trợ học phí và vẫn phải đi làm thêm", "Tự đi làm thêm để lo cho mình"], weights: [2, 3, 4] },
+  { q: "Bạn đánh giá như thế nào trong mức chênh lệch thu nhập của những người làm trong công ty của mình?", opts: ["Không đáng kể", "Chênh lệch vừa phải", "Tương đối lớn", "Rất lớn"], weights: [1, 2, 3, 4] },
+  { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
+
+// ==================== CÁC HÀM TÍNH TOÁN ĐỒNG BỘ ====================
+function getMatrixIncomeNeed(yearOffset) {
+  let sSum = 0;
+  const yr = AppState.currentYear + yearOffset;
+  AppState.tcGoals.forEach(g => {
+    if (yr >= g.start && yr <= g.end) {
+      sSum += (g.monthly || calculateMonthlyNeed(g));
+    }
+  });
+  return sSum > 0 ? (sSum / 0.40) : 0;
+}
+
+function calculateAgeMilestones() {
+  const baseAge = AppState.currentAge;
+  const offsets = [0, 5, 9, 14, 19, 29];
+  return offsets.map((off, idx) => {
+    const age = baseAge + off;
+    const year = AppState.currentYear + off;
+    const yrIndex = Math.min(32, off);
+    const incNeedFromMatrix = getMatrixIncomeNeed(yrIndex);
+
+    const stocks = Math.max(15, Math.min(75, 100 - age + 5));
+    const bonds = Math.min(60, Math.max(15, age * 0.9));
+    const ins = age >= 35 ? 10.0 : 7.0;
+    const cash = Math.max(5, 100 - (stocks + bonds + ins));
+    const returnNeed = ((stocks * 13.5 + bonds * 9.5 + ins * 4.5 + cash * 5.0) / 100);
+
+    return {
+      age,
+      year,
+      incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : (idx === 0 ? 15.0 : (idx === 1 ? 32.0 : 45.0 + off)),
+      stocks,
+      bonds,
+      ins,
+      cash,
+      returnNeed,
+      skills: AppState.skillsStore[idx] || "Kỹ năng làm việc nhóm, chuyên môn marketing"
+    };
+  });
+}
+
+// KHẮC PHỤC TRIỆT ĐỂ: BẢO LƯU VÀ CẬP NHẬT TỰ ĐỘNG DỮ LIỆU LỘ TRÌNH NGHỀ NGHIỆP
+function calculateCareerDetails() {
+  const baseAge = AppState.currentAge;
+  const ages = [
+    baseAge + 1, baseAge + 2, baseAge + 3, baseAge + 4,
+    baseAge + 5, baseAge + 6, baseAge + 7, baseAge + 8, baseAge + 9,
+    baseAge + 14, baseAge + 19, baseAge + 24, baseAge + 29
+  ];
+
+  // Map các giá trị hiện có để không bị ghi đè khi tính toán lại
+  const existingMap = {};
+  if (Array.isArray(AppState.careerDetailList)) {
+    AppState.careerDetailList.forEach(item => {
+      existingMap[item.age] = item;
+    });
+  }
+
+  return ages.map((age, i) => {
+    const yearOffset = age - baseAge;
+    const targetVal = getMatrixIncomeNeed(Math.min(32, yearOffset)) || (15 + yearOffset * 2.2);
+
+    let defaultRoute = 12.0 + yearOffset * 2.0;
+    if (i === 1) defaultRoute = targetVal - 4.0;
+    if (i === 3) defaultRoute = targetVal - 2.5;
+    if (i >= 5) defaultRoute = targetVal + (i % 2 === 0 ? 3.0 : -2.0);
+    const defaultActual = 10.0 + yearOffset * 2.8;
+
+    const exist = existingMap[age];
+    return {
+      age,
+      actual: exist && exist.actual !== undefined ? exist.actual : defaultActual,
+      target: targetVal,
+      route: exist && exist.route !== undefined ? exist.route : defaultRoute
+    };
+  });
+}
+
+function calculateInvestTargetMetrics(target) {
+  const years = Math.max(1, target.age - AppState.currentAge);
+  const i = (target.inflation || 4.0) / 100;
+  const r = (target.expectedReturn || 10.0) / 100;
+  const fv = target.pv * Math.pow(1 + i, years);
+  const rMonthly = r / 12;
+  const nMonths = years * 12;
+  let monthlyNeed = 0;
+  if (rMonthly > 0) {
+    monthlyNeed = (fv * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
+  } else {
+    monthlyNeed = fv / nMonths;
+  }
+  return { years, fv, monthlyNeed };
+}
 
 // ==================== CÁC HÀM ĐIỀU HƯỚNG TABS ====================
 window.switchTab = function(tabId) {
@@ -185,9 +289,26 @@ window.switchTab = function(tabId) {
   const targetPane = document.getElementById(tabId);
   if (targetPane) {
     targetPane.classList.add('active');
-    if (tabId === 'tab-dashboard') renderDashboardAllCharts();
-    if (tabId === 'tab-candoi') renderCareerChart();
-    if (tabId === 'tab-muctieu-tc') renderTcGoalsFormTable();
+    if (tabId === 'tab-dashboard') {
+      renderDashboardMatrices();
+      renderDashboardAllCharts();
+    }
+    if (tabId === 'tab-candoi') {
+      renderCareerTables();
+      renderCareerChart();
+    }
+    if (tabId === 'tab-muctieu-tc') {
+      renderTcGoalsFormTable();
+      syncGoalsToCards();
+    }
+    if (tabId === 'tab-muctieu-bt') {
+      renderTargetTables();
+    }
+    if (tabId === 'tab-khaosat') {
+      renderSurveyForm();
+      evaluateSurveys();
+      setTimeout(renderSurveyQuestionCharts, 80);
+    }
   }
 };
 
@@ -230,7 +351,381 @@ window.switchCareerSection = function(secNum) {
   renderCareerChart();
 };
 
-// ==================== TỪ KHÓA (MASTER DATA) VÀ ĐỒNG BỘ 2 CHIỀU ====================
+// ==================== VẼ SPARKLINE MINI-CHART ====================
+function drawSparkline(canvasId, values, color = '#16a34a') {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = (max - min) === 0 ? 1 : (max - min);
+
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  values.forEach((val, i) => {
+    const x = (i / (values.length - 1)) * (w - 8) + 4;
+    const y = h - ((val - min) / range) * (h - 8) - 4;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  const lastX = w - 4;
+  const lastY = h - ((values[values.length - 1] - min) / range) * (h - 8) - 4;
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 2.5, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+// ==================== DASHBOARD MATRICES ====================
+function renderDashboardMatrices() {
+  const incCats = AppState.incomeList;
+  const incMonthlySums = Array(13).fill(0);
+  const sparkIncData = {};
+
+  const incRows = incCats.map((cat, idx) => {
+    let rowSum = 0;
+    const tds = [];
+    const rowVals = [];
+    for (let m = 1; m <= 12; m++) {
+      const val = (AppState.monthlyDetails[m]?.incomes || [])
+        .filter(x => x.cat === cat)
+        .reduce((s, x) => s + x.val, 0);
+      rowSum += val;
+      incMonthlySums[m] += val;
+      rowVals.push(val);
+      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(1) : '-'}</td>`);
+    }
+    incMonthlySums[0] += rowSum;
+    sparkIncData[`spark-inc-${idx}`] = rowVals;
+
+    return `
+      <tr>
+        <td class="font-semibold">${cat}</td>
+        ${tds.join('')}
+        <td class="text-right font-bold text-green">${rowSum.toFixed(1)}</td>
+        <td class="text-center"><canvas id="spark-inc-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+      </tr>
+    `;
+  }).join('');
+  
+  const tbInc = document.getElementById('tbody-db-income');
+  if (tbInc) tbInc.innerHTML = incRows;
+  
+  const tfInc = document.getElementById('tfoot-db-income-total');
+  if (tfInc) {
+    let tfHtml = `<td class="font-bold">Tổng cộng thu nhập</td>`;
+    const totVals = [];
+    for (let m = 1; m <= 12; m++) {
+      tfHtml += `<td class="text-right font-bold text-green">${incMonthlySums[m].toFixed(1)}</td>`;
+      totVals.push(incMonthlySums[m]);
+    }
+    tfHtml += `<td class="text-right font-bold text-green">${incMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-inc-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfInc.innerHTML = tfHtml;
+    sparkIncData['spark-inc-total'] = totVals;
+  }
+
+  const expCats = AppState.expenses;
+  const expMonthlySums = Array(13).fill(0);
+  const sparkExpData = {};
+
+  const expRows = expCats.map((cat, idx) => {
+    let rowSum = 0;
+    const tds = [];
+    const rowVals = [];
+    for (let m = 1; m <= 12; m++) {
+      const val = (AppState.monthlyDetails[m]?.expenses || [])
+        .filter(x => x.cat === cat)
+        .reduce((s, x) => s + x.val, 0);
+      rowSum += val;
+      expMonthlySums[m] += val;
+      rowVals.push(val);
+      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(1) : '-'}</td>`);
+    }
+    expMonthlySums[0] += rowSum;
+    sparkExpData[`spark-exp-${idx}`] = rowVals;
+
+    return `
+      <tr>
+        <td class="font-semibold">${cat}</td>
+        ${tds.join('')}
+        <td class="text-right font-bold text-red">${rowSum.toFixed(1)}</td>
+        <td class="text-center"><canvas id="spark-exp-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+      </tr>
+    `;
+  }).join('');
+
+  const tbExp = document.getElementById('tbody-db-expense');
+  if (tbExp) tbExp.innerHTML = expRows;
+
+  const tfExpTot = document.getElementById('tfoot-db-expense-total');
+  const planExpSum = AppState.planExpense.reduce((s, x) => s + x.plan, 0);
+  if (tfExpTot) {
+    let tfHtml = `<td class="font-bold">Tổng chi thực tế</td>`;
+    const totExpVals = [];
+    for (let m = 1; m <= 12; m++) {
+      tfHtml += `<td class="text-right font-bold text-red">${expMonthlySums[m].toFixed(1)}</td>`;
+      totExpVals.push(expMonthlySums[m]);
+    }
+    tfHtml += `<td class="text-right font-bold text-red">${expMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-exp-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfExpTot.innerHTML = tfHtml;
+    sparkExpData['spark-exp-total'] = totExpVals;
+  }
+
+  const tfExpPlan = document.getElementById('tfoot-db-expense-plan');
+  if (tfExpPlan) {
+    let tfPlanHtml = `<td class="font-semibold text-gray">Kế hoạch chi</td>`;
+    for (let m = 1; m <= 12; m++) tfPlanHtml += `<td class="text-right text-gray">${planExpSum.toFixed(1)}</td>`;
+    tfPlanHtml += `<td class="text-right font-bold text-gray">${(planExpSum * 12).toFixed(1)}</td><td></td>`;
+    tfExpPlan.innerHTML = tfPlanHtml;
+  }
+
+  const trSav = document.getElementById('trow-db-savings');
+  const sparkSavData = [];
+  if (trSav) {
+    let sHtml = `<td class="font-bold text-green">Tiết kiệm ròng</td>`;
+    let yearSav = 0;
+    for (let m = 1; m <= 12; m++) {
+      const sav = incMonthlySums[m] - expMonthlySums[m];
+      yearSav += sav;
+      sparkSavData.push(sav);
+      sHtml += `<td class="text-right font-bold ${sav >= 0 ? 'text-green' : 'text-red'}">${sav.toFixed(1)}</td>`;
+    }
+    sHtml += `<td class="text-right font-bold text-green">${yearSav.toFixed(1)}</td><td class="text-center"><canvas id="spark-sav-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    trSav.innerHTML = sHtml;
+  }
+
+  const lrnCats = AppState.planList;
+  const lrnMonthlySums = Array(13).fill(0);
+  const sparkLrnData = {};
+
+  const lrnRows = lrnCats.map((cat, idx) => {
+    let rowSum = 0;
+    const tds = [];
+    const rowVals = [];
+    for (let m = 1; m <= 12; m++) {
+      const val = (AppState.monthlyDetails[m]?.learningDetails || [])
+        .filter(x => x.cat === cat)
+        .reduce((s, x) => s + x.val, 0);
+      rowSum += val;
+      lrnMonthlySums[m] += val;
+      rowVals.push(val);
+      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(2) : '-'}</td>`);
+    }
+    lrnMonthlySums[0] += rowSum;
+    sparkLrnData[`spark-lrn-${idx}`] = rowVals;
+
+    return `
+      <tr>
+        <td class="font-semibold">${cat}</td>
+        ${tds.join('')}
+        <td class="text-right font-bold text-orange">${rowSum.toFixed(2)}</td>
+        <td class="text-center"><canvas id="spark-lrn-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+      </tr>
+    `;
+  }).join('');
+
+  const tbLrn = document.getElementById('tbody-db-learning');
+  if (tbLrn) tbLrn.innerHTML = lrnRows;
+
+  const tfLrnTot = document.getElementById('tfoot-db-learning-total');
+  if (tfLrnTot) {
+    let tfLHtml = `<td class="font-bold">Tổng chi đào tạo</td>`;
+    const totLrnVals = [];
+    for (let m = 1; m <= 12; m++) {
+      tfLHtml += `<td class="text-right font-bold text-orange">${lrnMonthlySums[m].toFixed(2)}</td>`;
+      totLrnVals.push(lrnMonthlySums[m]);
+    }
+    tfLHtml += `<td class="text-right font-bold text-orange">${lrnMonthlySums[0].toFixed(2)}</td><td class="text-center"><canvas id="spark-lrn-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfLrnTot.innerHTML = tfLHtml;
+    sparkLrnData['spark-lrn-total'] = totLrnVals;
+  }
+
+  setTimeout(() => {
+    Object.keys(sparkIncData).forEach(id => drawSparkline(id, sparkIncData[id], '#16a34a'));
+    Object.keys(sparkExpData).forEach(id => drawSparkline(id, sparkExpData[id], '#dc2626'));
+    if (sparkSavData.length > 0) drawSparkline('spark-sav-total', sparkSavData, '#16a34a');
+    Object.keys(sparkLrnData).forEach(id => drawSparkline(id, sparkLrnData[id], '#ea580c'));
+  }, 40);
+}
+
+// ==================== DASHBOARD CHARTS TOÀN DIỆN ====================
+let dashChartInstances = {};
+
+function renderDashboardAllCharts() {
+  if (typeof Chart === 'undefined') return;
+
+  const cv1 = document.getElementById('chartDashGoalsPie');
+  if (cv1) {
+    if (dashChartInstances.goalsPie) dashChartInstances.goalsPie.destroy();
+    const debtsVal = AppState.tcGoals.filter(g => g.type === 'debt').reduce((s, g) => s + g.val, 0);
+    const investsVal = AppState.tcGoals.filter(g => g.type === 'invest').reduce((s, g) => s + g.val, 0);
+    dashChartInstances.goalsPie = new Chart(cv1.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Mục tiêu trả nợ', 'Mục tiêu tích lũy & đầu tư'],
+        datasets: [{ data: [debtsVal, investsVal], backgroundColor: ['#ea580c', '#16a34a'] }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 10 } } } }
+      }
+    });
+  }
+
+  const cv2 = document.getElementById('chartDashGoalsLine');
+  if (cv2) {
+    if (dashChartInstances.goalsLine) dashChartInstances.goalsLine.destroy();
+    const labels = [];
+    const cumData = [];
+    let cum = 0;
+    for (let i = 0; i <= 10; i++) {
+      const yr = AppState.currentYear + i;
+      labels.push(`${yr}`);
+      const yrVal = AppState.tcGoals.filter(g => g.end === yr).reduce((s, g) => s + g.val, 0);
+      cum += yrVal;
+      cumData.push(cum);
+    }
+    dashChartInstances.goalsLine = new Chart(cv2.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{ label: 'Giá trị tích lũy (tr)', data: cumData, borderColor: '#0e5627', backgroundColor: 'rgba(14, 86, 39, 0.1)', fill: true, tension: 0.3 }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  const cv3 = document.getElementById('chartDashInvestPie');
+  if (cv3) {
+    if (dashChartInstances.investPie) dashChartInstances.investPie.destroy();
+    dashChartInstances.investPie = new Chart(cv3.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: AppState.investProducts.slice(0, 5).map(x => x.name),
+        datasets: [{
+          data: AppState.investProducts.slice(0, 5).map(x => x.returnRate),
+          backgroundColor: ['#0e5627', '#16a34a', '#f29b28', '#ea580c', '#3b82f6']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 10 } } } }
+      }
+    });
+  }
+
+  const cv4 = document.getElementById('chartDashCombo12');
+  if (cv4) {
+    if (dashChartInstances.combo12) dashChartInstances.combo12.destroy();
+    const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
+    const incs = [], exps = [], savs = [];
+    for (let m = 1; m <= 12; m++) {
+      const inc = (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + x.val, 0);
+      const exp = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + x.val, 0);
+      incs.push(inc);
+      exps.push(exp);
+      savs.push(inc - exp);
+    }
+    dashChartInstances.combo12 = new Chart(cv4.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { type: 'line', label: 'Tiết kiệm', data: savs, borderColor: '#16a34a', borderWidth: 2.2, fill: false, tension: 0.2 },
+          { label: 'Thu nhập', data: incs, backgroundColor: '#0e5627' },
+          { label: 'Chi phí', data: exps, backgroundColor: '#f29b28' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Montserrat', size: 10 } } } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  const cv5 = document.getElementById('chartDashVariance');
+  if (cv5) {
+    if (dashChartInstances.variance) dashChartInstances.variance.destroy();
+    const planExp = AppState.planExpense.reduce((s, x) => s + x.plan, 0);
+    const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
+    const actuals = [], cumDiff = [];
+    let runningDiff = 0;
+    for (let m = 1; m <= 12; m++) {
+      const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + x.val, 0);
+      actuals.push(act);
+      runningDiff += (act - planExp);
+      cumDiff.push(runningDiff);
+    }
+    dashChartInstances.variance = new Chart(cv5.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { type: 'line', label: 'Lũy kế chênh lệch', data: cumDiff, borderColor: '#dc2626', borderWidth: 2, fill: false },
+          { label: 'Chi thực tế', data: actuals, backgroundColor: '#ea580c' },
+          { label: 'Kế hoạch', data: Array(12).fill(planExp), backgroundColor: '#cbd5e1' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Montserrat', size: 10 } } } }
+      }
+    });
+  }
+
+  const cv6 = document.getElementById('chartDashLearningStack');
+  if (cv6) {
+    if (dashChartInstances.learningStack) dashChartInstances.learningStack.destroy();
+    const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
+    const colors = ['#0e5627', '#16a34a', '#f29b28', '#3b82f6', '#8b5cf6'];
+    const datasets = AppState.planList.map((cat, idx) => {
+      const data = [];
+      for (let m = 1; m <= 12; m++) {
+        const val = (AppState.monthlyDetails[m]?.learningDetails || [])
+          .filter(x => x.cat === cat)
+          .reduce((s, x) => s + x.val, 0);
+        data.push(val);
+      }
+      return {
+        label: cat,
+        data: data,
+        backgroundColor: colors[idx % colors.length],
+        stack: 'learn'
+      };
+    });
+
+    dashChartInstances.learningStack = new Chart(cv6.getContext('2d'), {
+      type: 'bar',
+      data: { labels: months, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 9 } } } },
+        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+      }
+    });
+  }
+}
+
+// ==================== TỪ KHÓA (MASTER DATA) ====================
 function renderSetupTables() {
   const tbExp = document.getElementById('tbody-expenses');
   if (tbExp) {
@@ -429,15 +924,16 @@ window.updatePlanExpField = function(idx, fld, txt) { AppState.planExpense[idx][
 function updatePlanTotals() {
   const sumInc = AppState.planIncome.reduce((s, p) => s + p.plan, 0);
   const sumExp = AppState.planExpense.reduce((s, p) => s + p.plan, 0);
-  document.getElementById('plan-sum-inc-val').textContent = `${sumInc.toFixed(2)} tr`;
-  document.getElementById('plan-sum-exp-val').textContent = `${sumExp.toFixed(2)} tr`;
+  const incEl = document.getElementById('plan-sum-inc-val');
+  const expEl = document.getElementById('plan-sum-exp-val');
+  if (incEl) incEl.textContent = `${sumInc.toFixed(2)} tr`;
+  if (expEl) expEl.textContent = `${sumExp.toFixed(2)} tr`;
 }
 
-// ==================== THEO DÕI THU CHI 12 THÁNG (CÓ CALENDAR TIME) ====================
+// ==================== THEO DÕI THU CHI 12 THÁNG ====================
 function renderMonthView(m) {
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [], learningDetails: [] };
 
-  // 1. Nhật ký thu nhập: Dropdown chọn từ Từ khóa & Calendar date
   const tbInc = document.getElementById('tbody-m-detail-income');
   if (tbInc) {
     tbInc.innerHTML = mData.incomes.map((inc, i) => `
@@ -455,7 +951,6 @@ function renderMonthView(m) {
     `).join('');
   }
 
-  // 2. Nhật ký chi tiêu: Dropdown chọn từ Từ khóa & Calendar date
   const tbExp = document.getElementById('tbody-m-detail-expense');
   if (tbExp) {
     tbExp.innerHTML = mData.expenses.map((exp, i) => `
@@ -585,46 +1080,88 @@ window.updateReconNote = function(m, type, cat, field, txt) {
   dict[cat][field] = txt.trim();
 };
 
-// ==================== PHẦN 2 ĐÀO TẠO (ĐỒNG BỘ TỰ ĐỘNG TÍNH TOÁN) ====================
+// ==================== PHẦN 2 ĐÀO TẠO (TỰ ĐỘNG TÍNH TOÁN) ====================
 function renderMonthLearningSection(m) {
-  const items = AppState.monthlyDetails[m]?.learningDetails || [];
+  if (!AppState.monthlyDetails[m]) {
+    AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
+  }
+  
+  const items = AppState.monthlyDetails[m].learningDetails || [];
   const tb = document.getElementById('tbody-m-learning-detail');
+  
   if (tb) {
     tb.innerHTML = items.map((it, i) => `
       <tr>
-        <td><input type="date" class="input-date-cell" value="${it.date}" onchange="it.date=this.value;"></td>
+        <td><input type="date" class="input-date-cell" value="${it.date}" onchange="updateMonthLearningField(${m}, ${i}, 'date', this.value)"></td>
         <td>
-          <select class="select-inline-cell" onchange="it.cat=this.value; renderMonthLearningSection(${m}); syncLearningToDashboard();">
+          <select class="select-inline-cell" onchange="updateMonthLearningField(${m}, ${i}, 'cat', this.value)">
             ${AppState.planList.map(opt => `<option value="${opt}" ${opt === it.cat ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="it.desc=this.innerText.trim()">${it.desc}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="it.val=parseFloat(this.innerText)||0; renderMonthLearningSection(${m}); syncLearningToDashboard();">${it.val.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="it.expRes=this.innerText.trim()">${it.expRes}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="it.actRes=this.innerText.trim()">${it.actRes}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'desc', this.innerText.trim())">${it.desc || ''}</td>
+        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'val', parseFloat(this.innerText.replace(/[^0-9.-]/g, '')) || 0)">${Number(it.val || 0).toFixed(2)}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'expRes', this.innerText.trim())">${it.expRes || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'actRes', this.innerText.trim())">${it.actRes || ''}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthLearningRow(${m}, ${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 
-  // Tự động SUMIF ra bảng thống kê bên phải
   const catSums = {};
-  items.forEach(x => { catSums[x.cat] = (catSums[x.cat] || 0) + x.val; });
-  let tot = 0;
-  document.getElementById('tbody-m-learning-stat').innerHTML = AppState.planList.map(name => {
-    const val = catSums[name] || 0;
-    tot += val;
-    return `<tr><td>${name}</td><td class="text-right font-bold">${val.toFixed(2)}</td></tr>`;
-  }).join('');
+  let totalLearningCost = 0;
+  items.forEach(x => {
+    const val = parseFloat(x.val) || 0;
+    catSums[x.cat] = (catSums[x.cat] || 0) + val;
+    totalLearningCost += val;
+  });
 
-  document.getElementById('tfoot-m-learn-total').textContent = tot.toFixed(2);
-  document.getElementById('tfoot-m-learn-stat-total').textContent = tot.toFixed(2);
+  const tbStat = document.getElementById('tbody-m-learning-stat');
+  if (tbStat) {
+    tbStat.innerHTML = AppState.planList.map(name => {
+      const val = catSums[name] || 0;
+      return `<tr><td>${name}</td><td class="text-right font-bold text-orange">${val.toFixed(2)}</td></tr>`;
+    }).join('');
+  }
+
+  const footTotal = document.getElementById('tfoot-m-learn-total');
+  const footStatTotal = document.getElementById('tfoot-m-learn-stat-total');
+  if (footTotal) footTotal.textContent = totalLearningCost.toFixed(2);
+  if (footStatTotal) footStatTotal.textContent = totalLearningCost.toFixed(2);
+
+  const expList = AppState.monthlyDetails[m].expenses;
+  let lrnExpense = expList.find(x => x.cat === "Chi tiền phát triển bản thân");
+  if (lrnExpense) {
+    lrnExpense.val = totalLearningCost;
+  } else if (totalLearningCost > 0) {
+    expList.push({
+      date: `2026-${m < 10 ? '0' + m : m}-20`,
+      cat: "Chi tiền phát triển bản thân",
+      desc: "Đầu tư phát triển bản thân",
+      val: totalLearningCost
+    });
+  }
 }
+
+window.updateMonthLearningField = function(m, i, field, value) {
+  if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].learningDetails[i]) {
+    AppState.monthlyDetails[m].learningDetails[i][field] = value;
+    renderMonthLearningSection(m);
+    syncLearningToDashboard();
+  }
+};
 
 window.addMonthLearningRow = function() {
   const m = AppState.currentMonth;
   const mStr = m < 10 ? `0${m}` : `${m}`;
-  AppState.monthlyDetails[m].learningDetails.push({ date: `2026-${mStr}-10`, cat: AppState.planList[0], desc: "Khóa đào tạo mới", val: 1.0, expRes: "Nâng cao kỹ năng", actRes: "Áp dụng" });
+  const defaultCat = AppState.planList[0] || "Khóa học ngắn hạn";
+  AppState.monthlyDetails[m].learningDetails.push({
+    date: `2026-${mStr}-10`,
+    cat: defaultCat,
+    desc: "Khóa đào tạo mới",
+    val: 1.0,
+    expRes: "Nâng cao kỹ năng",
+    actRes: "Đang học"
+  });
   renderMonthLearningSection(m);
   syncLearningToDashboard();
 };
@@ -636,9 +1173,8 @@ window.deleteMonthLearningRow = function(m, i) {
 };
 
 function syncLearningToDashboard() {
+  renderReconciliationTable(AppState.currentMonth);
   recalculateAll();
-  renderDashboardMatrices();
-  renderDashboardAllCharts();
 }
 
 let monthBarChartInstance = null;
@@ -675,144 +1211,366 @@ function renderMonthHorizontalBarChart() {
 
 // ==================== CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP ====================
 let careerChartInstance = null;
+
 function renderCareerTables() {
+  const milestones = calculateAgeMilestones();
   const tb1 = document.getElementById('tbody-career-overview');
   if (tb1) {
-    tb1.innerHTML = AppState.careerOverview.map((item) => `
+    tb1.innerHTML = milestones.map((item, idx) => `
       <tr>
-        <td class="text-center font-bold">${item.age}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" onblur="item.incomeNeed=parseFloat(this.innerText)||0; renderCareerChart();">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right">${item.ins.toFixed(1)}%</td>
-        <td class="text-right">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-green">${item.returnNeed.toFixed(1)}%</td>
-        <td class="cell-blue" contenteditable="true" onblur="item.skills=this.innerText.trim();">${item.skills}</td>
+        <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
+        <td class="text-right font-bold text-orange">${item.incomeNeed.toFixed(1)}</td>
+        <td class="text-right font-semibold">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-green">${item.returnNeed.toFixed(2)}%</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="AppState.skillsStore[${idx}]=this.innerText.trim();">${item.skills}</td>
       </tr>
     `).join('');
   }
 
+  // TÍNH TOÁN VÀ ĐỒNG BỘ DỮ LIỆU CẢ 2 CHIỀU
+  AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
-    tb2.innerHTML = AppState.careerDetail.map((item) => {
-      const targetVal = item.age === 24 ? item.actual : (item.age <= 30 ? 20.0 : (item.age <= 40 ? 30.0 : 40.0));
+    tb2.innerHTML = AppState.careerDetailList.map((item, idx) => {
+      const isDeficit = item.route < item.target;
+      const diffVal = Math.abs(item.target - item.route).toFixed(1);
+
       return `
         <tr>
-          <td class="text-center font-bold">${item.age}</td>
-          <td class="text-right cell-blue font-bold" contenteditable="true" onblur="item.actual=parseFloat(this.innerText)||0; renderCareerChart();">${item.actual.toFixed(1)}</td>
-          <td class="text-right font-bold text-gold">${targetVal.toFixed(1)}</td>
-          <td class="text-right cell-blue font-bold" contenteditable="true" onblur="item.route=parseFloat(this.innerText)||0; renderCareerChart();">${item.route.toFixed(1)}</td>
+          <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
+          <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" 
+              onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
+            ${item.actual.toFixed(1)}
+          </td>
+          <td class="text-right font-bold text-gold">${item.target.toFixed(1)}</td>
+          <td class="text-right font-bold cell-blue ${isDeficit ? 'text-deficit-danger' : 'text-green'}" 
+              contenteditable="true" spellcheck="false" 
+              onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
+            ${item.route.toFixed(1)}
+          </td>
+          <td class="text-center">
+            ${isDeficit 
+              ? `<span class="deficit-badge">⚠️ Thiếu hụt (${diffVal} tr)</span>` 
+              : `<span class="success-badge">✅ Đạt yêu cầu</span>`
+            }
+          </td>
         </tr>
       `;
     }).join('');
   }
 }
 
+// CẬP NHẬT TRỰC TIẾP DỮ LIỆU KHI NGƯỜI DÙNG SỬA SỐ
+window.updateCareerDetailField = function(idx, field, val) {
+  if (AppState.careerDetailList[idx]) {
+    AppState.careerDetailList[idx][field] = val;
+    renderCareerTables();
+    renderCareerChart();
+  }
+};
+
+// CẬP NHẬT CHUẨN XÁC: TỰ ĐỘNG CHUYỂN LINE MÀU LỤC KHI CAO HƠN HOẶC BẰNG LINE VÀNG, VÀ ĐỎ KHI DƯỚI LINE VÀNG
 function renderCareerChart() {
   const canvas = document.getElementById('careerChart');
   if (!canvas || typeof Chart === 'undefined') return;
 
-  const ages = AppState.careerDetail.map(x => `${x.age} tuổi`);
-  const actuals = AppState.careerDetail.map(x => x.actual);
-  const targets = AppState.careerDetail.map(x => (x.age === 24 ? x.actual : (x.age <= 30 ? 20.0 : (x.age <= 40 ? 30.0 : 40.0))));
-  const routes = AppState.careerDetail.map(x => x.route);
+  const dataList = AppState.careerDetailList.length > 0 ? AppState.careerDetailList : calculateCareerDetails();
+  const labels = dataList.map(x => `${x.age} tuổi`);
+  const actuals = dataList.map(x => x.actual);
+  const targets = dataList.map(x => x.target);
+  const routes = dataList.map(x => x.route);
 
   if (careerChartInstance) careerChartInstance.destroy();
   careerChartInstance = new Chart(canvas.getContext('2d'), {
     type: 'line',
     data: {
-      labels: ages,
+      labels: labels,
       datasets: [
         {
           label: "Thu nhập thực tế",
           data: actuals,
-          borderColor: "#dc2626",
-          borderWidth: 2.2,
+          borderColor: "#2563eb",
+          backgroundColor: "#ffffff",
+          borderWidth: 2,
           borderDash: [5, 5],
+          pointRadius: 4,
+          pointBorderColor: "#2563eb",
+          pointBackgroundColor: "#ffffff",
           fill: false,
-          tension: 0.2
+          tension: 0.25
         },
         {
           label: "Số tiền cần có để đạt mục tiêu tài chính",
           data: targets,
           borderColor: "#eab308",
-          borderWidth: 2.5,
+          backgroundColor: "#eab308",
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: "#eab308",
           fill: false,
-          tension: 0.2
+          tension: 0.25
         },
         {
-          label: "Thu nhập theo lộ trình nghề nghiệp",
+          label: "Thu nhập theo lộ trình nghề nghiệp (Đạt yêu cầu)",
           data: routes,
-          borderColor: "#16a34a",
-          borderWidth: 2.5,
+          borderWidth: 3,
+          pointRadius: 6,
+          pointBackgroundColor: ctx => {
+            const idx = ctx.dataIndex;
+            return routes[idx] >= targets[idx] ? "#16a34a" : "#dc2626";
+          },
+          pointBorderColor: ctx => {
+            const idx = ctx.dataIndex;
+            return routes[idx] >= targets[idx] ? "#15803d" : "#b91c1c";
+          },
+          segment: {
+            borderColor: ctx => {
+              const p0 = ctx.p0DataIndex;
+              const p1 = ctx.p1DataIndex;
+              const isAbove = (routes[p0] >= targets[p0]) && (routes[p1] >= targets[p1]);
+              return isAbove ? '#16a34a' : '#dc2626';
+            }
+          },
           fill: false,
-          tension: 0.2
+          tension: 0.25
+        },
+        {
+          label: "Không đạt mục tiêu (Cần cải thiện)",
+          data: [],
+          borderColor: "#dc2626",
+          backgroundColor: "#dc2626",
+          borderWidth: 3,
+          pointRadius: 5,
+          pointBackgroundColor: "#dc2626"
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { position: 'top', labels: { font: { family: 'Montserrat', size: 11, weight: 'bold' } } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} tr` } }
+        legend: {
+          position: 'top',
+          labels: { font: { family: 'Montserrat', size: 11, weight: 'bold' }, boxWidth: 28, boxHeight: 12, padding: 16 }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (!ctx.raw && ctx.raw !== 0) return '';
+              return ` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)} tr`;
+            },
+            afterBody: items => {
+              const idx = items[0].dataIndex;
+              if (routes[idx] < targets[idx]) {
+                const diff = (targets[idx] - routes[idx]).toFixed(1);
+                return [`⚠️ Cảnh báo: Thu nhập nghề nghiệp thấp hơn mức cần ${diff} triệu đồng/tháng!`];
+              }
+              return [`✅ Đạt yêu cầu: Thu nhập nghề nghiệp đáp ứng hoặc vượt mục tiêu tích lũy.`];
+            }
+          }
+        }
       },
       scales: {
-        y: { beginAtZero: true, grid: { color: "#f1f5f9" } },
+        y: { beginAtZero: true, suggestedMax: 100, ticks: { stepSize: 10 }, grid: { color: "#f1f5f9" } },
         x: { grid: { display: false } }
       }
     }
   });
 }
 
-// ==================== BẢNG KHẢO SÁT CHUẨN XLSX CHẤM ĐIỂM ====================
+// ==================== BẢNG KHẢO SÁT CHUẨN DOT CHECKBOX ====================
 function renderSurveyForm() {
   const p1 = document.getElementById('survey-list-part-1');
   if (p1) {
-    p1.innerHTML = surveyQuestionsPart1.map((q, idx) => `
-      <div class="survey-q-card">
-        <div class="q-title"><span class="q-num">${idx + 1}</span> ${q.q}</div>
-        <div class="q-options">
-          ${q.opts.map((opt, optIdx) => `
-            <label class="dotbox-label">
-              <input type="radio" name="ks1_${idx + 1}" value="${q.weights[optIdx]}" ${optIdx === q.def ? 'checked' : ''} onchange="evaluateSurveys()">
-              <span class="dot-custom"></span>${opt}
-            </label>
-          `).join('')}
-        </div>
-      </div>
-    `).join('');
+    let p1Html = '';
+    surveyQuestionsPart1.forEach((q, qIdx) => {
+      const qNum = qIdx + 1;
+      p1Html += `
+        <tr class="survey-q-row">
+          <td class="text-center font-bold">${qNum}</td>
+          <td colspan="2" class="font-bold">${q.q}</td>
+        </tr>
+      `;
+
+      if (q.hasCharts) {
+        p1Html += `
+          <tr>
+            <td></td>
+            <td colspan="2">
+              <div class="survey-graphic-box">
+                <div class="chart-triplet-grid">
+                  <div class="chart-box-mini">
+                    <div class="chart-box-mini-title">Danh mục X - Lợi nhuận TB = 8%</div>
+                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniX"></canvas></div>
+                  </div>
+                  <div class="chart-box-mini">
+                    <div class="chart-box-mini-title">Danh mục Y - Lợi nhuận TB = 12%</div>
+                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniY"></canvas></div>
+                  </div>
+                  <div class="chart-box-mini">
+                    <div class="chart-box-mini-title">Danh mục Z - Lợi nhuận TB = 16%</div>
+                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniZ"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      if (q.hasTable) {
+        p1Html += `
+          <tr>
+            <td></td>
+            <td colspan="2">
+              <table class="sub-table-graphic">
+                <thead>
+                  <tr>
+                    <th>Danh mục đầu tư</th>
+                    <th>Giá trị kỳ vọng của 100 triệu sau một năm</th>
+                    <th>Khả năng lỗ sau một năm</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td class="font-bold">Danh mục A</td><td>107 triệu</td><td class="text-red font-bold">19%</td></tr>
+                  <tr><td class="font-bold">Danh mục B</td><td>108 triệu</td><td class="text-red font-bold">23%</td></tr>
+                  <tr><td class="font-bold">Danh mục C</td><td>109 triệu</td><td class="text-red font-bold">26%</td></tr>
+                  <tr><td class="font-bold">Danh mục D</td><td>110 triệu</td><td class="text-red font-bold">28%</td></tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        `;
+      }
+
+      q.opts.forEach((opt, optIdx) => {
+        const isChosen = AppState.surveyP1Choices[qNum] === optIdx;
+        p1Html += `
+          <tr class="survey-opt-row ${isChosen ? 'selected' : ''}" onclick="selectSurveyChoice(1, ${qNum}, ${optIdx})">
+            <td></td>
+            <td>${opt}</td>
+            <td class="survey-dotbox-cell">
+              <label class="dot-radio-wrapper" onclick="event.stopPropagation(); selectSurveyChoice(1, ${qNum}, ${optIdx})">
+                <input type="radio" name="ks1_q${qNum}" value="${optIdx}" ${isChosen ? 'checked' : ''}>
+                <span class="dot-circle"></span>
+              </label>
+            </td>
+          </tr>
+        `;
+      });
+    });
+    p1.innerHTML = p1Html;
   }
 
   const p2 = document.getElementById('survey-list-part-2');
   if (p2) {
-    p2.innerHTML = surveyQuestionsPart2.map((q, idx) => `
-      <div class="survey-q-card">
-        <div class="q-title"><span class="q-num">${idx + 1}</span> ${q.q}</div>
-        <div class="q-options">
-          ${q.opts.map((opt, optIdx) => `
-            <label class="dotbox-label">
-              <input type="radio" name="ks2_${idx + 1}" value="${q.weights[optIdx]}" ${optIdx === q.def ? 'checked' : ''} onchange="evaluateSurveys()">
-              <span class="dot-custom"></span>${opt}
-            </label>
-          `).join('')}
-        </div>
-      </div>
-    `).join('');
+    let p2Html = '';
+    surveyQuestionsPart2.forEach((q, qIdx) => {
+      const qNum = qIdx + 1;
+      p2Html += `
+        <tr class="survey-q-row">
+          <td class="text-center font-bold">${qNum}</td>
+          <td colspan="2" class="font-bold">${q.q}</td>
+        </tr>
+      `;
+
+      q.opts.forEach((opt, optIdx) => {
+        const isChosen = AppState.surveyP2Choices[qNum] === optIdx;
+        p2Html += `
+          <tr class="survey-opt-row ${isChosen ? 'selected' : ''}" onclick="selectSurveyChoice(2, ${qNum}, ${optIdx})">
+            <td></td>
+            <td>${opt}</td>
+            <td class="survey-dotbox-cell">
+              <label class="dot-radio-wrapper" onclick="event.stopPropagation(); selectSurveyChoice(2, ${qNum}, ${optIdx})">
+                <input type="radio" name="ks2_q${qNum}" value="${optIdx}" ${isChosen ? 'checked' : ''}>
+                <span class="dot-circle"></span>
+              </label>
+            </td>
+          </tr>
+        `;
+      });
+    });
+    p2.innerHTML = p2Html;
   }
+}
+
+window.selectSurveyChoice = function(part, qNum, optIdx) {
+  if (part === 1) {
+    AppState.surveyP1Choices[qNum] = optIdx;
+  } else {
+    AppState.surveyP2Choices[qNum] = optIdx;
+  }
+  renderSurveyForm();
+  evaluateSurveys();
+  setTimeout(renderSurveyQuestionCharts, 30);
+};
+
+let miniCharts = {};
+function renderSurveyQuestionCharts() {
+  if (typeof Chart === 'undefined') return;
+
+  const dataX = [2, 8, 9, 10, 11, 12, 13, 15, 12, 10, 7, 8, 11, 10, 9, 8, 7, 7, 6, 6];
+  const dataY = [15, 14, -3, 9, 7, 35, -9, 10, 7, 30, 15, 6, 12, 15, -4, 8, 11, 14, -7, 10];
+  const dataZ = [46, -11, 26, 29, 36, -8, 8, 6, 29, 9, -12, 13, 12, 8, -20, 26, 39, 4, 5, 8];
+
+  const createMini = (id, data) => {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    if (miniCharts[id]) miniCharts[id].destroy();
+
+    miniCharts[id] = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Array.from({ length: 20 }, (_, i) => `${i + 1}`),
+        datasets: [{
+          data: data,
+          backgroundColor: data.map(v => v >= 0 ? '#166534' : '#dc2626'),
+          barPercentage: 0.8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          x: { display: true, ticks: { font: { size: 7 } }, grid: { display: false } },
+          y: { min: -25, max: 50, ticks: { font: { size: 7 }, stepSize: 20 }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+  };
+
+  createMini('chartMiniX', dataX);
+  createMini('chartMiniY', dataY);
+  createMini('chartMiniZ', dataZ);
 }
 
 function evaluateSurveys() {
   let s1 = 0;
-  for (let i = 1; i <= surveyQuestionsPart1.length; i++) {
-    const ch = document.querySelector(`input[name="ks1_${i}"]:checked`);
-    if (ch) s1 += parseInt(ch.value, 10);
-  }
+  surveyQuestionsPart1.forEach((q, idx) => {
+    const qNum = idx + 1;
+    const choiceIdx = AppState.surveyP1Choices[qNum];
+    if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
+      s1 += q.weights[choiceIdx];
+    }
+  });
 
   let rTxt = "";
-  if (s1 <= 18) rTxt = "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp";
-  else if (s1 <= 29) rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình";
-  else rTxt = "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ rủi ro cao";
+  if (s1 <= 15) {
+    rTxt = "Bạn là người cực kỳ thận trọng và ngại rủi ro cao. Bạn nên ưu tiên các tài sản an toàn tuyệt đối như tiền gửi và trái phiếu chính phủ.";
+  } else if (s1 <= 22) {
+    rTxt = "Bạn là người thận trọng. Bạn nên duy trì các tài sản rủi ro tại mức thấp để hạn chế tối đa các đợt sụt giảm thị trường.";
+  } else if (s1 <= 30) {
+    rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình để cân bằng giữa sinh lời và an toàn vốn.";
+  } else if (s1 <= 38) {
+    rTxt = "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ sinh lời cao như cổ phiếu và chứng chỉ quỹ ETF.";
+  } else {
+    rTxt = "Bạn là nhà đầu tư quyết liệt, sẵn sàng chấp nhận biến động mạnh để tối ưu hóa mức tăng trưởng tài sản dài hạn vượt trội.";
+  }
 
   const bar1 = document.getElementById('survey-result-bar-1');
   const risk1 = document.getElementById('survey-result-risk');
@@ -820,17 +1578,26 @@ function evaluateSurveys() {
   if (risk1) risk1.textContent = `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
 
   let s2 = 0;
-  for (let i = 1; i <= surveyQuestionsPart2.length; i++) {
-    const ch = document.querySelector(`input[name="ks2_${i}"]:checked`);
-    if (ch) s2 += parseInt(ch.value, 10);
-  }
+  surveyQuestionsPart2.forEach((q, idx) => {
+    const qNum = idx + 1;
+    const choiceIdx = AppState.surveyP2Choices[qNum];
+    if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
+      s2 += q.weights[choiceIdx];
+    }
+  });
 
   let cTxt = "";
-  if (s2 <= 20) cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn";
-  else if (s2 <= 29) cTxt = "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn";
-  else if (s2 <= 38) cTxt = "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn";
-  else if (s2 <= 42) cTxt = "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn";
-  else cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn";
+  if (s2 <= 18) {
+    cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn (áp lực chi phí và phụ thuộc cao).";
+  } else if (s2 <= 26) {
+    cTxt = "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn.";
+  } else if (s2 <= 35) {
+    cTxt = "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.";
+  } else if (s2 <= 42) {
+    cTxt = "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn.";
+  } else {
+    cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn với tiềm năng tích lũy vượt trội.";
+  }
 
   const bar2 = document.getElementById('survey-result-bar-2');
   const ctx2 = document.getElementById('survey-result-context');
@@ -881,7 +1648,15 @@ function renderTcGoalsFormTable() {
 }
 
 window.addNewTcGoalRow = function() {
-  AppState.tcGoals.push({ id: `g_${Date.now()}`, name: "Mục tiêu mới", type: "invest", val: 100.0, paid: 0.0, start: 2026, end: 2030, rate: 8.0, monthly: 1.5 });
+  AppState.tcGoals.push({ 
+    id: `g_${Date.now()}`, name: "Mục tiêu mới", type: "invest", val: 100.0, paid: 0.0, 
+    start: AppState.currentYear, end: AppState.currentYear + 4, rate: 8.0, monthly: 1.7,
+    yearsRetire: 20, monthlyRetire: 10.0, deathFund: 200.0,
+    allocProducts: [
+      { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
+      { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 }
+    ]
+  });
   renderTcGoalsFormTable();
 };
 
@@ -919,62 +1694,130 @@ function syncGoalsToCards() {
   const debts = AppState.tcGoals.filter(g => g.type === 'debt');
   const invests = AppState.tcGoals.filter(g => g.type === 'invest');
 
-  if (dWrap) dWrap.innerHTML = debts.map((g, i) => createCardHtml(g, i + 1, "Mục tiêu trả nợ")).join('');
-  if (iWrap) iWrap.innerHTML = invests.map((g, i) => createCardHtml(g, i + 1, "Mục tiêu tài chính")).join('');
+  if (dWrap) dWrap.innerHTML = debts.map((g, i) => createCardHtmlDebt(g, i + 1)).join('');
+  if (iWrap) iWrap.innerHTML = invests.map((g, i) => createCardHtmlInvest(g, i + 1)).join('');
 }
 
-function createCardHtml(g, num, label) {
+function createCardHtmlDebt(g, num) {
+  const nYears = Math.max(1, g.end - g.start + 1);
+  const targetNeed = Math.max(0, g.val - (g.paid || 0));
+  const mVal = g.monthly || calculateMonthlyNeed(g);
+
+  return `
+    <div class="tc-goal-card-h4" id="card-${g.id}">
+      <div class="tc-card-h4-title">
+        <span>Mục tiêu trả nợ ${num}: ${g.name}</span>
+        <button class="btn-table-del" style="color:#ffffff;" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+      <table class="tc-card-h4-table">
+        <tbody>
+          <tr>
+            <td style="width: 32%;">Năm bắt đầu</td>
+            <td class="cell-green-val" style="width: 18%;">${g.start}</td>
+            <td class="bg-col-head" style="width: 32%;">Thời gian trả (năm)</td>
+            <td class="text-right font-bold" style="width: 18%;">${nYears.toFixed(1)}</td>
+          </tr>
+          <tr>
+            <td>Năm kết thúc</td>
+            <td class="cell-green-val">${g.end}</td>
+            <td class="bg-col-head">Khoản nợ còn lại</td>
+            <td class="text-right font-bold text-red">${targetNeed.toFixed(1)} tr</td>
+          </tr>
+          <tr>
+            <td>Lãi suất vay</td>
+            <td class="cell-green-val">${g.rate.toFixed(1)}%</td>
+            <td class="bg-col-head">Trả hàng tháng</td>
+            <td class="cell-orange-val">${mVal.toFixed(1)} tr</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function createCardHtmlInvest(g, num) {
   const nYears = Math.max(1, g.end - g.start + 1);
   const targetNeed = Math.max(0, g.val - (g.paid || 0));
   const mVal = g.monthly || calculateMonthlyNeed(g);
   const yVal = mVal * 12;
 
+  const prods = g.allocProducts && g.allocProducts.length > 0 ? g.allocProducts : [
+    { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
+    { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
+    { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
+  ];
+
+  let expectedAvgReturn = 0;
+  prods.forEach(p => { expectedAvgReturn += (p.weight / 100) * p.returnRate; });
+
   return `
-    <div class="tc-goal-card" id="card-${g.id}">
-      <div class="tc-goal-card-header">
-        <span>${label} ${num}: ${g.name}</span>
-        <button class="btn-card-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+    <div class="tc-goal-card-h4" id="card-${g.id}">
+      <div class="tc-card-h4-title">
+        <span>Mục tiêu đầu tư ${num}: ${g.name}</span>
+        <button class="btn-table-del" style="color:#ffffff;" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
-      <div class="tc-card-table-wrap">
-        <table class="tc-card-body-table">
-          <tbody>
-            <tr>
-              <td>Năm bắt đầu</td>
-              <td class="cell-import-green" contenteditable="true" onblur="g.start=parseInt(this.innerText,10)||2026; syncCardCalc('${g.id}');">${g.start}</td>
-              <td class="col-summary-title">Tóm tắt kế hoạch</td>
-              <td class="col-summary-title text-right">Khoản mục</td>
-            </tr>
-            <tr>
-              <td>Năm kết thúc</td>
-              <td class="cell-import-green" contenteditable="true" onblur="g.end=parseInt(this.innerText,10)||2030; syncCardCalc('${g.id}');">${g.end}</td>
-              <td colspan="2" class="text-right italic-head">Thời hạn: ${nYears.toFixed(1)} năm</td>
-            </tr>
-            <tr>
-              <td>Giá trị ${g.type === 'debt' ? 'khoản nợ' : 'mục tiêu'} (tr)</td>
-              <td class="text-right font-bold cell-import-green" contenteditable="true" onblur="g.val=parseFloat(this.innerText)||0; syncCardCalc('${g.id}');">${g.val.toFixed(1)}</td>
-              <td>Thời gian còn lại (năm)</td>
-              <td class="text-right font-bold">${nYears.toFixed(1)}</td>
-            </tr>
-            <tr>
-              <td>Lãi suất / Lợi nhuận</td>
-              <td class="cell-import-green" contenteditable="true" onblur="g.rate=parseFloat(this.innerText)||0; syncCardCalc('${g.id}');">${g.rate.toFixed(1)}%</td>
-              <td>Số tiền cần hàng tháng (tr)</td>
-              <td class="cell-calc-highlight font-bold">${mVal.toFixed(1)}</td>
-            </tr>
-            <tr>
-              <td>Số tiền ${g.type === 'debt' ? 'đã thanh toán trước đó' : 'đã tích lũy hiện có'}</td>
-              <td class="cell-import-green" contenteditable="true" onblur="g.paid=parseFloat(this.innerText)||0; syncCardCalc('${g.id}');">${g.paid.toFixed(1)}</td>
-              <td>Số tiền cần hàng năm (tr)</td>
-              <td class="cell-calc-highlight font-bold">${yVal.toFixed(1)}</td>
-            </tr>
-            <tr>
-              <td class="font-bold">Mục tiêu hiện tại cần đạt</td>
-              <td class="text-right font-bold text-red">${targetNeed.toFixed(1)}</td>
-              <td colspan="2"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <table class="tc-card-h4-table">
+        <thead>
+          <tr class="header-sub-green">
+            <th colspan="2" style="width: 32%;">Thông số kế hoạch</th>
+            <th colspan="2" style="width: 30%;">Tóm tắt kế hoạch</th>
+            <th colspan="4" style="width: 38%;">Sản phẩm đầu tư</th>
+          </tr>
+          <tr class="bg-col-head">
+            <th>Chỉ tiêu</th><th style="width: 50px;">Giá trị</th>
+            <th>Khoản mục</th><th style="width: 55px;">Giá trị</th>
+            <th>Loại sản phẩm</th><th style="width: 44px;">Tỷ trọng</th><th style="width: 40px;">LN</th><th style="width: 38px;">Rủi ro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Năm bắt đầu</td>
+            <td class="cell-green-val">${g.start}</td>
+            <td class="italic-head">Số tiền cần có khi hưu</td>
+            <td class="cell-orange-val">${targetNeed.toFixed(0)}</td>
+            <td class="cell-blue font-bold">${prods[0]?.prodName || 'Sản phẩm 1'}</td>
+            <td class="cell-green-val">${prods[0]?.weight.toFixed(1)}%</td>
+            <td class="text-right">${prods[0]?.returnRate.toFixed(0)}%</td>
+            <td class="text-right">${prods[0]?.risk.toFixed(0)}%</td>
+          </tr>
+          <tr>
+            <td>Năm kết thúc</td>
+            <td class="cell-green-val">${g.end}</td>
+            <td class="font-bold">Thời gian tiết kiệm (năm)</td>
+            <td class="text-right font-bold">${nYears.toFixed(1)}</td>
+            <td class="cell-blue font-bold">${prods[1]?.prodName || 'Sản phẩm 2'}</td>
+            <td class="cell-green-val">${prods[1]?.weight.toFixed(1)}%</td>
+            <td class="text-right">${prods[1]?.returnRate.toFixed(0)}%</td>
+            <td class="text-right">${prods[1]?.risk.toFixed(0)}%</td>
+          </tr>
+          <tr>
+            <td>TG sống sau hưu (năm)</td>
+            <td class="cell-green-val">${g.yearsRetire || 30}</td>
+            <td class="font-bold">Số tiền trả hàng tháng</td>
+            <td class="cell-orange-val">${mVal.toFixed(1)}</td>
+            <td class="cell-blue font-bold">${prods[2]?.prodName || 'Sản phẩm 3'}</td>
+            <td class="cell-green-val">${(prods[2]?.weight || 0).toFixed(1)}%</td>
+            <td class="text-right">${(prods[2]?.returnRate || 0).toFixed(0)}%</td>
+            <td class="text-right">${(prods[2]?.risk || 0).toFixed(0)}%</td>
+          </tr>
+          <tr>
+            <td>Hưu trí cần mỗi tháng</td>
+            <td class="cell-green-val">${g.monthlyRetire || 15}</td>
+            <td class="font-bold">Số tiền trả hàng năm</td>
+            <td class="cell-orange-val">${yVal.toFixed(1)}</td>
+            <td colspan="2" class="font-bold text-center bg-col-head">LN kỳ vọng TB</td>
+            <td colspan="2" class="cell-gold-val text-center">${expectedAvgReturn.toFixed(2)}%</td>
+          </tr>
+          <tr class="bg-neutral-gray font-semibold">
+            <td>Để lại sau mất:</td>
+            <td class="font-bold text-right text-red">${g.deathFund || 500} tr</td>
+            <td style="text-align: right;">LS (Lãi suất) đầu tư:</td>
+            <td class="cell-green-val">${expectedAvgReturn.toFixed(1)}%</td>
+            <td colspan="2" style="text-align: right;">Tích lũy hiện có:</td>
+            <td colspan="2" class="cell-green-val text-center font-bold">${g.paid || 0} tr</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   `;
 }
@@ -996,7 +1839,7 @@ window.removeGoalFromCard = function(id) {
   renderTcMatrixTable();
 };
 
-// ==================== MA TRẬN 33 NĂM PHẢN HỒI THỜI GIAN THỰC ====================
+// ==================== MA TRẬN 33 NĂM ====================
 function renderTcMatrixTable() {
   const thead = document.getElementById('tr-tc-matrix-head');
   const tbody = document.getElementById('tbody-tc-matrix');
@@ -1007,12 +1850,12 @@ function renderTcMatrixTable() {
   const all = [...debts, ...invests];
 
   thead.innerHTML = `
-    <th style="min-width: 55px;">Năm</th>
-    <th style="min-width: 55px;">Tuổi</th>
-    ${debts.map((g, i) => `<th style="min-width: 105px;">Trả nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    ${invests.map((g, i) => `<th style="min-width: 105px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    <th style="min-width: 85px;" class="col-highlight-gold">Tiết kiệm cần</th>
-    <th style="min-width: 85px;" class="col-highlight-orange">Thu nhập cần</th>
+    <th style="min-width: 48px;">Năm</th>
+    <th style="min-width: 48px;">Tuổi</th>
+    ${debts.map((g, i) => `<th style="min-width: 90px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
+    ${invests.map((g, i) => `<th style="min-width: 90px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
+    <th style="min-width: 78px;" class="col-highlight-gold">Tiết kiệm cần</th>
+    <th style="min-width: 78px;" class="col-highlight-orange">Thu nhập cần</th>
   `;
 
   const startY = AppState.currentYear;
@@ -1032,8 +1875,8 @@ function renderTcMatrixTable() {
       return `
         <td class="cell-matrix-editable ${val > 0 ? 'cell-active-goal' : ''}" 
             contenteditable="true" spellcheck="false" 
-            oninput="onMatrixInput(this, ${y})" 
-            onblur="onMatrixBlur(this, ${y})">
+            oninput="onMatrixCellChange(this, ${y})" 
+            onblur="formatMatrixCell(this, ${y})">
           ${val > 0 ? val.toFixed(1) : ''}
         </td>
       `;
@@ -1054,7 +1897,7 @@ function renderTcMatrixTable() {
   renderTcMatrixChart();
 }
 
-window.onMatrixInput = function(td, rIdx) {
+window.onMatrixCellChange = function(td, rIdx) {
   const row = document.getElementById(`mtr-row-${rIdx}`);
   if (!row) return;
 
@@ -1072,13 +1915,17 @@ window.onMatrixInput = function(td, rIdx) {
   const inc = rSum > 0 ? (rSum / 0.40) : 0;
   document.getElementById(`mtr-sav-${rIdx}`).textContent = rSum > 0 ? rSum.toFixed(1) : '-';
   document.getElementById(`mtr-inc-${rIdx}`).textContent = inc > 0 ? inc.toFixed(1) : '-';
-  updateMatrixChartFromCells();
+  updateMatrixChartData();
+  
+  // TỰ ĐỘNG CẬP NHẬT LẠI LỘ TRÌNH NGHỀ NGHIỆP KHI MA TRẬN TÀI CHÍNH THAY ĐỔI
+  renderCareerTables();
+  renderCareerChart();
 };
 
-window.onMatrixBlur = function(td, rIdx) {
+window.formatMatrixCell = function(td, rIdx) {
   const v = parseFloat(td.innerText.trim().replace(/[^0-9.-]/g, ''));
   td.textContent = (!isNaN(v) && v > 0) ? v.toFixed(1) : '';
-  window.onMatrixInput(td, rIdx);
+  window.onMatrixCellChange(td, rIdx);
 };
 
 let tcMatrixChartInstance = null;
@@ -1093,7 +1940,7 @@ function renderTcMatrixChart() {
   for (let y = 0; y <= 32; y++) {
     const yr = AppState.currentYear + y;
     const age = AppState.currentAge + y;
-    labels.push(`${age} tuổi (${yr})`);
+    labels.push(`${age}T (${yr})`);
 
     const sVal = parseFloat(document.getElementById(`mtr-sav-${y}`)?.innerText.replace(/[^0-9.-]/g, '')) || 0;
     const iVal = parseFloat(document.getElementById(`mtr-inc-${y}`)?.innerText.replace(/[^0-9.-]/g, '')) || 0;
@@ -1107,19 +1954,19 @@ function renderTcMatrixChart() {
     data: {
       labels: labels,
       datasets: [
-        { label: "Thu nhập cần có (tr/tháng)", data: incData, borderColor: "#ea580c", backgroundColor: "rgba(234, 88, 12, 0.1)", borderWidth: 2.2, fill: true, tension: 0.2 },
+        { label: "Thu nhập cần có (tr/tháng)", data: incData, borderColor: "#ea580c", backgroundColor: "rgba(234, 88, 12, 0.12)", borderWidth: 2, fill: true, tension: 0.2 },
         { label: "Tiết kiệm cần có (tr/tháng)", data: savData, borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.15)", borderWidth: 2, fill: true, tension: 0.2 }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, grid: { color: "#f1f5f9" } }, x: { grid: { display: false } } }
+      scales: { y: { beginAtZero: true, grid: { color: "#f1f5f9" } } }
     }
   });
 }
 
-function updateMatrixChartFromCells() {
+function updateMatrixChartData() {
   if (!tcMatrixChartInstance) return;
   const sData = [], iData = [];
   for (let y = 0; y <= 32; y++) {
@@ -1131,14 +1978,14 @@ function updateMatrixChartFromCells() {
   tcMatrixChartInstance.update();
 }
 
-// ==================== MỤC TIÊU BẢN THÂN (CÁC NÚT THÊM HOẠT ĐỘNG HOÀN TOÀN) ====================
+// ==================== MỤC TIÊU BẢN THÂN ====================
 function renderTargetTables() {
   const tbDebt = document.getElementById('tbody-debt-target');
   if (tbDebt) {
     tbDebt.innerHTML = AppState.debtTargets.map((d, i) => `
       <tr>
         <td class="cell-green-light text-center font-bold">${i + 1}</td>
-        <td class="cell-green-light text-center cell-blue" contenteditable="true" spellcheck="false" onblur="d.age=parseInt(this.innerText,10)||0;">${d.age}</td>
+        <td class="cell-green-light text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="d.age=parseInt(this.innerText,10)||0; recalculateAll();">${d.age}</td>
         <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="d.desc=this.innerText.trim();">${d.desc}</td>
         <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="d.val=parseFloat(this.innerText.replace(/,/g,''))||0; recalculateAll();">${d.val.toFixed(2)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteDebtTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
@@ -1148,22 +1995,30 @@ function renderTargetTables() {
 
   const tbInv = document.getElementById('tbody-invest-target');
   if (tbInv) {
-    tbInv.innerHTML = AppState.investTargets.map((inv, i) => `
-      <tr>
-        <td class="cell-green-light text-center font-bold">${i + 1}</td>
-        <td class="cell-green-light text-center cell-blue" contenteditable="true" spellcheck="false" onblur="inv.age=parseInt(this.innerText,10)||0;">${inv.age}</td>
-        <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="inv.desc=this.innerText.trim();">${inv.desc}</td>
-        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.val=parseFloat(this.innerText.replace(/,/g,''))||0; recalculateAll();">${inv.val.toLocaleString()}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteInvestTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
-      </tr>
-    `).join('');
+    tbInv.innerHTML = AppState.investTargets.map((inv, i) => {
+      const calc = calculateInvestTargetMetrics(inv);
+      return `
+        <tr>
+          <td class="cell-green-light text-center font-bold">${i + 1}</td>
+          <td class="cell-green-light text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.age=parseInt(this.innerText,10)||0; recalculateAll();">${inv.age}</td>
+          <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="inv.desc=this.innerText.trim();">${inv.desc}</td>
+          <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.pv=parseFloat(this.innerText.replace(/,/g,''))||0; recalculateAll();">${inv.pv.toLocaleString()}</td>
+          <td class="cell-green-light text-right cell-blue" contenteditable="true" spellcheck="false" onblur="inv.inflation=parseFloat(this.innerText)||4.0; recalculateAll();">${inv.inflation.toFixed(1)}%</td>
+          <td class="cell-green-light text-center font-bold">${calc.years} năm</td>
+          <td class="cell-green-light text-right font-bold text-red">${calc.fv.toFixed(1)}</td>
+          <td class="cell-green-light text-right cell-blue" contenteditable="true" spellcheck="false" onblur="inv.expectedReturn=parseFloat(this.innerText)||10.0; recalculateAll();">${inv.expectedReturn.toFixed(1)}%</td>
+          <td class="cell-green-light text-right font-bold text-green">${calc.monthlyNeed.toFixed(2)}</td>
+          <td class="text-center"><button class="btn-table-del" onclick="deleteInvestTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        </tr>
+      `;
+    }).join('');
   }
 
   renderSkillsFamilyJob();
 }
 
 window.addDebtTargetRow = function() {
-  AppState.debtTargets.push({ age: 35, desc: "Khoản nợ mới", val: 100.0 });
+  AppState.debtTargets.push({ age: AppState.currentAge + 5, desc: "Khoản nợ mới", val: 100.0 });
   renderTargetTables();
   recalculateAll();
 };
@@ -1174,7 +2029,7 @@ window.deleteDebtTargetRow = function(i) {
 };
 
 window.addInvestTargetRow = function() {
-  AppState.investTargets.push({ age: 40, desc: "Mục tiêu tích lũy mới", val: 200.0 });
+  AppState.investTargets.push({ age: AppState.currentAge + 4, desc: "Mục tiêu tích lũy mới", pv: 150.0, inflation: 4.0, expectedReturn: 10.0 });
   renderTargetTables();
   recalculateAll();
 };
@@ -1246,7 +2101,10 @@ function recalculateAll() {
   if (kpiExp) kpiExp.textContent = Math.round(totalExpYear);
   if (kpiSav) kpiSav.textContent = Math.round(yearSav);
 
+  renderCareerTables();
+  renderCareerChart();
   renderDashboardMatrices();
+  renderDashboardAllCharts();
   updatePlanTotals();
 }
 
@@ -1259,9 +2117,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCareerTables();
   renderTcGoalsFormTable();
   renderMonthView(AppState.currentMonth);
+  syncGoalsToCards();
   recalculateAll();
 
-  // Đồng bộ thay đổi năm & tuổi
   const yEl = document.getElementById('input-year');
   const aEl = document.getElementById('input-age');
   if (yEl) {
@@ -1272,6 +2130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         AppState.currentAge = AppState.currentYear - AppState.birthYear;
         if (aEl) aEl.innerText = AppState.currentAge;
         document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = v);
+        renderTargetTables();
+        renderTcMatrixTable();
         recalculateAll();
       }
     });
@@ -1282,6 +2142,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isNaN(v) && v > 0 && v < 120) {
         AppState.currentAge = v;
         AppState.birthYear = AppState.currentYear - v;
+        renderTargetTables();
+        renderTcMatrixTable();
         recalculateAll();
       }
     });

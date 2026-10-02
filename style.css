@@ -142,13 +142,12 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* THANH CUỘN THUẦN CSS */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* ==================== TOP INFO: NĂM, TUỔI & QUY ƯỚC ==================== */
+/* ==================== TOP INFO ==================== */
 .top-info-row {
   display: flex;
   align-items: flex-start;
@@ -294,7 +293,6 @@ body {
 .cell-blue { color: #0070c0 !important; font-weight: 500; outline: none; cursor: text; }
 .cell-blue:focus { background-color: #e8f4fc; }
 
-/* ==================== ĐỔ BÓNG MŨI TÊN DROPDOWN & CHỐNG CHỮ ĐÈ ==================== */
 .select-inline-cell {
   width: 100%;
   border: 1px solid #cbd5e1;
@@ -308,22 +306,12 @@ body {
   border-radius: 4px;
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%230070c0'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 6px center;
   background-size: 14px 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  white-space: normal;
-  word-break: break-word;
 }
 
-.select-inline-cell:focus {
-  border-color: #0070c0;
-  box-shadow: 0 0 0 2px rgba(0, 112, 192, 0.2);
-}
-
-/* INPUT DATE */
 .input-date-cell {
   border: 1px solid #cbd5e1;
   border-radius: 4px;
@@ -335,10 +323,6 @@ body {
   width: 100%;
   background: #ffffff;
   cursor: pointer;
-}
-.input-date-cell:focus {
-  border-color: #0070c0;
-  box-shadow: 0 0 0 2px rgba(0, 112, 192, 0.15);
 }
 
 .text-right { text-align: right; }
@@ -352,7 +336,7 @@ body {
 .mb-4 { margin-bottom: 20px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 
-/* ==================== DASHBOARD CẤU TRÚC THEO ẢNH ==================== */
+/* ==================== DASHBOARD ==================== */
 .dash-grid-row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -388,12 +372,7 @@ body {
   margin-bottom: 8px;
 }
 
-.slicer-tags {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
+.slicer-tags { display: flex; gap: 4px; flex-wrap: wrap; }
 .slicer-btn {
   background-color: #166534;
   color: #ffffff;
@@ -450,17 +429,9 @@ body {
 .kpi-orange .kpi-title { background-color: #f29b28; }
 .kpi-red .kpi-title { background-color: #c00000; }
 
-/* BẢNG MA TRẬN DASHBOARD THU GỌN VỪA VẶN */
-.compact-dash-matrix table {
-  font-size: 0.71rem;
-}
-.compact-dash-matrix th {
-  padding: 4px 5px;
-}
-.compact-dash-matrix td {
-  padding: 3px 5px;
-  height: 22px;
-}
+.compact-dash-matrix table { font-size: 0.71rem; }
+.compact-dash-matrix th { padding: 4px 5px; }
+.compact-dash-matrix td { padding: 3px 5px; height: 22px; }
 
 /* ==================== MỤC TIÊU BẢN THÂN ==================== */
 .target-container {
@@ -478,12 +449,32 @@ body {
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  border: none;
 }
 
-.target-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-.target-table th, .target-table td { border: 1px solid #ffffff; padding: 5px 10px; height: 25px; }
-.italic-head { font-style: italic; font-weight: 700; border-bottom: 2px solid #0e5627 !important; }
-.cell-green-light { background-color: #a4de6b; outline: none; }
+.target-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  border: none !important;
+  font-size: 0.78rem; 
+}
+
+.target-table th, .target-table td { 
+  border: none !important; 
+  padding: 6px 12px; 
+  height: 25px; 
+}
+
+.italic-head { 
+  font-style: italic; 
+  font-weight: 700; 
+  border-bottom: 2px solid #0e5627 !important; 
+}
+
+.cell-green-light { 
+  background-color: #a4de6b; 
+  outline: none; 
+}
 
 .survey-result-section { padding: 10px 14px; }
 .survey-result-title { font-style: italic; font-weight: 700; font-size: 0.85rem; border-bottom: 2px solid #0e5627; padding-bottom: 4px; margin-bottom: 8px; }
@@ -491,7 +482,7 @@ body {
 .btn-survey-link { background-color: #1e6b37; color: #ffffff; font-weight: 700; font-size: 0.8rem; padding: 6px 14px; border: none; cursor: pointer; border-radius: 3px; min-width: 120px; }
 .survey-desc { background-color: #a4de6b; flex: 1; padding: 6px 10px; font-size: 0.76rem; border-radius: 3px; }
 
-/* ==================== MỤC TIÊU TÀI CHÍNH & MA TRẬN ==================== */
+/* ==================== MỤC TIÊU TÀI CHÍNH (LAYOUT 3/7 & THU GỌN HÀNG) ==================== */
 .custom-sheet-container.full-width-sheet { max-width: 1380px; }
 .tc-subnav-bar, .sub-nav-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .btn-sub-nav {
@@ -565,28 +556,77 @@ body {
 .btn-add-goal { background-color: #0f172a; color: #ffffff; border: none; padding: 5px 12px; border-radius: 4px; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
 .tc-form-hint { font-size: 0.72rem; font-style: italic; color: #64748b; }
 
-.tc-two-columns-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 20px; width: 100%; }
-.tc-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; width: 100%; }
-.tc-column-banner { padding: 8px 14px; font-weight: 800; font-size: 0.88rem; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
+.tc-two-columns-grid { 
+  display: grid; 
+  grid-template-columns: 3fr 7fr; 
+  gap: 16px; 
+  width: 100%; 
+}
+
+.tc-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; width: 100%; }
+.tc-column-banner { padding: 6px 12px; font-weight: 800; font-size: 0.8rem; border-radius: 4px; display: flex; align-items: center; gap: 8px; }
 .orange-banner-head { background-color: #f29b28; color: #000000; }
 .green-banner-head { background-color: #0e5627; color: #ffffff; }
 
-/* CARD TỶ LỆ 4 CỘT CHỐNG CẮT KHUNG TUYỆT ĐỐI */
-.tc-goal-card { background: #ffffff; border: 1px solid #0e5627; border-radius: 6px; overflow: hidden; width: 100%; }
-.tc-goal-card-header { background-color: #0e5627; color: #ffffff; font-weight: 700; font-size: 0.82rem; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; }
-.tc-card-table-wrap { width: 100%; overflow-x: auto; }
-.tc-card-body-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
-.tc-card-body-table td { border: 1px solid #b7b7b7; padding: 5px 8px; height: 28px; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; }
-.tc-card-body-table td:nth-child(1) { width: 30%; }
-.tc-card-body-table td:nth-child(2) { width: 18%; }
-.tc-card-body-table td:nth-child(3) { width: 34%; }
-.tc-card-body-table td:nth-child(4) { width: 18%; }
-.tc-card-body-table .col-summary-title { background-color: #f1f5f9; font-weight: 700; }
+.tc-goal-card-h4 {
+  background: #ffffff;
+  border: 1px solid #0e5627;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
-.cell-import-green { background-color: #a4de6b !important; color: #000000 !important; font-weight: 700; text-align: right; outline: none; cursor: text; }
-.cell-calc-highlight { background-color: #f29b28; color: #000000; font-weight: 800; text-align: right; }
+.tc-card-h4-title {
+  background-color: #0e5627;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
-/* PHẦN 2 MA TRẬN ĐÃ THU GỌN VỪA VẶN */
+.tc-card-h4-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.70rem;
+}
+
+.tc-card-h4-table th, 
+.tc-card-h4-table td {
+  border: 1px solid #cbd5e1;
+  padding: 3px 5px;
+  height: 22px;
+}
+
+.tc-card-h4-table .bg-col-head {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
+.tc-card-h4-table .cell-green-val {
+  background-color: #f0fdf4;
+  color: #166534;
+  font-weight: 700;
+  text-align: right;
+}
+
+.tc-card-h4-table .cell-orange-val {
+  background-color: #fff7ed;
+  color: #c2410c;
+  font-weight: 800;
+  text-align: right;
+}
+
+.tc-card-h4-table .cell-gold-val {
+  background-color: #fefce8;
+  color: #a16207;
+  font-weight: 800;
+}
+
+/* PHẦN 2 MA TRẬN */
 .tc-matrix-header-box { background: #ffffff; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 4px; }
 .tc-matrix-desc { font-size: 0.74rem; color: #475569; margin-top: 4px; }
 .tc-chart-card { background: #ffffff; padding: 16px; border: 1px solid #cbd5e1; border-radius: 6px; }
@@ -600,18 +640,8 @@ body {
   border-radius: 4px;
 }
 
-.compact-matrix-table th {
-  padding: 4px 6px;
-  font-size: 0.72rem;
-  line-height: 1.2;
-}
-
-.compact-matrix-table td {
-  padding: 3px 5px;
-  height: 22px;
-  font-size: 0.72rem;
-}
-
+.compact-matrix-table th { padding: 4px 6px; font-size: 0.72rem; line-height: 1.2; }
+.compact-matrix-table td { padding: 3px 5px; height: 22px; font-size: 0.72rem; }
 .cell-matrix-editable { outline: none; cursor: text; text-align: right; min-width: 65px; }
 .cell-matrix-editable:focus { background-color: #bef264 !important; box-shadow: inset 0 0 0 2px #0e5627; }
 .tc-matrix-table td.cell-active-goal { background-color: #a4de6b; font-weight: 700; color: #000000; text-align: right; }
@@ -630,6 +660,28 @@ body {
 .bg-header-light-green th { background-color: #d9ead3; color: #000000; font-weight: 700; text-align: center; }
 .bg-header-orange th { background-color: #fce5cd; color: #000000; font-weight: 700; text-align: center; }
 .bg-total-row { background-color: #f8fafc; border-top: 2px solid #000000; }
+
+/* TÌNH TRẠNG LỘ TRÌNH NGHỀ NGHIỆP */
+.deficit-badge {
+  display: inline-block;
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.70rem;
+  border: 1px solid #fca5a5;
+}
+.success-badge {
+  display: inline-block;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.70rem;
+  border: 1px solid #86efac;
+}
 
 /* THEO DÕI THÁNG */
 .month-top-grid { display: grid; grid-template-columns: minmax(240px, 280px) 1fr; gap: 20px; background: #ffffff; padding: 16px; border: 1px solid #cbd5e1; border-radius: 4px; }
@@ -654,49 +706,185 @@ body {
 .learning-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 18px; }
 .learning-left-col, .learning-right-col { background: #ffffff; border: 1px solid #cbd5e1; min-width: 0; }
 
-/* CỐ ĐỊNH KÍCH THƯỚC KHUNG BIỂU ĐỒ NGHỀ NGHIỆP */
-.career-fixed-chart-wrapper {
+.career-fixed-chart-wrapper { width: 100%; }
+.fixed-size-card { height: 320px; display: flex; flex-direction: column; }
+.career-canvas-container { flex: 1; position: relative; width: 100%; height: 250px; }
+
+/* ==================== BẢNG KHẢO SÁT CHUẨN DOT CHECKBOX ==================== */
+.survey-dotbox-container { 
+  width: 100%; 
+  max-width: 1100px; 
+  background: #ffffff; 
+  padding: 20px 24px; 
+  border-radius: 6px; 
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06); 
+}
+.survey-top-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 16px; }
+.survey-main-title { font-size: 1.1rem; font-weight: 800; color: #0e5627; }
+.btn-back-target { background-color: #f29b28; color: #000000; border: 1px solid #c97d1b; font-weight: 700; font-size: 0.8rem; padding: 6px 16px; cursor: pointer; border-radius: 4px; }
+.survey-banner-green { background-color: #246a35; color: #ffffff; font-weight: 800; font-size: 0.95rem; padding: 10px 16px; border-radius: 4px; margin-bottom: 8px; }
+
+.survey-excel-wrap {
   width: 100%;
+  border: 1px solid #b7b7b7;
+  background-color: #ffffff;
+  overflow-x: auto;
 }
 
-.fixed-size-card {
-  height: 320px;
-  display: flex;
-  flex-direction: column;
+.survey-table-excel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.77rem;
 }
 
-.career-canvas-container {
-  flex: 1;
+.survey-table-excel th {
+  background-color: #0e5627;
+  color: #ffffff;
+  border: 1px solid #b7b7b7;
+  padding: 6px 8px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.survey-table-excel td {
+  border: 1px solid #cbd5e1;
+  padding: 5px 8px;
+  vertical-align: middle;
+}
+
+.survey-q-row {
+  background-color: #e2e8f0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.survey-opt-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.survey-opt-row:hover {
+  background-color: #f1f5f9;
+}
+.survey-opt-row.selected {
+  background-color: #f0fdf4;
+}
+
+/* DOT CHECKBOX TRÒN THUẦN CSS */
+.survey-dotbox-cell {
+  text-align: center;
+  cursor: pointer;
+}
+
+.dot-radio-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.dot-radio-wrapper input[type="radio"] {
+  opacity: 0;
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.dot-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  background-color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.dot-radio-wrapper:hover .dot-circle {
+  border-color: #0e5627;
+}
+
+.dot-radio-wrapper input[type="radio"]:checked + .dot-circle {
+  border-color: #0e5627;
+}
+
+.dot-radio-wrapper input[type="radio"]:checked + .dot-circle::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #0e5627;
+}
+
+/* Đồ họa biểu đồ và bảng câu hỏi */
+.survey-graphic-box {
+  background: #ffffff;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  margin: 6px 0;
+  border-radius: 4px;
+}
+.chart-triplet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.chart-box-mini {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+.chart-box-mini-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0e5627;
+  margin-bottom: 4px;
+}
+.mini-chart-canvas-wrap {
+  height: 110px;
   position: relative;
   width: 100%;
-  height: 250px;
 }
 
-/* BẢNG KHẢO SÁT CHUẨN DOTBOX */
-.survey-dotbox-container { width: 100%; max-width: 980px; background: #ffffff; padding: 20px 24px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.survey-top-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 16px; }
-.survey-main-title { font-size: 1.15rem; font-weight: 800; }
-.btn-back-target { background-color: #f29b28; color: #000000; border: 1px solid #c97d1b; font-weight: 700; font-size: 0.8rem; padding: 6px 16px; cursor: pointer; border-radius: 4px; }
-.survey-banner-green { background-color: #246a35; color: #ffffff; font-weight: 800; font-size: 0.95rem; padding: 10px 16px; border-radius: 4px; margin-bottom: 16px; }
-.survey-card-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
-.survey-q-card { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; }
-.q-title { font-size: 0.86rem; font-weight: 700; color: #1e293b; margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px; }
-.q-num { background-color: #0e5627; color: #ffffff; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 800; }
-.q-options { display: flex; flex-direction: column; gap: 6px; }
+.sub-table-graphic {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  margin-top: 6px;
+}
+.sub-table-graphic th {
+  background-color: #0e5627;
+  color: #ffffff;
+  border: 1px solid #94a3b8;
+  padding: 4px 6px;
+  font-weight: 700;
+}
+.sub-table-graphic td {
+  border: 1px solid #cbd5e1;
+  padding: 4px 6px;
+  text-align: center;
+}
 
-.dotbox-label { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #334155; cursor: pointer; padding: 6px 10px; border-radius: 4px; }
-.dotbox-label:hover { background-color: #f1f5f9; }
-.dotbox-label input[type="radio"] { display: none; }
-.dot-custom { width: 17px; height: 17px; border: 2px solid #94a3b8; border-radius: 50%; display: inline-block; position: relative; background-color: #ffffff; }
-.dotbox-label input[type="radio"]:checked + .dot-custom { border-color: #0e5627; }
-.dotbox-label input[type="radio"]:checked + .dot-custom::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background-color: #0e5627; }
-.dotbox-label:has(input[type="radio"]:checked) { background-color: #f0fdf4; color: #0e5627; font-weight: 600; }
-
-.survey-result-green-bar { background-color: #246a35; color: #ffffff; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; border-radius: 4px; margin: 10px 0 14px 0; text-align: center; }
+.survey-result-green-bar { 
+  background-color: #246a35; 
+  color: #ffffff; 
+  font-weight: 800; 
+  font-size: 0.85rem; 
+  padding: 10px 16px; 
+  border-radius: 4px; 
+  margin: 10px 0 14px 0; 
+  text-align: center; 
+}
 
 /* RESPONSIVE */
 @media (max-width: 1100px) {
-  .dash-grid-row-2, .dash-kpi-three-strip, .tc-two-columns-grid, .side-tables-grid, .learning-grid, .month-top-grid { grid-template-columns: 1fr; }
+  .tc-two-columns-grid { grid-template-columns: 1fr; }
+  .dash-grid-row-2, .dash-kpi-three-strip, .side-tables-grid, .learning-grid, .month-top-grid { grid-template-columns: 1fr; }
+  .chart-triplet-grid { grid-template-columns: 1fr; }
   .sidebar { width: 180px; }
 }
 
