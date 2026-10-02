@@ -122,7 +122,7 @@ const AppState = {
   surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
 };
 
-// Khởi tạo dữ liệu 12 tháng[cite: 9]
+// Khởi tạo dữ liệu 12 tháng
 for (let m = 1; m <= 12; m++) {
   const mStr = m < 10 ? `0${m}` : `${m}`;
   AppState.monthlyDetails[m] = {
@@ -146,7 +146,7 @@ for (let m = 1; m <= 12; m++) {
   };
 }
 
-// Bảng câu hỏi khảo sát 1 (10 câu)[cite: 4, 5, 6]
+// Bảng câu hỏi khảo sát 1 (10 câu)
 const surveyQuestionsPart1 = [
   { q: "Bạn có bao nhiêu mục tiêu tài chính?", opts: ["1", "2", "3", "4", ">4"], weights: [1, 2, 3, 4, 5] },
   { q: "Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?", opts: ["Không", "Dưới 2%", "Lớn hơn 2%, nhưng nhỏ hơn 4%", "Lớn hơn 4%, nhưng nhỏ hơn 6%", "Lớn hơn 6%"], weights: [1, 2, 3, 4, 5] },
@@ -160,7 +160,7 @@ const surveyQuestionsPart1 = [
   { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10-20%", "20-30%", "30-50%", ">50%"], weights: [1, 2, 3, 4, 5] }
 ];
 
-// Bảng câu hỏi khảo sát 2 (11 câu)[cite: 7, 8, 9]
+// Bảng câu hỏi khảo sát 2 (11 câu)
 const surveyQuestionsPart2 = [
   { q: "Tỷ lệ trích thu nhập hàng tháng của bạn để gửi về cho gia đình?", opts: [">30%", "20-30%", "10-20%", "0-10%", "0%"], weights: [1, 2, 3, 4, 5] },
   { q: "Mức thu nhập của vợ/chồng của bạn so với bạn?", opts: ["<50%", "50-70%", "70-100%", "100-150%", "150-300%"], weights: [1, 2, 3, 4, 5] },
@@ -216,7 +216,6 @@ function calculateAgeMilestones() {
   });
 }
 
-// KHẮC PHỤC TRIỆT ĐỂ: BẢO LƯU VÀ CẬP NHẬT TỰ ĐỘNG DỮ LIỆU LỘ TRÌNH NGHỀ NGHIỆP
 function calculateCareerDetails() {
   const baseAge = AppState.currentAge;
   const ages = [
@@ -225,7 +224,6 @@ function calculateCareerDetails() {
     baseAge + 14, baseAge + 19, baseAge + 24, baseAge + 29
   ];
 
-  // Map các giá trị hiện có để không bị ghi đè khi tính toán lại
   const existingMap = {};
   if (Array.isArray(AppState.careerDetailList)) {
     AppState.careerDetailList.forEach(item => {
@@ -1230,7 +1228,6 @@ function renderCareerTables() {
     `).join('');
   }
 
-  // TÍNH TOÁN VÀ ĐỒNG BỘ DỮ LIỆU CẢ 2 CHIỀU
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
@@ -1263,7 +1260,6 @@ function renderCareerTables() {
   }
 }
 
-// CẬP NHẬT TRỰC TIẾP DỮ LIỆU KHI NGƯỜI DÙNG SỬA SỐ
 window.updateCareerDetailField = function(idx, field, val) {
   if (AppState.careerDetailList[idx]) {
     AppState.careerDetailList[idx][field] = val;
@@ -1272,7 +1268,6 @@ window.updateCareerDetailField = function(idx, field, val) {
   }
 };
 
-// CẬP NHẬT CHUẨN XÁC: TỰ ĐỘNG CHUYỂN LINE MÀU LỤC KHI CAO HƠN HOẶC BẰNG LINE VÀNG, VÀ ĐỎ KHI DƯỚI LINE VÀNG
 function renderCareerChart() {
   const canvas = document.getElementById('careerChart');
   if (!canvas || typeof Chart === 'undefined') return;
@@ -1917,7 +1912,6 @@ window.onMatrixCellChange = function(td, rIdx) {
   document.getElementById(`mtr-inc-${rIdx}`).textContent = inc > 0 ? inc.toFixed(1) : '-';
   updateMatrixChartData();
   
-  // TỰ ĐỘNG CẬP NHẬT LẠI LỘ TRÌNH NGHỀ NGHIỆP KHI MA TRẬN TÀI CHÍNH THAY ĐỔI
   renderCareerTables();
   renderCareerChart();
 };
