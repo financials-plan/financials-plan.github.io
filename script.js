@@ -1,6 +1,6 @@
 /**
- * HỆ THỐNG QUẢN LÝ TÀI CHÍNH CÁ NHÂN CHUYÊN SÂU
- * Reactive Data Flow, Financial Models, Dynamic Age Sync & Multi-Chart Engine
+ * HỆ THỐNG QUẢN LÝ TÀI CHÍNH CÁ NHÂN DỄ DÙNG & CHUYÊN SÂU
+ * Tự động đồng bộ phản ứng (Reactive Flow), công thức dòng tiền chuẩn Excel
  */
 
 const AppState = {
@@ -36,17 +36,65 @@ const AppState = {
     { name: "Cổ phiếu riêng lẻ", returnRate: 12.0, risk: 6.0 }
   ],
 
-  debtTargets: [
-    { age: 35, desc: "Vay mua chung cư", val: 500.0 }
-  ],
-  investTargets: [
-    { age: 25, desc: "Du lịch xuyên Thái Lan", pv: 50.0, inflation: 4.0, expectedReturn: 8.0 },
-    { age: 26, desc: "Quỹ dự phòng tài chính", pv: 100.0, inflation: 4.0, expectedReturn: 7.0 },
-    { age: 28, desc: "Đám cưới", pv: 200.0, inflation: 4.5, expectedReturn: 9.0 },
-    { age: 30, desc: "Khởi nghiệp", pv: 500.0, inflation: 4.0, expectedReturn: 12.0 },
-    { age: 38, desc: "Mua chung cư", pv: 1500.0, inflation: 4.5, expectedReturn: 11.0 },
-    { age: 46, desc: "Cho con đi học đại học", pv: 500.0, inflation: 5.0, expectedReturn: 10.0 },
-    { age: 50, desc: "Hưu trí", pv: 800.0, inflation: 4.0, expectedReturn: 9.0 }
+  // BẢNG DỮ LIỆU ĐĂNG KÝ MỤC TIÊU DUY NHẤT TẠI TAB "MỤC TIÊU BẢN THÂN"
+  tcGoals: [
+    { 
+      id: "g1", name: "Vay mua chung cư", type: "debt", 
+      val: 500.0, paid: 50.0, start: 2026, end: 2035, 
+      inflation: 0.0, rate: 8.5, monthly: 6.2, 
+      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
+      allocProducts: [] 
+    },
+    { 
+      id: "g2", name: "Du lịch xuyên Thái Lan", type: "invest", 
+      val: 50.0, paid: 10.0, start: 2026, end: 2027, 
+      inflation: 4.0, rate: 8.0, monthly: 3.3, 
+      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
+      allocProducts: [] 
+    },
+    { 
+      id: "g3", name: "Quỹ dự phòng tài chính", type: "invest", 
+      val: 100.0, paid: 20.0, start: 2026, end: 2028, 
+      inflation: 4.0, rate: 7.0, monthly: 3.5, 
+      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
+      allocProducts: [] 
+    },
+    { 
+      id: "g4", name: "Đám cưới", type: "invest", 
+      val: 200.0, paid: 30.0, start: 2026, end: 2028, 
+      inflation: 4.5, rate: 9.0, monthly: 5.2, 
+      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
+      allocProducts: [] 
+    },
+    { 
+      id: "g5", name: "Khởi nghiệp", type: "invest", 
+      val: 500.0, paid: 50.0, start: 2026, end: 2030, 
+      inflation: 4.0, rate: 12.0, monthly: 8.5, 
+      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
+      allocProducts: [] 
+    },
+    { 
+      id: "g6", name: "Cho con đi học đại học", type: "invest", 
+      val: 500.0, paid: 0.0, start: 2030, end: 2046, 
+      inflation: 5.0, rate: 10.0, monthly: 1.4,
+      yearsRetire: 10, monthlyRetire: 5.0, deathFund: 100.0,
+      allocProducts: [
+        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
+        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
+        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
+      ]
+    },
+    { 
+      id: "g7", name: "Hưu trí", type: "invest", 
+      val: 800.0, paid: 50.0, start: 2028, end: 2050, 
+      inflation: 4.0, rate: 9.0, monthly: 1.8,
+      yearsRetire: 25, monthlyRetire: 12.0, deathFund: 300.0,
+      allocProducts: [
+        { prodName: "ETF - ETFFINLEAD", weight: 40.0, returnRate: 15.0, risk: 20.0 },
+        { prodName: "Trái phiếu Techcombank", weight: 40.0, returnRate: 10.5, risk: 6.0 },
+        { prodName: "Tiền gửi ngân hàng", weight: 20.0, returnRate: 5.0, risk: 2.0 }
+      ]
+    }
   ],
 
   skillsList: ["Sẵn sàng học hỏi cái mới", "Nhiệt huyết trong công việc", "Ngoại ngữ chuyên ngành vững"],
@@ -69,31 +117,7 @@ const AppState = {
     { name: "Chi tiền phát triển bản thân", plan: 3.5, note: "Sách & khóa học", analysis: "Đầu tư vốn con người tạo ROI cao" },
     { name: "Chi tiền bảo hiểm", plan: 1.0, note: "Bảo vệ dòng tiền", analysis: "Quản trị rủi ro sức khỏe" },
     { name: "Chi tiền điện, nước, internet, điện thoại, xăng xe", plan: 2.0, note: "Hóa đơn cố định", analysis: "Chi tiêu sinh hoạt cơ bản" },
-    { name: "Chi tiền trả nợ", plan: 6.5, note: "Gốc + lãi vay", analysis: "Nghĩa vụ nợ cần ưu tiên trích trước" }
-  ],
-
-  tcGoals: [
-    { id: "g1", name: "Vay mua chung cư", type: "debt", val: 500.0, paid: 50.0, start: 2026, end: 2035, rate: 8.5, monthly: 6.2, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
-    { id: "g2", name: "Du lịch xuyên Thái Lan", type: "invest", val: 50.0, paid: 10.0, start: 2026, end: 2027, rate: 8.0, monthly: 3.3, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
-    { id: "g3", name: "Quỹ dự phòng tài chính", type: "invest", val: 100.0, paid: 20.0, start: 2026, end: 2028, rate: 7.0, monthly: 3.5, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
-    { 
-      id: "g4", name: "Cho con đi học đại học", type: "invest", val: 500.0, paid: 0.0, start: 2030, end: 2046, rate: 10.0, monthly: 1.4,
-      yearsRetire: 10, monthlyRetire: 5.0, deathFund: 100.0,
-      allocProducts: [
-        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
-        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
-        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
-      ]
-    },
-    { 
-      id: "g5", name: "Hưu trí", type: "invest", val: 800.0, paid: 50.0, start: 2028, end: 2050, rate: 9.0, monthly: 1.8,
-      yearsRetire: 25, monthlyRetire: 12.0, deathFund: 300.0,
-      allocProducts: [
-        { prodName: "ETF - ETFFINLEAD", weight: 40.0, returnRate: 15.0, risk: 20.0 },
-        { prodName: "Trái phiếu Techcombank", weight: 40.0, returnRate: 10.5, risk: 6.0 },
-        { prodName: "Tiền gửi ngân hàng", weight: 20.0, returnRate: 5.0, risk: 2.0 }
-      ]
-    }
+    { name: "Chi tiền trả nợ", plan: 6.2, note: "Gốc + lãi vay", analysis: "Nghĩa vụ nợ cần ưu tiên trích trước" }
   ],
 
   skillsStore: {
@@ -112,7 +136,7 @@ const AppState = {
   surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
 };
 
-// Khởi tạo dữ liệu 12 tháng
+// Khởi tạo 12 tháng dữ liệu mẫu
 for (let m = 1; m <= 12; m++) {
   const mStr = m < 10 ? `0${m}` : `${m}`;
   AppState.monthlyDetails[m] = {
@@ -123,7 +147,7 @@ for (let m = 1; m <= 12; m++) {
     expenses: [
       { date: `2026-${mStr}-01`, cat: "Mua thực phẩm", desc: "Đi chợ, siêu thị", val: 6.0 },
       { date: `2026-${mStr}-05`, cat: "Đi ăn ở ngoài", desc: "Ăn uống giao lưu", val: 1.8 },
-      { date: `2026-${mStr}-10`, cat: "Chi tiền trả nợ", desc: "Khoản nợ định kỳ", val: 6.5 },
+      { date: `2026-${mStr}-10`, cat: "Chi tiền trả nợ", desc: "Khoản nợ định kỳ", val: 6.2 },
       { date: `2026-${mStr}-15`, cat: "Chi tiền điện, nước, internet, điện thoại, xăng xe", desc: "Hóa đơn", val: 1.8 },
       { date: `2026-${mStr}-20`, cat: "Chi tiền phát triển bản thân", desc: "Sách & khóa đào tạo", val: 1.2 }
     ],
@@ -163,38 +187,60 @@ const surveyQuestionsPart2 = [
   { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
 
-// LẤY DANH SÁCH MỤC TIÊU PHÂN LOẠI CHÍNH XÁC TỪ MỤC TIÊU BẢN THÂN
-function getPersonalDebtGoalTitles() {
-  const list = [];
-  AppState.debtTargets.forEach(d => {
-    if (d && d.desc !== undefined && d.desc !== null && d.desc.toString().trim() !== "") {
-      list.push(d.desc.toString().trim());
+// ==================== CÔNG THỨC TÀI CHÍNH SPREADSHEET CHUẨN ====================
+function calculateMonthlyNeed(goal) {
+  const nYears = Math.max(1, goal.end - goal.start + 1);
+  const nMonths = nYears * 12;
+  const rAnnual = (goal.rate || 8.0) / 100;
+  const rMonthly = rAnnual / 12;
+
+  if (goal.type === 'debt') {
+    const loanBalance = Math.max(0, goal.val - (goal.paid || 0));
+    if (loanBalance <= 0) return 0;
+    if (rMonthly === 0) return loanBalance / nMonths;
+    const pmt = (loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1);
+    return isNaN(pmt) || !isFinite(pmt) ? (loanBalance / nMonths) : pmt;
+  }
+
+  // Đầu tư & hưu trí
+  const infRate = (goal.inflation || 0) / 100;
+  let targetFV = 0;
+
+  if (goal.yearsRetire && goal.yearsRetire > 0) {
+    const mRetire = goal.monthlyRetire || 15.0;
+    const deathFund = goal.deathFund || 0;
+    const nRetireMonths = goal.yearsRetire * 12;
+
+    let pvRetire = 0;
+    if (rMonthly > 0) {
+      pvRetire = mRetire * (1 - Math.pow(1 + rMonthly, -nRetireMonths)) / rMonthly;
+      pvRetire += deathFund / Math.pow(1 + rMonthly, nRetireMonths);
+    } else {
+      pvRetire = (mRetire * nRetireMonths) + deathFund;
     }
-  });
-  return Array.from(new Set(list));
+    targetFV = pvRetire;
+  } else {
+    // Điều chỉnh lạm phát trượt giá: FV = Giá trị hiện tại * (1 + lạm phát)^n
+    targetFV = (goal.val || 0) * Math.pow(1 + infRate, nYears);
+  }
+
+  const currentPaidFV = (goal.paid || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - currentPaidFV);
+
+  if (deficitFV <= 0) return 0;
+  if (rMonthly === 0) return deficitFV / nMonths;
+
+  // Công thức PMT tích lũy tương lai
+  const pmtInvest = (deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
+  return isNaN(pmtInvest) || !isFinite(pmtInvest) ? (deficitFV / nMonths) : pmtInvest;
 }
 
-function getPersonalInvestGoalTitles() {
-  const list = [];
-  AppState.investTargets.forEach(inv => {
-    if (inv && inv.desc !== undefined && inv.desc !== null && inv.desc.toString().trim() !== "") {
-      list.push(inv.desc.toString().trim());
-    }
-  });
-  return Array.from(new Set(list));
-}
-
-function getAllPersonalGoalTitles() {
-  return [...getPersonalDebtGoalTitles(), ...getPersonalInvestGoalTitles()];
-}
-
-// ==================== CÁC HÀM TÍNH TOÁN ĐỒNG BỘ ====================
 function getMatrixIncomeNeed(yearOffset) {
   let sSum = 0;
   const yr = AppState.currentYear + yearOffset;
   AppState.tcGoals.forEach(g => {
     if (yr >= g.start && yr <= g.end) {
-      sSum += (g.monthly || calculateMonthlyNeed(g));
+      sSum += (g.monthly !== undefined ? g.monthly : calculateMonthlyNeed(g));
     }
   });
   return sSum > 0 ? (sSum / 0.40) : 0;
@@ -261,7 +307,6 @@ function calculateCareerDetails() {
     if (i >= 4) defaultRoute = targetVal + (i % 2 === 0 ? 4.0 : -1.5);
 
     const exist = existingMap[age];
-    
     const actualVal = (yearOffset === 0) 
       ? (exist && exist.actual !== undefined ? exist.actual : avgMonthlyActual2026) 
       : null;
@@ -276,7 +321,7 @@ function calculateCareerDetails() {
   });
 }
 
-// ==================== CÁC HÀM ĐIỀU HƯỚNG TABS ====================
+// ==================== ĐIỀU HƯỚNG TABS ====================
 window.switchTab = function(tabId) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   document.getElementById(`btn-${tabId}`)?.classList.add('active');
@@ -305,11 +350,12 @@ window.switchTab = function(tabId) {
       renderCareerChart();
     }
     if (tabId === 'tab-muctieu-tc') {
-      renderTcGoalsFormTable();
       syncGoalsToCards();
+      renderTcMatrixTable();
     }
     if (tabId === 'tab-muctieu-bt') {
-      renderTargetTables();
+      renderTcGoalsFormTable();
+      renderSkillsFamilyJob();
     }
     if (tabId === 'tab-khaosat') {
       renderGoogleFormSurvey();
@@ -1265,8 +1311,8 @@ function renderCareerTables() {
           
           <td class="text-center">
             ${isDeficit 
-              ? `<span class="deficit-badge">⚠ Thiếu hụt (${diffVal} tr)</span>` 
-              : `<span class="success-badge">✅ Đạt yêu cầu</span>`
+              ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal} tr)</span>` 
+              : `<span class="success-badge">✅ Vững tâm (Đạt)</span>`
             }
           </td>
         </tr>
@@ -1317,7 +1363,7 @@ function renderCareerChart() {
       labels: labels,
       datasets: [
         {
-          label: "Mục tiêu tài chính (Thu nhập cần có)",
+          label: "Thu nhập cần có để đạt mục tiêu",
           data: targets,
           borderColor: "#eab308",
           backgroundColor: "rgba(234, 179, 8, 0.15)",
@@ -1331,7 +1377,7 @@ function renderCareerChart() {
           tension: 0.25
         },
         {
-          label: "Lộ trình nghề nghiệp (Thu nhập dự kiến)",
+          label: "Thu nhập bạn dự kiến kiếm được",
           data: routes,
           borderColor: getRouteContinuousGradient,
           borderWidth: 3,
@@ -1373,7 +1419,7 @@ function renderCareerChart() {
               if (ctx.datasetIndex === 1) {
                 const targetVal = targets[ctx.dataIndex];
                 const diff = (ctx.raw - targetVal).toFixed(1);
-                const status = ctx.raw >= targetVal ? `[Đạt (+${diff} tr)]` : `[Thiếu hụt (${diff} tr)]`;
+                const status = ctx.raw >= targetVal ? `[Đạt (+${diff} tr)]` : `[Cần thêm (${diff} tr)]`;
                 return ` ${ctx.dataset.label}: ${val} tr ${status}`;
               }
               return ` ${ctx.dataset.label}: ${val} tr`;
@@ -1395,7 +1441,7 @@ function renderCareerChart() {
   });
 }
 
-// ==================== BẢNG KHẢO SÁT DẠNG GOOGLE FORM ====================
+// ==================== BẢNG KHẢO SÁT ====================
 function renderGoogleFormSurvey() {
   const p1Container = document.getElementById('gform-questions-p1');
   if (p1Container) {
@@ -1609,127 +1655,112 @@ function evaluateSurveys() {
   if (ctx2) ctx2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 }
 
-// ==================== MỤC TIÊU TÀI CHÍNH LỰA CHỌN TỪ MT BẢN THÂN ====================
-function calculateMonthlyNeed(goal) {
-  const nYears = Math.max(1, goal.end - goal.start + 1);
-  const targetNeed = Math.max(0, goal.val - (goal.paid || 0));
-  const rAnnual = (goal.rate || 8.0) / 100;
-  const rMonthly = rAnnual / 12;
-  const nMonths = nYears * 12;
-
-  if (rMonthly === 0) return targetNeed / nMonths;
-  let pmt = 0;
-  if (goal.type === 'debt') {
-    pmt = (targetNeed * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1);
-  } else {
-    pmt = (targetNeed * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
-  }
-  return isNaN(pmt) || !isFinite(pmt) ? (targetNeed / nMonths) : pmt;
-}
-
-// RENDER BẢNG NHẬP MỤC TIÊU TÀI CHÍNH - LIÊN KẾT CHUẨN XÁC THEO LOẠI DATA VÀ KHÔNG SỬA ĐỔI NỘI DUNG NGƯỜI DÙNG
+// ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN (TITLE THUẦN VIỆT, DỄ HIỂU) ====================
 function renderTcGoalsFormTable() {
   const tb = document.getElementById('tbody-tc-form-goals');
   if (!tb) return;
 
-  const debtGoals = getPersonalDebtGoalTitles();
-  const investGoals = getPersonalInvestGoalTitles();
-
   tb.innerHTML = AppState.tcGoals.map((g, idx) => {
-    const isDebt = g.type === 'debt';
-    const sourceList = isDebt ? debtGoals : investGoals;
-
-    // Tự động gán mục tiêu đầu tiên của nhóm nếu mục tiêu hiện tại không thuộc nhóm đó
-    if (!sourceList.includes(g.name)) {
-      if (sourceList.length > 0) {
-        g.name = sourceList[0];
-        if (isDebt) {
-          const matchDebt = AppState.debtTargets.find(d => d.desc === g.name);
-          if (matchDebt && matchDebt.val !== undefined) g.val = matchDebt.val;
-        }
-      } else {
-        g.name = isDebt ? "Chưa có mục tiêu trả nợ" : "Chưa có mục tiêu đầu tư";
-      }
-    }
-
-    const options = sourceList.length > 0 ? sourceList : [g.name];
-
+    g.monthly = calculateMonthlyNeed(g);
     return `
       <tr>
         <td>
-          <select class="select-inline-cell" onchange="onTcGoalNameChange(${idx}, this.value)">
-            ${options.map(opt => `<option value="${opt}" ${opt === g.name ? 'selected' : ''}>${opt}</option>`).join('')}
+          <input type="text" class="cell-blue font-bold" value="${g.name}" 
+                 placeholder="VD: Mua nhà, Cho con học..."
+                 onchange="onGoalFieldChange(${idx}, 'name', this.value)">
+        </td>
+        <td>
+          <select class="select-inline-cell" onchange="onGoalFieldChange(${idx}, 'type', this.value)">
+            <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Khoản nợ phải trả</option>
+            <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Tích lũy & Đầu tư</option>
           </select>
         </td>
         <td>
-          <select onchange="onTcGoalTypeChange(${idx}, this.value)">
-            <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Trả nợ</option>
-            <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Đầu tư</option>
-          </select>
+          <input type="number" step="any" class="text-right" value="${g.val}" 
+                 placeholder="0"
+                 onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
-        <td><input type="number" step="any" value="${g.val}" onchange="onTcGoalValChange(${idx}, parseFloat(this.value)||0)"></td>
-        <td><input type="number" step="any" value="${g.paid}" onchange="AppState.tcGoals[${idx}].paid=parseFloat(this.value)||0; onTcGoalDataUpdated(${idx});"></td>
-        <td><input type="number" value="${g.start}" onchange="AppState.tcGoals[${idx}].start=parseInt(this.value,10)||2026; onTcGoalDataUpdated(${idx});"></td>
-        <td><input type="number" value="${g.end}" onchange="AppState.tcGoals[${idx}].end=parseInt(this.value,10)||2030; onTcGoalDataUpdated(${idx});"></td>
-        <td><input type="number" step="any" value="${g.rate}" onchange="AppState.tcGoals[${idx}].rate=parseFloat(this.value)||0; onTcGoalDataUpdated(${idx});"></td>
-        <td class="text-right font-bold text-green" id="tc-goal-monthly-${idx}">${(g.monthly || calculateMonthlyNeed(g)).toFixed(2)}</td>
-        <td class="text-center"><button type="button" class="btn-table-del" onclick="deleteTcGoalRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td>
+          <input type="number" step="any" class="text-right" value="${g.paid || 0}" 
+                 placeholder="0"
+                 onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
+        </td>
+        <td>
+          <input type="number" class="text-center" value="${g.start}" 
+                 onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||2026)">
+        </td>
+        <td>
+          <input type="number" class="text-center" value="${g.end}" 
+                 onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||2030)">
+        </td>
+        <td>
+          <input type="number" step="any" class="text-right" value="${g.inflation || 0}" 
+                 ${g.type === 'debt' ? 'disabled style="background:#f1f5f9; cursor:not-allowed;"' : ''} 
+                 onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">
+        </td>
+        <td>
+          <input type="number" step="any" class="text-right" value="${g.rate || 8}" 
+                 onchange="onGoalFieldChange(${idx}, 'rate', parseFloat(this.value)||0)">
+        </td>
+        <td class="text-right font-bold text-green">${g.monthly.toFixed(2)} tr</td>
+        <td class="text-center">
+          <button type="button" class="btn-table-del" title="Xóa mục tiêu" onclick="deleteTcGoalRow(${idx})">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
       </tr>
     `;
   }).join('');
 }
 
-window.onTcGoalNameChange = function(idx, val) {
-  const g = AppState.tcGoals[idx];
-  g.name = val;
-  if (g.type === 'debt') {
-    const found = AppState.debtTargets.find(d => d.desc === val);
-    if (found && found.val !== undefined) {
-      g.val = found.val;
-    }
-    syncDebtGoalToOverallData();
-  }
-  onTcGoalDataUpdated(idx);
-};
-
-window.onTcGoalTypeChange = function(idx, newType) {
-  const g = AppState.tcGoals[idx];
-  g.type = newType;
-  const list = newType === 'debt' ? getPersonalDebtGoalTitles() : getPersonalInvestGoalTitles();
-  g.name = list[0] || (newType === 'debt' ? "Khoản nợ mới" : "Mục tiêu đầu tư mới");
+window.onGoalFieldChange = function(idx, field, val) {
+  if (!AppState.tcGoals[idx]) return;
+  AppState.tcGoals[idx][field] = val;
+  AppState.tcGoals[idx].monthly = calculateMonthlyNeed(AppState.tcGoals[idx]);
   
-  if (newType === 'debt') {
-    const found = AppState.debtTargets.find(d => d.desc === g.name);
-    if (found && found.val !== undefined) g.val = found.val;
-  }
-  
-  renderTcGoalsFormTable();
   syncDebtGoalToOverallData();
-  recalculateAll();
-};
-
-window.onTcGoalValChange = function(idx, val) {
-  const g = AppState.tcGoals[idx];
-  g.val = val;
-  if (g.type === 'debt') {
-    const found = AppState.debtTargets.find(d => d.desc === g.name);
-    if (found) {
-      found.val = val;
-      renderTargetTables();
-    }
-    syncDebtGoalToOverallData();
-  }
-  onTcGoalDataUpdated(idx);
-};
-
-function onTcGoalDataUpdated(idx) {
-  const g = AppState.tcGoals[idx];
-  g.monthly = calculateMonthlyNeed(g);
-  const cell = document.getElementById(`tc-goal-monthly-${idx}`);
-  if (cell) cell.textContent = g.monthly.toFixed(2);
+  renderTcGoalsFormTable();
   syncGoalsToCards();
   recalculateAll();
-}
+};
+
+window.addNewTcGoalRow = function() {
+  const defaultProds = AppState.investProducts.slice(0, 3).map((p, idx) => ({
+    prodName: p.name,
+    weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
+    returnRate: p.returnRate,
+    risk: p.risk
+  }));
+
+  AppState.tcGoals.push({ 
+    id: `g_${Date.now()}`, 
+    name: `Mục tiêu mới ${AppState.tcGoals.length + 1}`, 
+    type: "invest", 
+    val: 100.0, 
+    paid: 0.0, 
+    start: AppState.currentYear, 
+    end: AppState.currentYear + 4, 
+    inflation: 4.0, 
+    rate: 8.0, 
+    monthly: 0,
+    yearsRetire: 0, 
+    monthlyRetire: 0, 
+    deathFund: 0,
+    allocProducts: defaultProds
+  });
+
+  renderTcGoalsFormTable();
+  syncGoalsToCards();
+  recalculateAll();
+};
+
+window.deleteTcGoalRow = function(idx) {
+  AppState.tcGoals.splice(idx, 1);
+  syncDebtGoalToOverallData();
+  renderTcGoalsFormTable();
+  syncGoalsToCards();
+  recalculateAll();
+};
 
 function syncDebtGoalToOverallData() {
   const debtGoals = AppState.tcGoals.filter(g => g.type === 'debt');
@@ -1744,58 +1775,7 @@ function syncDebtGoalToOverallData() {
   }
 }
 
-window.addNewTcGoalRow = function() {
-  const investGoals = getPersonalInvestGoalTitles();
-  const defaultTitle = investGoals[0] || "Mục tiêu đầu tư mới";
-  const defaultProds = AppState.investProducts.slice(0, 3).map((p, idx) => ({
-    prodName: p.name,
-    weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
-    returnRate: p.returnRate,
-    risk: p.risk
-  }));
-
-  AppState.tcGoals.push({ 
-    id: `g_${Date.now()}`, name: defaultTitle, type: "invest", val: 100.0, paid: 0.0, 
-    start: AppState.currentYear, end: AppState.currentYear + 4, rate: 8.0, monthly: 1.7,
-    yearsRetire: 20, monthlyRetire: 10.0, deathFund: 200.0,
-    allocProducts: defaultProds.length > 0 ? defaultProds : [
-      { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
-      { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 }
-    ]
-  });
-  renderTcGoalsFormTable();
-};
-
-window.deleteTcGoalRow = function(idx) {
-  AppState.tcGoals.splice(idx, 1);
-  renderTcGoalsFormTable();
-  syncDebtGoalToOverallData();
-  const resArea = document.getElementById('tc-cards-result-area');
-  if (resArea && resArea.style.display !== 'none') {
-    syncGoalsToCards();
-    renderTcMatrixTable();
-  }
-  recalculateAll();
-};
-
-window.executeCalculateAndShowCards = function() {
-  AppState.tcGoals.forEach(g => { g.monthly = calculateMonthlyNeed(g); });
-  syncDebtGoalToOverallData();
-  renderTcGoalsFormTable();
-  syncGoalsToCards();
-
-  const resArea = document.getElementById('tc-cards-result-area');
-  if (resArea) {
-    resArea.style.display = 'block';
-    resArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  const btnSec2 = document.getElementById('btn-tc-sec2');
-  if (btnSec2) btnSec2.style.display = 'inline-flex';
-
-  renderTcMatrixTable();
-};
-
+// ==================== ĐỒNG BỘ SANG THẺ MỤC TIÊU TÀI CHÍNH ====================
 function syncGoalsToCards() {
   const dWrap = document.getElementById('tc-debt-cards-container');
   const iWrap = document.getElementById('tc-invest-cards-container');
@@ -1815,7 +1795,7 @@ function createCardHtmlDebt(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu trả nợ ${num}: ${g.name}</span>
+        <span>Khoản nợ ${num}: ${g.name}</span>
         <button class="btn-table-del" style="color:#ffffff;" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <table class="tc-card-h4-table">
@@ -1823,19 +1803,19 @@ function createCardHtmlDebt(g, num) {
           <tr>
             <td style="width: 32%;">Năm bắt đầu</td>
             <td class="cell-green-val" style="width: 18%;">${g.start}</td>
-            <td class="bg-col-head" style="width: 32%;">Thời gian trả (năm)</td>
-            <td class="text-right font-bold" style="width: 18%;">${nYears.toFixed(1)}</td>
+            <td class="bg-col-head" style="width: 32%;">Thời gian trả nợ</td>
+            <td class="text-right font-bold" style="width: 18%;">${nYears.toFixed(0)} năm</td>
           </tr>
           <tr>
-            <td>Năm kết thúc</td>
+            <td>Năm tất toán</td>
             <td class="cell-green-val">${g.end}</td>
             <td class="bg-col-head">Khoản nợ còn lại</td>
             <td class="text-right font-bold text-red">${targetNeed.toFixed(1)} tr</td>
           </tr>
           <tr>
             <td>Lãi suất vay</td>
-            <td class="cell-green-val">${g.rate.toFixed(1)}%</td>
-            <td class="bg-col-head">Trả hàng tháng</td>
+            <td class="cell-green-val">${g.rate.toFixed(1)}%/năm</td>
+            <td class="bg-col-head">Cần trả mỗi tháng</td>
             <td class="cell-orange-val">${mVal.toFixed(1)} tr</td>
           </tr>
         </tbody>
@@ -1867,7 +1847,6 @@ function createCardHtmlInvest(g, num) {
   });
 
   const prods = g.allocProducts;
-
   let expectedAvgReturn = 0;
   prods.forEach(p => { expectedAvgReturn += ((p.weight || 0) / 100) * (p.returnRate || 0); });
 
@@ -1889,22 +1868,22 @@ function createCardHtmlInvest(g, num) {
       <table class="tc-card-h4-table">
         <thead>
           <tr class="header-sub-green">
-            <th colspan="2" style="width: 32%;">Thông số kế hoạch</th>
-            <th colspan="2" style="width: 30%;">Tóm tắt kế hoạch</th>
-            <th colspan="4" style="width: 38%;">Sản phẩm đầu tư</th>
+            <th colspan="2" style="width: 32%;">Thông số thời gian</th>
+            <th colspan="2" style="width: 30%;">Tiền tích lũy</th>
+            <th colspan="4" style="width: 38%;">Kênh đầu tư phân bổ</th>
           </tr>
           <tr class="bg-col-head">
-            <th>Chỉ tiêu</th><th style="width: 50px;">Giá trị</th>
-            <th>Khoản mục</th><th style="width: 55px;">Giá trị</th>
-            <th>Loại sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 40px;">LN</th><th style="width: 38px;">Rủi ro</th>
+            <th>Chỉ tiêu</th><th style="width: 50px;">Năm</th>
+            <th>Mục</th><th style="width: 55px;">Số tiền</th>
+            <th>Kênh đầu tư</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 40px;">Lãi</th><th style="width: 38px;">Rủi ro</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>Năm bắt đầu</td>
             <td class="cell-green-val">${g.start}</td>
-            <td class="italic-head">Số tiền cần có khi hưu</td>
-            <td class="cell-orange-val">${targetNeed.toFixed(0)}</td>
+            <td class="italic-head">Số tiền cần gom</td>
+            <td class="cell-orange-val">${targetNeed.toFixed(0)} tr</td>
             <td>${renderProductSelect(0)}</td>
             <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(prods[0]?.weight || 0).toFixed(1)}%</td>
             <td class="text-right">${(prods[0]?.returnRate || 0).toFixed(1)}%</td>
@@ -1913,37 +1892,37 @@ function createCardHtmlInvest(g, num) {
           <tr>
             <td>Năm kết thúc</td>
             <td class="cell-green-val">${g.end}</td>
-            <td class="font-bold">Thời gian tiết kiệm (năm)</td>
-            <td class="text-right font-bold">${nYears.toFixed(1)}</td>
+            <td class="font-bold">Số năm tích lũy</td>
+            <td class="text-right font-bold">${nYears.toFixed(0)} năm</td>
             <td>${renderProductSelect(1)}</td>
             <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(prods[1]?.weight || 0).toFixed(1)}%</td>
             <td class="text-right">${(prods[1]?.returnRate || 0).toFixed(1)}%</td>
             <td class="text-right">${(prods[1]?.risk || 0).toFixed(1)}%</td>
           </tr>
           <tr>
-            <td>TG sống sau hưu (năm)</td>
-            <td class="cell-green-val">${g.yearsRetire || 30}</td>
-            <td class="font-bold">Số tiền trả hàng tháng</td>
-            <td class="cell-orange-val">${mVal.toFixed(1)}</td>
+            <td>Năm sống sau hưu</td>
+            <td class="cell-green-val">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
+            <td class="font-bold">Cần góp / tháng</td>
+            <td class="cell-orange-val">${mVal.toFixed(1)} tr</td>
             <td>${renderProductSelect(2)}</td>
             <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(prods[2]?.weight || 0).toFixed(1)}%</td>
             <td class="text-right">${(prods[2]?.returnRate || 0).toFixed(1)}%</td>
             <td class="text-right">${(prods[2]?.risk || 0).toFixed(1)}%</td>
           </tr>
           <tr>
-            <td>Hưu trí cần mỗi tháng</td>
-            <td class="cell-green-val">${g.monthlyRetire || 15}</td>
-            <td class="font-bold">Số tiền trả hàng năm</td>
-            <td class="cell-orange-val">${yVal.toFixed(1)}</td>
-            <td colspan="2" class="font-bold text-center bg-col-head">LN kỳ vọng TB</td>
-            <td colspan="2" class="cell-gold-val text-center">${expectedAvgReturn.toFixed(2)}%</td>
+            <td>Tiêu dùng sau hưu</td>
+            <td class="cell-green-val">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
+            <td class="font-bold">Cần góp / năm</td>
+            <td class="cell-orange-val">${yVal.toFixed(1)} tr</td>
+            <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
+            <td colspan="2" class="cell-gold-val text-center">${expectedAvgReturn.toFixed(2)}%/năm</td>
           </tr>
           <tr class="bg-neutral-gray font-semibold">
-            <td>Để lại sau mất:</td>
-            <td class="font-bold text-right text-red">${g.deathFund || 500} tr</td>
-            <td style="text-align: right;">Lãi suất đầu tư:</td>
-            <td class="cell-green-val">${expectedAvgReturn.toFixed(1)}%</td>
-            <td colspan="2" style="text-align: right;">Tích lũy hiện có:</td>
+            <td>Để lại cho con cháu:</td>
+            <td class="font-bold text-right text-red">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
+            <td style="text-align: right;">Trượt giá tính:</td>
+            <td class="cell-green-val">${(g.inflation || 0).toFixed(1)}%/năm</td>
+            <td colspan="2" style="text-align: right;">Tiền đã có sẵn:</td>
             <td colspan="2" class="cell-green-val text-center font-bold">${g.paid || 0} tr</td>
           </tr>
         </tbody>
@@ -2016,8 +1995,8 @@ function renderTcMatrixTable() {
     <th style="min-width: 48px;">Tuổi</th>
     ${debts.map((g, i) => `<th style="min-width: 90px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
     ${invests.map((g, i) => `<th style="min-width: 90px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    <th style="min-width: 78px;" class="col-highlight-gold">Tiết kiệm cần</th>
-    <th style="min-width: 78px;" class="col-highlight-orange">Thu nhập cần</th>
+    <th style="min-width: 85px;" class="col-highlight-gold">Tiết kiệm cần / tháng</th>
+    <th style="min-width: 85px;" class="col-highlight-orange">Thu nhập cần kiếm / tháng</th>
   `;
 
   const startY = AppState.currentYear;
@@ -2139,129 +2118,7 @@ function updateMatrixChartData() {
   tcMatrixChartInstance.update();
 }
 
-// ==================== MỤC TIÊU BẢN THÂN ====================
-function renderTargetTables() {
-  const tbDebt = document.getElementById('tbody-debt-target');
-  if (tbDebt) {
-    tbDebt.innerHTML = AppState.debtTargets.map((d, i) => `
-      <tr>
-        <td class="text-center font-bold bg-neutral-gray">${i + 1}</td>
-        <td class="text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateDebtTargetAge(${i}, this.innerText)">${d.age} tuổi</td>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="updateDebtTargetDesc(${i}, this.innerText)">${d.desc}</td>
-        <td class="text-center"><button class="btn-table-del" title="Xóa mục tiêu" onclick="deleteDebtTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
-      </tr>
-    `).join('');
-  }
-
-  const tbInv = document.getElementById('tbody-invest-target');
-  if (tbInv) {
-    tbInv.innerHTML = AppState.investTargets.map((inv, i) => `
-      <tr>
-        <td class="text-center font-bold bg-neutral-gray">${i + 1}</td>
-        <td class="text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateInvestTargetAge(${i}, this.innerText)">${inv.age} tuổi</td>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="updateInvestTargetDesc(${i}, this.innerText)">${inv.desc}</td>
-        <td class="text-center"><button class="btn-table-del" title="Xóa mục tiêu" onclick="deleteInvestTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
-      </tr>
-    `).join('');
-  }
-
-  renderSkillsFamilyJob();
-}
-
-// CẬP NHẬT TRỰC TIẾP TỪNG TRƯỜNG DỮ LIỆU - GIỮ NGUYÊN NỘI DUNG VÀ KHÔNG GHI ĐÈ
-window.updateDebtTargetAge = function(i, val) {
-  if (!AppState.debtTargets[i]) return;
-  AppState.debtTargets[i].age = parseInt(val, 10) || AppState.currentAge;
-  onPersonalGoalChanged();
-};
-
-window.updateDebtTargetDesc = function(i, val) {
-  if (!AppState.debtTargets[i]) return;
-  const oldVal = AppState.debtTargets[i].desc;
-  const newVal = val.trim();
-  AppState.debtTargets[i].desc = newVal;
-  
-  // Đồng bộ nếu mục tiêu này đang được chọn ở tab Mục tiêu tài chính
-  AppState.tcGoals.forEach(g => {
-    if (g.type === 'debt' && g.name === oldVal) {
-      g.name = newVal;
-    }
-  });
-
-  onPersonalGoalChanged();
-};
-
-window.updateInvestTargetAge = function(i, val) {
-  if (!AppState.investTargets[i]) return;
-  AppState.investTargets[i].age = parseInt(val, 10) || AppState.currentAge;
-  onPersonalGoalChanged();
-};
-
-window.updateInvestTargetDesc = function(i, val) {
-  if (!AppState.investTargets[i]) return;
-  const oldVal = AppState.investTargets[i].desc;
-  const newVal = val.trim();
-  AppState.investTargets[i].desc = newVal;
-
-  // Đồng bộ nếu mục tiêu này đang được chọn ở tab Mục tiêu tài chính
-  AppState.tcGoals.forEach(g => {
-    if (g.type === 'invest' && g.name === oldVal) {
-      g.name = newVal;
-    }
-  });
-
-  onPersonalGoalChanged();
-};
-
-function onPersonalGoalChanged() {
-  renderTcGoalsFormTable();
-  syncGoalsToCards();
-  recalculateAll();
-}
-
-window.addDebtTargetRow = function() {
-  AppState.debtTargets.push({ age: AppState.currentAge + 5, desc: `Khoản nợ mới ${AppState.debtTargets.length + 1}`, val: 100.0 });
-  renderTargetTables();
-  onPersonalGoalChanged();
-};
-
-window.deleteDebtTargetRow = function(i) {
-  const deletedDesc = AppState.debtTargets[i]?.desc;
-  AppState.debtTargets.splice(i, 1);
-  renderTargetTables();
-  
-  // Nếu có tcGoals đang trỏ tới mục tiêu bị xóa, gán sang mục tiêu hợp lệ còn lại
-  const remainingDebtGoals = getPersonalDebtGoalTitles();
-  AppState.tcGoals.forEach(g => {
-    if (g.type === 'debt' && g.name === deletedDesc) {
-      g.name = remainingDebtGoals[0] || "Khoản nợ mới";
-    }
-  });
-
-  onPersonalGoalChanged();
-};
-
-window.addInvestTargetRow = function() {
-  AppState.investTargets.push({ age: AppState.currentAge + 4, desc: `Mục tiêu tích lũy mới ${AppState.investTargets.length + 1}`, pv: 150.0, inflation: 4.0, expectedReturn: 10.0 });
-  renderTargetTables();
-  onPersonalGoalChanged();
-};
-
-window.deleteInvestTargetRow = function(i) {
-  const deletedDesc = AppState.investTargets[i]?.desc;
-  AppState.investTargets.splice(i, 1);
-  renderTargetTables();
-
-  const remainingInvestGoals = getPersonalInvestGoalTitles();
-  AppState.tcGoals.forEach(g => {
-    if (g.type === 'invest' && g.name === deletedDesc) {
-      g.name = remainingInvestGoals[0] || "Mục tiêu đầu tư mới";
-    }
-  });
-
-  onPersonalGoalChanged();
-};
-
+// ==================== PHẦN KỸ NĂNG & HOÀN CẢNH ====================
 function renderSkillsFamilyJob() {
   const tbS = document.getElementById('tbody-skills');
   if (tbS) {
@@ -2295,7 +2152,7 @@ function renderSkillsFamilyJob() {
 }
 
 window.addSkillRow = function() { AppState.skillsList.push("Kỹ năng mới"); renderSkillsFamilyJob(); };
-window.addFamilyRow = function() { AppState.familyList.push("Hỗ trợ gia đình mới"); renderSkillsFamilyJob(); };
+window.addFamilyRow = function() { AppState.familyList.push("Nguồn hỗ trợ mới"); renderSkillsFamilyJob(); };
 window.addJobRow = function() { AppState.jobList.push("Môi trường làm việc mới"); renderSkillsFamilyJob(); };
 
 // ==================== KHỞI CHẠY HỆ THỐNG ====================
@@ -2325,11 +2182,11 @@ function recalculateAll() {
 document.addEventListener('DOMContentLoaded', () => {
   renderSetupTables();
   renderPlanTables();
-  renderTargetTables();
+  renderTcGoalsFormTable();
+  renderSkillsFamilyJob();
   renderGoogleFormSurvey();
   evaluateSurveys();
   renderCareerTables();
-  renderTcGoalsFormTable();
   renderMonthView(AppState.currentMonth);
   syncGoalsToCards();
   recalculateAll();
@@ -2344,7 +2201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         AppState.currentAge = AppState.currentYear - AppState.birthYear;
         if (aEl) aEl.innerText = AppState.currentAge;
         document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = v);
-        renderTargetTables();
+        renderTcGoalsFormTable();
         renderTcMatrixTable();
         recalculateAll();
       }
@@ -2356,7 +2213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isNaN(v) && v > 0 && v < 120) {
         AppState.currentAge = v;
         AppState.birthYear = AppState.currentYear - v;
-        renderTargetTables();
+        renderTcGoalsFormTable();
         renderTcMatrixTable();
         recalculateAll();
       }

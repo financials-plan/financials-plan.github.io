@@ -337,7 +337,7 @@ body {
   font-size: 0.74rem;
   outline: none;
   cursor: pointer;
-  padding: 4px 24px 4px 6px;
+  padding: 4px 20px 4px 6px;
   border-radius: 4px;
   appearance: none;
   -webkit-appearance: none;
@@ -493,7 +493,7 @@ body {
   align-items: center;
   gap: 16px;
   width: 100%;
-  max-width: 980px;
+  max-width: 1100px;
 }
 
 .target-section {
@@ -602,26 +602,9 @@ body {
 .tc-section-pane, .career-section-pane, .month-section-pane { display: none; width: 100%; }
 .tc-section-pane.active, .career-section-pane.active, .month-section-pane.active { display: block; }
 
-.tc-import-container { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; }
+.tc-import-container { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; width: 100%; }
 .tc-import-header { background: #f8fafc; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px; }
 .tc-import-title { font-weight: 800; color: #0e5627; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-
-.btn-calc-main {
-  background: linear-gradient(135deg, #0e5627 0%, #16a34a 100%);
-  color: #ffffff;
-  border: none;
-  font-weight: 800;
-  font-size: 0.8rem;
-  padding: 8px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: opacity 0.15s ease;
-}
-.btn-calc-main:hover { opacity: 0.92; }
 
 .result-divider-header {
   font-size: 0.92rem;
@@ -655,13 +638,12 @@ body {
 .tc-input-table td { border: 1px solid #cbd5e1; padding: 4px 6px; }
 .tc-input-table input, .tc-input-table select { width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 6px; font-size: 0.76rem; outline: none; }
 
-.tc-form-bottom-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px dashed #cbd5e1; flex-wrap: wrap; gap: 8px; background: #ffffff; }
-.btn-add-goal { background-color: #0f172a; color: #ffffff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
-.tc-form-hint { font-size: 0.72rem; font-style: italic; color: #64748b; }
+.tc-form-bottom-bar { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 16px; border-top: 1px dashed #cbd5e1; flex-wrap: wrap; gap: 8px; background: #ffffff; }
+.tc-form-hint { font-size: 0.74rem; line-height: 1.5; color: #334155; }
 
 .tc-two-columns-grid { 
   display: grid; 
-  grid-template-columns: 3fr 7fr; 
+  grid-template-columns: 3.2fr 6.8fr; 
   gap: 16px; 
   width: 100%; 
 }
@@ -822,7 +804,7 @@ body {
 .fixed-size-card { height: 320px; display: flex; flex-direction: column; }
 .career-canvas-container { flex: 1; position: relative; width: 100%; height: 250px; }
 
-/* ==================== BẢNG KHẢO SÁT DẠNG GOOGLE FORM ==================== */
+/* ==================== BẢNG KHẢO SÁT ==================== */
 .gform-container {
   width: 100%;
   max-width: 860px;
@@ -1045,7 +1027,7 @@ body {
   line-height: 1.45;
 }
 
-/* ==================== ĐỒ HỌA BIỂU ĐỒ & BẢNG FIT KHUNG HÌNH (CÂU HỎI 5) ==================== */
+/* ==================== ĐỒ HỌA BIỂU ĐỒ & BẢNG (CÂU HỎI 5) ==================== */
 .survey-graphic-box {
   background: #ffffff;
   padding: 10px;
