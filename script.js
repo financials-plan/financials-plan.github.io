@@ -36,7 +36,6 @@ const AppState = {
     { name: "Cổ phiếu riêng lẻ", returnRate: 12.0, risk: 6.0 }
   ],
 
-  // Cấu trúc 4 trường theo đúng yêu cầu: order, age (thời điểm), desc (nội dung), action/val
   debtTargets: [
     { age: 35, desc: "Vay mua chung cư", val: 500.0 }
   ],
@@ -109,7 +108,6 @@ const AppState = {
   careerDetailList: [],
   monthlyDetails: {},
 
-  // Trạng thái lựa chọn khảo sát Google Form
   surveyP1Choices: { 1: 4, 2: 4, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 1, 9: 0, 10: 1 },
   surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
 };
@@ -138,7 +136,6 @@ for (let m = 1; m <= 12; m++) {
   };
 }
 
-// Bảng câu hỏi khảo sát 1 (10 câu)
 const surveyQuestionsPart1 = [
   { q: "Bạn có bao nhiêu mục tiêu tài chính?", opts: ["1", "2", "3", "4", ">4"], weights: [1, 2, 3, 4, 5] },
   { q: "Bạn có cần thu nhập hàng tháng từ danh mục đầu tư không?", opts: ["Không", "Dưới 2%", "Lớn hơn 2%, nhưng nhỏ hơn 4%", "Lớn hơn 4%, nhưng nhỏ hơn 6%", "Lớn hơn 6%"], weights: [1, 2, 3, 4, 5] },
@@ -152,7 +149,6 @@ const surveyQuestionsPart1 = [
   { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10-20%", "20-30%", "30-50%", ">50%"], weights: [1, 2, 3, 4, 5] }
 ];
 
-// Bảng câu hỏi khảo sát 2 (11 câu)
 const surveyQuestionsPart2 = [
   { q: "Tỷ lệ trích thu nhập hàng tháng của bạn để gửi về cho gia đình?", opts: [">30%", "20-30%", "10-20%", "0-10%", "0%"], weights: [1, 2, 3, 4, 5] },
   { q: "Mức thu nhập của vợ/chồng của bạn so với bạn?", opts: ["<50%", "50-70%", "70-100%", "100-150%", "150-300%"], weights: [1, 2, 3, 4, 5] },
@@ -167,7 +163,6 @@ const surveyQuestionsPart2 = [
   { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
 
-// Lấy danh sách toàn bộ mục tiêu từ Mục tiêu bản thân để nạp vào Selection Box của Mục tiêu tài chính
 function getAllPersonalGoalTitles() {
   const list = [];
   AppState.debtTargets.forEach(d => {
@@ -236,7 +231,6 @@ function calculateCareerDetails() {
     });
   }
 
-  // Thu nhập thực tế trung bình tháng năm 2026
   let actualCurrentYear = 0;
   for (let m = 1; m <= 12; m++) {
     actualCurrentYear += (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + x.val, 0);
@@ -254,7 +248,6 @@ function calculateCareerDetails() {
 
     const exist = existingMap[age];
     
-    // Chỉ năm 2026 (yearOffset === 0) mới có thu nhập thực tế.
     const actualVal = (yearOffset === 0) 
       ? (exist && exist.actual !== undefined ? exist.actual : avgMonthlyActual2026) 
       : null;
@@ -1228,7 +1221,6 @@ function renderCareerTables() {
     `).join('');
   }
 
-  // BẢNG LỘ TRÌNH CHI TIẾT
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
@@ -1241,7 +1233,6 @@ function renderCareerTables() {
         <tr>
           <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
           
-          <!-- THU NHẬP THỰC TẾ CHỈ CÓ NĂM 2026 -->
           <td class="text-right font-bold ${isCurrentYear ? 'cell-blue font-bold' : 'cell-disabled-readonly'}" 
               ${isCurrentYear ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)"` : ''}>
             ${item.actual !== null ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
@@ -1249,7 +1240,6 @@ function renderCareerTables() {
           
           <td class="text-right font-bold text-gold">${item.target.toFixed(1)}</td>
           
-          <!-- THU NHẬP THEO LỘ TRÌNH NGHỀ NGHIỆP -->
           <td class="text-right font-bold cell-blue ${isDeficit ? 'text-deficit-danger' : 'text-green'}" 
               contenteditable="true" spellcheck="false" 
               onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
@@ -1276,7 +1266,7 @@ window.updateCareerDetailField = function(idx, field, val) {
   }
 };
 
-// ĐÃ CẬP NHẬT: LOẠI BỎ THU NHẬP THỰC TẾ KHỎI BIỂU ĐỒ VÀ CHỈ HIỂN THỊ MỤC TIÊU VÀ LỘ TRÌNH NGHỀ NGHIỆP
+// CẬP NHẬT: ĐỔI MÀU ĐƯỜNG LINE LIÊN TỤC VÀ MƯỢT MÀ BẰNG HORIZONTAL GRADIENT
 function renderCareerChart() {
   const canvas = document.getElementById('careerChart');
   if (!canvas || typeof Chart === 'undefined') return;
@@ -1286,6 +1276,25 @@ function renderCareerChart() {
   const targets = dataList.map(x => x.target);
   const routes = dataList.map(x => x.route);
 
+  // Tạo hàm sinh Gradient ngang liên tục theo vùng vẽ chart
+  const getRouteContinuousGradient = (context) => {
+    const chart = context.chart;
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return '#16a34a';
+
+    const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+    const totalPoints = routes.length;
+    if (totalPoints <= 1) return '#16a34a';
+
+    routes.forEach((val, i) => {
+      const stop = i / (totalPoints - 1);
+      const isMet = val >= targets[i];
+      gradient.addColorStop(stop, isMet ? '#16a34a' : '#dc2626');
+    });
+
+    return gradient;
+  };
+
   if (careerChartInstance) careerChartInstance.destroy();
   careerChartInstance = new Chart(canvas.getContext('2d'), {
     type: 'line',
@@ -1293,21 +1302,26 @@ function renderCareerChart() {
       labels: labels,
       datasets: [
         {
-          label: "Số tiền cần có để đạt mục tiêu tài chính",
+          label: "Mục tiêu tài chính (Thu nhập cần có)",
           data: targets,
           borderColor: "#eab308",
-          backgroundColor: "#eab308",
+          backgroundColor: "rgba(234, 179, 8, 0.15)",
           borderWidth: 3,
           pointRadius: 5,
+          pointHoverRadius: 7,
           pointBackgroundColor: "#eab308",
+          pointBorderColor: "#ca8a04",
+          pointBorderWidth: 1.5,
           fill: false,
           tension: 0.25
         },
         {
-          label: "Thu nhập theo lộ trình nghề nghiệp (Đạt yêu cầu)",
+          label: "Lộ trình nghề nghiệp (Thu nhập dự kiến)",
           data: routes,
+          borderColor: getRouteContinuousGradient,
           borderWidth: 3,
           pointRadius: 6,
+          pointHoverRadius: 8,
           pointBackgroundColor: ctx => {
             const idx = ctx.dataIndex;
             return routes[idx] >= targets[idx] ? "#16a34a" : "#dc2626";
@@ -1316,25 +1330,9 @@ function renderCareerChart() {
             const idx = ctx.dataIndex;
             return routes[idx] >= targets[idx] ? "#15803d" : "#b91c1c";
           },
-          segment: {
-            borderColor: ctx => {
-              const p0 = ctx.p0DataIndex;
-              const p1 = ctx.p1DataIndex;
-              const isAbove = (routes[p0] >= targets[p0]) && (routes[p1] >= targets[p1]);
-              return isAbove ? '#16a34a' : '#dc2626';
-            }
-          },
+          pointBorderWidth: 2,
           fill: false,
           tension: 0.25
-        },
-        {
-          label: "Không đạt mục tiêu (Cần cải thiện)",
-          data: [],
-          borderColor: "#dc2626",
-          backgroundColor: "#dc2626",
-          borderWidth: 3,
-          pointRadius: 5,
-          pointBackgroundColor: "#dc2626"
         }
       ]
     },
@@ -1345,19 +1343,37 @@ function renderCareerChart() {
       plugins: {
         legend: {
           position: 'top',
-          labels: { font: { family: 'Montserrat', size: 11, weight: 'bold' }, boxWidth: 28, boxHeight: 12, padding: 16 }
+          labels: {
+            font: { family: 'Montserrat', size: 11, weight: 'bold' },
+            boxWidth: 28,
+            boxHeight: 12,
+            padding: 16
+          }
         },
         tooltip: {
           callbacks: {
             label: ctx => {
               if (ctx.raw === null || ctx.raw === undefined) return '';
-              return ` ${ctx.dataset.label}: ${Number(ctx.raw).toFixed(1)} tr`;
+              const val = Number(ctx.raw).toFixed(1);
+              if (ctx.datasetIndex === 1) {
+                const targetVal = targets[ctx.dataIndex];
+                const diff = (ctx.raw - targetVal).toFixed(1);
+                const status = ctx.raw >= targetVal ? `[Đạt (+${diff} tr)]` : `[Thiếu hụt (${diff} tr)]`;
+                return ` ${ctx.dataset.label}: ${val} tr ${status}`;
+              }
+              return ` ${ctx.dataset.label}: ${val} tr`;
             }
           }
         }
       },
       scales: {
-        y: { beginAtZero: true, suggestedMax: 100, ticks: { stepSize: 10 }, grid: { color: "#f1f5f9" } },
+        y: {
+          beginAtZero: true,
+          suggestedMax: 100,
+          ticks: { stepSize: 10 },
+          grid: { color: "#f1f5f9" },
+          title: { display: true, text: "Triệu đồng / tháng", font: { size: 10, weight: 600 } }
+        },
         x: { grid: { display: false } }
       }
     }
