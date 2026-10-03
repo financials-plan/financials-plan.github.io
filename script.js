@@ -36,6 +36,7 @@ const AppState = {
     { name: "Cổ phiếu riêng lẻ", returnRate: 12.0, risk: 6.0 }
   ],
 
+  // Cấu trúc 4 trường theo đúng yêu cầu: order, age (thời điểm), desc (nội dung), action/val
   debtTargets: [
     { age: 35, desc: "Vay mua chung cư", val: 500.0 }
   ],
@@ -73,11 +74,11 @@ const AppState = {
   ],
 
   tcGoals: [
-    { id: "g1", name: "Thẻ tín dụng", type: "debt", val: 100.0, paid: 0.0, start: 2026, end: 2028, rate: 8.0, monthly: 3.13, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
-    { id: "g2", name: "Vay vốn kinh doanh", type: "debt", val: 150.0, paid: 30.0, start: 2028, end: 2031, rate: 8.0, monthly: 2.93, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
-    { id: "g3", name: "Vay cải tạo/sửa chữa", type: "debt", val: 400.0, paid: 120.0, start: 2030, end: 2040, rate: 8.0, monthly: 3.20, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { id: "g1", name: "Vay mua chung cư", type: "debt", val: 500.0, paid: 50.0, start: 2026, end: 2035, rate: 8.5, monthly: 6.2, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { id: "g2", name: "Du lịch xuyên Thái Lan", type: "invest", val: 50.0, paid: 10.0, start: 2026, end: 2027, rate: 8.0, monthly: 3.3, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
+    { id: "g3", name: "Quỹ dự phòng tài chính", type: "invest", val: 100.0, paid: 20.0, start: 2026, end: 2028, rate: 7.0, monthly: 3.5, yearsRetire: 0, monthlyRetire: 0, deathFund: 0, allocProducts: [] },
     { 
-      id: "g4", name: "Hoàn thành quỹ học vấn", type: "invest", val: 200.0, paid: 50.0, start: 2026, end: 2028, rate: 8.65, monthly: 3.71,
+      id: "g4", name: "Cho con đi học đại học", type: "invest", val: 500.0, paid: 0.0, start: 2030, end: 2046, rate: 10.0, monthly: 1.4,
       yearsRetire: 10, monthlyRetire: 5.0, deathFund: 100.0,
       allocProducts: [
         { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
@@ -86,16 +87,7 @@ const AppState = {
       ]
     },
     { 
-      id: "g5", name: "Cho con đi học đại học", type: "invest", val: 500.0, paid: 0.0, start: 2030, end: 2048, rate: 14.5, monthly: 0.6,
-      yearsRetire: 30, monthlyRetire: 15.0, deathFund: 500.0,
-      allocProducts: [
-        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
-        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
-        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
-      ]
-    },
-    { 
-      id: "g6", name: "Hưu trí an nhàn", type: "invest", val: 800.0, paid: 50.0, start: 2028, end: 2045, rate: 12.0, monthly: 2.1,
+      id: "g5", name: "Hưu trí", type: "invest", val: 800.0, paid: 50.0, start: 2028, end: 2050, rate: 9.0, monthly: 1.8,
       yearsRetire: 25, monthlyRetire: 12.0, deathFund: 300.0,
       allocProducts: [
         { prodName: "ETF - ETFFINLEAD", weight: 40.0, returnRate: 15.0, risk: 20.0 },
@@ -117,7 +109,7 @@ const AppState = {
   careerDetailList: [],
   monthlyDetails: {},
 
-  // Trạng thái lựa chọn khảo sát
+  // Trạng thái lựa chọn khảo sát Google Form
   surveyP1Choices: { 1: 4, 2: 4, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 1, 9: 0, 10: 1 },
   surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
 };
@@ -153,9 +145,9 @@ const surveyQuestionsPart1 = [
   { q: "Sau bao lâu thì bạn sẽ bắt đầu muốn rút tiền từ danh mục đầu tư của mình để phục vụ cho mục đích?", opts: ["Hơn 20 năm", "11–20 năm", "6–10 năm", "1–5 năm", "Ngay lập tức"], weights: [1, 2, 3, 4, 5] },
   { q: "Hãy mô tả quan điểm của bạn đối với vấn đề mức sinh lời và rủi ro từ việc đầu tư?", opts: ["Vấn đề bạn quan tâm nhất là hạn chế rủi ro. Bạn sẵn sàng chấp nhận mức sinh lời thấp để hạn chế tối đa rủi ro thua lỗ", "Bạn sẵn sàng chấp nhận khả năng rủi ro đầu tư để đạt mức sinh lời vừa phải", "Bạn chủ yếu quan tâm đến việc tối đa hóa mức sinh lời để có thể đạt được mục tiêu như kế hoạch", "Bạn sẵn sàng chấp nhận rủi ro cao để sớm đạt được mục tiêu tài chính của mình"], weights: [1, 2, 3, 4] },
   { q: "Biểu đồ bên dưới cho thấy mức sinh lời trung bình của ba danh mục đầu tư trong thời gian 20 năm. Danh mục nào theo bạn là phù hợp với bạn nhất?", hasCharts: true, opts: ["Danh mục đầu tư X", "Danh mục đầu tư Y", "Danh mục đầu tư Z"], weights: [1, 2, 3] },
-  { q: "Rủi ro danh mục đầu tư bị giảm giá trị (có mức sinh lời âm) thường là mối quan tâm hàng đầu của các nhà đầu tư. Tuy nhiên, để đạt được mức sinh lời cao hơn, nhà đầu tư phải sẵn sàng chấp nhận rủi ro lớn hơn. Bảng sau mô tả bốn các danh mục đầu tư với các thông tin về giá trị dự kiến và khả năng lỗ tiềm năng. Hãy cho biết bạn cảm thấy thoải mái khi lựa chọn danh mục nào nhất?", hasTable: true, opts: ["Danh mục đầu tư A", "Danh mục đầu tư B", "Danh mục đầu tư C", "Danh mục đầu tư D"], weights: [1, 2, 3, 4] },
-  { q: "Lạm phát có thể làm sụt giảm mức sinh lời thực tế từ danh mục đầu tư theo thời gian. Ví dụ, trong một năm điển hình với 3,5% tỷ lệ lạm phát, lợi nhuận 6% trước khi lạm phát sẽ có giá trị lợi nhuận thực chỉ 2,5%. Thông tin nào sau đây thể hiện quan điểm của bạn về nỗi lo lạm phát?", opts: ["Bạn muốn giảm thiểu những biến động trong ngắn hạn cho danh mục đầu tư của mình càng nhiều càng tốt, việc cao hơn mức lạm phát hàng năm đáng kể không quá quan trọng", "Muốn một danh mục đầu tư cao hơn mức lạm phát vừa phải và sẵn sàng chấp nhận mức sụt giảm vừa phải trong ngắn hạn để đạt được mục tiêu này", "Mức sinh lời của danh mục có thể vượt xa mức lạm phát trong dài hạn và bạn sẵn sàng chấp nhận những mức sụt giảm có thể trong ngắn hạn để đạt được mục tiêu này"], weights: [1, 2, 3] },
-  { q: "Việc đầu tư đôi khi phải đối mặt với những khoản lỗ. Bạn nghĩ gì về những giai đoạn có những khoản lỗ cho danh mục của mình?", opts: ["Bạn sẽ bán các khoản đầu tư ngay lập tức nếu mức giảm đáng kể xảy ra", "Mặc dù việc sụt giảm khiến bạn không thoải mái nhưng bạn sẵn sàng chờ đợi giai đoạn phục hồi phía sau", "Bạn chịu được việc danh mục sụt giảm và hoàn có thể duy trì trạng thái đầu tư của danh mục trong một năm", "Cho dù danh mục đầu tư của bạn có sụt giảm trong vài năm tuy nhiên bạn đủ nhận thức để kiên định với mục tiêu dài hạn ban đầu"], weights: [1, 2, 3, 4] },
+  { q: "Rủi ro danh mục đầu tư bị giảm giá trị thường là mối quan tâm hàng đầu của các nhà đầu tư. Bảng sau mô tả bốn danh mục đầu tư với giá trị dự kiến và khả năng lỗ tiềm năng. Hãy cho biết bạn cảm thấy thoải mái khi lựa chọn danh mục nào nhất?", hasTable: true, opts: ["Danh mục đầu tư A", "Danh mục đầu tư B", "Danh mục đầu tư C", "Danh mục đầu tư D"], weights: [1, 2, 3, 4] },
+  { q: "Lạm phát có thể làm sụt giảm mức sinh lời thực tế từ danh mục đầu tư theo thời gian. Thông tin nào sau đây thể hiện quan điểm của bạn về nỗi lo lạm phát?", opts: ["Bạn muốn giảm thiểu những biến động trong ngắn hạn cho danh mục đầu tư của mình càng nhiều càng tốt, việc cao hơn mức lạm phát hàng năm đáng kể không quá quan trọng", "Muốn một danh mục đầu tư cao hơn mức lạm phát vừa phải và sẵn sàng chấp nhận mức sụt giảm vừa phải trong ngắn hạn để đạt được mục tiêu này", "Mức sinh lời của danh mục có thể vượt xa mức lạm phát trong dài hạn và bạn sẵn sàng chấp nhận những mức sụt giảm có thể trong ngắn hạn để đạt được mục tiêu này"], weights: [1, 2, 3] },
+  { q: "Việc đầu tư đôi khi phải đối mặt với những khoản lỗ. Bạn nghĩ gì về những giai đoạn có những khoản lỗ cho danh mục của mình?", opts: ["Bạn sẽ bán các khoản đầu tư ngay lập tức nếu mức giảm đáng kể xảy ra", "Mặc dù việc sụt giảm khiến bạn không thoải mái nhưng bạn sẵn sàng chờ đợi giai đoạn phục hồi phía sau", "Bạn chịu được việc danh mục sụt giảm và hoàn toàn có thể duy trì trạng thái đầu tư của danh mục trong một năm", "Cho dù danh mục đầu tư của bạn có sụt giảm trong vài năm tuy nhiên bạn đủ nhận thức để kiên định với mục tiêu dài hạn ban đầu"], weights: [1, 2, 3, 4] },
   { q: "Giá trị đầu tư tài sản hiện tại của bạn là?", opts: ["Dưới 200 triệu đồng", "200 triệu – 500 triệu đồng", "500 triệu đến 1 tỷ đồng", "Từ 1-2 tỷ đồng", "Hơn 2 tỷ đồng"], weights: [1, 2, 3, 4, 5] },
   { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10-20%", "20-30%", "30-50%", ">50%"], weights: [1, 2, 3, 4, 5] }
 ];
@@ -170,10 +162,22 @@ const surveyQuestionsPart2 = [
   { q: "Bạn có bao nhiêu em nhỏ trong gia đình còn đi học?", opts: ["4", "3", "2", "1", "0"], weights: [1, 2, 3, 4, 5] },
   { q: "Bạn nghĩ gì về việc tích lũy một lượng tài sản nhất định để lại cho con cái?", opts: ["Chỉ hỗ trợ con cái chi phí giáo dục", "Trang bị các phương tiện cơ bản", "Để lại các tài sản lớn cho con cái", "Tích lũy nhiều nhất có thể"], weights: [2, 3, 4, 5] },
   { q: "Bạn đánh giá sức khỏe của mình như thế nào so với bạn bè và những người khác?", opts: ["Kém hơn rất nhiều", "Kém hơn", "Bằng mức trung bình", "Tốt hơn", "Tốt hơn rất nhiều"], weights: [1, 2, 3, 4, 5] },
-  { q: "Mô tả tình hình tài chính của bạn khi bạn khi còn đi học?", opts: ["Phụ thuộc hoàn toàn vào gia đình", "Gia đình hỗ trợ học phí và vẫn phải đi làm thêm", "Tự đi làm thêm để lo cho mình"], weights: [2, 3, 4] },
+  { q: "Mô tả tình hình tài chính của bạn khi còn đi học?", opts: ["Phụ thuộc hoàn toàn vào gia đình", "Gia đình hỗ trợ học phí và vẫn phải đi làm thêm", "Tự đi làm thêm để lo cho mình"], weights: [2, 3, 4] },
   { q: "Bạn đánh giá như thế nào trong mức chênh lệch thu nhập của những người làm trong công ty của mình?", opts: ["Không đáng kể", "Chênh lệch vừa phải", "Tương đối lớn", "Rất lớn"], weights: [1, 2, 3, 4] },
   { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
+
+// Lấy danh sách toàn bộ mục tiêu từ Mục tiêu bản thân để nạp vào Selection Box của Mục tiêu tài chính
+function getAllPersonalGoalTitles() {
+  const list = [];
+  AppState.debtTargets.forEach(d => {
+    if (d.desc && d.desc.trim()) list.push(d.desc.trim());
+  });
+  AppState.investTargets.forEach(inv => {
+    if (inv.desc && inv.desc.trim()) list.push(inv.desc.trim());
+  });
+  return Array.from(new Set(list));
+}
 
 // ==================== CÁC HÀM TÍNH TOÁN ĐỒNG BỘ ====================
 function getMatrixIncomeNeed(yearOffset) {
@@ -216,9 +220,11 @@ function calculateAgeMilestones() {
   });
 }
 
+// YÊU CẦU 3: THU NHẬP THỰC TẾ CHỈ TÍNH TỚI THỜI ĐIỂM HIỆN TẠI (2026 - TUỔI HIỆN TẠI), CÁC NĂM SAU ĐỂ TRỐNG
 function calculateCareerDetails() {
   const baseAge = AppState.currentAge;
   const ages = [
+    baseAge,
     baseAge + 1, baseAge + 2, baseAge + 3, baseAge + 4,
     baseAge + 5, baseAge + 6, baseAge + 7, baseAge + 8, baseAge + 9,
     baseAge + 14, baseAge + 19, baseAge + 24, baseAge + 29
@@ -231,40 +237,37 @@ function calculateCareerDetails() {
     });
   }
 
+  // Thu nhập thực tế trung bình tháng năm 2026
+  let actualCurrentYear = 0;
+  for (let m = 1; m <= 12; m++) {
+    actualCurrentYear += (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + x.val, 0);
+  }
+  const avgMonthlyActual2026 = actualCurrentYear > 0 ? (actualCurrentYear / 12) : 25.0;
+
   return ages.map((age, i) => {
     const yearOffset = age - baseAge;
     const targetVal = getMatrixIncomeNeed(Math.min(32, yearOffset)) || (15 + yearOffset * 2.2);
 
-    let defaultRoute = 12.0 + yearOffset * 2.0;
-    if (i === 1) defaultRoute = targetVal - 4.0;
-    if (i === 3) defaultRoute = targetVal - 2.5;
-    if (i >= 5) defaultRoute = targetVal + (i % 2 === 0 ? 3.0 : -2.0);
-    const defaultActual = 10.0 + yearOffset * 2.8;
+    let defaultRoute = 15.0 + yearOffset * 2.5;
+    if (i === 1) defaultRoute = targetVal - 3.0;
+    if (i === 2) defaultRoute = targetVal - 1.5;
+    if (i >= 4) defaultRoute = targetVal + (i % 2 === 0 ? 4.0 : -1.5);
 
     const exist = existingMap[age];
+    
+    // Chỉ năm 2026 (yearOffset === 0) mới có thu nhập thực tế.
+    const actualVal = (yearOffset === 0) 
+      ? (exist && exist.actual !== undefined ? exist.actual : avgMonthlyActual2026) 
+      : null;
+
     return {
       age,
-      actual: exist && exist.actual !== undefined ? exist.actual : defaultActual,
+      year: AppState.currentYear + yearOffset,
+      actual: actualVal,
       target: targetVal,
       route: exist && exist.route !== undefined ? exist.route : defaultRoute
     };
   });
-}
-
-function calculateInvestTargetMetrics(target) {
-  const years = Math.max(1, target.age - AppState.currentAge);
-  const i = (target.inflation || 4.0) / 100;
-  const r = (target.expectedReturn || 10.0) / 100;
-  const fv = target.pv * Math.pow(1 + i, years);
-  const rMonthly = r / 12;
-  const nMonths = years * 12;
-  let monthlyNeed = 0;
-  if (rMonthly > 0) {
-    monthlyNeed = (fv * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
-  } else {
-    monthlyNeed = fv / nMonths;
-  }
-  return { years, fv, monthlyNeed };
 }
 
 // ==================== CÁC HÀM ĐIỀU HƯỚNG TABS ====================
@@ -303,7 +306,7 @@ window.switchTab = function(tabId) {
       renderTargetTables();
     }
     if (tabId === 'tab-khaosat') {
-      renderSurveyForm();
+      renderGoogleFormSurvey();
       evaluateSurveys();
       setTimeout(renderSurveyQuestionCharts, 80);
     }
@@ -349,7 +352,7 @@ window.switchCareerSection = function(secNum) {
   renderCareerChart();
 };
 
-// ==================== VẼ SPARKLINE MINI-CHART ====================
+// ==================== SPARKLINE CHART ====================
 function drawSparkline(canvasId, values, color = '#16a34a') {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -554,7 +557,7 @@ function renderDashboardMatrices() {
   }, 40);
 }
 
-// ==================== DASHBOARD CHARTS TOÀN DIỆN ====================
+// ==================== DASHBOARD ALL CHARTS ====================
 let dashChartInstances = {};
 
 function renderDashboardAllCharts() {
@@ -723,7 +726,7 @@ function renderDashboardAllCharts() {
   }
 }
 
-// ==================== TỪ KHÓA (MASTER DATA) ====================
+// ==================== TỪ KHÓA ====================
 function renderSetupTables() {
   const tbExp = document.getElementById('tbody-expenses');
   if (tbExp) {
@@ -773,8 +776,7 @@ function renderSetupTables() {
 }
 
 window.addExpenseRow = function() {
-  const name = `Chi tiêu mới ${AppState.expenses.length + 1}`;
-  AppState.expenses.push(name);
+  AppState.expenses.push(`Chi tiêu mới ${AppState.expenses.length + 1}`);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
@@ -791,8 +793,7 @@ window.updateExpenseItem = function(idx, val) {
 };
 
 window.addIncomeRow = function() {
-  const name = `Nguồn thu mới ${AppState.incomeList.length + 1}`;
-  AppState.incomeList.push(name);
+  AppState.incomeList.push(`Nguồn thu mới ${AppState.incomeList.length + 1}`);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
@@ -1078,7 +1079,7 @@ window.updateReconNote = function(m, type, cat, field, txt) {
   dict[cat][field] = txt.trim();
 };
 
-// ==================== PHẦN 2 ĐÀO TẠO (TỰ ĐỘNG TÍNH TOÁN) ====================
+// ==================== PHẦN 2 ĐÀO TẠO ====================
 function renderMonthLearningSection(m) {
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
@@ -1228,29 +1229,37 @@ function renderCareerTables() {
     `).join('');
   }
 
+  // YÊU CẦU 3: BẢNG LỘ TRÌNH CHI TIẾT - CHỈ CHO PHÉP NHẬP THU NHẬP THỰC TẾ ĐẾN 2026
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
     tb2.innerHTML = AppState.careerDetailList.map((item, idx) => {
       const isDeficit = item.route < item.target;
       const diffVal = Math.abs(item.target - item.route).toFixed(1);
+      const isCurrentYear = item.year === AppState.currentYear;
 
       return `
         <tr>
           <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
-          <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" 
-              onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
-            ${item.actual.toFixed(1)}
+          
+          <!-- THU NHẬP THỰC TẾ CHỈ CÓ NĂM 2026 -->
+          <td class="text-right font-bold ${isCurrentYear ? 'cell-blue font-bold' : 'cell-disabled-readonly'}" 
+              ${isCurrentYear ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)"` : ''}>
+            ${item.actual !== null ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
           </td>
+          
           <td class="text-right font-bold text-gold">${item.target.toFixed(1)}</td>
+          
+          <!-- THU NHẬP THEO LỘ TRÌNH NGHỀ NGHIỆP: CHO PHÉP NGƯỜI DÙNG NHẬP DATA ĐẦY ĐỦ -->
           <td class="text-right font-bold cell-blue ${isDeficit ? 'text-deficit-danger' : 'text-green'}" 
               contenteditable="true" spellcheck="false" 
               onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
             ${item.route.toFixed(1)}
           </td>
+          
           <td class="text-center">
             ${isDeficit 
-              ? `<span class="deficit-badge">⚠️ Thiếu hụt (${diffVal} tr)</span>` 
+              ? `<span class="deficit-badge">⚠️️ Thiếu hụt (${diffVal} tr)</span>` 
               : `<span class="success-badge">✅ Đạt yêu cầu</span>`
             }
           </td>
@@ -1285,17 +1294,16 @@ function renderCareerChart() {
       labels: labels,
       datasets: [
         {
-          label: "Thu nhập thực tế",
+          label: "Thu nhập thực tế (đến 2026)",
           data: actuals,
           borderColor: "#2563eb",
-          backgroundColor: "#ffffff",
-          borderWidth: 2,
-          borderDash: [5, 5],
-          pointRadius: 4,
-          pointBorderColor: "#2563eb",
-          pointBackgroundColor: "#ffffff",
+          backgroundColor: "#2563eb",
+          borderWidth: 3,
+          pointRadius: 6,
+          pointBackgroundColor: "#2563eb",
           fill: false,
-          tension: 0.25
+          tension: 0.25,
+          spanGaps: false
         },
         {
           label: "Số tiền cần có để đạt mục tiêu tài chính",
@@ -1355,16 +1363,8 @@ function renderCareerChart() {
         tooltip: {
           callbacks: {
             label: ctx => {
-              if (!ctx.raw && ctx.raw !== 0) return '';
-              return ` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)} tr`;
-            },
-            afterBody: items => {
-              const idx = items[0].dataIndex;
-              if (routes[idx] < targets[idx]) {
-                const diff = (targets[idx] - routes[idx]).toFixed(1);
-                return [`⚠️ Cảnh báo: Thu nhập nghề nghiệp thấp hơn mức cần ${diff} triệu đồng/tháng!`];
-              }
-              return [`✅ Đạt yêu cầu: Thu nhập nghề nghiệp đáp ứng hoặc vượt mục tiêu tích lũy.`];
+              if (ctx.raw === null || ctx.raw === undefined) return '';
+              return ` ${ctx.dataset.label}: ${Number(ctx.raw).toFixed(1)} tr`;
             }
           }
         }
@@ -1377,131 +1377,122 @@ function renderCareerChart() {
   });
 }
 
-// ==================== BẢNG KHẢO SÁT CHUẨN DOT CHECKBOX ====================
-function renderSurveyForm() {
-  const p1 = document.getElementById('survey-list-part-1');
-  if (p1) {
-    let p1Html = '';
-    surveyQuestionsPart1.forEach((q, qIdx) => {
-      const qNum = qIdx + 1;
-      p1Html += `
-        <tr class="survey-q-row">
-          <td class="text-center font-bold">${qNum}</td>
-          <td colspan="2" class="font-bold">${q.q}</td>
-        </tr>
+// ==================== YÊU CẦU 4: BẢNG KHẢO SÁT DẠNG GOOGLE FORM ====================
+function renderGoogleFormSurvey() {
+  const p1Container = document.getElementById('gform-questions-p1');
+  if (p1Container) {
+    let html1 = '';
+    surveyQuestionsPart1.forEach((q, idx) => {
+      const qNum = idx + 1;
+      const selected = AppState.surveyP1Choices[qNum];
+
+      html1 += `
+        <div class="gform-card" id="gform-card-p1-q${qNum}">
+          <div class="gform-card-header">
+            <span class="gform-q-number">Câu hỏi ${qNum}</span>
+            <div class="gform-q-text">${q.q}</div>
+          </div>
       `;
 
       if (q.hasCharts) {
-        p1Html += `
-          <tr>
-            <td></td>
-            <td colspan="2">
-              <div class="survey-graphic-box">
-                <div class="chart-triplet-grid">
-                  <div class="chart-box-mini">
-                    <div class="chart-box-mini-title">Danh mục X - Lợi nhuận TB = 8%</div>
-                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniX"></canvas></div>
-                  </div>
-                  <div class="chart-box-mini">
-                    <div class="chart-box-mini-title">Danh mục Y - Lợi nhuận TB = 12%</div>
-                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniY"></canvas></div>
-                  </div>
-                  <div class="chart-box-mini">
-                    <div class="chart-box-mini-title">Danh mục Z - Lợi nhuận TB = 16%</div>
-                    <div class="mini-chart-canvas-wrap"><canvas id="chartMiniZ"></canvas></div>
-                  </div>
-                </div>
+        html1 += `
+          <div class="survey-graphic-box">
+            <div class="chart-triplet-grid">
+              <div class="chart-box-mini">
+                <div class="chart-box-mini-title">Danh mục X - Lợi nhuận TB = 8%</div>
+                <div class="mini-chart-canvas-wrap"><canvas id="chartMiniX"></canvas></div>
               </div>
-            </td>
-          </tr>
+              <div class="chart-box-mini">
+                <div class="chart-box-mini-title">Danh mục Y - Lợi nhuận TB = 12%</div>
+                <div class="mini-chart-canvas-wrap"><canvas id="chartMiniY"></canvas></div>
+              </div>
+              <div class="chart-box-mini">
+                <div class="chart-box-mini-title">Danh mục Z - Lợi nhuận TB = 16%</div>
+                <div class="mini-chart-canvas-wrap"><canvas id="chartMiniZ"></canvas></div>
+              </div>
+            </div>
+          </div>
         `;
       }
 
       if (q.hasTable) {
-        p1Html += `
-          <tr>
-            <td></td>
-            <td colspan="2">
-              <table class="sub-table-graphic">
-                <thead>
-                  <tr>
-                    <th>Danh mục đầu tư</th>
-                    <th>Giá trị kỳ vọng của 100 triệu sau một năm</th>
-                    <th>Khả năng lỗ sau một năm</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td class="font-bold">Danh mục A</td><td>107 triệu</td><td class="text-red font-bold">19%</td></tr>
-                  <tr><td class="font-bold">Danh mục B</td><td>108 triệu</td><td class="text-red font-bold">23%</td></tr>
-                  <tr><td class="font-bold">Danh mục C</td><td>109 triệu</td><td class="text-red font-bold">26%</td></tr>
-                  <tr><td class="font-bold">Danh mục D</td><td>110 triệu</td><td class="text-red font-bold">28%</td></tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
+        html1 += `
+          <table class="sub-table-graphic">
+            <thead>
+              <tr>
+                <th>Danh mục đầu tư</th>
+                <th>Giá trị kỳ vọng của 100 triệu sau 1 năm</th>
+                <th>Khả năng lỗ sau một năm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="font-bold">Danh mục A</td><td>107 triệu</td><td class="text-red font-bold">19%</td></tr>
+              <tr><td class="font-bold">Danh mục B</td><td>108 triệu</td><td class="text-red font-bold">23%</td></tr>
+              <tr><td class="font-bold">Danh mục C</td><td>109 triệu</td><td class="text-red font-bold">26%</td></tr>
+              <tr><td class="font-bold">Danh mục D</td><td>110 triệu</td><td class="text-red font-bold">28%</td></tr>
+            </tbody>
+          </table>
         `;
       }
 
+      html1 += `<div class="gform-options-list">`;
       q.opts.forEach((opt, optIdx) => {
-        const isChosen = AppState.surveyP1Choices[qNum] === optIdx;
-        p1Html += `
-          <tr class="survey-opt-row ${isChosen ? 'selected' : ''}" onclick="selectSurveyChoice(1, ${qNum}, ${optIdx})">
-            <td></td>
-            <td>${opt}</td>
-            <td class="survey-dotbox-cell">
-              <label class="dot-radio-wrapper" onclick="event.stopPropagation(); selectSurveyChoice(1, ${qNum}, ${optIdx})">
-                <input type="radio" name="ks1_q${qNum}" value="${optIdx}" ${isChosen ? 'checked' : ''}>
-                <span class="dot-circle"></span>
-              </label>
-            </td>
-          </tr>
+        const isChecked = selected === optIdx;
+        html1 += `
+          <label class="gform-option-item ${isChecked ? 'active' : ''}" onclick="selectGoogleFormOption(1, ${qNum}, ${optIdx})">
+            <input type="radio" name="gform_p1_${qNum}" value="${optIdx}" ${isChecked ? 'checked' : ''}>
+            <span class="gform-radio-dot"></span>
+            <span class="gform-option-label">${opt}</span>
+          </label>
         `;
       });
+      html1 += `</div></div>`;
     });
-    p1.innerHTML = p1Html;
+    p1Container.innerHTML = html1;
   }
 
-  const p2 = document.getElementById('survey-list-part-2');
-  if (p2) {
-    let p2Html = '';
-    surveyQuestionsPart2.forEach((q, qIdx) => {
-      const qNum = qIdx + 1;
-      p2Html += `
-        <tr class="survey-q-row">
-          <td class="text-center font-bold">${qNum}</td>
-          <td colspan="2" class="font-bold">${q.q}</td>
-        </tr>
+  const p2Container = document.getElementById('gform-questions-p2');
+  if (p2Container) {
+    let html2 = '';
+    surveyQuestionsPart2.forEach((q, idx) => {
+      const qNum = idx + 1;
+      const selected = AppState.surveyP2Choices[qNum];
+
+      html2 += `
+        <div class="gform-card" id="gform-card-p2-q${qNum}">
+          <div class="gform-card-header">
+            <span class="gform-q-number">Câu hỏi ${qNum}</span>
+            <div class="gform-q-text">${q.q}</div>
+          </div>
+          <div class="gform-options-list">
       `;
 
       q.opts.forEach((opt, optIdx) => {
-        const isChosen = AppState.surveyP2Choices[qNum] === optIdx;
-        p2Html += `
-          <tr class="survey-opt-row ${isChosen ? 'selected' : ''}" onclick="selectSurveyChoice(2, ${qNum}, ${optIdx})">
-            <td></td>
-            <td>${opt}</td>
-            <td class="survey-dotbox-cell">
-              <label class="dot-radio-wrapper" onclick="event.stopPropagation(); selectSurveyChoice(2, ${qNum}, ${optIdx})">
-                <input type="radio" name="ks2_q${qNum}" value="${optIdx}" ${isChosen ? 'checked' : ''}>
-                <span class="dot-circle"></span>
-              </label>
-            </td>
-          </tr>
+        const isChecked = selected === optIdx;
+        html2 += `
+          <label class="gform-option-item ${isChecked ? 'active' : ''}" onclick="selectGoogleFormOption(2, ${qNum}, ${optIdx})">
+            <input type="radio" name="gform_p2_${qNum}" value="${optIdx}" ${isChecked ? 'checked' : ''}>
+            <span class="gform-radio-dot"></span>
+            <span class="gform-option-label">${opt}</span>
+          </label>
         `;
       });
+
+      html2 += `</div></div>`;
     });
-    p2.innerHTML = p2Html;
+    p2Container.innerHTML = html2;
   }
 }
 
-window.selectSurveyChoice = function(part, qNum, optIdx) {
+window.selectGoogleFormOption = function(part, qNum, optIdx) {
   if (part === 1) {
     AppState.surveyP1Choices[qNum] = optIdx;
   } else {
     AppState.surveyP2Choices[qNum] = optIdx;
   }
-  renderSurveyForm();
+  renderGoogleFormSurvey();
   evaluateSurveys();
-  setTimeout(renderSurveyQuestionCharts, 30);
+  setTimeout(renderSurveyQuestionCharts, 40);
 };
 
 let miniCharts = {};
@@ -1567,9 +1558,9 @@ function evaluateSurveys() {
     rTxt = "Bạn là nhà đầu tư quyết liệt, sẵn sàng chấp nhận biến động mạnh để tối ưu hóa mức tăng trưởng tài sản dài hạn vượt trội.";
   }
 
-  const bar1 = document.getElementById('survey-result-bar-1');
+  const p1ResEl = document.getElementById('survey-result-p1-text');
   const risk1 = document.getElementById('survey-result-risk');
-  if (bar1) bar1.textContent = `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
+  if (p1ResEl) p1ResEl.innerHTML = `<strong>Khả năng chịu đựng rủi ro:</strong> ${rTxt}`;
   if (risk1) risk1.textContent = `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
 
   let s2 = 0;
@@ -1594,13 +1585,13 @@ function evaluateSurveys() {
     cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn với tiềm năng tích lũy vượt trội.";
   }
 
-  const bar2 = document.getElementById('survey-result-bar-2');
+  const p2ResEl = document.getElementById('survey-result-p2-text');
   const ctx2 = document.getElementById('survey-result-context');
-  if (bar2) bar2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
+  if (p2ResEl) p2ResEl.innerHTML = `<strong>Hoàn cảnh & Môi trường:</strong> ${cTxt}`;
   if (ctx2) ctx2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 }
 
-// ==================== MỤC TIÊU TÀI CHÍNH ====================
+// ==================== YÊU CẦU 2: MỤC TIÊU TÀI CHÍNH LỰA CHỌN TỪ MT BẢN THÂN ====================
 function calculateMonthlyNeed(goal) {
   const nYears = Math.max(1, goal.end - goal.start + 1);
   const targetNeed = Math.max(0, goal.val - (goal.paid || 0));
@@ -1622,29 +1613,46 @@ function renderTcGoalsFormTable() {
   const tb = document.getElementById('tbody-tc-form-goals');
   if (!tb) return;
 
-  tb.innerHTML = AppState.tcGoals.map((g, idx) => `
-    <tr>
-      <td><input type="text" value="${g.name}" onchange="AppState.tcGoals[${idx}].name=this.value.trim();"></td>
-      <td>
-        <select onchange="AppState.tcGoals[${idx}].type=this.value;">
-          <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Trả nợ</option>
-          <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Đầu tư</option>
-        </select>
-      </td>
-      <td><input type="number" step="any" value="${g.val}" onchange="AppState.tcGoals[${idx}].val=parseFloat(this.value)||0;"></td>
-      <td><input type="number" step="any" value="${g.paid}" onchange="AppState.tcGoals[${idx}].paid=parseFloat(this.value)||0;"></td>
-      <td><input type="number" value="${g.start}" onchange="AppState.tcGoals[${idx}].start=parseInt(this.value,10)||2026;"></td>
-      <td><input type="number" value="${g.end}" onchange="AppState.tcGoals[${idx}].end=parseInt(this.value,10)||2030;"></td>
-      <td><input type="number" step="any" value="${g.rate}" onchange="AppState.tcGoals[${idx}].rate=parseFloat(this.value)||0;"></td>
-      <td class="text-right font-bold text-green">${(g.monthly || calculateMonthlyNeed(g)).toFixed(2)}</td>
-      <td class="text-center"><button type="button" class="btn-table-del" onclick="deleteTcGoalRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
-    </tr>
-  `).join('');
+  const personalGoalTitles = getAllPersonalGoalTitles();
+
+  tb.innerHTML = AppState.tcGoals.map((g, idx) => {
+    // Đảm bảo tên hiện tại luôn có trong options
+    const options = [...personalGoalTitles];
+    if (g.name && !options.includes(g.name)) {
+      options.unshift(g.name);
+    }
+    if (options.length === 0) options.push("Mục tiêu mẫu");
+
+    return `
+      <tr>
+        <td>
+          <select class="select-inline-cell" onchange="AppState.tcGoals[${idx}].name=this.value;">
+            ${options.map(opt => `<option value="${opt}" ${opt === g.name ? 'selected' : ''}>${opt}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select onchange="AppState.tcGoals[${idx}].type=this.value;">
+            <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Trả nợ</option>
+            <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Đầu tư</option>
+          </select>
+        </td>
+        <td><input type="number" step="any" value="${g.val}" onchange="AppState.tcGoals[${idx}].val=parseFloat(this.value)||0;"></td>
+        <td><input type="number" step="any" value="${g.paid}" onchange="AppState.tcGoals[${idx}].paid=parseFloat(this.value)||0;"></td>
+        <td><input type="number" value="${g.start}" onchange="AppState.tcGoals[${idx}].start=parseInt(this.value,10)||2026;"></td>
+        <td><input type="number" value="${g.end}" onchange="AppState.tcGoals[${idx}].end=parseInt(this.value,10)||2030;"></td>
+        <td><input type="number" step="any" value="${g.rate}" onchange="AppState.tcGoals[${idx}].rate=parseFloat(this.value)||0;"></td>
+        <td class="text-right font-bold text-green">${(g.monthly || calculateMonthlyNeed(g)).toFixed(2)}</td>
+        <td class="text-center"><button type="button" class="btn-table-del" onclick="deleteTcGoalRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+      </tr>
+    `;
+  }).join('');
 }
 
 window.addNewTcGoalRow = function() {
+  const pGoals = getAllPersonalGoalTitles();
+  const defaultTitle = pGoals[0] || "Mục tiêu mới";
   AppState.tcGoals.push({ 
-    id: `g_${Date.now()}`, name: "Mục tiêu mới", type: "invest", val: 100.0, paid: 0.0, 
+    id: `g_${Date.now()}`, name: defaultTitle, type: "invest", val: 100.0, paid: 0.0, 
     start: AppState.currentYear, end: AppState.currentYear + 4, rate: 8.0, monthly: 1.7,
     yearsRetire: 20, monthlyRetire: 10.0, deathFund: 200.0,
     allocProducts: [
@@ -1817,16 +1825,6 @@ function createCardHtmlInvest(g, num) {
   `;
 }
 
-window.syncCardCalc = function(id) {
-  const g = AppState.tcGoals.find(x => x.id === id);
-  if (g) {
-    g.monthly = calculateMonthlyNeed(g);
-    syncGoalsToCards();
-    renderTcGoalsFormTable();
-    renderTcMatrixTable();
-  }
-};
-
 window.removeGoalFromCard = function(id) {
   AppState.tcGoals = AppState.tcGoals.filter(x => x.id !== id);
   syncGoalsToCards();
@@ -1972,65 +1970,63 @@ function updateMatrixChartData() {
   tcMatrixChartInstance.update();
 }
 
-// ==================== MỤC TIÊU BẢN THÂN ====================
+// ==================== YÊU CẦU 1: MỤC TIÊU BẢN THÂN CÓ BORDER CHUẨN 4 CỘT ====================
+// Cấu trúc 4 cột đúng yêu cầu: Thứ tự mục tiêu - Thời điểm thực hiện mục tiêu - Nội dung mục tiêu - Lựa chọn xoá (nút)
 function renderTargetTables() {
   const tbDebt = document.getElementById('tbody-debt-target');
   if (tbDebt) {
     tbDebt.innerHTML = AppState.debtTargets.map((d, i) => `
       <tr>
-        <td class="cell-green-light text-center font-bold">${i + 1}</td>
-        <td class="cell-green-light text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="d.age=parseInt(this.innerText,10)||0; recalculateAll();">${d.age}</td>
-        <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="d.desc=this.innerText.trim();">${d.desc}</td>
-        <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="d.val=parseFloat(this.innerText.replace(/,/g,''))||0; recalculateAll();">${d.val.toFixed(2)}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteDebtTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center font-bold bg-neutral-gray">${i + 1}</td>
+        <td class="text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="d.age=parseInt(this.innerText,10)||AppState.currentAge; recalculateAll();">${d.age} tuổi</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="d.desc=this.innerText.trim(); onPersonalGoalChanged();">${d.desc}</td>
+        <td class="text-center"><button class="btn-table-del" title="Xóa mục tiêu" onclick="deleteDebtTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 
   const tbInv = document.getElementById('tbody-invest-target');
   if (tbInv) {
-    tbInv.innerHTML = AppState.investTargets.map((inv, i) => {
-      const calc = calculateInvestTargetMetrics(inv);
-      return `
-        <tr>
-          <td class="cell-green-light text-center font-bold">${i + 1}</td>
-          <td class="cell-green-light text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.age=parseInt(this.innerText,10)||0; recalculateAll();">${inv.age}</td>
-          <td class="cell-green-light cell-blue" contenteditable="true" spellcheck="false" onblur="inv.desc=this.innerText.trim();">${inv.desc}</td>
-          <td class="cell-green-light text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.pv=parseFloat(this.innerText.replace(/,/g,''))||0; recalculateAll();">${inv.pv.toLocaleString()}</td>
-          <td class="cell-green-light text-right cell-blue" contenteditable="true" spellcheck="false" onblur="inv.inflation=parseFloat(this.innerText)||4.0; recalculateAll();">${inv.inflation.toFixed(1)}%</td>
-          <td class="cell-green-light text-center font-bold">${calc.years} năm</td>
-          <td class="cell-green-light text-right font-bold text-red">${calc.fv.toFixed(1)}</td>
-          <td class="cell-green-light text-right cell-blue" contenteditable="true" spellcheck="false" onblur="inv.expectedReturn=parseFloat(this.innerText)||10.0; recalculateAll();">${inv.expectedReturn.toFixed(1)}%</td>
-          <td class="cell-green-light text-right font-bold text-green">${calc.monthlyNeed.toFixed(2)}</td>
-          <td class="text-center"><button class="btn-table-del" onclick="deleteInvestTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
-        </tr>
-      `;
-    }).join('');
+    tbInv.innerHTML = AppState.investTargets.map((inv, i) => `
+      <tr>
+        <td class="text-center font-bold bg-neutral-gray">${i + 1}</td>
+        <td class="text-center cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="inv.age=parseInt(this.innerText,10)||AppState.currentAge; recalculateAll();">${inv.age} tuổi</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="inv.desc=this.innerText.trim(); onPersonalGoalChanged();">${inv.desc}</td>
+        <td class="text-center"><button class="btn-table-del" title="Xóa mục tiêu" onclick="deleteInvestTargetRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+      </tr>
+    `).join('');
   }
 
   renderSkillsFamilyJob();
 }
 
+function onPersonalGoalChanged() {
+  renderTcGoalsFormTable();
+  recalculateAll();
+}
+
 window.addDebtTargetRow = function() {
   AppState.debtTargets.push({ age: AppState.currentAge + 5, desc: "Khoản nợ mới", val: 100.0 });
   renderTargetTables();
-  recalculateAll();
+  onPersonalGoalChanged();
 };
+
 window.deleteDebtTargetRow = function(i) {
   AppState.debtTargets.splice(i, 1);
   renderTargetTables();
-  recalculateAll();
+  onPersonalGoalChanged();
 };
 
 window.addInvestTargetRow = function() {
   AppState.investTargets.push({ age: AppState.currentAge + 4, desc: "Mục tiêu tích lũy mới", pv: 150.0, inflation: 4.0, expectedReturn: 10.0 });
   renderTargetTables();
-  recalculateAll();
+  onPersonalGoalChanged();
 };
+
 window.deleteInvestTargetRow = function(i) {
   AppState.investTargets.splice(i, 1);
   renderTargetTables();
-  recalculateAll();
+  onPersonalGoalChanged();
 };
 
 function renderSkillsFamilyJob() {
@@ -2038,7 +2034,7 @@ function renderSkillsFamilyJob() {
   if (tbS) {
     tbS.innerHTML = AppState.skillsList.map((s, i) => `
       <tr>
-        <td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.skillsList[${i}]=this.innerText.trim();">${s}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.skillsList[${i}]=this.innerText.trim();">${s}</td>
         <td class="text-center"><button class="btn-table-del" onclick="AppState.skillsList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -2048,7 +2044,7 @@ function renderSkillsFamilyJob() {
   if (tbF) {
     tbF.innerHTML = AppState.familyList.map((f, i) => `
       <tr>
-        <td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.familyList[${i}]=this.innerText.trim();">${f}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.familyList[${i}]=this.innerText.trim();">${f}</td>
         <td class="text-center"><button class="btn-table-del" onclick="AppState.familyList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -2058,25 +2054,16 @@ function renderSkillsFamilyJob() {
   if (tbJ) {
     tbJ.innerHTML = AppState.jobList.map((j, i) => `
       <tr>
-        <td class="cell-green-light cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.jobList[${i}]=this.innerText.trim();">${j}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.jobList[${i}]=this.innerText.trim();">${j}</td>
         <td class="text-center"><button class="btn-table-del" onclick="AppState.jobList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 }
 
-window.addSkillRow = function() {
-  AppState.skillsList.push("Kỹ năng mới");
-  renderSkillsFamilyJob();
-};
-window.addFamilyRow = function() {
-  AppState.familyList.push("Hỗ trợ gia đình mới");
-  renderSkillsFamilyJob();
-};
-window.addJobRow = function() {
-  AppState.jobList.push("Môi trường làm việc mới");
-  renderSkillsFamilyJob();
-};
+window.addSkillRow = function() { AppState.skillsList.push("Kỹ năng mới"); renderSkillsFamilyJob(); };
+window.addFamilyRow = function() { AppState.familyList.push("Hỗ trợ gia đình mới"); renderSkillsFamilyJob(); };
+window.addJobRow = function() { AppState.jobList.push("Môi trường làm việc mới"); renderSkillsFamilyJob(); };
 
 // ==================== KHỞI CHẠY HỆ THỐNG ====================
 function recalculateAll() {
@@ -2106,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSetupTables();
   renderPlanTables();
   renderTargetTables();
-  renderSurveyForm();
+  renderGoogleFormSurvey();
   evaluateSurveys();
   renderCareerTables();
   renderTcGoalsFormTable();
