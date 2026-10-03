@@ -49,36 +49,36 @@ Các mục tiêu chi tiêu dài hạn (mua chung cư, quỹ học vấn, hưu tr
 
 - **Bước 1: Tính giá trị tương lai kỳ vọng ($FV$) có tính đến lạm phát:**
 
-  $$FV = PV_0 \cdot (1 + i)^t$$
+$$FV = PV_0 \cdot (1 + i)^t$$
 
-  Với $PV_0$ là chi phí hiện giá tại thời điểm lập kế hoạch, $i$ là tỷ lệ lạm phát bình quân hàng năm, và $t$ là số năm cho đến khi thực hiện mục tiêu ($t = \text{Tuổi thực hiện} - \text{Tuổi hiện tại}$).
+Với $PV_0$ là chi phí hiện giá tại thời điểm lập kế hoạch, $i$ là tỷ lệ lạm phát bình quân hàng năm, và $t$ là số năm cho đến khi thực hiện mục tiêu ($t = \text{Tuổi thực hiện} - \text{Tuổi hiện tại}$).
 
 - **Bước 2: Xác định lượng vốn cần tích lũy hàng tháng:**
-  Dựa trên công thức giá trị tương lai của dòng niên kim tích lũy định kỳ (Sinking Fund Factor):
+Dựa trên công thức giá trị tương lai của dòng niên kim tích lũy định kỳ (Sinking Fund Factor):
 
-  $$PMT_{\text{invest}} = \frac{FV \cdot r_m}{(1 + r_m)^n - 1}$$
+$$PMT_{\text{invest}} = \frac{FV \cdot r_m}{(1 + r_m)^n - 1}$$
 
-  Với $r_m = \frac{r_{\text{kỳ vọng}}}{12}$ là tỷ suất sinh lời bình quân tháng của danh mục phân bổ.
+Với $r_m = \frac{r_{\text{kỳ vọng}}}{12}$ là tỷ suất sinh lời bình quân tháng của danh mục phân bổ.
 
 ### 3. Mô hình phân bổ tài sản thích ứng theo vòng đời (Lifecycle Asset Allocation Model)
 Khẩu vị rủi ro và khả năng gánh chịu tổn thất giảm dần theo độ tuổi khi thời gian phục hồi vốn ngắn lại. Thuật toán tự động tái cấu trúc tỷ trọng tài sản danh mục theo quy tắc điều chỉnh tuổi:
 
 - **Tỷ trọng Cổ phiếu & Chứng chỉ quỹ tăng trưởng ($W_{\text{stocks}}$):**
 
-  $$W_{\text{stocks}} = \max\left(15\%,\, \min\left(75\%,\, 100 - \text{Tuổi} + 5\right)\right)$$
+$$W_{\text{stocks}} = \max(15\%,\, \min(75\%,\, 100 - \text{Tuổi} + 5))$$
 
 - **Tỷ trọng Trái phiếu & Thu nhập cố định ($W_{\text{bonds}}$):**
 
-  $$W_{\text{bonds}} = \min\left(60\%,\, \max\left(15\%,\, \text{Tuổi} \times 0.9\right)\right)$$
+$$W_{\text{bonds}} = \min(60\%,\, \max(15\%,\, \text{Tuổi} \times 0.9))$$
 
-- **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Thiết lập mức cố định 7% cho giai đoạn tích lũy sớm ($< 35$ tuổi) và nâng lên 10% cho giai đoạn trung niên nhằm bảo vệ dòng thu nhập gia đình.
+- **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Thiết lập mức cố định $7\%$ cho giai đoạn tích lũy sớm ($< 35$ tuổi) và nâng lên $10\%$ cho giai đoạn trung niên nhằm bảo vệ dòng thu nhập gia đình.
 - **Tỷ trọng Tiền gửi & Tài sản thanh khoản ($W_{\text{cash}}$):** Đảm bảo tính thanh khoản với mức sàn tối thiểu:
 
-  $$W_{\text{cash}} = \max\left(5\%,\, 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
+$$W_{\text{cash}} = \max(5\%,\, 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}}))$$
 
 - **Tỷ suất sinh lời kỳ vọng tổng thể:**
 
-  $$\bar{R} = \sum_{j} W_j \cdot R_j$$
+$$\bar{R} = \sum_{j} W_j \cdot R_j$$
 
 ### 4. Thuật toán nghịch đảo thu nhập từ tỷ lệ tiết kiệm mục tiêu (Savings-to-Income Inversion)
 Thay vì chi tiêu trước rồi tiết kiệm phần thừa, hệ thống vận hành theo nguyên lý trả cho bản thân trước (*Pay Yourself First*).
@@ -104,7 +104,7 @@ Quy trình đối soát cuối mỗi tháng so sánh giữa dự toán ngân sá
 - **Phương sai chi phí:** $\text{Variance}_{\text{expense}} = \text{Plan} - \text{Actual}$ (Dương là tiết kiệm ngân sách, âm là vượt chi).
 - **Lũy kế chênh lệch chi tiêu:** Theo dõi xu hướng tích lũy chênh lệch qua 12 tháng nhằm kịp thời điều chỉnh hành vi chi tiêu trong các quý tiếp theo:
 
-  $$\text{CumDiff}_m = \sum_{k=1}^{m} (\text{Actual}_k - \text{Plan}_k)$$
+$$\text{CumDiff}_m = \sum_{k=1}^{m} (\text{Actual}_k - \text{Plan}_k)$$
 
 ### 7. Mô hình lượng hóa tâm lý và bối cảnh tài chính (Psychometric Scoring)
 Hệ thống lượng hóa các yếu tố định tính thông qua hai bộ khảo sát với thang điểm có trọng số:
