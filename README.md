@@ -9,10 +9,10 @@ Hệ thống hoạch định và kiểm soát tài chính cá nhân toàn diện
 Quản lý tài chính cá nhân hiệu quả không chỉ đơn thuần là việc ghi chép sổ sách thu chi hàng ngày, mà đòi hỏi khả năng dự báo dòng tiền, phòng ngừa rủi ro lạm phát và thiết lập kỷ luật đầu tư xuyên suốt nhiều thập kỷ. Hệ thống được xây dựng nhằm giải quyết bài toán cốt lõi: **Làm thế nào để chuyển đổi các mục tiêu cuộc đời thành những con số định lượng cụ thể trên lộ trình nghề nghiệp và tích lũy hàng tháng?**
 
 ### Mục tiêu cốt lõi
-* **Lượng hóa các mục tiêu cuộc sống:** Biến các ước mơ (mua nhà, học vấn cho con cái, hưu trí an nhàn, khởi nghiệp) thành kế hoạch tài chính có lộ trình dòng tiền chính xác qua từng năm.
-* **Cầu nối giữa tài chính và sự nghiệp:** Xác định mức thu nhập cần thiết tại từng mốc tuổi và đối chiếu với năng lực tạo thu nhập thực tế từ nghề nghiệp, từ đó chủ động nâng cấp năng lực hoặc điều chỉnh mục tiêu kịp thời.
-* **Kiểm soát dòng tiền vi mô đến vĩ mô:** Kết hợp liền mạch giữa việc theo dõi ngân sách chi tiết trong 12 tháng và bức tranh tích lũy kéo dài hơn 30 năm.
-* **Quản trị rủi ro cá nhân hóa:** Định hình khẩu vị rủi ro và đánh giá bối cảnh gia đình thông qua hệ thống khảo sát định lượng, hỗ trợ lựa chọn danh mục đầu tư thích ứng theo từng giai đoạn cuộc đời.
+- **Lượng hóa các mục tiêu cuộc sống:** Biến các ước mơ (mua nhà, học vấn cho con cái, hưu trí an nhàn, khởi nghiệp) thành kế hoạch tài chính có lộ trình dòng tiền chính xác qua từng năm.
+- **Cầu nối giữa tài chính và sự nghiệp:** Xác định mức thu nhập cần thiết tại từng mốc tuổi và đối chiếu với năng lực tạo thu nhập thực tế từ nghề nghiệp, từ đó chủ động nâng cấp năng lực hoặc điều chỉnh mục tiêu kịp thời.
+- **Kiểm soát dòng tiền vi mô đến vĩ mô:** Kết hợp liền mạch giữa việc theo dõi ngân sách chi tiết trong 12 tháng và bức tranh tích lũy kéo dài hơn 30 năm.
+- **Quản trị rủi ro cá nhân hóa:** Định hình khẩu vị rủi ro và đánh giá bối cảnh gia đình thông qua hệ thống khảo sát định lượng, hỗ trợ lựa chọn danh mục đầu tư thích ứng theo từng giai đoạn cuộc đời.
 
 ---
 
@@ -20,13 +20,13 @@ Quản lý tài chính cá nhân hiệu quả không chỉ đơn thuần là vi�
 
 Hệ thống được thiết kế theo cấu trúc liên hoàn, đảm bảo tính đồng bộ dữ liệu hai chiều giữa các phân hệ:
 
-* **Thiết lập danh mục chủ (Từ khóa):** Không gian quản lý các danh mục thu nhập, chi phí, kế hoạch phát triển bản thân và rổ sản phẩm đầu tư với tỷ suất sinh lời cùng biên độ rủi ro kỳ vọng.
-* **Trung tâm chỉ huy dòng tiền (Dashboard):** Bảng điều khiển phân tích trực quan với các chỉ số tài chính tức thời, biểu đồ cơ cấu phân bổ, đối soát thu - chi - tiết kiệm và ma trận dữ liệu tổng hợp 12 tháng.
-* **Định vị bản thân & Hoàn cảnh:** Không gian đánh giá nội tại cá nhân, năng lực cốt lõi, môi trường làm việc và các ràng buộc trách nhiệm gia đình.
-* **Kế hoạch mục tiêu tài chính:** Bộ công cụ tính toán chi tiết cho từng khoản nợ và khoản đầu tư tích lũy, tự động kết xuất ra ma trận nhu cầu dòng tiền suốt 33 năm.
-* **Cân đối lộ trình nghề nghiệp:** Đối chiếu trực quan ba đường quỹ đạo thu nhập: *Thu nhập thực tế*, *Thu nhập cần đạt mục tiêu* và *Thu nhập theo lộ trình sự nghiệp*, tự động cảnh báo các giai đoạn thâm hụt tài chính.
-* **Theo dõi & Đối soát thu chi 12 tháng:** Nhật ký ghi nhận giao dịch thu chi thực tế, phân tích phương sai so với kế hoạch ngân sách và tính toán tự động chi phí tái đầu tư vào vốn con người (phát triển bản thân).
-* **Đánh giá rủi ro & Hoàn cảnh (Khảo sát):** Hệ thống chấm điểm trắc nghiệm định lượng chuẩn xác nhằm xác định khẩu vị đầu tư và chỉ số thuận lợi về bối cảnh tài chính.
+- **Thiết lập danh mục chủ (Từ khóa):** Không gian quản lý các danh mục thu nhập, chi phí, kế hoạch phát triển bản thân và rổ sản phẩm đầu tư với tỷ suất sinh lời cùng biên độ rủi ro kỳ vọng.
+- **Trung tâm chỉ huy dòng tiền (Dashboard):** Bảng điều khiển phân tích trực quan với các chỉ số tài chính tức thời, biểu đồ cơ cấu phân bổ, đối soát thu - chi - tiết kiệm và ma trận dữ liệu tổng hợp 12 tháng.
+- **Định vị bản thân & Hoàn cảnh:** Không gian đánh giá nội tại cá nhân, năng lực cốt lõi, môi trường làm việc và các ràng buộc trách nhiệm gia đình.
+- **Kế hoạch mục tiêu tài chính:** Bộ công cụ tính toán chi tiết cho từng khoản nợ và khoản đầu tư tích lũy, tự động kết xuất ra ma trận nhu cầu dòng tiền suốt 33 năm.
+- **Cân đối lộ trình nghề nghiệp:** Đối chiếu trực quan ba đường quỹ đạo thu nhập: *Thu nhập thực tế*, *Thu nhập cần đạt mục tiêu* và *Thu nhập theo lộ trình sự nghiệp*, tự động cảnh báo các giai đoạn thâm hụt tài chính.
+- **Theo dõi & Đối soát thu chi 12 tháng:** Nhật ký ghi nhận giao dịch thu chi thực tế, phân tích phương sai so với kế hoạch ngân sách và tính toán tự động chi phí tái đầu tư vào vốn con người (phát triển bản thân).
+- **Đánh giá rủi ro & Hoàn cảnh (Khảo sát):** Hệ thống chấm điểm trắc nghiệm định lượng chuẩn xác nhằm xác định khẩu vị đầu tư và chỉ số thuận lợi về bối cảnh tài chính.
 
 ---
 
@@ -40,64 +40,76 @@ Hệ thống tích hợp các công thức tài chính vi mô và lý thuyết d
 $$PMT = \frac{PV \cdot r_m \cdot (1 + r_m)^n}{(1 + r_m)^n - 1}$$
 
 Trong đó:
-* $PV$: Dư nợ gốc còn lại cần thanh toán ($PV = \text{Tổng giá trị} - \text{Đã tích lũy}$).
-* $r_m$: Lãi suất danh nghĩa theo tháng, với $r_m = \frac{r_{\text{năm}}}{12}$.
-* $n$: Tổng số kỳ thanh toán theo tháng ($n = (\text{Năm kết thúc} - \text{Năm bắt đầu} + 1) \times 12$).
+- $PV$: Dư nợ gốc còn lại cần thanh toán ($PV = \text{Tổng giá trị} - \text{Đã tích lũy}$).
+- $r_m$: Lãi suất danh nghĩa theo tháng, với $r_m = \frac{r_{\text{năm}}}{12}$.
+- $n$: Tổng số kỳ thanh toán theo tháng ($n = (\text{Năm kết thúc} - \text{Năm bắt đầu} + 1) \times 12$).
 
 ### 2. Mô hình quỹ tích lũy mục tiêu và giá trị tương lai hiệu chỉnh lạm phát (Inflation-Adjusted Sinking Fund)
 Các mục tiêu chi tiêu dài hạn (mua chung cư, quỹ học vấn, hưu trí) chịu sự bào mòn nghiêm trọng của lạm phát. Thuật toán tiến hành theo quy trình hai bước:
 
-* **Bước 1: Tính giá trị tương lai kỳ vọng ($FV$) có tính đến lạm phát:**
+- **Bước 1: Tính giá trị tương lai kỳ vọng ($FV$) có tính đến lạm phát:**
+
   $$FV = PV_0 \cdot (1 + i)^t$$
+
   Với $PV_0$ là chi phí hiện giá tại thời điểm lập kế hoạch, $i$ là tỷ lệ lạm phát bình quân hàng năm, và $t$ là số năm cho đến khi thực hiện mục tiêu ($t = \text{Tuổi thực hiện} - \text{Tuổi hiện tại}$).
 
-* **Bước 2: Xác định lượng vốn cần tích lũy hàng tháng:**
+- **Bước 2: Xác định lượng vốn cần tích lũy hàng tháng:**
   Dựa trên công thức giá trị tương lai của dòng niên kim tích lũy định kỳ (Sinking Fund Factor):
+
   $$PMT_{\text{invest}} = \frac{FV \cdot r_m}{(1 + r_m)^n - 1}$$
+
   Với $r_m = \frac{r_{\text{kỳ vọng}}}{12}$ là tỷ suất sinh lời bình quân tháng của danh mục phân bổ.
 
 ### 3. Mô hình phân bổ tài sản thích ứng theo vòng đời (Lifecycle Asset Allocation Model)
 Khẩu vị rủi ro và khả năng gánh chịu tổn thất giảm dần theo độ tuổi khi thời gian phục hồi vốn ngắn lại. Thuật toán tự động tái cấu trúc tỷ trọng tài sản danh mục theo quy tắc điều chỉnh tuổi:
 
-* **Tỷ trọng Cổ phiếu & Chứng chỉ quỹ tăng trưởng ($W_{\text{stocks}}$):**
-  $$W_{\text{stocks}} = \max\left(15\%,\ \min\left(75\%,\ 100 - \text{Tuổi} + 5\right)\right)$$
-* **Tỷ trọng Trái phiếu & Thu nhập cố định ($W_{\text{bonds}}$):**
-  $$W_{\text{bonds}} = \min\left(60\%,\ \max\left(15\%,\ \text{Tuổi} \times 0.9\right)\right)$$
-* **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Thiết lập mức cố định $7\%$ cho giai đoạn tích lũy sớm ($< 35$ tuổi) và nâng lên $10\%$ cho giai đoạn trung niên nhằm bảo vệ dòng thu nhập gia đình.
-* **Tỷ trọng Tiền gửi & Tài sản thanh khoản ($W_{\text{cash}}$):** Đảm bảo tính thanh khoản với mức sàn tối thiểu:
-  $$W_{\text{cash}} = \max\left(5\%,\ 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
-* **Tỷ suất sinh lời kỳ vọng tổng thể:**
+- **Tỷ trọng Cổ phiếu & Chứng chỉ quỹ tăng trưởng ($W_{\text{stocks}}$):**
+
+  $$W_{\text{stocks}} = \max\left(15\%,\, \min\left(75\%,\, 100 - \text{Tuổi} + 5\right)\right)$$
+
+- **Tỷ trọng Trái phiếu & Thu nhập cố định ($W_{\text{bonds}}$):**
+
+  $$W_{\text{bonds}} = \min\left(60\%,\, \max\left(15\%,\, \text{Tuổi} \times 0.9\right)\right)$$
+
+- **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Thiết lập mức cố định 7% cho giai đoạn tích lũy sớm ($< 35$ tuổi) và nâng lên 10% cho giai đoạn trung niên nhằm bảo vệ dòng thu nhập gia đình.
+- **Tỷ trọng Tiền gửi & Tài sản thanh khoản ($W_{\text{cash}}$):** Đảm bảo tính thanh khoản với mức sàn tối thiểu:
+
+  $$W_{\text{cash}} = \max\left(5\%,\, 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
+
+- **Tỷ suất sinh lời kỳ vọng tổng thể:**
+
   $$\bar{R} = \sum_{j} W_j \cdot R_j$$
 
 ### 4. Thuật toán nghịch đảo thu nhập từ tỷ lệ tiết kiệm mục tiêu (Savings-to-Income Inversion)
-Thay vì chi tiêu trước rồi tiết kiệm phần thừa, hệ thống vận hành theo nguyên lý trả cho bản thân trước (*Pay Yourself First*). 
+Thay vì chi tiêu trước rồi tiết kiệm phần thừa, hệ thống vận hành theo nguyên lý trả cho bản thân trước (*Pay Yourself First*).
 
 Từ tổng số tiền tiết kiệm và nghĩa vụ nợ bắt buộc trong năm $y$ ($\sum PMT_{y}$), hệ thống nghịch đảo để tìm ra mức thu nhập ròng hàng tháng tối thiểu cần đạt:
 
 $$\text{Thu nhập cần có}_y = \frac{\sum PMT_y}{\text{Tỷ trọng tiết kiệm mục tiêu}}$$
 
-*(Tỷ trọng tiết kiệm mặc định được chuẩn hóa ở mức $40\%$ hoặc điều chỉnh tùy theo khả năng cá nhân).*
+*(Tỷ trọng tiết kiệm mặc định được chuẩn hóa ở mức 40% hoặc điều chỉnh tùy theo khả năng cá nhân).*
 
 ### 5. Thuật toán phân tích thâm hụt và cảnh báo độ lệch sự nghiệp (Career Deficit Engine)
 Hệ thống thực hiện so khớp từng điểm dữ liệu trên dòng thời gian giữa lộ trình thu nhập từ vị trí công việc ($I_{\text{route}}$) và mức thu nhập cần thiết để hiện thực hóa các mục tiêu ($I_{\text{target}}$):
 
 $$\Delta I = I_{\text{route}} - I_{\text{target}}$$
 
-* **Trạng thái Đạt yêu cầu ($\Delta I \ge 0$):** Lộ trình sự nghiệp đủ sức chi trả cho các mục tiêu; phân đoạn biểu đồ hiển thị sắc xanh lục.
-* **Trạng thái Cảnh báo thâm hụt ($\Delta I < 0$):** Xuất hiện khoảng cách tài chính cần khắc phục; hệ thống tự động tính toán biên độ thiếu hụt và chuyển cảnh báo màu đỏ trên đồ thị.
+- **Trạng thái Đạt yêu cầu ($\Delta I \ge 0$):** Lộ trình sự nghiệp đủ sức chi trả cho các mục tiêu; phân đoạn biểu đồ hiển thị sắc xanh lục.
+- **Trạng thái Cảnh báo thâm hụt ($\Delta I < 0$):** Xuất hiện khoảng cách tài chính cần khắc phục; hệ thống tự động tính toán biên độ thiếu hụt và chuyển cảnh báo màu đỏ trên đồ thị.
 
 ### 6. Mô hình phân tích phương sai ngân sách (Budget Variance & Reconciliation)
 Quy trình đối soát cuối mỗi tháng so sánh giữa dự toán ngân sách và số liệu thực tế phát sinh:
 
-* **Phương sai thu nhập:** $Variance_{\text{income}} = Actual - Plan$ (Dương là thuận lợi, âm là bất lợi).
-* **Phương sai chi phí:** $Variance_{\text{expense}} = Plan - Actual$ (Dương là tiết kiệm ngân sách, âm là vượt chi).
-* **Lũy kế chênh lệch chi tiêu:** Theo dõi xu hướng tích lũy chênh lệch qua 12 tháng nhằm kịp thời điều chỉnh hành vi chi tiêu trong các quý tiếp theo:
-  $$CumDiff_m = \sum_{k=1}^{m} \left(Actual_k - Plan_k\right)$$
+- **Phương sai thu nhập:** $\text{Variance}_{\text{income}} = \text{Actual} - \text{Plan}$ (Dương là thuận lợi, âm là bất lợi).
+- **Phương sai chi phí:** $\text{Variance}_{\text{expense}} = \text{Plan} - \text{Actual}$ (Dương là tiết kiệm ngân sách, âm là vượt chi).
+- **Lũy kế chênh lệch chi tiêu:** Theo dõi xu hướng tích lũy chênh lệch qua 12 tháng nhằm kịp thời điều chỉnh hành vi chi tiêu trong các quý tiếp theo:
+
+  $$\text{CumDiff}_m = \sum_{k=1}^{m} (\text{Actual}_k - \text{Plan}_k)$$
 
 ### 7. Mô hình lượng hóa tâm lý và bối cảnh tài chính (Psychometric Scoring)
 Hệ thống lượng hóa các yếu tố định tính thông qua hai bộ khảo sát với thang điểm có trọng số:
-* **Khảo sát chịu đựng rủi ro:** Chấm điểm dựa trên thái độ với thua lỗ ngắn hạn, tầm nhìn rút vốn, mức độ hiểu biết về lạm phát và quy mô tài sản. Điểm số phân tầng từ *Cực kỳ thận trọng* đến *Quyết liệt*, trực tiếp hỗ trợ định hướng tỷ trọng danh mục.
-* **Khảo sát hoàn cảnh tài chính:** Đo lường các nghĩa vụ phụ thuộc, bảo chứng từ gia đình, thói quen lập kế hoạch và tốc độ gia tăng thu nhập trong quá khứ để phân loại điều kiện phát triển tài chính từ *Bất lợi* đến *Cực kỳ thuận lợi*.
+- **Khảo sát chịu đựng rủi ro:** Chấm điểm dựa trên thái độ với thua lỗ ngắn hạn, tầm nhìn rút vốn, mức độ hiểu biết về lạm phát và quy mô tài sản. Điểm số phân tầng từ *Cực kỳ thận trọng* đến *Quyết liệt*, trực tiếp hỗ trợ định hướng tỷ trọng danh mục.
+- **Khảo sát hoàn cảnh tài chính:** Đo lường các nghĩa vụ phụ thuộc, bảo chứng từ gia đình, thói quen lập kế hoạch và tốc độ gia tăng thu nhập trong quá khứ để phân loại điều kiện phát triển tài chính từ *Bất lợi* đến *Cực kỳ thuận lợi*.
 
 ---
 
@@ -105,24 +117,22 @@ Hệ thống lượng hóa các yếu tố định tính thông qua hai bộ kh�
 
 Hệ thống hoạt động trên nguyên tắc truyền dữ liệu theo luồng một chiều kết hợp đồng bộ hóa tức thời:
 
-* **Từ khóa làm gốc:** Việc chỉnh sửa bất kỳ danh mục chi phí hay sản phẩm tài chính nào tại trang *Từ khóa* sẽ tự động cập nhật đến toàn bộ danh mục lựa chọn ở bảng lập kế hoạch, các bảng theo dõi 12 tháng và nhãn hiển thị trên biểu đồ.
-* **Liên kết phát triển bản thân:** Mọi khoản chi cho giáo dục và nâng cao kỹ năng tại phân hệ phát triển bản thân hàng tháng được tự động tổng hợp và ghi nhận vào chi phí thực tế của danh mục *Chi tiền phát triển bản thân*, đảm bảo không xảy ra hiện tượng lệch số liệu kế toán.
-* **Liên kết ma trận và biểu đồ sự nghiệp:** Khi người dùng thay đổi giá trị hoặc thời hạn của một mục tiêu trong bảng lập kế hoạch, ma trận 33 năm sẽ tự động tính lại dòng tiền, từ đó định hình lại đường mục tiêu tài chính trên biểu đồ lộ trình nghề nghiệp.
+- **Từ khóa làm gốc:** Việc chỉnh sửa bất kỳ danh mục chi phí hay sản phẩm tài chính nào tại trang *Từ khóa* sẽ tự động cập nhật đến toàn bộ danh mục lựa chọn ở bảng lập kế hoạch, các bảng theo dõi 12 tháng và nhãn hiển thị trên biểu đồ.
+- **Liên kết phát triển bản thân:** Mọi khoản chi cho giáo dục và nâng cao kỹ năng tại phân hệ phát triển bản thân hàng tháng được tự động tổng hợp và ghi nhận vào chi phí thực tế của danh mục *Chi tiền phát triển bản thân*, đảm bảo không xảy ra hiện tượng lệch số liệu kế toán.
+- **Liên kết ma trận và biểu đồ sự nghiệp:** Khi người dùng thay đổi giá trị hoặc thời hạn của một mục tiêu trong bảng lập kế hoạch, ma trận 33 năm sẽ tự động tính lại dòng tiền, từ đó định hình lại đường mục tiêu tài chính trên biểu đồ lộ trình nghề nghiệp.
 
 ---
 
 ## Giá trị ứng dụng thực tiễn
 
 Hệ thống loại bỏ hoàn toàn tính mơ hồ trong việc lập kế hoạch tài chính, mang lại cho người dùng:
-* Cái nhìn thấu đáo về khả năng tài chính trong suốt vòng đời làm việc và nghỉ hưu.
-* Động lực rõ ràng trong công việc khi hiểu chính xác một mức tăng lương tương ứng với việc hoàn thành mục tiêu cụ thể nào.
-* Kỷ luật kiểm soát ngân sách dựa trên số liệu đối soát định kỳ thay vì cảm tính.
-* Sự an tâm nhờ danh mục tài sản được thiết kế cân bằng giữa tăng trưởng và an toàn vốn qua từng mốc tuổi.
-
-
-
+- Cái nhìn thấu đáo về khả năng tài chính trong suốt vòng đời làm việc và nghỉ hưu.
+- Động lực rõ ràng trong công việc khi hiểu chính xác một mức tăng lương tương ứng với việc hoàn thành mục tiêu cụ thể nào.
+- Kỷ luật kiểm soát ngân sách dựa trên số liệu đối soát định kỳ thay vì cảm tính.
+- Sự an tâm nhờ danh mục tài sản được thiết kế cân bằng giữa tăng trưởng và an toàn vốn qua từng mốc tuổi.
 
 ---
+
 ## Hiện thực Thuật toán & Kiến trúc Mã nguồn
 
 Hệ thống được thiết kế theo mô hình luồng dữ liệu một chiều phản ứng (Reactive One-Way Data Flow), trong đó `AppState` đóng vai trò là một Single Source of Truth (nguồn chân lý duy nhất). Tất cả các phép tính toán tài chính, cập nhật DOM và biểu đồ đều được kích hoạt tự động theo chuỗi phụ thuộc khi dữ liệu đầu vào biến động.
