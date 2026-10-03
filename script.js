@@ -220,7 +220,6 @@ function calculateAgeMilestones() {
   });
 }
 
-// YÊU CẦU 3: THU NHẬP THỰC TẾ CHỈ TÍNH TỚI THỜI ĐIỂM HIỆN TẠI (2026 - TUỔI HIỆN TẠI), CÁC NĂM SAU ĐỂ TRỐNG
 function calculateCareerDetails() {
   const baseAge = AppState.currentAge;
   const ages = [
@@ -1229,7 +1228,7 @@ function renderCareerTables() {
     `).join('');
   }
 
-  // YÊU CẦU 3: BẢNG LỘ TRÌNH CHI TIẾT - CHỈ CHO PHÉP NHẬP THU NHẬP THỰC TẾ ĐẾN 2026
+  // BẢNG LỘ TRÌNH CHI TIẾT
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
@@ -1250,7 +1249,7 @@ function renderCareerTables() {
           
           <td class="text-right font-bold text-gold">${item.target.toFixed(1)}</td>
           
-          <!-- THU NHẬP THEO LỘ TRÌNH NGHỀ NGHIỆP: CHO PHÉP NGƯỜI DÙNG NHẬP DATA ĐẦY ĐỦ -->
+          <!-- THU NHẬP THEO LỘ TRÌNH NGHỀ NGHIỆP -->
           <td class="text-right font-bold cell-blue ${isDeficit ? 'text-deficit-danger' : 'text-green'}" 
               contenteditable="true" spellcheck="false" 
               onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
@@ -1259,7 +1258,7 @@ function renderCareerTables() {
           
           <td class="text-center">
             ${isDeficit 
-              ? `<span class="deficit-badge">⚠️️ Thiếu hụt (${diffVal} tr)</span>` 
+              ? `<span class="deficit-badge">⚠ Thiếu hụt (${diffVal} tr)</span>` 
               : `<span class="success-badge">✅ Đạt yêu cầu</span>`
             }
           </td>
@@ -1277,13 +1276,13 @@ window.updateCareerDetailField = function(idx, field, val) {
   }
 };
 
+// ĐÃ CẬP NHẬT: LOẠI BỎ THU NHẬP THỰC TẾ KHỎI BIỂU ĐỒ VÀ CHỈ HIỂN THỊ MỤC TIÊU VÀ LỘ TRÌNH NGHỀ NGHIỆP
 function renderCareerChart() {
   const canvas = document.getElementById('careerChart');
   if (!canvas || typeof Chart === 'undefined') return;
 
   const dataList = AppState.careerDetailList.length > 0 ? AppState.careerDetailList : calculateCareerDetails();
   const labels = dataList.map(x => `${x.age} tuổi`);
-  const actuals = dataList.map(x => x.actual);
   const targets = dataList.map(x => x.target);
   const routes = dataList.map(x => x.route);
 
@@ -1293,18 +1292,6 @@ function renderCareerChart() {
     data: {
       labels: labels,
       datasets: [
-        {
-          label: "Thu nhập thực tế (đến 2026)",
-          data: actuals,
-          borderColor: "#2563eb",
-          backgroundColor: "#2563eb",
-          borderWidth: 3,
-          pointRadius: 6,
-          pointBackgroundColor: "#2563eb",
-          fill: false,
-          tension: 0.25,
-          spanGaps: false
-        },
         {
           label: "Số tiền cần có để đạt mục tiêu tài chính",
           data: targets,
@@ -1377,7 +1364,7 @@ function renderCareerChart() {
   });
 }
 
-// ==================== YÊU CẦU 4: BẢNG KHẢO SÁT DẠNG GOOGLE FORM ====================
+// ==================== BẢNG KHẢO SÁT DẠNG GOOGLE FORM ====================
 function renderGoogleFormSurvey() {
   const p1Container = document.getElementById('gform-questions-p1');
   if (p1Container) {
@@ -1591,7 +1578,7 @@ function evaluateSurveys() {
   if (ctx2) ctx2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 }
 
-// ==================== YÊU CẦU 2: MỤC TIÊU TÀI CHÍNH LỰA CHỌN TỪ MT BẢN THÂN ====================
+// ==================== MỤC TIÊU TÀI CHÍNH LỰA CHỌN TỪ MT BẢN THÂN ====================
 function calculateMonthlyNeed(goal) {
   const nYears = Math.max(1, goal.end - goal.start + 1);
   const targetNeed = Math.max(0, goal.val - (goal.paid || 0));
@@ -1616,7 +1603,6 @@ function renderTcGoalsFormTable() {
   const personalGoalTitles = getAllPersonalGoalTitles();
 
   tb.innerHTML = AppState.tcGoals.map((g, idx) => {
-    // Đảm bảo tên hiện tại luôn có trong options
     const options = [...personalGoalTitles];
     if (g.name && !options.includes(g.name)) {
       options.unshift(g.name);
@@ -1970,8 +1956,7 @@ function updateMatrixChartData() {
   tcMatrixChartInstance.update();
 }
 
-// ==================== YÊU CẦU 1: MỤC TIÊU BẢN THÂN CÓ BORDER CHUẨN 4 CỘT ====================
-// Cấu trúc 4 cột đúng yêu cầu: Thứ tự mục tiêu - Thời điểm thực hiện mục tiêu - Nội dung mục tiêu - Lựa chọn xoá (nút)
+// ==================== MỤC TIÊU BẢN THÂN ====================
 function renderTargetTables() {
   const tbDebt = document.getElementById('tbody-debt-target');
   if (tbDebt) {
