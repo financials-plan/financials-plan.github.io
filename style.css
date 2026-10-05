@@ -40,11 +40,19 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+body, button, input, select, textarea {
   font-family: var(--font-sans);
+}
+
+/* Bảo vệ icon Font Awesome không bị ghi đè font chữ */
+.fa, .fas, .fa-solid, .fa-regular, .fa-brands {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
 }
 
 body {
@@ -491,7 +499,6 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* NÚT THÊM NỔI BẬT KHÔNG BỊ MỜ ẨN (FIX HÌNH ẢNH 1) */
 .btn-table-add-prominent {
   display: inline-flex;
   align-items: center;
@@ -590,7 +597,16 @@ body {
 .mb-4 { margin-bottom: 20px; }
 .mt-4 { margin-top: 20px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-.table-scroll-x { width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); background: #ffffff; }
+
+/* Khung cuộn ngang bảo đảm responsive cho tất cả bảng */
+.table-scroll-x {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: #ffffff;
+}
 
 /* ==================== DASHBOARD SECTION ==================== */
 .dash-kpi-three-strip {
@@ -877,7 +893,6 @@ body {
 }
 .btn-next-step:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
 
-/* BẢNG FIT KHUNG WEB & TỰ ĐỘNG XUỐNG DÒNG (FIX HÌNH ẢNH 2) */
 .tc-form-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -918,7 +933,6 @@ body {
 }
 .tc-input-table input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); }
 
-/* Phân bổ tỷ lệ cột cho bảng mục tiêu vừa vặn mọi màn hình */
 .tc-input-table th.th-name { min-width: 130px; }
 .tc-input-table th.th-type { min-width: 95px; width: 10%; }
 .tc-input-table th.th-num { min-width: 80px; width: 9%; }
@@ -999,7 +1013,7 @@ body {
 .deficit-badge { display: inline-block; background-color: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.70rem; border: 1px solid #fecaca; }
 .success-badge { display: inline-block; background-color: #d1fae5; color: #059669; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.70rem; border: 1px solid #a7f3d0; }
 
-/* MONTH DETAIL */
+/* ==================== MONTH DETAIL ==================== */
 .month-top-grid { display: grid; grid-template-columns: 280px 1fr; gap: 18px; background: #ffffff; padding: 18px; border: 1px solid var(--border-color); border-radius: 10px; box-shadow: var(--shadow-sm); }
 .month-kpi-stack { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
 .kpi-box { display: flex; align-items: center; justify-content: space-between; border-radius: 8px; overflow: hidden; height: 50px; border: 1px solid var(--border-color); }
@@ -1202,83 +1216,113 @@ body {
 @media (max-width: 768px) {
   body {
     flex-direction: column;
+    overflow-x: hidden;
     overflow-y: auto;
     height: auto;
     min-height: 100vh;
   }
-  
+
   .sidebar {
     width: 100%;
     height: auto;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .sidebar-header {
-    padding: 12px 16px;
+    padding: 10px 14px;
   }
 
-  /* Tối ưu menu cuộn ngang trên điện thoại */
+  /* THANH NAV MENU MOBILE: Cuộn ngang mượt mà, hiển thị đầy đủ các mục */
   .nav-menu {
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 8px 12px;
-    gap: 8px;
+    padding: 8px 10px;
+    gap: 6px;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
+    align-items: center;
   }
 
   .nav-section-label {
-    display: none; /* Ẩn bớt nhãn tiêu đề menu trên mobile để tránh rối */
+    display: none;
   }
 
   .nav-item {
     flex-shrink: 0;
-    padding: 7px 12px;
+    padding: 6px 12px;
     font-size: 0.74rem;
+    height: 34px;
+    border-radius: 6px;
   }
 
   .nav-item.two-lines {
-    padding: 7px 12px;
+    padding: 6px 12px;
+    line-height: normal;
   }
 
-  /* Khung chọn 12 tháng gọn gàng, hiển thị đầy đủ */
+  /* KHUNG CHỌN 12 THÁNG TRÊN MOBILE: HIỂN THỊ ĐẦY ĐỦ TRÊN MỘT HÀNG CUỘN TIỆN LỢI */
   .month-nav-grid {
     display: flex;
+    flex-direction: row;
     flex-wrap: nowrap;
-    overflow-x: auto;
+    overflow-x: visible;
     gap: 6px;
-    padding: 2px 0;
-    -webkit-overflow-scrolling: touch;
+    padding: 0;
   }
 
   .nav-item.nav-month {
     flex-shrink: 0;
-    min-width: 72px;
-    padding: 6px 10px;
+    min-width: 68px;
+    padding: 6px 8px;
+    height: 34px;
   }
 
   .main-content {
     overflow: visible;
+    width: 100%;
   }
 
   .content-body {
-    padding: 14px 12px;
+    padding: 12px 10px;
+    overflow-x: hidden;
   }
 
   .app-topbar {
-    padding: 0 16px;
-    height: 48px;
+    padding: 0 12px;
+    height: 46px;
   }
-  
+
   .app-topbar h1 {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
-  
+
   .currency-tag {
-    font-size: 0.70rem;
+    font-size: 0.68rem;
     padding: 4px 8px;
+  }
+
+  .table-scroll-x {
+    margin-bottom: 14px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .excel-table-bordered,
+  .excel-table,
+  .tc-input-table {
+    min-width: 640px;
+  }
+
+  .month-top-grid {
+    padding: 12px;
+  }
+
+  .month-bar-canvas-wrap {
+    height: 180px;
   }
 }

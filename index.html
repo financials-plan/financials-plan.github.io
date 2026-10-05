@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sổ Tài Chính Cá Nhân</title>
-  <!-- Google Font: Inter & Plus Jakarta Sans -->
+  <!-- Google Font: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -17,7 +17,6 @@
 </head>
 <body>
 
-  <!-- SIDEBAR DỌC -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="brand-badge"><i class="fa-solid fa-wallet"></i></div>
@@ -43,10 +42,10 @@
         <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
       </button>
       <button class="nav-item two-lines" id="btn-tab-candoi" onclick="switchTab('tab-candoi')">
-        <i class="fa-solid fa-route"></i><span>Cân đối<br>lộ trình nghề nghiệp</span>
+        <i class="fa-solid fa-route"></i><span>Cân đối lộ trình</span>
       </button>
       <button class="nav-item two-lines" id="btn-tab-kehoach" onclick="switchTab('tab-kehoach')">
-        <i class="fa-solid fa-wallet"></i><span>Kế hoạch<br>thu nhập & chi tiêu</span>
+        <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
       </button>
 
       <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
@@ -72,7 +71,6 @@
     </nav>
   </aside>
 
-  <!-- KHUNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
     <header class="app-topbar">
@@ -323,26 +321,27 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN ==================== -->
       <div id="tab-muctieu-bt" class="tab-pane">
         <div class="target-container">
           
           <div class="target-section">
             <div class="target-header-caption"><i class="fa-solid fa-flag"></i> ĐỊNH HƯỚNG TẦM NHÌN DÀI HẠN</div>
-            <table class="target-table">
-              <thead>
-                <tr>
-                  <th style="width: 160px;">Mốc thời điểm</th>
-                  <th>Nội dung mục tiêu dài hạn</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false">50 tuổi</td>
-                  <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false">Từng bước đạt mục tiêu tài chính trong tương lai và độc lập tài chính bền vững</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th style="width: 160px;">Mốc thời điểm</th>
+                    <th>Nội dung mục tiêu dài hạn</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false">50 tuổi</td>
+                    <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false">Từng bước đạt mục tiêu tài chính trong tương lai và độc lập tài chính bền vững</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div class="target-section">
@@ -387,55 +386,63 @@
           </div>
 
           <div class="target-section">
-            <table class="target-table">
-              <thead><tr><th class="text-center"><i class="fa-solid fa-percent"></i> Tỷ lệ thu nhập mục tiêu dành để tiết kiệm đầu tư</th></tr></thead>
-              <tbody><tr><td class="cell-primary-light text-center cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" id="target-savings-rate-val">40%</td></tr></tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="target-table">
+                <thead><tr><th class="text-center"><i class="fa-solid fa-percent"></i> Tỷ lệ thu nhập mục tiêu dành để tiết kiệm đầu tư</th></tr></thead>
+                <tbody><tr><td class="cell-primary-light text-center cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" id="target-savings-rate-val">40%</td></tr></tbody>
+              </table>
+            </div>
           </div>
 
           <div class="target-section">
-            <table class="target-table">
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    <i class="fa-solid fa-award"></i> Điểm mạnh & Giá trị cốt lõi bản thân
-                    <button class="btn-table-add ml-2" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
-                  </th>
-                  <th style="width: 60px;" class="text-center">Xoá</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-skills"></tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th class="text-left">
+                      <i class="fa-solid fa-award"></i> Điểm mạnh & Giá trị cốt lõi bản thân
+                      <button class="btn-table-add ml-2" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </th>
+                    <th style="width: 60px;" class="text-center">Xoá</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-skills"></tbody>
+              </table>
+            </div>
           </div>
 
           <div class="target-section">
-            <table class="target-table">
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    <i class="fa-solid fa-people-roof"></i> Gia đình & Điểm tựa nguồn lực
-                    <button class="btn-table-add ml-2" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
-                  </th>
-                  <th style="width: 60px;" class="text-center">Xoá</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-family"></tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th class="text-left">
+                      <i class="fa-solid fa-people-roof"></i> Gia đình & Điểm tựa nguồn lực
+                      <button class="btn-table-add ml-2" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </th>
+                    <th style="width: 60px;" class="text-center">Xoá</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-family"></tbody>
+              </table>
+            </div>
           </div>
 
           <div class="target-section">
-            <table class="target-table">
-              <thead>
-                <tr>
-                  <th class="text-left">
-                    <i class="fa-solid fa-briefcase"></i> Môi trường làm việc & Tiềm năng bứt phá
-                    <button class="btn-table-add ml-2" onclick="addJobRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
-                  </th>
-                  <th style="width: 60px;" class="text-center">Xoá</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-job"></tbody>
-            </table>
+            <div class="table-scroll-x">
+              <table class="target-table">
+                <thead>
+                  <tr>
+                    <th class="text-left">
+                      <i class="fa-solid fa-briefcase"></i> Môi trường làm việc & Tiềm năng bứt phá
+                      <button class="btn-table-add ml-2" onclick="addJobRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                    </th>
+                    <th style="width: 60px;" class="text-center">Xoá</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-job"></tbody>
+              </table>
+            </div>
           </div>
 
           <div class="target-section survey-result-section">
