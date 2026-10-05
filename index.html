@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng Quản Lý & Hoạch Định Tài Chính Cá Nhân Dễ Dùng</title>
-  <!-- Google Font: Montserrat -->
+  <title>Sổ Tài Chính Cá Nhân</title>
+  <!-- Google Font: Inter & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
@@ -20,46 +20,54 @@
   <!-- SIDEBAR DỌC -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <span class="diamond-icon">💎</span>
-      <span>TÀI CHÍNH</span>
+      <div class="brand-badge"><i class="fa-solid fa-wallet"></i></div>
+      <div class="brand-text">
+        <span class="brand-title">SỔ TÀI CHÍNH</span>
+      </div>
     </div>
 
     <nav class="nav-menu">
+      <div class="nav-section-label">TỔNG QUAN & THIẾT LẬP</div>
       <button class="nav-item active" id="btn-tab-tukhoa" onclick="switchTab('tab-tukhoa')">
-        <i class="fa-solid fa-key"></i><span>Từ khóa</span>
+        <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
       </button>
       <button class="nav-item" id="btn-tab-dashboard" onclick="switchTab('tab-dashboard')">
-        <i class="fa-solid fa-chart-pie"></i><span>Dashboard</span>
+        <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
       </button>
+
+      <div class="nav-section-label">MỤC TIÊU & LỘ TRÌNH</div>
       <button class="nav-item" id="btn-tab-muctieu-bt" onclick="switchTab('tab-muctieu-bt')">
         <i class="fa-solid fa-bullseye"></i><span>Mục tiêu bản thân</span>
       </button>
       <button class="nav-item" id="btn-tab-muctieu-tc" onclick="switchTab('tab-muctieu-tc')">
-        <i class="fa-solid fa-sack-dollar"></i><span>Mục tiêu tài chính</span>
+        <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
       </button>
       <button class="nav-item two-lines" id="btn-tab-candoi" onclick="switchTab('tab-candoi')">
-        <i class="fa-solid fa-briefcase"></i><span>Cân đối<br>lộ trình nghề nghiệp</span>
+        <i class="fa-solid fa-route"></i><span>Cân đối<br>lộ trình nghề nghiệp</span>
       </button>
       <button class="nav-item two-lines" id="btn-tab-kehoach" onclick="switchTab('tab-kehoach')">
-        <i class="fa-solid fa-file-invoice-dollar"></i><span>Kế hoạch<br>thu nhập & chi tiêu</span>
+        <i class="fa-solid fa-wallet"></i><span>Kế hoạch<br>thu nhập & chi tiêu</span>
       </button>
 
-      <!-- 12 NÚT THEO DÕI THÁNG -->
-      <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Theo dõi tháng 1</span></button>
-      <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Theo dõi tháng 2</span></button>
-      <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Theo dõi tháng 3</span></button>
-      <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Theo dõi tháng 4</span></button>
-      <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Theo dõi tháng 5</span></button>
-      <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Theo dõi tháng 6</span></button>
-      <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Theo dõi tháng 7</span></button>
-      <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Theo dõi tháng 8</span></button>
-      <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Theo dõi tháng 9</span></button>
-      <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Theo dõi tháng 10</span></button>
-      <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Theo dõi tháng 11</span></button>
-      <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Theo dõi tháng 12</span></button>
+      <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
+      <div class="month-nav-grid">
+        <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
+        <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
+        <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
+        <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
+        <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
+        <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
+        <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
+        <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
+        <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
+        <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
+        <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
+        <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+      </div>
 
+      <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
       <button class="nav-item" id="btn-tab-khaosat" onclick="switchTab('tab-khaosat')">
-        <i class="fa-solid fa-clipboard-question"></i><span>Bảng khảo sát</span>
+        <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
       </button>
     </nav>
   </aside>
@@ -67,9 +75,14 @@
   <!-- KHUNG NỘI DUNG CHÍNH -->
   <main class="main-content">
     
-    <header class="orange-banner">
-      <h1 id="current-title">TỪ KHÓA</h1>
-      <span class="unit-text">Đơn vị: triệu đồng</span>
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <span class="status-indicator"></span>
+        <h1 id="current-title">TỪ KHÓA THIẾT LẬP</h1>
+      </div>
+      <div class="topbar-right">
+        <span class="currency-tag"><i class="fa-solid fa-coins"></i> Đơn vị tính: Triệu VNĐ</span>
+      </div>
     </header>
 
     <section class="content-body">
@@ -77,89 +90,93 @@
       <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
       <div id="tab-tukhoa" class="tab-pane active">
         <div class="top-info-row">
-          <div class="info-block block-orange">
-            <div class="info-header">Năm bắt đầu theo dõi</div>
+          <div class="info-block block-modern-accent">
+            <div class="info-header"><i class="fa-regular fa-calendar"></i> Năm bắt đầu theo dõi</div>
             <div class="info-body num-blue" id="input-year" contenteditable="true" spellcheck="false">2026</div>
           </div>
 
-          <div class="info-block block-green">
-            <div class="info-header">Tuổi của bạn năm <span class="dynamic-year">2026</span></div>
+          <div class="info-block block-modern-dark">
+            <div class="info-header"><i class="fa-regular fa-user"></i> Tuổi của bạn năm <span class="dynamic-year">2026</span></div>
             <div class="info-body num-blue" id="input-age" contenteditable="true" spellcheck="false">21</div>
           </div>
 
           <div class="color-convention-block">
-            <div class="convention-title">Quy ước màu chữ:</div>
-            <div class="convention-item"><span class="color-rect bg-blue"></span><span class="text-blue-rule">Màu xanh dương: Nhập dữ liệu</span></div>
-            <div class="convention-item"><span class="color-rect bg-black"></span><span class="text-black-rule">Màu đen: Kết quả trung gian</span></div>
-            <div class="convention-item"><span class="color-rect bg-red"></span><span class="text-red-rule">Màu đỏ: Dữ liệu quan trọng</span></div>
+            <div class="convention-title"><i class="fa-solid fa-circle-info"></i> Quy ước dữ liệu trên trang:</div>
+            <div class="convention-item"><span class="color-rect bg-blue"></span><span class="text-blue-rule">Chữ xanh dương: Nhập số liệu trực tiếp</span></div>
+            <div class="convention-item"><span class="color-rect bg-black"></span><span class="text-black-rule">Chữ xám / đen: Giá trị tính toán tự động</span></div>
+            <div class="convention-item"><span class="color-rect bg-red"></span><span class="text-red-rule">Chữ đỏ / cam: Cảnh báo & Khoản quan trọng</span></div>
           </div>
         </div>
 
         <div class="sheet-tables-container">
+          <!-- Chi phí -->
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
-                <tr class="header-main-orange">
+                <tr class="header-main-primary">
                   <th colspan="3">
                     <div class="table-header-flex">
-                      <span class="title">Danh mục chi phí</span>
+                      <span class="title"><i class="fa-solid fa-arrow-down-wide-short"></i> Danh mục chi phí</span>
                       <button class="btn-table-add" onclick="addExpenseRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                     </div>
                   </th>
                 </tr>
-                <tr class="header-sub-orange"><th style="width: 35px;">#</th><th>Khoản mục</th><th style="width: 40px;">Xóa</th></tr>
+                <tr class="header-sub"><th style="width: 40px;">#</th><th>Khoản mục chi tiêu</th><th style="width: 45px;">Xóa</th></tr>
               </thead>
               <tbody id="tbody-expenses"></tbody>
             </table>
           </div>
 
+          <!-- Thu nhập -->
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
-                <tr class="header-main-green">
+                <tr class="header-main-success">
                   <th colspan="3">
                     <div class="table-header-flex">
-                      <span class="title">Danh mục thu nhập</span>
+                      <span class="title"><i class="fa-solid fa-arrow-up-right-dots"></i> Danh mục thu nhập</span>
                       <button class="btn-table-add" onclick="addIncomeRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                     </div>
                   </th>
                 </tr>
-                <tr class="header-sub-green"><th style="width: 35px;">#</th><th>Khoản mục</th><th style="width: 40px;">Xóa</th></tr>
+                <tr class="header-sub"><th style="width: 40px;">#</th><th>Nguồn thu nhập</th><th style="width: 45px;">Xóa</th></tr>
               </thead>
               <tbody id="tbody-income"></tbody>
             </table>
           </div>
 
+          <!-- Đào tạo -->
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
-                <tr class="header-main-orange">
+                <tr class="header-main-warning">
                   <th colspan="3">
                     <div class="table-header-flex">
-                      <span class="title">Kế hoạch phát triển</span>
+                      <span class="title"><i class="fa-solid fa-graduation-cap"></i> Kế hoạch phát triển</span>
                       <button class="btn-table-add" onclick="addPlanRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                     </div>
                   </th>
                 </tr>
-                <tr class="header-sub-orange"><th style="width: 35px;">#</th><th>Khoản mục</th><th style="width: 40px;">Xóa</th></tr>
+                <tr class="header-sub"><th style="width: 40px;">#</th><th>Hạng mục phát triển</th><th style="width: 45px;">Xóa</th></tr>
               </thead>
               <tbody id="tbody-learning"></tbody>
             </table>
           </div>
 
+          <!-- Sản phẩm đầu tư -->
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
-                <tr class="header-main-green">
+                <tr class="header-main-info">
                   <th colspan="5">
                     <div class="table-header-flex">
-                      <span class="title">Danh mục sản phẩm đầu tư</span>
+                      <span class="title"><i class="fa-solid fa-cubes-stacked"></i> Danh mục sản phẩm đầu tư</span>
                       <button class="btn-table-add" onclick="addInvestRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                     </div>
                   </th>
                 </tr>
-                <tr class="header-sub-green">
-                  <th style="width: 35px;">#</th><th>Khoản mục</th><th style="width: 120px;">Lãi suất năm (%)</th><th style="width: 80px;">Rủi ro (%)</th><th style="width: 40px;">Xóa</th>
+                <tr class="header-sub">
+                  <th style="width: 40px;">#</th><th>Sản phẩm tài chính</th><th style="width: 130px;">Lãi suất năm (%)</th><th style="width: 90px;">Rủi ro (%)</th><th style="width: 45px;">Xóa</th>
                 </tr>
               </thead>
               <tbody id="tbody-invest"></tbody>
@@ -170,51 +187,60 @@
 
       <!-- ==================== TAB 2: DASHBOARD ==================== -->
       <div id="tab-dashboard" class="tab-pane">
-        <div class="dash-grid-row-2 mb-3">
+        <div class="dash-kpi-three-strip mb-4">
+          <div class="dash-kpi-block kpi-modern-success">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng thu nhập năm <span class="dynamic-year">2026</span></span>
+              <span class="kpi-num" id="kpi-dash-income">0</span>
+            </div>
+          </div>
+          <div class="dash-kpi-block kpi-modern-warning">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng chi tiêu năm <span class="dynamic-year">2026</span></span>
+              <span class="kpi-num" id="kpi-dash-expense">0</span>
+            </div>
+          </div>
+          <div class="dash-kpi-block kpi-modern-primary">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-piggy-bank"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tiết kiệm ròng năm <span class="dynamic-year">2026</span></span>
+              <span class="kpi-num" id="kpi-dash-savings">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-grid-row-2 mb-4">
           <div class="chart-card">
-            <h3>Cơ cấu phân bổ các mục tiêu tài chính</h3>
+            <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu phân bổ các mục tiêu tài chính</h3>
             <div class="chart-container-compact"><canvas id="chartDashGoalsPie"></canvas></div>
           </div>
           <div class="chart-card">
-            <h3>Theo dõi mục tiêu tài chính</h3>
+            <h3><i class="fa-solid fa-arrow-trend-up"></i> Tích lũy tiến độ mục tiêu qua các năm</h3>
             <div class="chart-container-compact"><canvas id="chartDashGoalsLine"></canvas></div>
           </div>
         </div>
 
-        <div class="dash-kpi-three-strip mb-3">
-          <div class="dash-kpi-block kpi-green">
-            <span class="kpi-title">Tổng thu nhập năm:<span class="dynamic-year">2026</span></span>
-            <span class="kpi-num" id="kpi-dash-income">0</span>
-          </div>
-          <div class="dash-kpi-block kpi-orange">
-            <span class="kpi-title">Tổng chi tiêu năm:<span class="dynamic-year">2026</span></span>
-            <span class="kpi-num" id="kpi-dash-expense">0</span>
-          </div>
-          <div class="dash-kpi-block kpi-red">
-            <span class="kpi-title">Tiết kiệm năm:<span class="dynamic-year">2026</span></span>
-            <span class="kpi-num" id="kpi-dash-savings">0</span>
-          </div>
-        </div>
-
-        <div class="dash-grid-row-2 mb-3">
+        <div class="dash-grid-row-2 mb-4">
           <div class="chart-card">
-            <h3>Sản phẩm đầu tư trong năm</h3>
+            <h3><i class="fa-solid fa-layer-group"></i> Hiệu suất danh mục đầu tư mẫu</h3>
             <div class="chart-container-compact"><canvas id="chartDashInvestPie"></canvas></div>
           </div>
           <div class="chart-card">
-            <h3>Thu nhập / Chi phí / Tiết kiệm 12 tháng</h3>
+            <h3><i class="fa-solid fa-chart-simple"></i> Thu nhập - Chi phí - Dòng tiền tích lũy 12 tháng</h3>
             <div class="chart-container-compact"><canvas id="chartDashCombo12"></canvas></div>
           </div>
         </div>
 
         <div class="dash-grid-row-2 mb-4">
           <div class="chart-card">
-            <h3>Chi tiêu thực tế và Kế hoạch & Lũy kế chênh lệch</h3>
+            <h3><i class="fa-solid fa-scale-balanced"></i> Chi tiêu thực tế so với Kế hoạch & Chênh lệch lũy kế</h3>
             <div class="chart-container-compact"><canvas id="chartDashVariance"></canvas></div>
           </div>
           <div class="chart-card">
             <div class="card-head-flex">
-              <h3>Chi đầu tư phát triển bản thân</h3>
+              <h3><i class="fa-solid fa-graduation-cap"></i> Phân bổ chi tiêu phát triển bản thân</h3>
               <div class="slicer-tags" id="dash-slicer-tags"></div>
             </div>
             <div class="chart-container-compact"><canvas id="chartDashLearningStack"></canvas></div>
@@ -222,18 +248,18 @@
         </div>
 
         <div class="dashboard-matrix-container">
-          <div class="sheet-title-banner mb-2"><i class="fa-solid fa-table-cells"></i> DỮ LIỆU MA TRẬN 12 THÁNG</div>
+          <div class="sheet-title-banner mb-3"><i class="fa-solid fa-table-list"></i> DỮ LIỆU MA TRẬN DÒNG TIỀN CHI TIẾT 12 THÁNG</div>
           
-          <div class="table-scroll-x mb-3 compact-dash-matrix">
+          <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table" id="table-db-income">
               <thead>
-                <tr class="header-main-green">
-                  <th style="min-width: 170px; text-align: left;">Thu nhập</th>
-                  <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
-                  <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
-                  <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
-                  <th style="min-width: 75px;">Tổng</th>
-                  <th style="min-width: 75px;">Xu hướng</th>
+                <tr class="header-main-success">
+                  <th style="min-width: 190px; text-align: left;">Hạng mục thu nhập</th>
+                  <th>T1</th><th>T2</th><th>T3</th><th>T4</th>
+                  <th>T5</th><th>T6</th><th>T7</th><th>T8</th>
+                  <th>T9</th><th>T10</th><th>T11</th><th>T12</th>
+                  <th style="min-width: 80px;">Tổng năm</th>
+                  <th style="min-width: 95px;">Xu hướng</th>
                 </tr>
               </thead>
               <tbody id="tbody-db-income"></tbody>
@@ -241,16 +267,16 @@
             </table>
           </div>
 
-          <div class="table-scroll-x mb-3 compact-dash-matrix">
+          <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table" id="table-db-expense">
               <thead>
-                <tr class="header-main-orange">
-                  <th style="min-width: 170px; text-align: left;">Chi tiêu</th>
-                  <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
-                  <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
-                  <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
-                  <th style="min-width: 75px;">Tổng</th>
-                  <th style="min-width: 75px;">Xu hướng</th>
+                <tr class="header-main-warning">
+                  <th style="min-width: 190px; text-align: left;">Hạng mục chi tiêu</th>
+                  <th>T1</th><th>T2</th><th>T3</th><th>T4</th>
+                  <th>T5</th><th>T6</th><th>T7</th><th>T8</th>
+                  <th>T9</th><th>T10</th><th>T11</th><th>T12</th>
+                  <th style="min-width: 80px;">Tổng năm</th>
+                  <th style="min-width: 95px;">Xu hướng</th>
                 </tr>
               </thead>
               <tbody id="tbody-db-expense"></tbody>
@@ -262,32 +288,32 @@
             </table>
           </div>
 
-          <div class="table-scroll-x mb-3 compact-dash-matrix">
+          <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table">
               <thead>
-                <tr class="header-main-red">
-                  <th style="min-width: 170px; text-align: left;">Tiết kiệm</th>
-                  <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
-                  <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
-                  <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
-                  <th style="min-width: 75px;">Tổng</th>
-                  <th style="min-width: 75px;">Xu hướng</th>
+                <tr class="header-main-primary">
+                  <th style="min-width: 190px; text-align: left;">Tiết kiệm ròng hàng tháng</th>
+                  <th>T1</th><th>T2</th><th>T3</th><th>T4</th>
+                  <th>T5</th><th>T6</th><th>T7</th><th>T8</th>
+                  <th>T9</th><th>T10</th><th>T11</th><th>T12</th>
+                  <th style="min-width: 80px;">Tổng năm</th>
+                  <th style="min-width: 95px;">Xu hướng</th>
                 </tr>
               </thead>
               <tbody><tr class="savings-highlight-row" id="trow-db-savings"></tr></tbody>
             </table>
           </div>
 
-          <div class="table-scroll-x mb-3 compact-dash-matrix">
+          <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table" id="table-db-learning">
               <thead>
-                <tr class="header-sub-orange">
-                  <th style="min-width: 170px; text-align: left;">Chi phí phát triển bản thân</th>
-                  <th>Tháng 1</th><th>Tháng 2</th><th>Tháng 3</th><th>Tháng 4</th>
-                  <th>Tháng 5</th><th>Tháng 6</th><th>Tháng 7</th><th>Tháng 8</th>
-                  <th>Tháng 9</th><th>Tháng 10</th><th>Tháng 11</th><th>Tháng 12</th>
-                  <th style="min-width: 75px;">Tổng</th>
-                  <th style="min-width: 75px;">Xu hướng</th>
+                <tr class="header-sub">
+                  <th style="min-width: 190px; text-align: left;">Phát triển bản thân</th>
+                  <th>T1</th><th>T2</th><th>T3</th><th>T4</th>
+                  <th>T5</th><th>T6</th><th>T7</th><th>T8</th>
+                  <th>T9</th><th>T10</th><th>T11</th><th>T12</th>
+                  <th style="min-width: 80px;">Tổng năm</th>
+                  <th style="min-width: 95px;">Xu hướng</th>
                 </tr>
               </thead>
               <tbody id="tbody-db-learning"></tbody>
@@ -297,36 +323,35 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN (DATA NHẬP CHÍNH THỨC DỄ HIỂU) ==================== -->
+      <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN ==================== -->
       <div id="tab-muctieu-bt" class="tab-pane">
         <div class="target-container">
           
-          <!-- BẢNG ĐỊNH HƯỚNG TỔNG THỂ -->
           <div class="target-section">
+            <div class="target-header-caption"><i class="fa-solid fa-flag"></i> ĐỊNH HƯỚNG TẦM NHÌN DÀI HẠN</div>
             <table class="target-table">
               <thead>
                 <tr>
-                  <th style="width: 160px;" class="italic-head">Thời điểm</th>
-                  <th class="italic-head">Nội dung mục tiêu dài hạn</th>
+                  <th style="width: 160px;">Mốc thời điểm</th>
+                  <th>Nội dung mục tiêu dài hạn</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="cell-green-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false">50 tuổi</td>
-                  <td class="cell-green-light cell-blue font-semibold" contenteditable="true" spellcheck="false">Từng bước đạt mục tiêu tài chính trong tương lai và độc lập tài chính bền vững</td>
+                  <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false">50 tuổi</td>
+                  <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false">Từng bước đạt mục tiêu tài chính trong tương lai và độc lập tài chính bền vững</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <!-- BẢNG NHẬP SỐ LIỆU MỤC TIÊU (ĐÃ THAY THẾ TOÀN BỘ CÁC TỪ VIẾT TẮT KHÓ HIỂU) -->
           <div class="target-section">
             <div class="tc-import-container">
               <div class="tc-import-header">
                 <div class="tc-import-title">
-                  <i class="fa-solid fa-list-check"></i> BẢNG ĐĂNG KÝ CÁC MỤC TIÊU TÀI CHÍNH CỦA BẠN
+                  <i class="fa-solid fa-bullseye text-primary"></i> DANH SÁCH ĐĂNG KÝ CÁC MỤC TIÊU TÀI CHÍNH
                 </div>
-                <button type="button" class="btn-table-add" onclick="addNewTcGoalRow()">
+                <button type="button" class="btn-table-add-prominent" onclick="addNewTcGoalRow()">
                   <i class="fa-solid fa-plus"></i> Thêm mục tiêu mới
                 </button>
               </div>
@@ -335,26 +360,26 @@
                 <table class="tc-input-table">
                   <thead>
                     <tr>
-                      <th style="min-width: 220px;">Tên mục tiêu</th>
-                      <th style="width: 115px;">Loại mục tiêu</th>
-                      <th style="width: 125px;">Số tiền dự kiến (tr)</th>
-                      <th style="width: 110px;">Tiền sẵn có (tr)</th>
-                      <th style="width: 85px;">Năm bắt đầu</th>
-                      <th style="width: 85px;">Năm cần đạt</th>
-                      <th style="width: 95px;">Trượt giá (%/năm)</th>
-                      <th style="width: 105px;">Lãi suất đầu tư (%/năm)</th>
-                      <th style="width: 115px;">Số tiền cần góp / tháng</th>
-                      <th style="width: 45px;">Xóa</th>
+                      <th class="th-name">Tên mục tiêu</th>
+                      <th class="th-type">Phân loại</th>
+                      <th class="th-num">Giá trị mục tiêu (tr)</th>
+                      <th class="th-num">Đã tích lũy (tr)</th>
+                      <th class="th-year">Năm bắt đầu</th>
+                      <th class="th-year">Năm hoàn tất</th>
+                      <th class="th-num">Lạm phát (%/năm)</th>
+                      <th class="th-num">Lãi sinh lời (%/năm)</th>
+                      <th class="th-contrib">Cần đóng góp / tháng</th>
+                      <th class="th-del">Xóa</th>
                     </tr>
                   </thead>
                   <tbody id="tbody-tc-form-goals"></tbody>
                 </table>
                 <div class="tc-form-bottom-bar">
                   <span class="tc-form-hint">
-                    💡 <strong>Ghi chú:</strong><br>
-                    • <strong>Số tiền dự kiến:</strong> Số tiền bạn tính theo giá cả ở thời điểm hiện tại.<br>
-                    • <strong>Trượt giá:</strong> Mức lạm phát ước tính hàng năm (hệ thống sẽ tự tính tiền đội lên trong tương lai).<br>
-                    • <strong>Số tiền cần góp / tháng:</strong> Số tiền bạn cần để dành hoặc trích trả nợ mỗi tháng để về đích đúng hạn (tự động tính).
+                    💡 <strong>Cơ chế tính toán dòng tiền:</strong><br>
+                    • <strong>Giá trị mục tiêu:</strong> Định giá tại thời điểm hiện tại. Hệ thống tự động bù trừ tiền đã có sẵn.<br>
+                    • <strong>Trượt giá / Lạm phát:</strong> Hệ thống tính luỹ kế giá trị tương lai (FV) theo số năm tích lũy.<br>
+                    • <strong>Cần đóng góp / tháng:</strong> Được tính tự động chuẩn công thức trả góp (PMT) & tự động liên kết với Kế hoạch chi tiêu.
                   </span>
                 </div>
               </div>
@@ -363,8 +388,8 @@
 
           <div class="target-section">
             <table class="target-table">
-              <thead><tr><th class="italic-head text-center">Tỷ lệ thu nhập dành để tiết kiệm (%)</th></tr></thead>
-              <tbody><tr><td class="cell-green-light text-center cell-blue font-bold" contenteditable="true" spellcheck="false" id="target-savings-rate-val">40%</td></tr></tbody>
+              <thead><tr><th class="text-center"><i class="fa-solid fa-percent"></i> Tỷ lệ thu nhập mục tiêu dành để tiết kiệm đầu tư</th></tr></thead>
+              <tbody><tr><td class="cell-primary-light text-center cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" id="target-savings-rate-val">40%</td></tr></tbody>
             </table>
           </div>
 
@@ -372,11 +397,11 @@
             <table class="target-table">
               <thead>
                 <tr>
-                  <th class="italic-head text-center">
-                    Định vị giá trị bản thân & Điểm mạnh
-                    <button class="btn-table-add ml-2" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i></button>
+                  <th class="text-left">
+                    <i class="fa-solid fa-award"></i> Điểm mạnh & Giá trị cốt lõi bản thân
+                    <button class="btn-table-add ml-2" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                   </th>
-                  <th style="width: 80px;" class="italic-head text-center">Xoá</th>
+                  <th style="width: 60px;" class="text-center">Xoá</th>
                 </tr>
               </thead>
               <tbody id="tbody-skills"></tbody>
@@ -387,11 +412,11 @@
             <table class="target-table">
               <thead>
                 <tr>
-                  <th class="italic-head text-center">
-                    Gia đình & Nguồn lực hỗ trợ
-                    <button class="btn-table-add ml-2" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i></button>
+                  <th class="text-left">
+                    <i class="fa-solid fa-people-roof"></i> Gia đình & Điểm tựa nguồn lực
+                    <button class="btn-table-add ml-2" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                   </th>
-                  <th style="width: 80px;" class="italic-head text-center">Xoá</th>
+                  <th style="width: 60px;" class="text-center">Xoá</th>
                 </tr>
               </thead>
               <tbody id="tbody-family"></tbody>
@@ -402,11 +427,11 @@
             <table class="target-table">
               <thead>
                 <tr>
-                  <th class="italic-head text-center">
-                    Môi trường làm việc & Cơ hội phát triển
-                    <button class="btn-table-add ml-2" onclick="addJobRow()"><i class="fa-solid fa-plus"></i></button>
+                  <th class="text-left">
+                    <i class="fa-solid fa-briefcase"></i> Môi trường làm việc & Tiềm năng bứt phá
+                    <button class="btn-table-add ml-2" onclick="addJobRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                   </th>
-                  <th style="width: 80px;" class="italic-head text-center">Xoá</th>
+                  <th style="width: 60px;" class="text-center">Xoá</th>
                 </tr>
               </thead>
               <tbody id="tbody-job"></tbody>
@@ -414,14 +439,14 @@
           </div>
 
           <div class="target-section survey-result-section">
-            <div class="survey-result-title">Kết quả đánh giá từ khảo sát</div>
+            <div class="survey-result-title"><i class="fa-solid fa-square-poll-vertical"></i> Kết quả phân tích từ Khảo sát bản thân</div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')">Làm bài khảo sát</button>
-              <div class="survey-desc font-bold text-black" id="survey-result-risk">Đang tính toán...</div>
+              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')"><i class="fa-solid fa-pen-to-square"></i> Khảo sát rủi ro</button>
+              <div class="survey-desc font-semibold text-black" id="survey-result-risk">Đang tính toán...</div>
             </div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')">Làm bài khảo sát</button>
-              <div class="survey-desc font-bold text-black" id="survey-result-context">Đang tính toán...</div>
+              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')"><i class="fa-solid fa-pen-to-square"></i> Khảo sát hoàn cảnh</button>
+              <div class="survey-desc font-semibold text-black" id="survey-result-context">Đang tính toán...</div>
             </div>
           </div>
         </div>
@@ -433,54 +458,52 @@
           
           <div class="tc-subnav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-tc-sec1" onclick="switchTcSection(1)">
-              <i class="fa-solid fa-list-check"></i> Phần 1: Kế hoạch chi tiết từng mục tiêu
+              <i class="fa-solid fa-layer-group"></i> Phần 1: Bảng phân bổ chi tiết từng mục tiêu
             </button>
             <button type="button" class="btn-sub-nav" id="btn-tc-sec2" onclick="switchTcSection(2)">
-              <i class="fa-solid fa-chart-line"></i> Phần 2: Bảng số tiền cần tiết kiệm & Thu nhập cần có
+              <i class="fa-solid fa-chart-line"></i> Phần 2: Ma trận nhu cầu tiết kiệm và thu nhập
             </button>
           </div>
 
-          <!-- PHẦN 1: THẺ CHI TIẾT TỪNG MỤC TIÊU (TỰ ĐỘNG ĐỒNG BỘ) -->
+          <!-- PHẦN 1 -->
           <div id="tc-section-1" class="tc-section-pane active">
             <div class="result-divider-header mb-3">
               <div class="d-flex-center gap-2">
-                <i class="fa-solid fa-circle-check text-green"></i>
-                <span>CÁC MỤC TIÊU ĐƯỢC TỰ ĐỘNG ĐỒNG BỘ VÀ TÍNH TOÁN TỪ BẢNG MỤC TIÊU BẢN THÂN</span>
+                <i class="fa-solid fa-circle-check text-success"></i>
+                <span>Tất cả mục tiêu đã được tự động tính dòng tiền theo công thức tài chính chuẩn</span>
               </div>
               <button type="button" class="btn-next-step" onclick="switchTcSection(2)">
-                Xem Lộ trình thu nhập qua từng độ tuổi <i class="fa-solid fa-arrow-right"></i>
+                Xem Ma trận nhu cầu tiết kiệm và thu nhập <i class="fa-solid fa-arrow-right"></i>
               </button>
             </div>
 
             <div class="tc-two-columns-grid">
-              <!-- CỘT TRẢ NỢ -->
               <div class="tc-column tc-col-debt">
-                <div class="tc-column-banner orange-banner-head"><i class="fa-solid fa-hand-holding-dollar"></i> KẾ HOẠCH TRẢ NỢ</div>
+                <div class="tc-column-banner debt-banner-head"><i class="fa-solid fa-hand-holding-dollar"></i> DANH MỤC TRẢ NỢ ĐỊNH KỲ</div>
                 <div class="tc-cards-list" id="tc-debt-cards-container"></div>
               </div>
-              <!-- CỘT ĐẦU TƯ TÍCH LŨY -->
               <div class="tc-column tc-col-invest">
-                <div class="tc-column-banner green-banner-head"><i class="fa-solid fa-piggy-bank"></i> KẾ HOẠCH TÍCH LŨY & ĐẦU TƯ</div>
+                <div class="tc-column-banner invest-banner-head"><i class="fa-solid fa-chart-pie"></i> DANH MỤC TÍCH LŨY & ĐẦU TƯ TĂNG TRƯỞNG</div>
                 <div class="tc-cards-list" id="tc-invest-cards-container"></div>
               </div>
             </div>
           </div>
 
-          <!-- PHẦN 2: BẢNG SỐ TIỀN CẦN TIẾT KIỆM QUA CÁC NĂM -->
+          <!-- PHẦN 2 -->
           <div id="tc-section-2" class="tc-section-pane">
             <div class="tc-matrix-header-box mb-3">
-              <div class="sheet-title-text">Phần 2: Bảng xác định mức tiết kiệm và mức thu nhập bạn cần đạt mỗi tháng</div>
-              <div class="tc-matrix-desc">* Dữ liệu hiển thị số tiền mỗi mục tiêu cần nộp qua từng năm. Hệ thống sẽ cộng dồn để tính ra mức thu nhập hàng tháng bạn cần kiếm được.</div>
+              <div class="sheet-title-text"><i class="fa-solid fa-timeline"></i> Ma trận nhu cầu tiết kiệm và thu nhập</div>
+              <div class="tc-matrix-desc">Dữ liệu tính toán dựa trên mức đóng góp của từng mục tiêu tại từng thời điểm theo tỷ lệ tiết kiệm 40%.</div>
             </div>
 
             <div class="tc-chart-card mb-4">
-              <div class="tc-chart-title">Lộ trình mục tiêu: Số tiền cần tiết kiệm và Thu nhập cần đạt (triệu VNĐ/tháng)</div>
+              <div class="tc-chart-title">Mức tiết kiệm và Thu nhập cần đạt (triệu VNĐ/tháng)</div>
               <div class="tc-chart-canvas-wrap"><canvas id="tcMatrixChart"></canvas></div>
             </div>
 
             <div class="compact-matrix-container">
               <table class="excel-matrix-table compact-matrix-table" id="table-tc-matrix">
-                <thead><tr class="header-main-green" id="tr-tc-matrix-head"></tr></thead>
+                <thead><tr class="header-main-primary" id="tr-tc-matrix-head"></tr></thead>
                 <tbody id="tbody-tc-matrix"></tbody>
               </table>
             </div>
@@ -495,38 +518,37 @@
           
           <div class="tc-subnav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-career-sec1" onclick="switchCareerSection(1)">
-              <i class="fa-solid fa-route"></i> Phần 1: Phân bổ tài sản & Kỹ năng theo độ tuổi
+              <i class="fa-solid fa-pie-chart"></i> Phần 1: Phân bổ công cụ tài chính & Kỹ năng theo tuổi
             </button>
             <button type="button" class="btn-sub-nav" id="btn-career-sec2" onclick="switchCareerSection(2)">
-              <i class="fa-solid fa-stairs"></i> Phần 2: So sánh thu nhập thực tế & Mục tiêu đặt ra
+              <i class="fa-solid fa-arrow-trend-up"></i> Phần 2: Đối chiếu lộ trình nghề nghiệp và mục tiêu
             </button>
           </div>
 
           <div class="career-fixed-chart-wrapper mb-4">
             <div class="tc-chart-card fixed-size-card">
-              <div class="tc-chart-title">Biểu đồ so sánh: Thu nhập cần có và Thu nhập dự kiến theo lộ trình</div>
+              <div class="tc-chart-title">So sánh: Thu nhập cần kiếm để đạt mục tiêu và Thu nhập theo lộ trình dự kiến</div>
               <div class="career-canvas-container"><canvas id="careerChart"></canvas></div>
             </div>
           </div>
 
-          <!-- PHẦN 1 -->
           <div id="career-sec-1" class="career-section-pane active">
-            <div class="sheet-title-text mb-3">Phần 1: Lộ trình phân bổ tiền và phát triển bản thân theo độ tuổi</div>
+            <div class="sheet-title-text mb-3"><i class="fa-solid fa-layer-group"></i> Lộ trình phân bổ tài sản & Phát triển chuyên môn theo từng giai đoạn</div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
                 <thead>
-                  <tr class="bg-header-green">
-                    <th rowspan="2" style="width: 65px;">Tuổi</th>
-                    <th rowspan="2" style="width: 140px;">Thu nhập cần có (tr/tháng)</th>
-                    <th colspan="4">Gợi ý phân bổ tiền tiết kiệm</th>
-                    <th rowspan="2" style="width: 160px;">Lãi suất đầu tư cần đạt (%/năm)</th>
-                    <th rowspan="2">Kỹ năng bạn cần rèn luyện</th>
+                  <tr class="bg-header-primary">
+                    <th rowspan="2" style="width: 70px;">Độ tuổi</th>
+                    <th rowspan="2" style="width: 150px;">Thu nhập cần có (tr/tháng)</th>
+                    <th colspan="4">Cơ cấu danh mục đầu tư khuyến nghị</th>
+                    <th rowspan="2" style="width: 150px;">Lãi suất kỳ vọng (%/năm)</th>
+                    <th rowspan="2">Kỹ năng cốt lõi cần trui rèn</th>
                   </tr>
-                  <tr class="bg-header-light-green">
-                    <th style="width: 90px;">Cổ phiếu</th>
-                    <th style="width: 90px;">Trái phiếu</th>
-                    <th style="width: 90px;">Bảo hiểm</th>
-                    <th style="width: 90px;">Tiền gửi ngân hàng</th>
+                  <tr class="bg-header-sub">
+                    <th style="width: 95px;">Cổ phiếu</th>
+                    <th style="width: 95px;">Trái phiếu</th>
+                    <th style="width: 95px;">Bảo hiểm</th>
+                    <th style="width: 95px;">Tiền gửi NH</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-career-overview"></tbody>
@@ -534,18 +556,17 @@
             </div>
           </div>
 
-          <!-- PHẦN 2 -->
           <div id="career-sec-2" class="career-section-pane">
-            <div class="sheet-title-text mb-3">Phần 2: Bảng đối chiếu thu nhập thực tế & Lộ trình nghề nghiệp</div>
+            <div class="sheet-title-text mb-3"><i class="fa-solid fa-scale-balanced"></i> Kiểm tra tính khả thi của lộ trình thu nhập cá nhân</div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
                 <thead>
-                  <tr class="bg-header-orange">
-                    <th style="width: 65px;">Tuổi</th>
-                    <th style="width: 170px;">Thu nhập thực tế (tr/tháng)<br><small style="font-weight:normal; font-size:0.7rem;">(Năm hiện tại)</small></th>
-                    <th style="width: 180px;">Thu nhập cần kiếm (tr/tháng)<br><small style="font-weight:normal; font-size:0.7rem;">(Để đạt mục tiêu)</small></th>
-                    <th style="width: 220px;">Lộ trình bạn dự định đạt (tr/tháng)<br><small style="font-weight:normal; font-size:0.7rem;">(Tự nhập kỳ vọng của bạn)</small></th>
-                    <th>Đánh giá khả năng đạt mục tiêu</th>
+                  <tr class="bg-header-primary">
+                    <th style="width: 70px;">Số tuổi</th>
+                    <th style="width: 180px;">Thu nhập thực tế<br><small>(Năm hiện tại)</small></th>
+                    <th style="width: 190px;">Mức cần có để đạt mục tiêu<br><small>(Hệ thống tính)</small></th>
+                    <th style="width: 220px;">Lộ trình thu nhập kỳ vọng<br><small>(Bạn tự nhập vào)</small></th>
+                    <th>Đánh giá khả năng về đích</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-career-detail"></tbody>
@@ -561,26 +582,26 @@
         <div class="custom-sheet-container full-width-sheet">
 
           <div class="sheet-title-banner flex-between">
-            <span>PHẦN 1: KẾ HOẠCH THU NHẬP HÀNG THÁNG</span>
-            <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+            <span><i class="fa-solid fa-coins"></i> PHẦN 1: TIỀN DỰ TÍNH KIẾM ĐƯỢC MỖI THÁNG</span>
+            <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản thu</button>
           </div>
           <div class="table-scroll-x mb-4">
             <table class="excel-table-bordered">
               <thead>
-                <tr class="bg-header-green">
+                <tr class="bg-header-success">
                   <th style="width: 45px;">#</th>
-                  <th style="width: 220px;">Nguồn thu</th>
-                  <th style="width: 140px;">Số tiền dự kiến (tr)</th>
-                  <th style="width: 200px;">Ghi chú</th>
-                  <th>Đánh giá nguồn thu</th>
+                  <th style="width: 220px;">Khoản thu</th>
+                  <th style="width: 150px;">Số tiền dự tính (tr)</th>
+                  <th style="width: 220px;">Ghi chú chi tiết</th>
+                  <th>Mức độ ổn định</th>
                   <th style="width: 45px;">Xóa</th>
                 </tr>
               </thead>
               <tbody id="tbody-plan-inc"></tbody>
               <tfoot>
                 <tr class="bg-total-row">
-                  <td colspan="2" class="font-bold">Tổng thu nhập dự kiến</td>
-                  <td class="text-right text-green font-bold" id="plan-sum-inc-val">0.00 tr</td>
+                  <td colspan="2" class="font-bold">Tổng thu nhập dự tính hàng tháng</td>
+                  <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00 tr</td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -588,26 +609,26 @@
           </div>
 
           <div class="sheet-title-banner flex-between mt-4">
-            <span>PHẦN 2: KẾ HOẠCH CHI TIÊU HÀNG THÁNG</span>
-            <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+            <span><i class="fa-solid fa-credit-card"></i> PHẦN 2: MỨC TIỀN DỰ TÍNH TIÊU MỖI THÁNG</span>
+            <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản chi</button>
           </div>
           <div class="table-scroll-x">
             <table class="excel-table-bordered">
               <thead>
-                <tr class="bg-header-orange">
+                <tr class="bg-header-warning">
                   <th style="width: 45px;">#</th>
-                  <th style="width: 220px;">Khoản chi</th>
-                  <th style="width: 140px;">Số tiền dự trù (tr)</th>
-                  <th style="width: 200px;">Ghi chú</th>
-                  <th>Phân tích tính cần thiết</th>
+                  <th style="width: 220px;">Khoản mục chi tiêu</th>
+                  <th style="width: 150px;">Mức chi tối đa (tr)</th>
+                  <th style="width: 220px;">Ghi chú chi tiết</th>
+                  <th>Mức độ cần thiết</th>
                   <th style="width: 45px;">Xóa</th>
                 </tr>
               </thead>
               <tbody id="tbody-plan-exp"></tbody>
               <tfoot>
                 <tr class="bg-total-row">
-                  <td colspan="2" class="font-bold">Tổng chi tiêu dự trù</td>
-                  <td class="text-right text-red font-bold" id="plan-sum-exp-val">0.00 tr</td>
+                  <td colspan="2" class="font-bold">Tổng chi tiêu dự tính hàng tháng</td>
+                  <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00 tr</td>
                   <td colspan="3"></td>
                 </tr>
               </tfoot>
@@ -622,40 +643,50 @@
         <div class="custom-sheet-container full-width-sheet">
           
           <div class="sub-nav-bar mb-3">
-            <button type="button" class="btn-sub-nav active" id="btn-month-sec1" onclick="switchMonthSection(1)">Theo dõi thu chi</button>
-            <button type="button" class="btn-sub-nav" id="btn-month-sec2" onclick="switchMonthSection(2)">Chi cho học tập & Phát triển bản thân</button>
+            <button type="button" class="btn-sub-nav active" id="btn-month-sec1" onclick="switchMonthSection(1)">
+              <i class="fa-solid fa-receipt"></i> Nhật ký & Đối chiếu thu chi thực tế
+            </button>
+            <button type="button" class="btn-sub-nav" id="btn-month-sec2" onclick="switchMonthSection(2)">
+              <i class="fa-solid fa-graduation-cap"></i> Nhật ký chi phí học tập & Đào tạo
+            </button>
           </div>
 
-          <!-- PHẦN 1 -->
           <div id="month-sec-1" class="month-section-pane active">
-            <div class="sheet-title-text mb-3">Phần 1: Theo dõi thu chi thực tế trong tháng</div>
-
             <div class="month-top-grid mb-4">
               <div class="month-kpi-stack">
-                <div class="kpi-box box-green"><div class="kpi-lbl">Tổng thu thực tế</div><div class="kpi-val" id="m-summary-income">0</div></div>
-                <div class="kpi-box box-orange"><div class="kpi-lbl">Tổng chi thực tế</div><div class="kpi-val" id="m-summary-expense">0</div></div>
-                <div class="kpi-box box-red"><div class="kpi-lbl">Tiền còn dư (tiết kiệm)</div><div class="kpi-val" id="m-summary-savings">0</div></div>
+                <div class="kpi-box box-modern-success">
+                  <div class="kpi-lbl">Tổng thu thực tế</div>
+                  <div class="kpi-val" id="m-summary-income">0</div>
+                </div>
+                <div class="kpi-box box-modern-warning">
+                  <div class="kpi-lbl">Tổng chi thực tế</div>
+                  <div class="kpi-val" id="m-summary-expense">0</div>
+                </div>
+                <div class="kpi-box box-modern-primary">
+                  <div class="kpi-lbl">Tiết kiệm dôi dư</div>
+                  <div class="kpi-val" id="m-summary-savings">0</div>
+                </div>
               </div>
               <div class="month-chart-box">
-                <div class="chart-box-title">Cơ cấu các khoản chi tiêu trong tháng</div>
+                <div class="chart-box-title"><i class="fa-solid fa-chart-bar"></i> Phân bổ các nhóm chi tiêu trong tháng (triệu VNĐ)</div>
                 <div class="month-bar-canvas-wrap"><canvas id="monthExpenseBarChart"></canvas></div>
               </div>
             </div>
 
             <div class="side-tables-grid mb-4">
               <div class="side-table-col">
-                <div class="table-header-bar green-bar">
-                  <span>Nhật ký thu nhập chi tiết</span>
-                  <button class="btn-table-add" onclick="addMonthDetailIncomeRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                <div class="table-header-bar success-bar">
+                  <span><i class="fa-solid fa-circle-plus"></i> Nhật ký thu nhập chi tiết</span>
+                  <button class="btn-table-add" onclick="addMonthDetailIncomeRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-light-green">
-                        <th style="width: 130px;">Ngày</th>
-                        <th>Khoản thu</th>
-                        <th>Nội dung cụ thể</th>
-                        <th style="width: 75px;">Số tiền (tr)</th>
+                      <tr class="bg-header-sub">
+                        <th style="width: 125px;">Ngày</th>
+                        <th>Nguồn thu</th>
+                        <th>Chi tiết giao dịch</th>
+                        <th style="width: 85px;">Số tiền (tr)</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -663,7 +694,7 @@
                     <tfoot>
                       <tr class="bg-total-row">
                         <td colspan="3" class="font-bold text-center">Tổng thu nhập</td>
-                        <td class="text-right font-bold text-green" id="tfoot-m-inc-total">0.0</td>
+                        <td class="text-right font-bold text-success font-mono" id="tfoot-m-inc-total">0.0</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -672,21 +703,21 @@
               </div>
 
               <div class="side-table-col">
-                <div class="table-header-bar green-bar"><span>Đối chiếu thu nhập: Kế hoạch vs Thực tế</span></div>
+                <div class="table-header-bar success-bar"><span><i class="fa-solid fa-code-compare"></i> Đối chiếu thu nhập: Kế hoạch vs Thực tế</span></div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-light-green">
-                        <th>Danh mục</th><th style="width: 75px;">Kế hoạch</th><th style="width: 75px;">Thực tế</th><th style="width: 80px;">Chênh lệch</th><th>Nguyên nhân</th><th>Cách cải thiện</th>
+                      <tr class="bg-header-sub">
+                        <th>Danh mục</th><th style="width: 75px;">Kế hoạch</th><th style="width: 75px;">Thực tế</th><th style="width: 85px;">Chênh lệch</th><th>Nguyên nhân</th><th>Giải pháp</th>
                       </tr>
                     </thead>
                     <tbody id="tbody-m-recon-income"></tbody>
                     <tfoot>
                       <tr class="bg-total-row">
-                        <td class="font-bold">Tổng thu nhập</td>
-                        <td class="text-right font-bold" id="tfoot-recon-inc-plan">0.0</td>
-                        <td class="text-right font-bold text-green" id="tfoot-recon-inc-act">0.0</td>
-                        <td class="text-right font-bold text-red" id="tfoot-recon-inc-diff">0.0</td>
+                        <td class="font-bold">Tổng cộng</td>
+                        <td class="text-right font-bold font-mono" id="tfoot-recon-inc-plan">0.0</td>
+                        <td class="text-right font-bold text-success font-mono" id="tfoot-recon-inc-act">0.0</td>
+                        <td class="text-right font-bold text-danger font-mono" id="tfoot-recon-inc-diff">0.0</td>
                         <td colspan="2"></td>
                       </tr>
                     </tfoot>
@@ -697,18 +728,18 @@
 
             <div class="side-tables-grid mb-4">
               <div class="side-table-col">
-                <div class="table-header-bar orange-bar">
-                  <span>Nhật ký chi tiêu chi tiết</span>
-                  <button class="btn-table-add" onclick="addMonthDetailExpenseRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                <div class="table-header-bar warning-bar">
+                  <span><i class="fa-solid fa-circle-minus"></i> Nhật ký chi tiêu chi tiết</span>
+                  <button class="btn-table-add" onclick="addMonthDetailExpenseRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-orange">
-                        <th style="width: 130px;">Ngày</th>
+                      <tr class="bg-header-sub">
+                        <th style="width: 125px;">Ngày</th>
                         <th>Khoản chi</th>
-                        <th>Nội dung cụ thể</th>
-                        <th style="width: 75px;">Số tiền (tr)</th>
+                        <th>Chi tiết giao dịch</th>
+                        <th style="width: 85px;">Số tiền (tr)</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -716,7 +747,7 @@
                     <tfoot>
                       <tr class="bg-total-row">
                         <td colspan="3" class="font-bold text-center">Tổng chi tiêu</td>
-                        <td class="text-right font-bold text-red" id="tfoot-m-exp-total">0.0</td>
+                        <td class="text-right font-bold text-danger font-mono" id="tfoot-m-exp-total">0.0</td>
                         <td></td>
                       </tr>
                     </tfoot>
@@ -725,21 +756,21 @@
               </div>
 
               <div class="side-table-col">
-                <div class="table-header-bar orange-bar"><span>Đối chiếu chi tiêu: Kế hoạch vs Thực tế</span></div>
+                <div class="table-header-bar warning-bar"><span><i class="fa-solid fa-code-compare"></i> Đối chiếu chi tiêu: Kế hoạch vs Thực tế</span></div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-orange">
-                        <th>Danh mục</th><th style="width: 75px;">Kế hoạch</th><th style="width: 75px;">Thực tế</th><th style="width: 80px;">Chênh lệch</th><th>Nguyên nhân</th><th>Cách tối ưu</th>
+                      <tr class="bg-header-sub">
+                        <th>Danh mục</th><th style="width: 75px;">Kế hoạch</th><th style="width: 75px;">Thực tế</th><th style="width: 85px;">Chênh lệch</th><th>Nguyên nhân</th><th>Giải pháp</th>
                       </tr>
                     </thead>
                     <tbody id="tbody-m-recon-expense"></tbody>
                     <tfoot>
                       <tr class="bg-total-row">
-                        <td class="font-bold">Tổng chi tiêu</td>
-                        <td class="text-right font-bold" id="tfoot-recon-exp-plan">0.0</td>
-                        <td class="text-right font-bold text-red" id="tfoot-recon-exp-act">0.0</td>
-                        <td class="text-right font-bold text-red" id="tfoot-recon-exp-diff">0.0</td>
+                        <td class="font-bold">Tổng cộng</td>
+                        <td class="text-right font-bold font-mono" id="tfoot-recon-exp-plan">0.0</td>
+                        <td class="text-right font-bold text-danger font-mono" id="tfoot-recon-exp-act">0.0</td>
+                        <td class="text-right font-bold text-danger font-mono" id="tfoot-recon-exp-diff">0.0</td>
                         <td colspan="2"></td>
                       </tr>
                     </tfoot>
@@ -750,33 +781,31 @@
 
           </div>
 
-          <!-- PHẦN 2 -->
           <div id="month-sec-2" class="month-section-pane">
-            <div class="sheet-title-text mb-3">Phần 2: Chi tiết các khoản chi cho học tập & Nâng cao kỹ năng</div>
             <div class="learning-grid">
               <div class="learning-left-col">
-                <div class="table-header-bar orange-bar">
-                  <span>Nhật ký chi phí học tập</span>
-                  <button class="btn-table-add" onclick="addMonthLearningRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                <div class="table-header-bar info-bar">
+                  <span><i class="fa-solid fa-book-open"></i> Nhật ký chi phí học tập & Đào tạo</span>
+                  <button class="btn-table-add" onclick="addMonthLearningRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-orange">
-                        <th style="width: 130px;">Ngày</th>
-                        <th>Khoản mục</th>
-                        <th>Nội dung khóa học / sách</th>
-                        <th style="width: 70px;">Số tiền (tr)</th>
-                        <th>Mục tiêu mong đợi</th>
-                        <th>Kết quả thực tế</th>
+                      <tr class="bg-header-sub">
+                        <th style="width: 125px;">Ngày</th>
+                        <th>Hạng mục</th>
+                        <th>Khóa học / Chứng chỉ / Sách</th>
+                        <th style="width: 85px;">Số tiền (tr)</th>
+                        <th>Kỳ vọng đầu ra</th>
+                        <th>Thực tế đạt được</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
                     <tbody id="tbody-m-learning-detail"></tbody>
                     <tfoot>
                       <tr class="bg-total-row">
-                        <td colspan="3" class="font-bold text-center">Tổng tiền đã chi cho bản thân</td>
-                        <td class="text-right font-bold text-red" id="tfoot-m-learn-total">0.00</td>
+                        <td colspan="3" class="font-bold text-center">Tổng kinh phí đầu tư bản thân</td>
+                        <td class="text-right font-bold text-info font-mono" id="tfoot-m-learn-total">0.00</td>
                         <td colspan="3"></td>
                       </tr>
                     </tfoot>
@@ -785,17 +814,17 @@
               </div>
 
               <div class="learning-right-col">
-                <div class="table-header-bar orange-bar"><span>Tổng kết theo loại hình đào tạo</span></div>
+                <div class="table-header-bar info-bar"><span><i class="fa-solid fa-chart-column"></i> Tổng kết theo nhóm đào tạo</span></div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-orange"><th>Danh mục</th><th style="width: 95px;">Tổng tiền đã chi (tr)</th></tr>
+                      <tr class="bg-header-sub"><th>Hạng mục</th><th style="width: 105px;">Số tiền (tr)</th></tr>
                     </thead>
                     <tbody id="tbody-m-learning-stat"></tbody>
                     <tfoot>
                       <tr class="bg-total-row">
-                        <td class="font-bold">Tổng tiền đã chi</td>
-                        <td class="text-right font-bold text-red" id="tfoot-m-learn-stat-total">0.00</td>
+                        <td class="font-bold">Tổng cộng</td>
+                        <td class="text-right font-bold text-info font-mono" id="tfoot-m-learn-stat-total">0.00</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -814,9 +843,9 @@
           <div class="gform-header-card">
             <div class="gform-stripe"></div>
             <div class="gform-header-content">
-              <h2 class="gform-title">PHIẾU KHẢO SÁT ĐÁNH GIÁ MỨC ĐỘ CHẤP NHẬN RỦI RO & HOÀN CẢNH CỦA BẠN</h2>
+              <h2 class="gform-title"><i class="fa-solid fa-shield-halved text-primary"></i> KHẢO SÁT KHẢ NĂNG CHẤP NHẬN RỦI RO & HOÀN CẢNH TÀI CHÍNH</h2>
               <p class="gform-desc">
-                Hãy trả lời trung thực theo thói quen và cảm xúc thật của bạn. Hệ thống sẽ giúp bạn biết mình phù hợp với phương pháp đầu tư an toàn hay tăng trưởng.
+                Phiếu trắc nghiệm tâm lý học tài chính chuẩn quốc tế, giúp định hình phong cách phân bổ tài sản phù hợp nhất với khẩu vị rủi ro và điều kiện thực tế của bạn.
               </p>
               <div class="gform-top-actions">
                 <button type="button" class="btn-gform-back" onclick="switchTab('tab-muctieu-bt')">
@@ -827,29 +856,29 @@
           </div>
 
           <!-- PHẦN 1 -->
-          <div class="gform-section-banner">
-            <div class="gform-section-badge">Phần 1</div>
-            <h3>Khảo sát 1: Bạn chịu đựng được mức độ rủi ro nào khi giữ tiền?</h3>
+          <div class="gform-section-banner banner-primary">
+            <div class="gform-section-badge">Khảo sát 1</div>
+            <h3>Mức độ chấp nhận rủi ro trong quản lý & đầu tư</h3>
           </div>
           
           <div id="gform-questions-p1" class="gform-questions-flow"></div>
           
           <div class="gform-summary-result" id="survey-result-bar-1">
-            <div class="result-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <div class="result-text" id="survey-result-p1-text">Đang cập nhật đánh giá khảo sát rủi ro...</div>
+            <div class="result-icon"><i class="fa-solid fa-shield-check"></i></div>
+            <div class="result-text" id="survey-result-p1-text">Đang cập nhật đánh giá rủi ro...</div>
           </div>
 
           <!-- PHẦN 2 -->
-          <div class="gform-section-banner mt-4">
-            <div class="gform-section-badge">Phần 2</div>
-            <h3>Khảo sát 2: Hoàn cảnh tài chính, công việc & áp lực gia đình</h3>
+          <div class="gform-section-banner banner-indigo mt-4">
+            <div class="gform-section-badge">Khảo sát 2</div>
+            <h3>Hoàn cảnh gia đình, trách nhiệm & môi trường phát triển</h3>
           </div>
 
           <div id="gform-questions-p2" class="gform-questions-flow"></div>
 
           <div class="gform-summary-result" id="survey-result-bar-2">
-            <div class="result-icon"><i class="fa-solid fa-house-user"></i></div>
-            <div class="result-text" id="survey-result-p2-text">Đang cập nhật đánh giá hoàn cảnh tài chính...</div>
+            <div class="result-icon"><i class="fa-solid fa-house-circle-check"></i></div>
+            <div class="result-text" id="survey-result-p2-text">Đang cập nhật đánh giá hoàn cảnh...</div>
           </div>
 
         </div>
@@ -858,7 +887,7 @@
     </section>
   </main>
 
-  <!-- Script logic thuần JavaScript -->
+  <!-- Script logic JavaScript -->
   <script src="./script.js"></script>
 </body>
 </html>

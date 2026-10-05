@@ -327,7 +327,7 @@ window.switchTab = function(tabId) {
   document.getElementById(`btn-${tabId}`)?.classList.add('active');
 
   const titlesMap = {
-    'tab-tukhoa': 'TỪ KHÓA',
+    'tab-tukhoa': 'TỪ KHÓA THIẾT LẬP',
     'tab-dashboard': 'DASHBOARD THEO DÕI TÀI CHÍNH',
     'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
     'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
@@ -405,7 +405,7 @@ window.switchCareerSection = function(secNum) {
 };
 
 // ==================== SPARKLINE CHART ====================
-function drawSparkline(canvasId, values, color = '#16a34a') {
+function drawSparkline(canvasId, values, color = '#10b981') {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -454,7 +454,7 @@ function renderDashboardMatrices() {
       rowSum += val;
       incMonthlySums[m] += val;
       rowVals.push(val);
-      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(1) : '-'}</td>`);
+      tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`);
     }
     incMonthlySums[0] += rowSum;
     sparkIncData[`spark-inc-${idx}`] = rowVals;
@@ -463,8 +463,8 @@ function renderDashboardMatrices() {
       <tr>
         <td class="font-semibold">${cat}</td>
         ${tds.join('')}
-        <td class="text-right font-bold text-green">${rowSum.toFixed(1)}</td>
-        <td class="text-center"><canvas id="spark-inc-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+        <td class="text-right font-bold text-success font-mono">${rowSum.toFixed(1)}</td>
+        <td class="text-center"><canvas id="spark-inc-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
       </tr>
     `;
   }).join('');
@@ -477,10 +477,10 @@ function renderDashboardMatrices() {
     let tfHtml = `<td class="font-bold">Tổng cộng thu nhập</td>`;
     const totVals = [];
     for (let m = 1; m <= 12; m++) {
-      tfHtml += `<td class="text-right font-bold text-green">${incMonthlySums[m].toFixed(1)}</td>`;
+      tfHtml += `<td class="text-right font-bold text-success font-mono">${incMonthlySums[m].toFixed(1)}</td>`;
       totVals.push(incMonthlySums[m]);
     }
-    tfHtml += `<td class="text-right font-bold text-green">${incMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-inc-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfHtml += `<td class="text-right font-bold text-success font-mono">${incMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-inc-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
     tfInc.innerHTML = tfHtml;
     sparkIncData['spark-inc-total'] = totVals;
   }
@@ -500,7 +500,7 @@ function renderDashboardMatrices() {
       rowSum += val;
       expMonthlySums[m] += val;
       rowVals.push(val);
-      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(1) : '-'}</td>`);
+      tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`);
     }
     expMonthlySums[0] += rowSum;
     sparkExpData[`spark-exp-${idx}`] = rowVals;
@@ -509,8 +509,8 @@ function renderDashboardMatrices() {
       <tr>
         <td class="font-semibold">${cat}</td>
         ${tds.join('')}
-        <td class="text-right font-bold text-red">${rowSum.toFixed(1)}</td>
-        <td class="text-center"><canvas id="spark-exp-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+        <td class="text-right font-bold text-danger font-mono">${rowSum.toFixed(1)}</td>
+        <td class="text-center"><canvas id="spark-exp-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
       </tr>
     `;
   }).join('');
@@ -524,34 +524,34 @@ function renderDashboardMatrices() {
     let tfHtml = `<td class="font-bold">Tổng chi thực tế</td>`;
     const totExpVals = [];
     for (let m = 1; m <= 12; m++) {
-      tfHtml += `<td class="text-right font-bold text-red">${expMonthlySums[m].toFixed(1)}</td>`;
+      tfHtml += `<td class="text-right font-bold text-danger font-mono">${expMonthlySums[m].toFixed(1)}</td>`;
       totExpVals.push(expMonthlySums[m]);
     }
-    tfHtml += `<td class="text-right font-bold text-red">${expMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-exp-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfHtml += `<td class="text-right font-bold text-danger font-mono">${expMonthlySums[0].toFixed(1)}</td><td class="text-center"><canvas id="spark-exp-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
     tfExpTot.innerHTML = tfHtml;
     sparkExpData['spark-exp-total'] = totExpVals;
   }
 
   const tfExpPlan = document.getElementById('tfoot-db-expense-plan');
   if (tfExpPlan) {
-    let tfPlanHtml = `<td class="font-semibold text-gray">Kế hoạch chi</td>`;
-    for (let m = 1; m <= 12; m++) tfPlanHtml += `<td class="text-right text-gray">${planExpSum.toFixed(1)}</td>`;
-    tfPlanHtml += `<td class="text-right font-bold text-gray">${(planExpSum * 12).toFixed(1)}</td><td></td>`;
+    let tfPlanHtml = `<td class="font-semibold text-muted">Kế hoạch chi</td>`;
+    for (let m = 1; m <= 12; m++) tfPlanHtml += `<td class="text-right text-muted font-mono">${planExpSum.toFixed(1)}</td>`;
+    tfPlanHtml += `<td class="text-right font-bold text-muted font-mono">${(planExpSum * 12).toFixed(1)}</td><td></td>`;
     tfExpPlan.innerHTML = tfPlanHtml;
   }
 
   const trSav = document.getElementById('trow-db-savings');
   const sparkSavData = [];
   if (trSav) {
-    let sHtml = `<td class="font-bold text-green">Tiết kiệm ròng</td>`;
+    let sHtml = `<td class="font-bold text-success">Tiết kiệm ròng</td>`;
     let yearSav = 0;
     for (let m = 1; m <= 12; m++) {
       const sav = incMonthlySums[m] - expMonthlySums[m];
       yearSav += sav;
       sparkSavData.push(sav);
-      sHtml += `<td class="text-right font-bold ${sav >= 0 ? 'text-green' : 'text-red'}">${sav.toFixed(1)}</td>`;
+      sHtml += `<td class="text-right font-bold font-mono ${sav >= 0 ? 'text-success' : 'text-danger'}">${sav.toFixed(1)}</td>`;
     }
-    sHtml += `<td class="text-right font-bold text-green">${yearSav.toFixed(1)}</td><td class="text-center"><canvas id="spark-sav-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    sHtml += `<td class="text-right font-bold text-success font-mono">${yearSav.toFixed(1)}</td><td class="text-center"><canvas id="spark-sav-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
     trSav.innerHTML = sHtml;
   }
 
@@ -570,7 +570,7 @@ function renderDashboardMatrices() {
       rowSum += val;
       lrnMonthlySums[m] += val;
       rowVals.push(val);
-      tds.push(`<td class="text-right">${val > 0 ? val.toFixed(2) : '-'}</td>`);
+      tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(2) : '-'}</td>`);
     }
     lrnMonthlySums[0] += rowSum;
     sparkLrnData[`spark-lrn-${idx}`] = rowVals;
@@ -579,8 +579,8 @@ function renderDashboardMatrices() {
       <tr>
         <td class="font-semibold">${cat}</td>
         ${tds.join('')}
-        <td class="text-right font-bold text-orange">${rowSum.toFixed(2)}</td>
-        <td class="text-center"><canvas id="spark-lrn-${idx}" class="sparkline-canvas" width="95" height="24"></canvas></td>
+        <td class="text-right font-bold text-warning font-mono">${rowSum.toFixed(2)}</td>
+        <td class="text-center"><canvas id="spark-lrn-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
       </tr>
     `;
   }).join('');
@@ -593,19 +593,19 @@ function renderDashboardMatrices() {
     let tfLHtml = `<td class="font-bold">Tổng chi đào tạo</td>`;
     const totLrnVals = [];
     for (let m = 1; m <= 12; m++) {
-      tfLHtml += `<td class="text-right font-bold text-orange">${lrnMonthlySums[m].toFixed(2)}</td>`;
+      tfLHtml += `<td class="text-right font-bold text-warning font-mono">${lrnMonthlySums[m].toFixed(2)}</td>`;
       totLrnVals.push(lrnMonthlySums[m]);
     }
-    tfLHtml += `<td class="text-right font-bold text-orange">${lrnMonthlySums[0].toFixed(2)}</td><td class="text-center"><canvas id="spark-lrn-total" class="sparkline-canvas" width="95" height="24"></canvas></td>`;
+    tfLHtml += `<td class="text-right font-bold text-warning font-mono">${lrnMonthlySums[0].toFixed(2)}</td><td class="text-center"><canvas id="spark-lrn-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
     tfLrnTot.innerHTML = tfLHtml;
     sparkLrnData['spark-lrn-total'] = totLrnVals;
   }
 
   setTimeout(() => {
-    Object.keys(sparkIncData).forEach(id => drawSparkline(id, sparkIncData[id], '#16a34a'));
-    Object.keys(sparkExpData).forEach(id => drawSparkline(id, sparkExpData[id], '#dc2626'));
-    if (sparkSavData.length > 0) drawSparkline('spark-sav-total', sparkSavData, '#16a34a');
-    Object.keys(sparkLrnData).forEach(id => drawSparkline(id, sparkLrnData[id], '#ea580c'));
+    Object.keys(sparkIncData).forEach(id => drawSparkline(id, sparkIncData[id], '#10b981'));
+    Object.keys(sparkExpData).forEach(id => drawSparkline(id, sparkExpData[id], '#e11d48'));
+    if (sparkSavData.length > 0) drawSparkline('spark-sav-total', sparkSavData, '#10b981');
+    Object.keys(sparkLrnData).forEach(id => drawSparkline(id, sparkLrnData[id], '#d97706'));
   }, 40);
 }
 
@@ -624,12 +624,13 @@ function renderDashboardAllCharts() {
       type: 'doughnut',
       data: {
         labels: ['Mục tiêu trả nợ', 'Mục tiêu tích lũy & đầu tư'],
-        datasets: [{ data: [debtsVal, investsVal], backgroundColor: ['#ea580c', '#16a34a'] }]
+        datasets: [{ data: [debtsVal, investsVal], backgroundColor: ['#e11d48', '#10b981'], borderWidth: 2, borderColor: '#ffffff' }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 10 } } } }
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '500' } } } },
+        cutout: '68%'
       }
     });
   }
@@ -651,13 +652,16 @@ function renderDashboardAllCharts() {
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{ label: 'Giá trị tích lũy (tr)', data: cumData, borderColor: '#0e5627', backgroundColor: 'rgba(14, 86, 39, 0.1)', fill: true, tension: 0.3 }]
+        datasets: [{ label: 'Giá trị tích lũy (tr)', data: cumData, borderColor: '#4f46e5', backgroundColor: 'rgba(79, 70, 229, 0.08)', fill: true, tension: 0.35, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#4f46e5' }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } },
+          x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+        }
       }
     });
   }
@@ -671,13 +675,15 @@ function renderDashboardAllCharts() {
         labels: AppState.investProducts.slice(0, 5).map(x => x.name),
         datasets: [{
           data: AppState.investProducts.slice(0, 5).map(x => x.returnRate),
-          backgroundColor: ['#0e5627', '#16a34a', '#f29b28', '#ea580c', '#3b82f6']
+          backgroundColor: ['#0f172a', '#4f46e5', '#0284c7', '#10b981', '#f59e0b'],
+          borderWidth: 2,
+          borderColor: '#ffffff'
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 10 } } } }
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 10 } } } }
       }
     });
   }
@@ -699,16 +705,19 @@ function renderDashboardAllCharts() {
       data: {
         labels: months,
         datasets: [
-          { type: 'line', label: 'Tiết kiệm', data: savs, borderColor: '#16a34a', borderWidth: 2.2, fill: false, tension: 0.2 },
-          { label: 'Thu nhập', data: incs, backgroundColor: '#0e5627' },
-          { label: 'Chi phí', data: exps, backgroundColor: '#f29b28' }
+          { type: 'line', label: 'Tiết kiệm', data: savs, borderColor: '#10b981', borderWidth: 2.5, fill: false, tension: 0.25, pointRadius: 4, pointBackgroundColor: '#10b981' },
+          { label: 'Thu nhập', data: incs, backgroundColor: '#0f172a', borderRadius: 4 },
+          { label: 'Chi phí', data: exps, backgroundColor: '#cbd5e1', borderRadius: 4 }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { font: { family: 'Montserrat', size: 10 } } } },
-        scales: { y: { beginAtZero: true } }
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } },
+          x: { grid: { display: false } }
+        }
       }
     });
   }
@@ -731,15 +740,16 @@ function renderDashboardAllCharts() {
       data: {
         labels: months,
         datasets: [
-          { type: 'line', label: 'Lũy kế chênh lệch', data: cumDiff, borderColor: '#dc2626', borderWidth: 2, fill: false },
-          { label: 'Chi thực tế', data: actuals, backgroundColor: '#ea580c' },
-          { label: 'Kế hoạch', data: Array(12).fill(planExp), backgroundColor: '#cbd5e1' }
+          { type: 'line', label: 'Lũy kế chênh lệch', data: cumDiff, borderColor: '#e11d48', borderWidth: 2, fill: false, tension: 0.2 },
+          { label: 'Chi thực tế', data: actuals, backgroundColor: '#f43f5e', borderRadius: 4 },
+          { label: 'Kế hoạch', data: Array(12).fill(planExp), backgroundColor: '#e2e8f0', borderRadius: 4 }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { font: { family: 'Montserrat', size: 10 } } } }
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 10 } } } },
+        scales: { y: { grid: { color: '#f1f5f9' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } }, x: { grid: { display: false } } }
       }
     });
   }
@@ -748,7 +758,7 @@ function renderDashboardAllCharts() {
   if (cv6) {
     if (dashChartInstances.learningStack) dashChartInstances.learningStack.destroy();
     const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
-    const colors = ['#0e5627', '#16a34a', '#f29b28', '#3b82f6', '#8b5cf6'];
+    const colors = ['#0f172a', '#4f46e5', '#0284c7', '#10b981', '#f59e0b'];
     const datasets = AppState.planList.map((cat, idx) => {
       const data = [];
       for (let m = 1; m <= 12; m++) {
@@ -761,7 +771,8 @@ function renderDashboardAllCharts() {
         label: cat,
         data: data,
         backgroundColor: colors[idx % colors.length],
-        stack: 'learn'
+        stack: 'learn',
+        borderRadius: 3
       };
     });
 
@@ -771,8 +782,8 @@ function renderDashboardAllCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Montserrat', size: 9 } } } },
-        scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+        plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 9 } } } },
+        scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } } }
       }
     });
   }
@@ -784,7 +795,7 @@ function renderSetupTables() {
   if (tbExp) {
     tbExp.innerHTML = AppState.expenses.map((item, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteExpenseItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -795,7 +806,7 @@ function renderSetupTables() {
   if (tbInc) {
     tbInc.innerHTML = AppState.incomeList.map((item, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteIncomeItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -806,7 +817,7 @@ function renderSetupTables() {
   if (tbLrn) {
     tbLrn.innerHTML = AppState.planList.map((item, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanListItem(${idx}, this.innerText)">${item}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanListItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -817,10 +828,10 @@ function renderSetupTables() {
   if (tbInv) {
     tbInv.innerHTML = AppState.investProducts.map((p, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'name', this.innerText)">${p.name}</td>
-        <td class="text-right cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText)||0)">${p.returnRate.toFixed(1)}%</td>
-        <td class="text-right cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText)||0)">${p.risk.toFixed(1)}%</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText)||0)">${p.returnRate.toFixed(1)}%</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText)||0)">${p.risk.toFixed(1)}%</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteInvestItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -907,13 +918,13 @@ function renderPlanTables() {
   if (tbInc) {
     tbInc.innerHTML = AppState.planIncome.map((p, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td>
           <select class="select-inline-cell" onchange="updatePlanIncCat(${idx}, this.value)">
             ${AppState.incomeList.map(opt => `<option value="${opt}" ${opt === p.name ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         </td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updatePlanIncVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updatePlanIncVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'note', this.innerText)">${p.note || ''}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'analysis', this.innerText)">${p.analysis || ''}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanIncRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
@@ -925,13 +936,13 @@ function renderPlanTables() {
   if (tbExp) {
     tbExp.innerHTML = AppState.planExpense.map((p, idx) => `
       <tr>
-        <td class="text-center">${idx + 1}</td>
+        <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td>
           <select class="select-inline-cell" onchange="updatePlanExpCat(${idx}, this.value)">
             ${AppState.expenses.map(opt => `<option value="${opt}" ${opt === p.name ? 'selected' : ''}>${opt}</option>`).join('')}
           </select>
         </td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updatePlanExpVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updatePlanExpVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'note', this.innerText)">${p.note || ''}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'analysis', this.innerText)">${p.analysis || ''}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanExpRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
@@ -999,7 +1010,7 @@ function renderMonthView(m) {
           </select>
         </td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="inc.desc=this.innerText.trim();">${inc.desc || ''}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(1)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${inc.val.toFixed(1)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1016,7 +1027,7 @@ function renderMonthView(m) {
           </select>
         </td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="exp.desc=this.innerText.trim();">${exp.desc || ''}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(1)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${exp.val.toFixed(1)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1044,10 +1055,10 @@ function renderReconciliationTable(m) {
     const note = mData.reconIncomeNotes[p.name] || { reason: '', action: '' };
     return `
       <tr>
-        <td>${p.name}</td>
-        <td class="text-right">${p.plan.toFixed(1)}</td>
-        <td class="text-right font-bold">${act.toFixed(1)}</td>
-        <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
+        <td class="font-medium">${p.name}</td>
+        <td class="text-right font-mono">${p.plan.toFixed(1)}</td>
+        <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
+        <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${p.name}', 'reason', this.innerText)">${note.reason || ''}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${p.name}', 'action', this.innerText)">${note.action || ''}</td>
       </tr>
@@ -1070,10 +1081,10 @@ function renderReconciliationTable(m) {
     const note = mData.reconExpenseNotes[p.name] || { reason: '', action: '' };
     return `
       <tr>
-        <td>${p.name}</td>
-        <td class="text-right">${p.plan.toFixed(1)}</td>
-        <td class="text-right font-bold">${act.toFixed(1)}</td>
-        <td class="text-right font-bold ${diff >= 0 ? 'text-green' : 'text-red'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
+        <td class="font-medium">${p.name}</td>
+        <td class="text-right font-mono">${p.plan.toFixed(1)}</td>
+        <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
+        <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${p.name}', 'reason', this.innerText)">${note.reason || ''}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${p.name}', 'action', this.innerText)">${note.action || ''}</td>
       </tr>
@@ -1153,7 +1164,7 @@ function renderMonthLearningSection(m) {
           </select>
         </td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'desc', this.innerText.trim())">${it.desc || ''}</td>
-        <td class="text-right cell-blue font-bold" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'val', parseFloat(this.innerText.replace(/[^0-9.-]/g, '')) || 0)">${Number(it.val || 0).toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'val', parseFloat(this.innerText.replace(/[^0-9.-]/g, '')) || 0)">${Number(it.val || 0).toFixed(2)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'expRes', this.innerText.trim())">${it.expRes || ''}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'actRes', this.innerText.trim())">${it.actRes || ''}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthLearningRow(${m}, ${i})"><i class="fa-solid fa-trash-can"></i></button></td>
@@ -1173,7 +1184,7 @@ function renderMonthLearningSection(m) {
   if (tbStat) {
     tbStat.innerHTML = AppState.planList.map(name => {
       const val = catSums[name] || 0;
-      return `<tr><td>${name}</td><td class="text-right font-bold text-orange">${val.toFixed(2)}</td></tr>`;
+      return `<tr><td>${name}</td><td class="text-right font-bold text-info font-mono">${val.toFixed(2)}</td></tr>`;
     }).join('');
   }
 
@@ -1248,7 +1259,7 @@ function renderMonthHorizontalBarChart() {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{ label: "Chi thực tế", data: data, backgroundColor: "#f29b28", borderRadius: 3, barPercentage: 0.65 }]
+      datasets: [{ label: "Chi thực tế", data: data, backgroundColor: "#4f46e5", borderRadius: 4, barPercentage: 0.65 }]
     },
     options: {
       indexAxis: 'y',
@@ -1258,7 +1269,10 @@ function renderMonthHorizontalBarChart() {
         legend: { display: false },
         tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)} tr` } }
       },
-      scales: { x: { beginAtZero: true, grid: { color: "#f1f5f9" } }, y: { grid: { display: false } } }
+      scales: {
+        x: { beginAtZero: true, grid: { color: "#f1f5f9" }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+      }
     }
   });
 }
@@ -1272,13 +1286,13 @@ function renderCareerTables() {
   if (tb1) {
     tb1.innerHTML = milestones.map((item, idx) => `
       <tr>
-        <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
-        <td class="text-right font-bold text-orange">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-green">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
+        <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
+        <td class="text-right font-semibold font-mono">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="AppState.skillsStore[${idx}]=this.innerText.trim();">${item.skills}</td>
       </tr>
     `).join('');
@@ -1294,16 +1308,16 @@ function renderCareerTables() {
 
       return `
         <tr>
-          <td class="text-center font-bold bg-neutral-gray">${item.age}</td>
+          <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
           
-          <td class="text-right font-bold ${isCurrentYear ? 'cell-blue font-bold' : 'cell-disabled-readonly'}" 
+          <td class="text-right font-bold font-mono ${isCurrentYear ? 'cell-blue' : 'cell-disabled-readonly'}" 
               ${isCurrentYear ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)"` : ''}>
             ${item.actual !== null ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
           </td>
           
-          <td class="text-right font-bold text-gold">${item.target.toFixed(1)}</td>
+          <td class="text-right font-bold text-primary font-mono">${item.target.toFixed(1)}</td>
           
-          <td class="text-right font-bold cell-blue ${isDeficit ? 'text-deficit-danger' : 'text-green'}" 
+          <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}" 
               contenteditable="true" spellcheck="false" 
               onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
             ${item.route.toFixed(1)}
@@ -1341,16 +1355,16 @@ function renderCareerChart() {
   const getRouteContinuousGradient = (context) => {
     const chart = context.chart;
     const { ctx, chartArea } = chart;
-    if (!chartArea) return '#16a34a';
+    if (!chartArea) return '#10b981';
 
     const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
     const totalPoints = routes.length;
-    if (totalPoints <= 1) return '#16a34a';
+    if (totalPoints <= 1) return '#10b981';
 
     routes.forEach((val, i) => {
       const stop = i / (totalPoints - 1);
       const isMet = val >= targets[i];
-      gradient.addColorStop(stop, isMet ? '#16a34a' : '#dc2626');
+      gradient.addColorStop(stop, isMet ? '#10b981' : '#e11d48');
     });
 
     return gradient;
@@ -1365,14 +1379,13 @@ function renderCareerChart() {
         {
           label: "Thu nhập cần có để đạt mục tiêu",
           data: targets,
-          borderColor: "#eab308",
-          backgroundColor: "rgba(234, 179, 8, 0.15)",
-          borderWidth: 3,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointBackgroundColor: "#eab308",
-          pointBorderColor: "#ca8a04",
-          pointBorderWidth: 1.5,
+          borderColor: "#94a3b8",
+          backgroundColor: "rgba(148, 163, 184, 0.1)",
+          borderWidth: 2.5,
+          borderDash: [5, 5],
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: "#64748b",
           fill: false,
           tension: 0.25
         },
@@ -1381,16 +1394,13 @@ function renderCareerChart() {
           data: routes,
           borderColor: getRouteContinuousGradient,
           borderWidth: 3,
-          pointRadius: 6,
-          pointHoverRadius: 8,
+          pointRadius: 5,
+          pointHoverRadius: 7,
           pointBackgroundColor: ctx => {
             const idx = ctx.dataIndex;
-            return routes[idx] >= targets[idx] ? "#16a34a" : "#dc2626";
+            return routes[idx] >= targets[idx] ? "#10b981" : "#e11d48";
           },
-          pointBorderColor: ctx => {
-            const idx = ctx.dataIndex;
-            return routes[idx] >= targets[idx] ? "#15803d" : "#b91c1c";
-          },
+          pointBorderColor: "#ffffff",
           pointBorderWidth: 2,
           fill: false,
           tension: 0.25
@@ -1405,9 +1415,9 @@ function renderCareerChart() {
         legend: {
           position: 'top',
           labels: {
-            font: { family: 'Montserrat', size: 11, weight: 'bold' },
-            boxWidth: 28,
-            boxHeight: 12,
+            font: { family: 'Plus Jakarta Sans', size: 11, weight: 'bold' },
+            boxWidth: 24,
+            boxHeight: 10,
             padding: 16
           }
         },
@@ -1431,11 +1441,11 @@ function renderCareerChart() {
         y: {
           beginAtZero: true,
           suggestedMax: 100,
-          ticks: { stepSize: 10 },
+          ticks: { stepSize: 10, font: { family: 'JetBrains Mono', size: 10 } },
           grid: { color: "#f1f5f9" },
-          title: { display: true, text: "Triệu đồng / tháng", font: { size: 10, weight: 600 } }
+          title: { display: true, text: "Triệu đồng / tháng", font: { family: 'Plus Jakarta Sans', size: 11, weight: 600 } }
         },
-        x: { grid: { display: false } }
+        x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
       }
     }
   });
@@ -1490,10 +1500,10 @@ function renderGoogleFormSurvey() {
               </tr>
             </thead>
             <tbody>
-              <tr><td class="font-bold">Danh mục A</td><td>107 triệu</td><td class="text-red font-bold">19%</td></tr>
-              <tr><td class="font-bold">Danh mục B</td><td>108 triệu</td><td class="text-red font-bold">23%</td></tr>
-              <tr><td class="font-bold">Danh mục C</td><td>109 triệu</td><td class="text-red font-bold">26%</td></tr>
-              <tr><td class="font-bold">Danh mục D</td><td>110 triệu</td><td class="text-red font-bold">28%</td></tr>
+              <tr><td class="font-bold">Danh mục A</td><td>107 triệu</td><td class="text-danger font-bold">19%</td></tr>
+              <tr><td class="font-bold">Danh mục B</td><td>108 triệu</td><td class="text-danger font-bold">23%</td></tr>
+              <tr><td class="font-bold">Danh mục C</td><td>109 triệu</td><td class="text-danger font-bold">26%</td></tr>
+              <tr><td class="font-bold">Danh mục D</td><td>110 triệu</td><td class="text-danger font-bold">28%</td></tr>
             </tbody>
           </table>
         `;
@@ -1578,7 +1588,8 @@ function renderSurveyQuestionCharts() {
         labels: Array.from({ length: 20 }, (_, i) => `${i + 1}`),
         datasets: [{
           data: data,
-          backgroundColor: data.map(v => v >= 0 ? '#166534' : '#dc2626'),
+          backgroundColor: data.map(v => v >= 0 ? '#10b981' : '#e11d48'),
+          borderRadius: 2,
           barPercentage: 0.8
         }]
       },
@@ -1610,16 +1621,12 @@ function evaluateSurveys() {
   });
 
   let rTxt = "";
-  if (s1 <= 15) {
-    rTxt = "Bạn là người cực kỳ thận trọng và ngại rủi ro cao. Bạn nên ưu tiên các tài sản an toàn tuyệt đối như tiền gửi và trái phiếu chính phủ.";
-  } else if (s1 <= 22) {
-    rTxt = "Bạn là người thận trọng. Bạn nên duy trì các tài sản rủi ro tại mức thấp để hạn chế tối đa các đợt sụt giảm thị trường.";
-  } else if (s1 <= 30) {
-    rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình để cân bằng giữa sinh lời và an toàn vốn.";
-  } else if (s1 <= 38) {
-    rTxt = "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ sinh lời cao như cổ phiếu và chứng chỉ quỹ ETF.";
+  if (s1 < 18) {
+    rTxt = "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp.";
+  } else if (s1 < 28) {
+    rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.";
   } else {
-    rTxt = "Bạn là nhà đầu tư quyết liệt, sẵn sàng chấp nhận biến động mạnh để tối ưu hóa mức tăng trưởng tài sản dài hạn vượt trội.";
+    rTxt = "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ rủi ro cao.";
   }
 
   const p1ResEl = document.getElementById('survey-result-p1-text');
@@ -1637,16 +1644,16 @@ function evaluateSurveys() {
   });
 
   let cTxt = "";
-  if (s2 <= 18) {
-    cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn (áp lực chi phí và phụ thuộc cao).";
-  } else if (s2 <= 26) {
+  if (s2 <= 20) {
+    cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn.";
+  } else if (s2 <= 29) {
     cTxt = "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn.";
-  } else if (s2 <= 35) {
+  } else if (s2 <= 38) {
     cTxt = "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.";
-  } else if (s2 <= 42) {
+  } else if (s2 <= 41) {
     cTxt = "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn.";
   } else {
-    cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn với tiềm năng tích lũy vượt trội.";
+    cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn.";
   }
 
   const p2ResEl = document.getElementById('survey-result-p2-text');
@@ -1655,7 +1662,7 @@ function evaluateSurveys() {
   if (ctx2) ctx2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 }
 
-// ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN (TITLE THUẦN VIỆT, DỄ HIỂU) ====================
+// ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN ====================
 function renderTcGoalsFormTable() {
   const tb = document.getElementById('tbody-tc-form-goals');
   if (!tb) return;
@@ -1676,33 +1683,33 @@ function renderTcGoalsFormTable() {
           </select>
         </td>
         <td>
-          <input type="number" step="any" class="text-right" value="${g.val}" 
+          <input type="number" step="any" class="text-right font-mono" value="${g.val}" 
                  placeholder="0"
                  onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right" value="${g.paid || 0}" 
+          <input type="number" step="any" class="text-right font-mono" value="${g.paid || 0}" 
                  placeholder="0"
                  onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" class="text-center" value="${g.start}" 
+          <input type="number" class="text-center font-mono" value="${g.start}" 
                  onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||2026)">
         </td>
         <td>
-          <input type="number" class="text-center" value="${g.end}" 
+          <input type="number" class="text-center font-mono" value="${g.end}" 
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||2030)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right" value="${g.inflation || 0}" 
-                 ${g.type === 'debt' ? 'disabled style="background:#f1f5f9; cursor:not-allowed;"' : ''} 
+          <input type="number" step="any" class="text-right font-mono" value="${g.inflation || 0}" 
+                 ${g.type === 'debt' ? 'disabled style="background:#f8fafc; cursor:not-allowed;"' : ''} 
                  onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right" value="${g.rate || 8}" 
+          <input type="number" step="any" class="text-right font-mono" value="${g.rate || 8}" 
                  onchange="onGoalFieldChange(${idx}, 'rate', parseFloat(this.value)||0)">
         </td>
-        <td class="text-right font-bold text-green">${g.monthly.toFixed(2)} tr</td>
+        <td class="text-right font-bold text-success font-mono">${g.monthly.toFixed(2)} tr</td>
         <td class="text-center">
           <button type="button" class="btn-table-del" title="Xóa mục tiêu" onclick="deleteTcGoalRow(${idx})">
             <i class="fa-solid fa-trash-can"></i>
@@ -1795,28 +1802,28 @@ function createCardHtmlDebt(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Khoản nợ ${num}: ${g.name}</span>
-        <button class="btn-table-del" style="color:#ffffff;" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+        <span>Khoản nợ ${num}: <strong>${g.name}</strong></span>
+        <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <table class="tc-card-h4-table">
         <tbody>
           <tr>
             <td style="width: 32%;">Năm bắt đầu</td>
-            <td class="cell-green-val" style="width: 18%;">${g.start}</td>
+            <td class="cell-green-val font-mono" style="width: 18%;">${g.start}</td>
             <td class="bg-col-head" style="width: 32%;">Thời gian trả nợ</td>
-            <td class="text-right font-bold" style="width: 18%;">${nYears.toFixed(0)} năm</td>
+            <td class="text-right font-bold font-mono" style="width: 18%;">${nYears.toFixed(0)} năm</td>
           </tr>
           <tr>
             <td>Năm tất toán</td>
-            <td class="cell-green-val">${g.end}</td>
+            <td class="cell-green-val font-mono">${g.end}</td>
             <td class="bg-col-head">Khoản nợ còn lại</td>
-            <td class="text-right font-bold text-red">${targetNeed.toFixed(1)} tr</td>
+            <td class="text-right font-bold text-danger font-mono">${targetNeed.toFixed(1)} tr</td>
           </tr>
           <tr>
             <td>Lãi suất vay</td>
-            <td class="cell-green-val">${g.rate.toFixed(1)}%/năm</td>
+            <td class="cell-green-val font-mono">${g.rate.toFixed(1)}%/năm</td>
             <td class="bg-col-head">Cần trả mỗi tháng</td>
-            <td class="cell-orange-val">${mVal.toFixed(1)} tr</td>
+            <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
           </tr>
         </tbody>
       </table>
@@ -1862,68 +1869,68 @@ function createCardHtmlInvest(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: ${g.name}</span>
-        <button class="btn-table-del" style="color:#ffffff;" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+        <span>Mục tiêu đầu tư ${num}: <strong>${g.name}</strong></span>
+        <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <table class="tc-card-h4-table">
         <thead>
-          <tr class="header-sub-green">
-            <th colspan="2" style="width: 32%;">Thông số thời gian</th>
-            <th colspan="2" style="width: 30%;">Tiền tích lũy</th>
-            <th colspan="4" style="width: 38%;">Kênh đầu tư phân bổ</th>
+          <tr class="bg-header-sub">
+            <th colspan="2" style="width: 30%;">Thông số thời gian</th>
+            <th colspan="2" style="width: 30%;">Số tiền tích lũy</th>
+            <th colspan="4" style="width: 40%;">Phân bổ kênh đầu tư</th>
           </tr>
           <tr class="bg-col-head">
             <th>Chỉ tiêu</th><th style="width: 50px;">Năm</th>
-            <th>Mục</th><th style="width: 55px;">Số tiền</th>
-            <th>Kênh đầu tư</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 40px;">Lãi</th><th style="width: 38px;">Rủi ro</th>
+            <th>Chỉ tiêu</th><th style="width: 60px;">Số tiền</th>
+            <th>Kênh đầu tư</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi</th><th style="width: 45px;">Rủi ro</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td>Năm bắt đầu</td>
-            <td class="cell-green-val">${g.start}</td>
-            <td class="italic-head">Số tiền cần gom</td>
-            <td class="cell-orange-val">${targetNeed.toFixed(0)} tr</td>
+            <td class="cell-green-val font-mono">${g.start}</td>
+            <td>Cần gom</td>
+            <td class="cell-orange-val font-mono">${targetNeed.toFixed(0)} tr</td>
             <td>${renderProductSelect(0)}</td>
-            <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(prods[0]?.weight || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[0]?.returnRate || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[0]?.risk || 0).toFixed(1)}%</td>
+            <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(prods[0]?.weight || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[0]?.returnRate || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[0]?.risk || 0).toFixed(1)}%</td>
           </tr>
           <tr>
             <td>Năm kết thúc</td>
-            <td class="cell-green-val">${g.end}</td>
-            <td class="font-bold">Số năm tích lũy</td>
-            <td class="text-right font-bold">${nYears.toFixed(0)} năm</td>
+            <td class="cell-green-val font-mono">${g.end}</td>
+            <td class="font-bold">Số năm gom</td>
+            <td class="text-right font-bold font-mono">${nYears.toFixed(0)} năm</td>
             <td>${renderProductSelect(1)}</td>
-            <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(prods[1]?.weight || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[1]?.returnRate || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[1]?.risk || 0).toFixed(1)}%</td>
+            <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(prods[1]?.weight || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[1]?.returnRate || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[1]?.risk || 0).toFixed(1)}%</td>
           </tr>
           <tr>
-            <td>Năm sống sau hưu</td>
-            <td class="cell-green-val">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
-            <td class="font-bold">Cần góp / tháng</td>
-            <td class="cell-orange-val">${mVal.toFixed(1)} tr</td>
+            <td>Năm sau hưu</td>
+            <td class="cell-green-val font-mono">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
+            <td class="font-bold">Cần / tháng</td>
+            <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
             <td>${renderProductSelect(2)}</td>
-            <td class="cell-green-val" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(prods[2]?.weight || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[2]?.returnRate || 0).toFixed(1)}%</td>
-            <td class="text-right">${(prods[2]?.risk || 0).toFixed(1)}%</td>
+            <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(prods[2]?.weight || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[2]?.returnRate || 0).toFixed(1)}%</td>
+            <td class="text-right font-mono">${(prods[2]?.risk || 0).toFixed(1)}%</td>
           </tr>
           <tr>
-            <td>Tiêu dùng sau hưu</td>
-            <td class="cell-green-val">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
-            <td class="font-bold">Cần góp / năm</td>
-            <td class="cell-orange-val">${yVal.toFixed(1)} tr</td>
+            <td>Tiêu sau hưu</td>
+            <td class="cell-green-val font-mono">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
+            <td class="font-bold">Cần / năm</td>
+            <td class="cell-orange-val font-mono">${yVal.toFixed(1)} tr</td>
             <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
-            <td colspan="2" class="cell-gold-val text-center">${expectedAvgReturn.toFixed(2)}%/năm</td>
+            <td colspan="2" class="cell-gold-val text-center font-mono">${expectedAvgReturn.toFixed(2)}%/năm</td>
           </tr>
           <tr class="bg-neutral-gray font-semibold">
-            <td>Để lại cho con cháu:</td>
-            <td class="font-bold text-right text-red">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
-            <td style="text-align: right;">Trượt giá tính:</td>
-            <td class="cell-green-val">${(g.inflation || 0).toFixed(1)}%/năm</td>
-            <td colspan="2" style="text-align: right;">Tiền đã có sẵn:</td>
-            <td colspan="2" class="cell-green-val text-center font-bold">${g.paid || 0} tr</td>
+            <td>Để lại cho con:</td>
+            <td class="font-bold text-right text-danger font-mono">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
+            <td style="text-align: right;">Trượt giá:</td>
+            <td class="cell-green-val font-mono">${(g.inflation || 0).toFixed(1)}%/năm</td>
+            <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
+            <td colspan="2" class="cell-green-val text-center font-bold font-mono">${g.paid || 0} tr</td>
           </tr>
         </tbody>
       </table>
@@ -1980,7 +1987,7 @@ window.removeGoalFromCard = function(id) {
   recalculateAll();
 };
 
-// ==================== MA TRẬN 33 NĂM ====================
+// ==================== MA TRẬN NHU CẦU TIẾT KIỆM VÀ THU NHẬP ====================
 function renderTcMatrixTable() {
   const thead = document.getElementById('tr-tc-matrix-head');
   const tbody = document.getElementById('tbody-tc-matrix');
@@ -1991,12 +1998,12 @@ function renderTcMatrixTable() {
   const all = [...debts, ...invests];
 
   thead.innerHTML = `
-    <th style="min-width: 48px;">Năm</th>
-    <th style="min-width: 48px;">Tuổi</th>
-    ${debts.map((g, i) => `<th style="min-width: 90px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    ${invests.map((g, i) => `<th style="min-width: 90px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    <th style="min-width: 85px;" class="col-highlight-gold">Tiết kiệm cần / tháng</th>
-    <th style="min-width: 85px;" class="col-highlight-orange">Thu nhập cần kiếm / tháng</th>
+    <th style="min-width: 55px;">Năm</th>
+    <th style="min-width: 55px;">Tuổi</th>
+    ${debts.map((g, i) => `<th style="min-width: 95px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
+    ${invests.map((g, i) => `<th style="min-width: 95px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
+    <th style="min-width: 90px;" class="col-highlight-gold">Tiết kiệm cần / tháng</th>
+    <th style="min-width: 95px;" class="col-highlight-orange">Thu nhập cần có / tháng</th>
   `;
 
   const startY = AppState.currentYear;
@@ -2011,7 +2018,7 @@ function renderTcMatrixTable() {
 
     const cells = all.map(g => {
       const active = yr >= g.start && yr <= g.end;
-      const val = active ? (g.monthly || calculateMonthlyNeed(g)) : 0;
+      const val = active ? (g.monthly !== undefined ? g.monthly : calculateMonthlyNeed(g)) : 0;
       if (val > 0) sSum += val;
       return `
         <td class="cell-matrix-editable ${val > 0 ? 'cell-active-goal' : ''}" 
@@ -2026,8 +2033,8 @@ function renderTcMatrixTable() {
     const incNeed = sSum > 0 ? (sSum / rate) : 0;
     rows += `
       <tr id="mtr-row-${y}">
-        <td class="text-center font-bold bg-neutral-gray">${yr}</td>
-        <td class="text-center font-bold bg-neutral-gray">${age}</td>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${yr}</td>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${age}</td>
         ${cells}
         <td class="text-right val-gold cell-readonly" id="mtr-sav-${y}">${sSum > 0 ? sSum.toFixed(1) : '-'}</td>
         <td class="text-right val-orange cell-readonly" id="mtr-inc-${y}">${incNeed > 0 ? incNeed.toFixed(1) : '-'}</td>
@@ -2094,14 +2101,18 @@ function renderTcMatrixChart() {
     data: {
       labels: labels,
       datasets: [
-        { label: "Thu nhập cần có (tr/tháng)", data: incData, borderColor: "#ea580c", backgroundColor: "rgba(234, 88, 12, 0.12)", borderWidth: 2, fill: true, tension: 0.2 },
-        { label: "Tiết kiệm cần có (tr/tháng)", data: savData, borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.15)", borderWidth: 2, fill: true, tension: 0.2 }
+        { label: "Thu nhập cần có (tr/tháng)", data: incData, borderColor: "#4f46e5", backgroundColor: "rgba(79, 70, 229, 0.08)", borderWidth: 2.5, fill: true, tension: 0.25 },
+        { label: "Tiết kiệm cần có (tr/tháng)", data: savData, borderColor: "#f59e0b", backgroundColor: "rgba(245, 158, 11, 0.08)", borderWidth: 2.5, fill: true, tension: 0.25 }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true, grid: { color: "#f1f5f9" } } }
+      plugins: { legend: { position: 'top', labels: { font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "#f1f5f9" }, ticks: { font: { family: 'JetBrains Mono', size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } } }
+      }
     }
   });
 }
