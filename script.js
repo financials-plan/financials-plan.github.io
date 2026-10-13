@@ -2231,3 +2231,134 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// ==================== TÍCH HỢP FIREBASE DATA FLOW ====================
+
+function updateCloudStatus(status, text) {
+  const badge = document.getElementById('cloud-status-badge');
+  const txt = document.getElementById('cloud-status-text');
+  if (!badge || !txt) return;
+
+  badge.className = `cloud-badge cloud-${status}`;
+  txt.textContent = text;
+}
+
+function showToast(message, type = 'success') {
+  let toast = document.getElementById('cloud-floating-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'cloud-floating-toast';
+    toast.className = 'cloud-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.className = `cloud-toast toast-${type} show`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${message}</span>`;
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+/**
+ * GHI DỮ LIỆU: Bấm nút "Lưu Cloud"
+ */
+window.saveAppStateToCloud = async function() {
+  if (!window.CloudDB) {
+    alert("Dịch vụ Firebase chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
+    return;
+  }
+
+  const btnSave = document.getElementById('btn-cloud-save');
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang lưu...</span>`;
+  }
+  updateCloudStatus('loading', 'Đang lưu lên Cloud...');
+
+  const result = await window.CloudDB.saveData(AppState);
+
+  if (btnSave) {
+    btnSave.disabled = false;
+    btnSave.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>`;
+  }
+
+  if (result.success) {
+    updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
+    showToast("Đã lưu toàn bộ dữ liệu tài chính lên Cloud thành công!", "success");
+  } else {
+    updateCloudStatus('error', 'Lỗi khi lưu!');
+    showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
+  }
+};
+
+/**
+ * ĐỌC DỮ LIỆU: Tải dữ liệu từ Firestore và render lại toàn bộ màn hình
+ */
+window.loadAppStateFromCloud = async function(isInitialLoad = false) {
+  if (!window.CloudDB) return;
+
+  const btnLoad = document.getElementById('btn-cloud-load');
+  if (btnLoad) {
+    btnLoad.disabled = true;
+    btnLoad.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tải...</span>`;
+  }
+  updateCloudStatus('loading', 'Đang tải từ Cloud...');
+
+  const result = await window.CloudDB.loadData();
+
+  if (btnLoad) {
+    btnLoad.disabled = false;
+    btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>`;
+  }
+
+  if (result.success && result.data) {
+    const cloudData = result.data;
+
+    // Gán dữ liệu đám mây vào AppState
+    Object.keys(cloudData).forEach(key => {
+      if (key !== '_lastUpdated') {
+        AppState[key] = cloudData[key];
+      }
+    });
+
+    // Đồng bộ lại UI Năm và Tuổi
+    const yEl = document.getElementById('input-year');
+    const aEl = document.getElementById('input-age');
+    if (yEl) yEl.innerText = AppState.currentYear;
+    if (aEl) aEl.innerText = AppState.currentAge;
+    document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+    // Vẽ lại tất cả các bảng và biểu đồ
+    renderSetupTables();
+    renderPlanTables();
+    renderTcGoalsFormTable();
+    renderSkillsFamilyJob();
+    renderGoogleFormSurvey();
+    evaluateSurveys();
+    renderCareerTables();
+    renderMonthView(AppState.currentMonth);
+    syncGoalsToCards();
+    recalculateAll();
+
+    updateCloudStatus('ready', 'Đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
+    if (!isInitialLoad) {
+      showToast("Đã tải và cập nhật dữ liệu mới nhất từ Cloud!", "success");
+    }
+  } else if (result.notFound) {
+    updateCloudStatus('ready', 'Dữ liệu mặc định');
+    if (!isInitialLoad) {
+      showToast("Chưa có bản ghi trên Cloud. Hãy bấm 'Lưu Cloud' để tạo bản lưu đầu tiên!", "success");
+    }
+  } else {
+    updateCloudStatus('error', 'Lỗi tải dữ liệu');
+    if (!isInitialLoad) {
+      showToast("Không thể nạp dữ liệu từ Cloud!", "error");
+    }
+  }
+};
+
+// Tự động tải dữ liệu từ Firestore ngay khi trang web khởi động xong
+window.addEventListener('firebase-ready', () => {
+  window.loadAppStateFromCloud(true);
+});
