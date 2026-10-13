@@ -73,12 +73,26 @@
 
   <main class="main-content">
     
-    <header class="app-topbar">
+   <header class="app-topbar">
       <div class="topbar-left">
         <span class="status-indicator"></span>
         <h1 id="current-title">TỪ KHÓA THIẾT LẬP</h1>
       </div>
+      
+      <!-- Nút điều khiển lưu / tải dữ liệu đám mây -->
       <div class="topbar-right">
+        <span id="cloud-status-badge" class="cloud-badge cloud-ready">
+          <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
+        </span>
+
+        <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="loadAppStateFromCloud()" title="Tải dữ liệu mới nhất từ Firebase">
+          <i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>
+        </button>
+
+        <button type="button" class="btn-cloud-sync btn-cloud-save" id="btn-cloud-save" onclick="saveAppStateToCloud()" title="Lưu dữ liệu hiện tại lên Cloud">
+          <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>
+        </button>
+
         <span class="currency-tag"><i class="fa-solid fa-coins"></i> Đơn vị tính: Triệu VNĐ</span>
       </div>
     </header>
@@ -894,7 +908,12 @@
     </section>
   </main>
 
-  <!-- Script logic JavaScript -->
+  <!-- 1. Nạp file cấu hình Firebase trước (bắt buộc có type="module") -->
+  <script type="module" src="./firebase-config.js"></script>
+  <!-- 2. Nạp script logic ứng dụng -->
   <script src="./script.js"></script>
+
+</body>
+</html>
 </body>
 </html>
