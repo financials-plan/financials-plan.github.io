@@ -1,7 +1,90 @@
 /**
  * HỆ THỐNG QUẢN LÝ TÀI CHÍNH CÁ NHÂN DỄ DÙNG & CHUYÊN SÂU
  * Tự động đồng bộ phản ứng (Reactive Flow), công thức dòng tiền chuẩn Excel
+ * Tích hợp nhận diện đa người dùng & phân vùng Cloud Firestore
  */
+
+// ==================== HÀM CHUẨN HÓA TÊN DÙNG CHUNG ====================
+/**
+ * Chuẩn hóa họ tên người dùng thành định danh Firestore ổn định
+ * Quy tắc:
+ * 1. Chữ thường
+ * 2. Bỏ dấu tiếng Việt & dấu phụ Unicode
+ * 3. Thay khoảng trắng bằng gạch dưới '_'
+ * 4. Loại bỏ ký tự không phù hợp
+ * 5. Khử nhiều dấu gạch dưới liên tiếp và ở hai đầu
+ * Ví dụ: "Nguyễn Văn An" -> "nguyen_van_an"
+ */
+function normalizeUserName(rawName) {
+  if (!rawName || typeof rawName !== 'string') return '';
+  let str = rawName.trim().toLowerCase();
+  
+  // Phân rã tổ hợp Unicode và xóa dấu phụ (diacritical marks)
+  str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  // Xử lý riêng chữ 'đ' / 'Đ' của tiếng Việt
+  str = str.replace(/[đĐ]/g, 'd');
+  
+  // Thay thế khoảng trắng (một hoặc nhiều khoảng trắng) bằng dấu gạch dưới
+  str = str.replace(/\s+/g, '_');
+  
+  // Loại bỏ các ký tự đặc biệt, chỉ giữ lại a-z, 0-9 và dấu gạch dưới
+  str = str.replace(/[^a-z0-9_]/g, '');
+  
+  // Rút gọn nhiều dấu gạch dưới liên tiếp thành một
+  str = str.replace(/_+/g, '_');
+  
+  // Loại bỏ dấu gạch dưới ở đầu và cuối chuỗi
+  str = str.replace(/^_+|_+$/g, '');
+  
+  return str;
+}
+
+// ==================== QUẢN LÝ PHIÊN NGƯỜI DÙNG (SESSION) ====================
+const UserSession = {
+  STORAGE_KEY: "FIN_APP_USER_SESSION",
+  currentUser: null, // { rawName, normalizedName, docId }
+
+  getStored() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      console.error("Lỗi đọc session từ localStorage:", e);
+      return null;
+    }
+  },
+
+  setStored(user) {
+    this.currentUser = user;
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.error("Lỗi ghi session vào localStorage:", e);
+    }
+    this.updateUI();
+  },
+
+  clear() {
+    this.currentUser = null;
+    try {
+      localStorage.removeItem(this.STORAGE_KEY);
+    } catch (e) {}
+    this.updateUI();
+  },
+
+  updateUI() {
+    const rawEl = document.getElementById('display-raw-name');
+    const slugEl = document.getElementById('display-id-slug');
+    if (this.currentUser) {
+      if (rawEl) rawEl.textContent = this.currentUser.rawName;
+      if (slugEl) slugEl.textContent = `@${this.currentUser.docId}`;
+    } else {
+      if (rawEl) rawEl.textContent = "Chưa xác nhận";
+      if (slugEl) slugEl.textContent = "@guest";
+    }
+  }
+};
 
 const AppState = {
   currentYear: 2026,
@@ -2190,7 +2273,295 @@ function recalculateAll() {
   updatePlanTotals();
 }
 
+// ==================== TÍCH HỢP FIREBASE DATA FLOW ĐA NGƯỜI DÙNG ====================
+
+function updateCloudStatus(status, text) {
+  const badge = document.getElementById('cloud-status-badge');
+  const txt = document.getElementById('cloud-status-text');
+  if (!badge || !txt) return;
+
+  badge.className = `cloud-badge cloud-${status}`;
+  txt.textContent = text;
+}
+
+function showToast(message, type = 'success') {
+  let toast = document.getElementById('cloud-floating-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'cloud-floating-toast';
+    toast.className = 'cloud-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.className = `cloud-toast toast-${type} show`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${message}</span>`;
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3200);
+}
+
+/**
+ * GHI DỮ LIỆU: Lưu AppState vào Document ID riêng biệt của người dùng
+ */
+window.saveAppStateToCloud = async function() {
+  if (!window.CloudDB) {
+    alert("Dịch vụ Firebase chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
+    return;
+  }
+
+  if (!UserSession.currentUser) {
+    showToast("Vui lòng xác nhận danh tính trước khi lưu dữ liệu!", "error");
+    openUserModal(false);
+    return;
+  }
+
+  const btnSave = document.getElementById('btn-cloud-save');
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang lưu...</span>`;
+  }
+  updateCloudStatus('loading', 'Đang lưu lên Cloud...');
+
+  const userDocId = UserSession.currentUser.docId;
+  const result = await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
+
+  if (btnSave) {
+    btnSave.disabled = false;
+    btnSave.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>`;
+  }
+
+  if (result.success) {
+    updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
+    showToast(`Đã lưu thành công dữ liệu của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
+  } else {
+    updateCloudStatus('error', 'Lỗi khi lưu!');
+    showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
+  }
+};
+
+/**
+ * ĐỌC DỮ LIỆU: Nạp dữ liệu từ Document ID của người dùng hiện tại
+ */
+window.loadAppStateFromCloud = async function(isInitialLoad = false) {
+  if (!window.CloudDB || !UserSession.currentUser) return;
+
+  const btnLoad = document.getElementById('btn-cloud-load');
+  if (btnLoad) {
+    btnLoad.disabled = true;
+    btnLoad.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tải...</span>`;
+  }
+  updateCloudStatus('loading', 'Đang tải từ Cloud...');
+
+  const userDocId = UserSession.currentUser.docId;
+  const result = await window.CloudDB.loadData(userDocId);
+
+  if (btnLoad) {
+    btnLoad.disabled = false;
+    btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>`;
+  }
+
+  if (result.success && result.data) {
+    const cloudData = result.data;
+
+    // Gán dữ liệu đám mây vào AppState (bỏ qua các thuộc tính metadata hệ thống)
+    Object.keys(cloudData).forEach(key => {
+      if (!key.startsWith('_')) {
+        AppState[key] = cloudData[key];
+      }
+    });
+
+    // Đồng bộ lại UI Năm và Tuổi
+    const yEl = document.getElementById('input-year');
+    const aEl = document.getElementById('input-age');
+    if (yEl) yEl.innerText = AppState.currentYear;
+    if (aEl) aEl.innerText = AppState.currentAge;
+    document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+    // Vẽ lại tất cả các bảng và biểu đồ
+    renderSetupTables();
+    renderPlanTables();
+    renderTcGoalsFormTable();
+    renderSkillsFamilyJob();
+    renderGoogleFormSurvey();
+    evaluateSurveys();
+    renderCareerTables();
+    renderMonthView(AppState.currentMonth);
+    syncGoalsToCards();
+    recalculateAll();
+
+    updateCloudStatus('ready', 'Đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
+    if (!isInitialLoad) {
+      showToast(`Đã cập nhật dữ liệu của [${UserSession.currentUser.rawName}]!`, "success");
+    }
+  } else if (result.notFound) {
+    updateCloudStatus('ready', 'Hồ sơ mới tạo');
+    if (!isInitialLoad) {
+      showToast("Hồ sơ này chưa có bản lưu trên Cloud. Hãy bấm 'Lưu Cloud' để tạo!", "success");
+    }
+  } else {
+    updateCloudStatus('error', 'Lỗi tải dữ liệu');
+    if (!isInitialLoad) {
+      showToast("Không thể nạp dữ liệu từ Cloud!", "error");
+    }
+  }
+};
+
+// ==================== ĐIỀU KHIỂN MODAL NHẬN DIỆN NGƯỜI DÙNG ====================
+
+let pendingUserCandidate = null;
+
+window.openUserModal = function(allowCancel = true) {
+  const modal = document.getElementById('user-modal-overlay');
+  const cancelBtn = document.getElementById('btn-modal-cancel');
+  const input = document.getElementById('input-user-rawname');
+  const errorEl = document.getElementById('user-input-error');
+  const dupBox = document.getElementById('duplicate-warning-box');
+
+  if (!modal) return;
+
+  if (errorEl) errorEl.style.display = 'none';
+  if (dupBox) dupBox.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = allowCancel ? 'inline-block' : 'none';
+
+  if (UserSession.currentUser && input) {
+    input.value = UserSession.currentUser.rawName;
+    updateSlugPreview(UserSession.currentUser.rawName);
+  } else if (input) {
+    input.value = '';
+    updateSlugPreview('');
+  }
+
+  modal.classList.add('active');
+  if (input) setTimeout(() => input.focus(), 80);
+};
+
+window.closeUserModal = function() {
+  const modal = document.getElementById('user-modal-overlay');
+  if (modal) modal.classList.remove('active');
+};
+
+function updateSlugPreview(val) {
+  const slugEl = document.getElementById('preview-user-slug');
+  const normalized = normalizeUserName(val);
+  if (slugEl) {
+    slugEl.textContent = normalized ? `user_${normalized}` : 'chua_xac_dinh';
+  }
+}
+
+window.submitUserProfile = async function() {
+  const input = document.getElementById('input-user-rawname');
+  const errorEl = document.getElementById('user-input-error');
+  const dupBox = document.getElementById('duplicate-warning-box');
+  const btnSubmit = document.getElementById('btn-modal-submit');
+
+  if (!input) return;
+  const rawVal = input.value.trim();
+
+  // Kiểm tra tính hợp lệ của họ tên
+  if (!rawVal || rawVal.length < 2) {
+    if (errorEl) {
+      errorEl.textContent = "Vui lòng nhập họ và tên hợp lệ (tối thiểu 2 ký tự, không chỉ chứa khoảng trắng).";
+      errorEl.style.display = 'block';
+    }
+    input.focus();
+    return;
+  }
+
+  const normalized = normalizeUserName(rawVal);
+  if (!normalized) {
+    if (errorEl) {
+      errorEl.textContent = "Tên không chứa ký tự chữ cái hợp lệ để tạo định danh.";
+      errorEl.style.display = 'block';
+    }
+    return;
+  }
+
+  if (errorEl) errorEl.style.display = 'none';
+  const defaultDocId = `user_${normalized}`;
+
+  // Kiểm tra trùng lặp trên Cloud nếu Firestore đã sẵn sàng
+  if (window.CloudDB && (!UserSession.currentUser || UserSession.currentUser.docId !== defaultDocId)) {
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang kiểm tra...</span>`;
+    }
+
+    const check = await window.CloudDB.checkDocExists(defaultDocId);
+
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = `<span>Xác nhận & Bắt đầu</span> <i class="fa-solid fa-arrow-right"></i>`;
+    }
+
+    if (check.success && check.exists) {
+      // Đã có dữ liệu của người có tên chuẩn hóa tương đương -> Hiển thị hộp thoại xử lý trùng lặp
+      pendingUserCandidate = {
+        rawName: rawVal,
+        normalizedName: normalized,
+        defaultDocId: defaultDocId
+      };
+
+      const dupDocText = document.getElementById('dup-doc-id-text');
+      if (dupDocText) dupDocText.textContent = defaultDocId;
+      if (dupBox) dupBox.style.display = 'flex';
+
+      // Gắn sự kiện cho 2 nút giải quyết
+      document.getElementById('btn-dup-use-existing').onclick = () => {
+        applyUserProfile(rawVal, normalized, defaultDocId, true);
+      };
+
+      document.getElementById('btn-dup-create-unique').onclick = () => {
+        // Tạo hậu tố phân biệt theo thời gian thực ngắn
+        const uniqueSuffix = Date.now().toString().slice(-4);
+        const uniqueDocId = `user_${normalized}_${uniqueSuffix}`;
+        applyUserProfile(rawVal, normalized, uniqueDocId, false);
+      };
+
+      return;
+    }
+  }
+
+  // Tên mới hoàn toàn hoặc là người dùng hiện tại đang cập nhật
+  applyUserProfile(rawVal, normalized, defaultDocId, false);
+};
+
+function applyUserProfile(rawName, normalizedName, docId, loadExistingData = false) {
+  const user = {
+    rawName: rawName,
+    normalizedName: normalizedName,
+    docId: docId,
+    confirmedAt: new Date().toISOString()
+  };
+
+  UserSession.setStored(user);
+  closeUserModal();
+  showToast(`Chào mừng [${rawName}], hệ sinh thái đã sẵn sàng!`, "success");
+
+  // Nạp dữ liệu từ Cloud tương ứng với hồ sơ
+  if (window.CloudDB) {
+    window.loadAppStateFromCloud(false);
+  }
+}
+
+// ==================== KHỞI TẠO VÀ LẮNG NGHE SỰ KIỆN ====================
 document.addEventListener('DOMContentLoaded', () => {
+  // Gắn sự kiện gõ phím để xem trước định danh
+  const inputName = document.getElementById('input-user-rawname');
+  if (inputName) {
+    inputName.addEventListener('input', (e) => {
+      updateSlugPreview(e.target.value);
+      const errorEl = document.getElementById('user-input-error');
+      if (errorEl) errorEl.style.display = 'none';
+      const dupBox = document.getElementById('duplicate-warning-box');
+      if (dupBox) dupBox.style.display = 'none';
+    });
+    inputName.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitUserProfile();
+    });
+  }
+
+  // Khởi tạo các bảng dữ liệu ban đầu
   renderSetupTables();
   renderPlanTables();
   renderTcGoalsFormTable();
@@ -2201,6 +2572,16 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMonthView(AppState.currentMonth);
   syncGoalsToCards();
   recalculateAll();
+
+  // Khôi phục phiên người dùng hoặc mở Modal bắt buộc
+  const storedUser = UserSession.getStored();
+  if (storedUser && storedUser.rawName && storedUser.docId) {
+    UserSession.currentUser = storedUser;
+    UserSession.updateUI();
+  } else {
+    // Người dùng mới truy cập: mở modal chặn các thao tác cho đến khi xác nhận họ tên
+    openUserModal(false);
+  }
 
   const yEl = document.getElementById('input-year');
   const aEl = document.getElementById('input-age');
@@ -2232,137 +2613,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ==================== TÍCH HỢP FIREBASE DATA FLOW ====================
-
-function updateCloudStatus(status, text) {
-  const badge = document.getElementById('cloud-status-badge');
-  const txt = document.getElementById('cloud-status-text');
-  if (!badge || !txt) return;
-
-  badge.className = `cloud-badge cloud-${status}`;
-  txt.textContent = text;
-}
-
-function showToast(message, type = 'success') {
-  let toast = document.getElementById('cloud-floating-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'cloud-floating-toast';
-    toast.className = 'cloud-toast';
-    document.body.appendChild(toast);
-  }
-
-  toast.className = `cloud-toast toast-${type} show`;
-  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${message}</span>`;
-
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
-}
-
-/**
- * GHI DỮ LIỆU: Bấm nút "Lưu Cloud"
- */
-window.saveAppStateToCloud = async function() {
-  if (!window.CloudDB) {
-    alert("Dịch vụ Firebase chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
-    return;
-  }
-
-  const btnSave = document.getElementById('btn-cloud-save');
-  if (btnSave) {
-    btnSave.disabled = true;
-    btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang lưu...</span>`;
-  }
-  updateCloudStatus('loading', 'Đang lưu lên Cloud...');
-
-  const result = await window.CloudDB.saveData(AppState);
-
-  if (btnSave) {
-    btnSave.disabled = false;
-    btnSave.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>`;
-  }
-
-  if (result.success) {
-    updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
-    showToast("Đã lưu toàn bộ dữ liệu tài chính lên Cloud thành công!", "success");
-  } else {
-    updateCloudStatus('error', 'Lỗi khi lưu!');
-    showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
-  }
-};
-
-/**
- * ĐỌC DỮ LIỆU: Tải dữ liệu từ Firestore và render lại toàn bộ màn hình
- */
-window.loadAppStateFromCloud = async function(isInitialLoad = false) {
-  if (!window.CloudDB) return;
-
-  const btnLoad = document.getElementById('btn-cloud-load');
-  if (btnLoad) {
-    btnLoad.disabled = true;
-    btnLoad.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tải...</span>`;
-  }
-  updateCloudStatus('loading', 'Đang tải từ Cloud...');
-
-  const result = await window.CloudDB.loadData();
-
-  if (btnLoad) {
-    btnLoad.disabled = false;
-    btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>`;
-  }
-
-  if (result.success && result.data) {
-    const cloudData = result.data;
-
-    // Gán dữ liệu đám mây vào AppState
-    Object.keys(cloudData).forEach(key => {
-      if (key !== '_lastUpdated') {
-        AppState[key] = cloudData[key];
-      }
-    });
-
-    // Đồng bộ lại UI Năm và Tuổi
-    const yEl = document.getElementById('input-year');
-    const aEl = document.getElementById('input-age');
-    if (yEl) yEl.innerText = AppState.currentYear;
-    if (aEl) aEl.innerText = AppState.currentAge;
-    document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
-
-    // Vẽ lại tất cả các bảng và biểu đồ
-    renderSetupTables();
-    renderPlanTables();
-    renderTcGoalsFormTable();
-    renderSkillsFamilyJob();
-    renderGoogleFormSurvey();
-    evaluateSurveys();
-    renderCareerTables();
-    renderMonthView(AppState.currentMonth);
-    syncGoalsToCards();
-    recalculateAll();
-
-    updateCloudStatus('ready', 'Đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
-    if (!isInitialLoad) {
-      showToast("Đã tải và cập nhật dữ liệu mới nhất từ Cloud!", "success");
-    }
-  } else if (result.notFound) {
-    updateCloudStatus('ready', 'Dữ liệu mặc định');
-    if (!isInitialLoad) {
-      showToast("Chưa có bản ghi trên Cloud. Hãy bấm 'Lưu Cloud' để tạo bản lưu đầu tiên!", "success");
-    }
-  } else {
-    updateCloudStatus('error', 'Lỗi tải dữ liệu');
-    if (!isInitialLoad) {
-      showToast("Không thể nạp dữ liệu từ Cloud!", "error");
-    }
-  }
-};
-
-// Nếu Firebase đã load xong trước thì tải luôn, nếu chưa thì đợi sự kiện
-if (window.CloudDB) {
-  window.loadAppStateFromCloud(true);
-} else {
-  window.addEventListener('firebase-ready', () => {
+// Khi Firebase sẵn sàng
+window.addEventListener('firebase-ready', () => {
+  if (UserSession.currentUser) {
     window.loadAppStateFromCloud(true);
-  });
-}
+  }
+});
