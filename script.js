@@ -411,7 +411,7 @@ window.switchTab = function(tabId) {
 
   const titlesMap = {
     'tab-tukhoa': 'TỪ KHÓA THIẾT LẬP',
-    'tab-dashboard': 'DASHBOARD THEO DÕI TÀI CHÍNH',
+    'tab-dashboard': 'DASHBOARD',
     'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
     'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
     'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
