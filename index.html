@@ -73,14 +73,26 @@
 
   <main class="main-content">
     
-   <header class="app-topbar">
+    <header class="app-topbar">
       <div class="topbar-left">
         <span class="status-indicator"></span>
         <h1 id="current-title">TỪ KHÓA THIẾT LẬP</h1>
       </div>
       
-      <!-- Nút điều khiển lưu / tải dữ liệu đám mây -->
+      <!-- Nút điều khiển lưu / tải dữ liệu đám mây & Huy hiệu nhận diện người dùng -->
       <div class="topbar-right">
+        <!-- Huy hiệu người dùng hiện tại -->
+        <div id="user-profile-badge" class="user-profile-badge" onclick="openUserModal(true)" title="Nhấn để đổi hồ sơ người dùng">
+          <div class="user-avatar"><i class="fa-solid fa-user-check"></i></div>
+          <div class="user-info-text">
+            <span class="user-raw-name" id="display-raw-name">Chưa xác nhận</span>
+            <span class="user-id-slug" id="display-id-slug">@guest</span>
+          </div>
+          <button type="button" class="btn-user-switch" title="Đổi người dùng">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+          </button>
+        </div>
+
         <span id="cloud-status-badge" class="cloud-badge cloud-ready">
           <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
         </span>
@@ -335,6 +347,7 @@
         </div>
       </div>
 
+      <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN ==================== -->
       <div id="tab-muctieu-bt" class="tab-pane">
         <div class="target-container">
           
@@ -907,6 +920,61 @@
 
     </section>
   </main>
+
+  <!-- ==================== MODAL NHẬN DIỆN NGƯỜI DÙNG ==================== -->
+  <div id="user-modal-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-icon-badge"><i class="fa-solid fa-user-gear"></i></div>
+        <div class="modal-title-group">
+          <h3>Nhận diện hồ sơ người dùng</h3>
+          <p>Nhập họ và tên để lưu trữ và quản lý sổ tài chính độc lập trên Cloud</p>
+        </div>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-user-rawname">Họ và tên của bạn:</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-signature"></i>
+            <input type="text" id="input-user-rawname" placeholder="Ví dụ: Đinh Anh Quân, Nguyễn Văn An..." autocomplete="name">
+          </div>
+          <div class="input-hint">
+            Định danh hệ thống: <code id="preview-user-slug">chua_xac_dinh</code>
+          </div>
+          <div class="input-error-msg" id="user-input-error" style="display: none;"></div>
+        </div>
+
+        <!-- Hộp thoại giải quyết trường hợp trùng tên đã có dữ liệu trên Cloud -->
+        <div id="duplicate-warning-box" class="duplicate-warning-box" style="display: none;">
+          <div class="dup-box-header">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Hồ sơ đã tồn tại trên Cloud Firestore</span>
+          </div>
+          <p class="dup-box-desc">
+            Định danh <strong id="dup-doc-id-text"></strong> đã có dữ liệu tài chính được lưu trước đó. Vui lòng chọn hành động mong muốn:
+          </p>
+          <div class="dup-actions-grid">
+            <button type="button" class="btn-dup-opt btn-dup-use" id="btn-dup-use-existing">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Tải & dùng tiếp hồ sơ này
+            </button>
+            <button type="button" class="btn-dup-opt btn-dup-new" id="btn-dup-create-unique">
+              <i class="fa-solid fa-user-plus"></i> Tạo hồ sơ mới phân biệt
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" id="btn-modal-cancel" onclick="closeUserModal()" style="display: none;">
+          Đóng
+        </button>
+        <button type="button" class="btn-modal-submit" id="btn-modal-submit" onclick="submitUserProfile()">
+          <span>Xác nhận & Bắt đầu</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- 1. Nạp file cấu hình Firebase trước (bắt buộc có type="module") -->
   <script type="module" src="./firebase-config.js"></script>
