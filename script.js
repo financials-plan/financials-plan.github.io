@@ -2358,7 +2358,11 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   }
 };
 
-// Tự động tải dữ liệu từ Firestore ngay khi trang web khởi động xong
-window.addEventListener('firebase-ready', () => {
+// Nếu Firebase đã load xong trước thì tải luôn, nếu chưa thì đợi sự kiện
+if (window.CloudDB) {
   window.loadAppStateFromCloud(true);
-});
+} else {
+  window.addEventListener('firebase-ready', () => {
+    window.loadAppStateFromCloud(true);
+  });
+}
