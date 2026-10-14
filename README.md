@@ -254,16 +254,46 @@ Tự động tính toán cơ cấu tỷ trọng danh mục đầu tư mẫu (C�
   * `returnNeed`: Tỷ suất sinh lời kỳ vọng trung bình gia quyền của danh mục ($\%/\text{năm}$).
 
 #### C. Công thức toán học & Quy tắc phân bổ
-1. **Tỷ trọng Cổ phiếu ($W_{\text{stocks}}$):** Áp dụng biến thể hiện đại của quy tắc kinh điển "$100 - \text{Tuổi}$" kết hợp cận an toàn $[15\%, 75\%]$:
-   $$W_{\text{stocks}} = \max\left(15\%,\ \min\left(75\%,\ 100 - \text{Tuổi} + 5\right)\right)$$
-2. **Tỷ trọng Trái phiếu ($W_{\text{bonds}}$):** Tăng dần theo tỷ lệ $90\%$ tuổi đời, khống chế trong khoảng $[15\%, 60\%]$:
-   $$W_{\text{bonds}} = \min\left(60\%,\ \max\left(15\%,\ \text{Tuổi} \times 0.9\right)\right)$$
-3. **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Bước nhảy theo giai đoạn trách nhiệm gia đình:
-   $$W_{\text{ins}} = \begin{cases} 7.0\% & \text{nếu } \text{Tuổi} < 35 \\ 10.0\% & \text{nếu } \text{Tuổi} \ge 35 \end{cases}$$
-4. **Tỷ trọng Tiền mặt thanh khoản ($W_{\text{cash}}$):** Phần bù còn lại để tổng danh mục luôn bảo toàn $100\%$, mức sàn tối thiểu $5\%$:
-   $$W_{\text{cash}} = \max\left(5\%,\ 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
-5. **Tỷ suất sinh lời kỳ vọng trung bình gia quyền ($\bar{R}$):**
-   $$\bar{R} = \frac{W_{\text{stocks}} \times 13.5\% + W_{\text{bonds}} \times 9.5\% + W_{\text{ins}} \times 4.5\% + W_{\text{cash}} \times 5.0\%}{100}$$
+
+1. **Tỷ trọng Cổ phiếu (\(W_{\text{stocks}}\)):** Áp dụng biến thể hiện đại của quy tắc kinh điển \(100 - \text{Tuổi}\), kết hợp cận an toàn từ \(15\%\) đến \(75\%\):
+
+   $$
+   W_{\text{stocks}} = \max\left(15\%, \min\left(75\%, 105 - \text{Tuổi}\right)\right)
+   $$
+
+2. **Tỷ trọng Trái phiếu (\(W_{\text{bonds}}\)):** Tăng dần theo tỷ lệ \(90\%\) tuổi đời, giới hạn trong khoảng từ \(15\%\) đến \(60\%\):
+
+   $$
+   W_{\text{bonds}} = \min\left(60\%, \max\left(15\%, 0.9 \times \text{Tuổi}\right)\right)
+   $$
+
+3. **Tỷ trọng Bảo hiểm phòng hộ (\(W_{\text{ins}}\)):** Thay đổi theo giai đoạn trách nhiệm gia đình:
+
+   $$
+   W_{\text{ins}} =
+   \begin{cases}
+   7.0\%, & \text{nếu Tuổi} < 35 \\
+   10.0\%, & \text{nếu Tuổi} \geq 35
+   \end{cases}
+   $$
+
+4. **Tỷ trọng Tiền mặt thanh khoản (\(W_{\text{cash}}\)):** Phần bù còn lại để tổng danh mục hướng đến \(100\%\), với mức sàn tối thiểu \(5\%\):
+
+   $$
+   W_{\text{cash}} = \max\left(5\%, 100\% - \left(W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}}\right)\right)
+   $$
+
+5. **Tỷ suất sinh lời kỳ vọng trung bình gia quyền (\(\bar{R}\)):**
+
+   $$
+   \bar{R} =
+   \frac{
+   W_{\text{stocks}} \times 13.5\%
+   + W_{\text{bonds}} \times 9.5\%
+   + W_{\text{ins}} \times 4.5\%
+   + W_{\text{cash}} \times 5.0\%
+   }{100}
+   $$
 
 #### D. Pseudocode
 ```text
