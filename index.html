@@ -2,12 +2,13 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6258F5">
   <title>Sổ Tài Chính Cá Nhân</title>
-  <!-- Google Font: Plus Jakarta Sans & JetBrains Mono -->
+  <!-- Google Font: Inter (một font chính, biến thiên 400-800, hỗ trợ tiếng Việt) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
   <!-- Chart.js CDN -->
@@ -17,58 +18,129 @@
 </head>
 <body>
 
-  <aside class="sidebar">
+  <!-- Thanh điều hướng cho màn hình hẹp: mở/đóng drawer menu -->
+  <div class="mobile-appbar">
+    <button type="button" class="btn-menu-toggle" id="btn-menu-toggle" aria-label="Mở menu điều hướng" aria-controls="app-sidebar" aria-expanded="false">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+    <div class="brand-badge"><i class="fa-solid fa-wallet"></i></div>
+    <span class="brand-title">SỔ TÀI CHÍNH</span>
+  </div>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <aside class="sidebar" id="app-sidebar">
     <div class="sidebar-header">
-      <div class="brand-badge"><i class="fa-solid fa-wallet"></i></div>
+      <div class="brand-badge" onclick="toggleSideRail()" title="Sổ Tài Chính Cá Nhân"><i class="fa-solid fa-wallet"></i></div>
       <div class="brand-text">
         <span class="brand-title">SỔ TÀI CHÍNH</span>
+        <span class="brand-subtitle">Quản lý &amp; Tăng trưởng</span>
       </div>
+      <!-- Nút điều khiển Ghim / Chế độ Tự động mở rộng (Smart Side Rail) -->
+      <button type="button" class="btn-rail-toggle" id="btn-rail-toggle" aria-label="Ghim mở rộng hoặc tự động thu gọn Side Rail" aria-pressed="true" title="Ghim mở rộng (Nhấn để chuyển sang Tự động mở khi hover)" onclick="toggleSideRailPin()">
+        <i class="fa-solid fa-thumbtack icon-rail-pin"></i>
+      </button>
+      <button type="button" class="btn-drawer-close" id="btn-drawer-close" aria-label="Đóng menu điều hướng"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
-    <nav class="nav-menu">
-      <div class="nav-section-label">TỔNG QUAN & THIẾT LẬP</div>
-      <button class="nav-item active" id="btn-tab-tukhoa" onclick="switchTab('tab-tukhoa')">
-        <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
-      </button>
-      <button class="nav-item" id="btn-tab-dashboard" onclick="switchTab('tab-dashboard')">
-        <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
-      </button>
+    <nav class="nav-menu" id="rail-nav-menu">
+      <div class="rail-nav-wrapper" id="rail-nav-wrapper">
+        <!-- Vùng highlight trượt mượt mà (Sliding Active Highlight - Mẫu Lucian #040) -->
+        <div class="rail-active-pill" id="rail-active-pill" aria-hidden="true">
+          <span class="rail-active-indicator"></span>
+        </div>
 
-      <div class="nav-section-label">MỤC TIÊU & LỘ TRÌNH</div>
-      <button class="nav-item" id="btn-tab-muctieu-bt" onclick="switchTab('tab-muctieu-bt')">
-        <i class="fa-solid fa-bullseye"></i><span>Mục tiêu bản thân</span>
-      </button>
-      <button class="nav-item" id="btn-tab-muctieu-tc" onclick="switchTab('tab-muctieu-tc')">
-        <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
-      </button>
-      <button class="nav-item two-lines" id="btn-tab-candoi" onclick="switchTab('tab-candoi')">
-        <i class="fa-solid fa-route"></i><span>Cân đối lộ trình</span>
-      </button>
-      <button class="nav-item two-lines" id="btn-tab-kehoach" onclick="switchTab('tab-kehoach')">
-        <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
-      </button>
+        <div class="nav-section-label">TỔNG QUAN &amp; THIẾT LẬP</div>
+        <button class="nav-item active" id="btn-tab-tukhoa" data-tooltip="Từ khóa thiết lập" onclick="switchTab('tab-tukhoa')">
+          <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
+        </button>
+        <button class="nav-item" id="btn-tab-dashboard" data-tooltip="Dashboard phân tích" onclick="switchTab('tab-dashboard')">
+          <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
+        </button>
 
-      <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
-      <div class="month-nav-grid">
-        <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
-        <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
-        <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
-        <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
-        <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
-        <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
-        <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
-        <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
-        <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
-        <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
-        <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
-        <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+        <div class="nav-section-label">MỤC TIÊU &amp; LỘ TRÌNH</div>
+        <button class="nav-item" id="btn-tab-muctieu-bt" data-tooltip="Mục tiêu bản thân" onclick="switchTab('tab-muctieu-bt')">
+          <i class="fa-solid fa-bullseye"></i><span>Mục tiêu bản thân</span>
+        </button>
+        <button class="nav-item" id="btn-tab-muctieu-tc" data-tooltip="Mục tiêu tài chính" onclick="switchTab('tab-muctieu-tc')">
+          <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
+        </button>
+        <button class="nav-item two-lines" id="btn-tab-candoi" data-tooltip="Cân đối lộ trình" onclick="switchTab('tab-candoi')">
+          <i class="fa-solid fa-route"></i><span>Cân đối lộ trình</span>
+        </button>
+        <button class="nav-item two-lines" id="btn-tab-kehoach" data-tooltip="Kế hoạch thu chi" onclick="switchTab('tab-kehoach')">
+          <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
+        </button>
+
+        <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
+        <!-- Nút rút gọn cho chế độ Collapsed Side Rail -->
+        <button type="button" class="rail-month-collapsed-btn" id="btn-month-collapsed" data-tooltip="Theo dõi 12 tháng" onclick="switchMonthTab(AppState.currentMonth || 1)">
+          <i class="fa-solid fa-calendar-days"></i>
+        </button>
+        <div class="month-nav-grid">
+          <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
+          <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
+          <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
+          <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
+          <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
+          <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
+          <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
+          <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
+          <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
+          <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
+          <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
+          <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+        </div>
+
+        <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
+        <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
+          <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Khu vực Account Switcher ở chân Side Rail (Mẫu Lucian #037) -->
+    <div class="rail-account-area" id="rail-account-area">
+      <!-- Flyout Menu mở lên phía trên (Mẫu #037) -->
+      <div class="account-switcher-menu" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
+        <div class="account-menu-header">
+          <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
+          <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
+        </div>
+
+        <!-- Danh sách hồ sơ thật -->
+        <div class="account-list" id="rail-account-list" role="group">
+          <!-- Render động từ JavaScript -->
+        </div>
+
+        <div class="account-menu-divider"></div>
+
+        <!-- Các thao tác thực tế -->
+        <div class="account-actions">
+          <button type="button" class="account-action-btn" onclick="openUserModal(true); closeAccountMenu();">
+            <i class="fa-solid fa-user-plus text-primary"></i> <span>Thêm / Đổi hồ sơ mới</span>
+          </button>
+          <button type="button" class="account-action-btn" onclick="saveAppStateToCloud(); closeAccountMenu();">
+            <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu lên Cloud</span>
+          </button>
+          <button type="button" class="account-action-btn text-danger" onclick="logoutUserProfile(); closeAccountMenu();">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất hồ sơ</span>
+          </button>
+        </div>
       </div>
 
-      <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
-      <button class="nav-item" id="btn-tab-khaosat" onclick="switchTab('tab-khaosat')">
-        <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
+      <!-- Account Chip ở đáy Side Rail -->
+      <button type="button" class="rail-account-chip" id="btn-account-chip" aria-haspopup="menu" aria-expanded="false" aria-label="Mở menu chuyển đổi tài khoản" onclick="toggleAccountMenu(event)">
+        <div class="chip-avatar-wrap">
+          <div class="chip-avatar" id="chip-user-avatar">N</div>
+          <span class="chip-status-dot" title="Trạng thái: Hoạt động"></span>
+        </div>
+        <div class="chip-info">
+          <span class="chip-name" id="chip-display-name">Chưa xác nhận</span>
+          <span class="chip-slug" id="chip-display-slug">@guest</span>
+        </div>
+        <i class="fa-solid fa-chevron-up chip-chevron"></i>
       </button>
-    </nav>
+    </div>
   </aside>
 
   <main class="main-content">
@@ -81,17 +153,11 @@
       
       <!-- Nút điều khiển lưu / tải dữ liệu đám mây & Huy hiệu nhận diện người dùng -->
       <div class="topbar-right">
-        <!-- Huy hiệu người dùng hiện tại -->
-        <div id="user-profile-badge" class="user-profile-badge" onclick="openUserModal(true)" title="Nhấn để đổi hồ sơ người dùng">
-          <div class="user-avatar"><i class="fa-solid fa-user-check"></i></div>
-          <div class="user-info-text">
-            <span class="user-raw-name" id="display-raw-name">Chưa xác nhận</span>
-            <span class="user-id-slug" id="display-id-slug">@guest</span>
-          </div>
-          <button type="button" class="btn-user-switch" title="Đổi người dùng">
-            <i class="fa-solid fa-arrow-right-arrow-left"></i>
-          </button>
-        </div>
+        <!-- Nút chuyển đổi giao diện Sáng / Tối (Light / Dark Theme) -->
+        <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" onclick="toggleTheme()" aria-label="Chuyển chế độ giao diện Sáng / Tối" title="Chuyển chế độ giao diện Sáng / Tối">
+          <i class="fa-solid fa-moon icon-theme-dark" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun icon-theme-light" aria-hidden="true"></i>
+        </button>
 
         <span id="cloud-status-badge" class="cloud-badge cloud-ready">
           <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
@@ -105,7 +171,7 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>
         </button>
 
-        <span class="currency-tag"><i class="fa-solid fa-coins"></i> Triệu VNĐ</span>
+        <span class="currency-tag"><i class="fa-solid fa-coins"></i> Đơn vị tính: Triệu VNĐ</span>
       </div>
     </header>
 
@@ -126,7 +192,7 @@
 
           <div class="color-convention-block">
             <div class="convention-title"><i class="fa-solid fa-circle-info"></i> Quy ước dữ liệu trên trang:</div>
-            <div class="convention-item"><span class="color-rect bg-blue"></span><span class="text-blue-rule">Chữ xanh dương: Nhập số liệu trực tiếp</span></div>
+            <div class="convention-item"><span class="color-rect bg-blue"></span><span class="text-blue-rule">Chữ xanh tím: Nhập số liệu trực tiếp</span></div>
             <div class="convention-item"><span class="color-rect bg-black"></span><span class="text-black-rule">Chữ xám / đen: Giá trị tính toán tự động</span></div>
             <div class="convention-item"><span class="color-rect bg-red"></span><span class="text-red-rule">Chữ đỏ / cam: Cảnh báo & Khoản quan trọng</span></div>
           </div>
@@ -137,7 +203,7 @@
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
-                <tr class="header-main-primary">
+                <tr class="header-main-danger">
                   <th colspan="3">
                     <div class="table-header-flex">
                       <span class="title"><i class="fa-solid fa-arrow-down-wide-short"></i> Danh mục chi phí</span>
@@ -211,21 +277,45 @@
 
       <!-- ==================== TAB 2: DASHBOARD ==================== -->
       <div id="tab-dashboard" class="tab-pane">
-        <div class="dash-kpi-three-strip mb-4">
-          <div class="dash-kpi-block kpi-modern-success">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
-            <div class="kpi-content-wrap">
-              <span class="kpi-title">Tổng thu nhập năm <span class="dynamic-year">2026</span></span>
-              <span class="kpi-num" id="kpi-dash-income">0</span>
-            </div>
+        <!-- Tầng 1: Hero -->
+        <div class="dash-hero">
+          <div class="dash-hero-copy">
+            <span class="dash-hero-kicker"><i class="fa-solid fa-bolt"></i> Tổng quan năm <span class="dynamic-year">2026</span></span>
+            <h2 class="dash-hero-title">Dòng tiền của bạn, rõ ràng trong một cái nhìn</h2>
+            <p class="dash-hero-desc">Theo dõi thu nhập, chi tiêu và tiết kiệm ròng. Số liệu được tổng hợp tự động từ kế hoạch và nhật ký thu chi bạn đã nhập.</p>
           </div>
-          <div class="dash-kpi-block kpi-modern-warning">
-            <div class="kpi-icon-wrap"><i class="fa-solid fa-receipt"></i></div>
-            <div class="kpi-content-wrap">
-              <span class="kpi-title">Tổng chi tiêu năm <span class="dynamic-year">2026</span></span>
-              <span class="kpi-num" id="kpi-dash-expense">0</span>
-            </div>
+          <div class="dash-hero-actions">
+            <button type="button" class="btn-lime" onclick="switchMonthTab(AppState.currentMonth)"><i class="fa-solid fa-receipt"></i> Ghi thu chi tháng này</button>
+            <button type="button" class="btn-ghost-light" onclick="switchTab('tab-kehoach')"><i class="fa-solid fa-wallet"></i> Kế hoạch thu chi</button>
           </div>
+        </div>
+
+        <!-- Tầng 2: Lối tắt tới các chức năng có sẵn -->
+        <nav class="dash-shortcuts" aria-label="Lối tắt chức năng">
+          <button type="button" class="shortcut shortcut--plan" onclick="switchTab('tab-kehoach')">
+            <span class="shortcut-icon"><i class="fa-solid fa-wallet"></i></span>
+            <span class="shortcut-text"><span class="shortcut-title">Kế hoạch thu chi</span><span class="shortcut-desc">Dự tính thu nhập &amp; chi tiêu hàng tháng</span></span>
+            <i class="fa-solid fa-arrow-right shortcut-arrow"></i>
+          </button>
+          <button type="button" class="shortcut shortcut--month" onclick="switchMonthTab(AppState.currentMonth)">
+            <span class="shortcut-icon"><i class="fa-solid fa-receipt"></i></span>
+            <span class="shortcut-text"><span class="shortcut-title">Theo dõi thu chi</span><span class="shortcut-desc">Nhật ký và đối chiếu theo tháng</span></span>
+            <i class="fa-solid fa-arrow-right shortcut-arrow"></i>
+          </button>
+          <button type="button" class="shortcut shortcut--goal" onclick="switchTab('tab-muctieu-tc')">
+            <span class="shortcut-icon"><i class="fa-solid fa-vault"></i></span>
+            <span class="shortcut-text"><span class="shortcut-title">Mục tiêu tài chính</span><span class="shortcut-desc">Phân bổ và dòng tiền từng mục tiêu</span></span>
+            <i class="fa-solid fa-arrow-right shortcut-arrow"></i>
+          </button>
+          <button type="button" class="shortcut shortcut--route" onclick="switchTab('tab-candoi')">
+            <span class="shortcut-icon"><i class="fa-solid fa-route"></i></span>
+            <span class="shortcut-text"><span class="shortcut-title">Cân đối lộ trình</span><span class="shortcut-desc">Đối chiếu thu nhập với mục tiêu</span></span>
+            <i class="fa-solid fa-arrow-right shortcut-arrow"></i>
+          </button>
+        </nav>
+
+        <!-- Tầng 3: Chỉ số tài chính (tiết kiệm ròng nổi bật) -->
+        <div class="dash-kpi-three-strip">
           <div class="dash-kpi-block kpi-modern-primary">
             <div class="kpi-icon-wrap"><i class="fa-solid fa-piggy-bank"></i></div>
             <div class="kpi-content-wrap">
@@ -233,43 +323,68 @@
               <span class="kpi-num" id="kpi-dash-savings">0</span>
             </div>
           </div>
+          <div class="dash-kpi-block kpi-modern-success">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-sack-dollar"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng thu nhập năm <span class="dynamic-year">2026</span></span>
+              <span class="kpi-num" id="kpi-dash-income">0</span>
+            </div>
+          </div>
+          <div class="dash-kpi-block kpi-modern-danger">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng chi tiêu năm <span class="dynamic-year">2026</span></span>
+              <span class="kpi-num" id="kpi-dash-expense">0</span>
+            </div>
+          </div>
         </div>
 
-        <div class="dash-grid-row-2 mb-4">
-          <div class="chart-card">
-            <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu phân bổ các mục tiêu tài chính</h3>
-            <div class="chart-container-compact"><canvas id="chartDashGoalsPie"></canvas></div>
+        <!-- Tầng 4: Biểu đồ dòng tiền -->
+        <section class="dash-section">
+          <div class="dash-section-head">
+            <h2 class="section-heading">Dòng tiền trong năm</h2>
+            <p class="section-hint">Thu nhập, chi phí và tiết kiệm theo từng tháng; so sánh chi tiêu thực tế với kế hoạch.</p>
           </div>
-          <div class="chart-card">
-            <h3><i class="fa-solid fa-arrow-trend-up"></i> Tích lũy tiến độ mục tiêu qua các năm</h3>
-            <div class="chart-container-compact"><canvas id="chartDashGoalsLine"></canvas></div>
-          </div>
-        </div>
-
-        <div class="dash-grid-row-2 mb-4">
-          <div class="chart-card">
-            <h3><i class="fa-solid fa-layer-group"></i> Hiệu suất danh mục đầu tư mẫu</h3>
-            <div class="chart-container-compact"><canvas id="chartDashInvestPie"></canvas></div>
-          </div>
-          <div class="chart-card">
+          <div class="chart-card chart-card--wide">
             <h3><i class="fa-solid fa-chart-simple"></i> Thu nhập - Chi phí - Dòng tiền tích lũy 12 tháng</h3>
             <div class="chart-container-compact"><canvas id="chartDashCombo12"></canvas></div>
           </div>
-        </div>
-
-        <div class="dash-grid-row-2 mb-4">
-          <div class="chart-card">
-            <h3><i class="fa-solid fa-scale-balanced"></i> Chi tiêu thực tế so với Kế hoạch & Chênh lệch lũy kế</h3>
-            <div class="chart-container-compact"><canvas id="chartDashVariance"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="card-head-flex">
-              <h3><i class="fa-solid fa-graduation-cap"></i> Phân bổ chi tiêu phát triển bản thân</h3>
-              <div class="slicer-tags" id="dash-slicer-tags"></div>
+          <div class="dash-grid-row-2">
+            <div class="chart-card">
+              <h3><i class="fa-solid fa-scale-balanced"></i> Chi tiêu thực tế so với Kế hoạch & Chênh lệch lũy kế</h3>
+              <div class="chart-container-compact"><canvas id="chartDashVariance"></canvas></div>
             </div>
-            <div class="chart-container-compact"><canvas id="chartDashLearningStack"></canvas></div>
+            <div class="chart-card">
+              <div class="card-head-flex">
+                <h3><i class="fa-solid fa-graduation-cap"></i> Phân bổ chi tiêu phát triển bản thân</h3>
+                <div class="slicer-tags" id="dash-slicer-tags"></div>
+              </div>
+              <div class="chart-container-compact"><canvas id="chartDashLearningStack"></canvas></div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <!-- Tầng 5: Mục tiêu & đầu tư -->
+        <section class="dash-section">
+          <div class="dash-section-head">
+            <h2 class="section-heading">Mục tiêu & đầu tư</h2>
+            <p class="section-hint">Cơ cấu mục tiêu, tiến độ tích lũy qua các năm và hiệu suất danh mục đầu tư mẫu.</p>
+          </div>
+          <div class="dash-grid-row-3">
+            <div class="chart-card">
+              <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu phân bổ các mục tiêu tài chính</h3>
+              <div class="chart-container-compact"><canvas id="chartDashGoalsPie"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <h3><i class="fa-solid fa-arrow-trend-up"></i> Tích lũy tiến độ mục tiêu qua các năm</h3>
+              <div class="chart-container-compact"><canvas id="chartDashGoalsLine"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <h3><i class="fa-solid fa-layer-group"></i> Hiệu suất danh mục đầu tư mẫu</h3>
+              <div class="chart-container-compact"><canvas id="chartDashInvestPie"></canvas></div>
+            </div>
+          </div>
+        </section>
 
         <div class="dashboard-matrix-container">
           <div class="sheet-title-banner mb-3"><i class="fa-solid fa-table-list"></i> DỮ LIỆU MA TRẬN DÒNG TIỀN CHI TIẾT 12 THÁNG</div>
@@ -294,7 +409,7 @@
           <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table" id="table-db-expense">
               <thead>
-                <tr class="header-main-warning">
+                <tr class="header-main-danger">
                   <th style="min-width: 190px; text-align: left;">Hạng mục chi tiêu</th>
                   <th>T1</th><th>T2</th><th>T3</th><th>T4</th>
                   <th>T5</th><th>T6</th><th>T7</th><th>T8</th>
@@ -475,12 +590,12 @@
           <div class="target-section survey-result-section">
             <div class="survey-result-title"><i class="fa-solid fa-square-poll-vertical"></i> Kết quả phân tích từ Khảo sát bản thân</div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')"><i class="fa-solid fa-pen-to-square"></i> Khảo sát rủi ro</button>
-              <div class="survey-desc font-semibold text-black" id="survey-result-risk">Đang tính toán...</div>
+              <button class="btn-survey-link" onclick="openSurveyTab(1)"><i class="fa-solid fa-pen-to-square"></i> Khảo sát rủi ro</button>
+              <div class="survey-desc font-semibold text-theme-primary" id="survey-result-risk">Đang tính toán...</div>
             </div>
             <div class="survey-row">
-              <button class="btn-survey-link" onclick="switchTab('tab-khaosat')"><i class="fa-solid fa-pen-to-square"></i> Khảo sát hoàn cảnh</button>
-              <div class="survey-desc font-semibold text-black" id="survey-result-context">Đang tính toán...</div>
+              <button class="btn-survey-link" onclick="openSurveyTab(2)"><i class="fa-solid fa-pen-to-square"></i> Khảo sát hoàn cảnh</button>
+              <div class="survey-desc font-semibold text-theme-primary" id="survey-result-context">Đang tính toán...</div>
             </div>
           </div>
         </div>
@@ -615,58 +730,62 @@
       <div id="tab-kehoach" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
 
-          <div class="sheet-title-banner flex-between">
-            <span><i class="fa-solid fa-coins"></i> PHẦN 1: TIỀN DỰ TÍNH KIẾM ĐƯỢC MỖI THÁNG</span>
-            <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản thu</button>
-          </div>
-          <div class="table-scroll-x mb-4">
-            <table class="excel-table-bordered">
-              <thead>
-                <tr class="bg-header-success">
-                  <th style="width: 45px;">#</th>
-                  <th style="width: 220px;">Khoản thu</th>
-                  <th style="width: 150px;">Số tiền dự tính (tr)</th>
-                  <th style="width: 220px;">Ghi chú chi tiết</th>
-                  <th>Mức độ ổn định</th>
-                  <th style="width: 45px;">Xóa</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-plan-inc"></tbody>
-              <tfoot>
-                <tr class="bg-total-row">
-                  <td colspan="2" class="font-bold">Tổng thu nhập dự tính hàng tháng</td>
-                  <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00 tr</td>
-                  <td colspan="3"></td>
-                </tr>
-              </tfoot>
-            </table>
+          <div class="data-panel mb-4">
+            <div class="sheet-title-banner flex-between">
+              <span><i class="fa-solid fa-coins"></i> PHẦN 1: TIỀN DỰ TÍNH KIẾM ĐƯỢC MỖI THÁNG</span>
+              <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản thu</button>
+            </div>
+            <div class="table-scroll-x">
+              <table class="excel-table-bordered">
+                <thead>
+                  <tr class="bg-header-success">
+                    <th style="width: 45px;">#</th>
+                    <th style="width: 220px;">Khoản thu</th>
+                    <th style="width: 150px;">Số tiền dự tính (tr)</th>
+                    <th style="width: 220px;">Ghi chú chi tiết</th>
+                    <th>Mức độ ổn định</th>
+                    <th style="width: 45px;">Xóa</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-plan-inc"></tbody>
+                <tfoot>
+                  <tr class="bg-total-row">
+                    <td colspan="2" class="font-bold">Tổng thu nhập dự tính hàng tháng</td>
+                    <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00 tr</td>
+                    <td colspan="3"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
-          <div class="sheet-title-banner flex-between mt-4">
-            <span><i class="fa-solid fa-credit-card"></i> PHẦN 2: MỨC TIỀN DỰ TÍNH TIÊU MỖI THÁNG</span>
-            <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản chi</button>
-          </div>
-          <div class="table-scroll-x">
-            <table class="excel-table-bordered">
-              <thead>
-                <tr class="bg-header-warning">
-                  <th style="width: 45px;">#</th>
-                  <th style="width: 220px;">Khoản mục chi tiêu</th>
-                  <th style="width: 150px;">Mức chi tối đa (tr)</th>
-                  <th style="width: 220px;">Ghi chú chi tiết</th>
-                  <th>Mức độ cần thiết</th>
-                  <th style="width: 45px;">Xóa</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-plan-exp"></tbody>
-              <tfoot>
-                <tr class="bg-total-row">
-                  <td colspan="2" class="font-bold">Tổng chi tiêu dự tính hàng tháng</td>
-                  <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00 tr</td>
-                  <td colspan="3"></td>
-                </tr>
-              </tfoot>
-            </table>
+          <div class="data-panel">
+            <div class="sheet-title-banner flex-between">
+              <span><i class="fa-solid fa-credit-card"></i> PHẦN 2: MỨC TIỀN DỰ TÍNH TIÊU MỖI THÁNG</span>
+              <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản chi</button>
+            </div>
+            <div class="table-scroll-x">
+              <table class="excel-table-bordered">
+                <thead>
+                  <tr class="bg-header-danger">
+                    <th style="width: 45px;">#</th>
+                    <th style="width: 220px;">Khoản mục chi tiêu</th>
+                    <th style="width: 150px;">Mức chi tối đa (tr)</th>
+                    <th style="width: 220px;">Ghi chú chi tiết</th>
+                    <th>Mức độ cần thiết</th>
+                    <th style="width: 45px;">Xóa</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-plan-exp"></tbody>
+                <tfoot>
+                  <tr class="bg-total-row">
+                    <td colspan="2" class="font-bold">Tổng chi tiêu dự tính hàng tháng</td>
+                    <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00 tr</td>
+                    <td colspan="3"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
         </div>
@@ -692,7 +811,7 @@
                   <div class="kpi-lbl">Tổng thu thực tế</div>
                   <div class="kpi-val" id="m-summary-income">0</div>
                 </div>
-                <div class="kpi-box box-modern-warning">
+                <div class="kpi-box box-modern-danger">
                   <div class="kpi-lbl">Tổng chi thực tế</div>
                   <div class="kpi-val" id="m-summary-expense">0</div>
                 </div>
@@ -717,7 +836,7 @@
                   <table class="excel-table-bordered">
                     <thead>
                       <tr class="bg-header-sub">
-                        <th style="width: 125px;">Ngày</th>
+                        <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Nguồn thu</th>
                         <th>Chi tiết giao dịch</th>
                         <th style="width: 85px;">Số tiền (tr)</th>
@@ -770,7 +889,7 @@
                   <table class="excel-table-bordered">
                     <thead>
                       <tr class="bg-header-sub">
-                        <th style="width: 125px;">Ngày</th>
+                        <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Khoản chi</th>
                         <th>Chi tiết giao dịch</th>
                         <th style="width: 85px;">Số tiền (tr)</th>
@@ -816,17 +935,43 @@
           </div>
 
           <div id="month-sec-2" class="month-section-pane">
+            <!-- Thẻ thống kê KPI chi phí học tập & đào tạo phát triển bản thân -->
+            <div class="learning-kpi-strip mb-4">
+              <div class="learning-kpi-card kpi-card-cyan">
+                <div class="kpi-icon-wrap"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="kpi-info-wrap">
+                  <div class="kpi-label">Tổng kinh phí học tập</div>
+                  <div class="kpi-value"><span id="m-learn-kpi-total">0.00</span> <small>tr</small></div>
+                </div>
+              </div>
+              <div class="learning-kpi-card kpi-card-purple">
+                <div class="kpi-icon-wrap"><i class="fa-solid fa-book-bookmark"></i></div>
+                <div class="kpi-info-wrap">
+                  <div class="kpi-label">Số mục đã ghi nhận</div>
+                  <div class="kpi-value"><span id="m-learn-kpi-count">0</span> <small>mục</small></div>
+                </div>
+              </div>
+              <div class="learning-kpi-card kpi-card-mint">
+                <div class="kpi-icon-wrap"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                <div class="kpi-info-wrap">
+                  <div class="kpi-label">Hạng mục trọng điểm</div>
+                  <div class="kpi-value kpi-text-value" id="m-learn-kpi-top">Chưa có</div>
+                </div>
+              </div>
+            </div>
+
             <div class="learning-grid">
               <div class="learning-left-col">
                 <div class="table-header-bar info-bar">
                   <span><i class="fa-solid fa-book-open"></i> Nhật ký chi phí học tập & Đào tạo</span>
                   <button class="btn-table-add" onclick="addMonthLearningRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
                 </div>
+                <div class="mobile-scroll-hint"><i class="fa-solid fa-arrows-left-right"></i> Cuộn ngang để xem đầy đủ cột</div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
                       <tr class="bg-header-sub">
-                        <th style="width: 125px;">Ngày</th>
+                        <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Hạng mục</th>
                         <th>Khóa học / Chứng chỉ / Sách</th>
                         <th style="width: 85px;">Số tiền (tr)</th>
@@ -879,7 +1024,7 @@
             <div class="gform-header-content">
               <h2 class="gform-title"><i class="fa-solid fa-shield-halved text-primary"></i> KHẢO SÁT KHẢ NĂNG CHẤP NHẬN RỦI RO & HOÀN CẢNH TÀI CHÍNH</h2>
               <p class="gform-desc">
-                Phiếu trắc nghiệm tâm lý học tài chính chuẩn quốc tế, giúp định hình phong cách phân bổ tài sản phù hợp nhất với khẩu vị rủi ro và điều kiện thực tế của bạn.
+                Phiếu trắc nghiệm tâm lý học tài chính chuẩn mực, giúp định hình phong cách phân bổ tài sản phù hợp nhất với khẩu vị rủi ro và điều kiện thực tế của bạn.
               </p>
               <div class="gform-top-actions">
                 <button type="button" class="btn-gform-back" onclick="switchTab('tab-muctieu-bt')">
@@ -889,30 +1034,180 @@
             </div>
           </div>
 
-          <!-- PHẦN 1 -->
-          <div class="gform-section-banner banner-primary">
-            <div class="gform-section-badge">Khảo sát 1</div>
-            <h3>Mức độ chấp nhận rủi ro trong quản lý & đầu tư</h3>
-          </div>
-          
-          <div id="gform-questions-p1" class="gform-questions-flow"></div>
-          
-          <div class="gform-summary-result" id="survey-result-bar-1">
-            <div class="result-icon"><i class="fa-solid fa-shield-check"></i></div>
-            <div class="result-text" id="survey-result-p1-text">Đang cập nhật đánh giá rủi ro...</div>
+          <!-- Thanh điều hướng 3 mục khảo sát độc lập -->
+          <div class="survey-nav-three" id="survey-nav-three" role="tablist" aria-label="Điều hướng 3 phần khảo sát">
+            <button type="button" class="survey-nav-tab active" id="survey-step-btn-1" onclick="goToSurveyStep(1)" role="tab" aria-selected="true">
+              <div class="nav-tab-badge">1</div>
+              <div class="nav-tab-text">
+                <span class="nav-tab-title">Phần 1: Khẩu vị rủi ro</span>
+                <span class="nav-tab-sub">10 câu trắc nghiệm</span>
+              </div>
+              <span class="nav-tab-status" id="survey-tab-stat-1">0/10 câu</span>
+            </button>
+
+            <button type="button" class="survey-nav-tab" id="survey-step-btn-2" onclick="goToSurveyStep(2)" role="tab" aria-selected="false">
+              <div class="nav-tab-badge">2</div>
+              <div class="nav-tab-text">
+                <span class="nav-tab-title">Phần 2: Hoàn cảnh &amp; Trách nhiệm</span>
+                <span class="nav-tab-sub">11 câu hoàn cảnh</span>
+              </div>
+              <span class="nav-tab-status" id="survey-tab-stat-2">0/11 câu</span>
+            </button>
+
+            <button type="button" class="survey-nav-tab" id="survey-step-btn-3" onclick="goToSurveyStep(3)" role="tab" aria-selected="false">
+              <div class="nav-tab-badge"><i class="fa-solid fa-flag-checkered"></i></div>
+              <div class="nav-tab-text">
+                <span class="nav-tab-title">Kết luận &amp; Khuyến nghị</span>
+                <span class="nav-tab-sub">Đánh giá &amp; Phân bổ</span>
+              </div>
+              <span class="nav-tab-status" id="survey-tab-stat-3">Chưa hoàn tất</span>
+            </button>
           </div>
 
-          <!-- PHẦN 2 -->
-          <div class="gform-section-banner banner-indigo mt-4">
-            <div class="gform-section-badge">Khảo sát 2</div>
-            <h3>Hoàn cảnh gia đình, trách nhiệm & môi trường phát triển</h3>
+          <!-- Thanh tiến độ hoàn thành động -->
+          <div class="survey-progress-box">
+            <div class="survey-progress-meta">
+              <span id="survey-progress-lbl">Tiến độ Phần 1: Khẩu vị rủi ro (0/10 câu đã chọn)</span>
+              <strong id="survey-progress-stat">0 / 21 câu hỏi (0%)</strong>
+            </div>
+            <div class="survey-progress-track">
+              <div class="survey-progress-fill" id="survey-progress-fill" style="width: 0%;"></div>
+            </div>
           </div>
 
-          <div id="gform-questions-p2" class="gform-questions-flow"></div>
+          <!-- BƯỚC 1: KHẢO SÁT PHẦN 1 (10 CÂU) -->
+          <div id="survey-step-pane-1" class="survey-step-pane active">
+            <div class="gform-section-banner banner-primary">
+              <div class="gform-section-badge">Khảo sát 1 • 10 câu</div>
+              <h3>Mức độ chấp nhận rủi ro trong quản lý &amp; đầu tư (Câu 1 đến Câu 10)</h3>
+            </div>
+            
+            <div id="gform-questions-p1" class="gform-questions-flow"></div>
 
-          <div class="gform-summary-result" id="survey-result-bar-2">
-            <div class="result-icon"><i class="fa-solid fa-house-circle-check"></i></div>
-            <div class="result-text" id="survey-result-p2-text">Đang cập nhật đánh giá hoàn cảnh...</div>
+            <div class="survey-step-actions">
+              <button type="button" class="btn-survey-action btn-survey-next" onclick="goToSurveyStep(2)">
+                <span>Tiếp tục sang Phần 2 (Câu 11–21)</span> <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- BƯỚC 2: KHẢO SÁT PHẦN 2 (11 CÂU) -->
+          <div id="survey-step-pane-2" class="survey-step-pane">
+            <div class="gform-section-banner banner-indigo">
+              <div class="gform-section-badge">Khảo sát 2 • 11 câu</div>
+              <h3>Hoàn cảnh gia đình, trách nhiệm &amp; môi trường phát triển (Câu 11 đến Câu 21)</h3>
+            </div>
+
+            <div id="gform-questions-p2" class="gform-questions-flow"></div>
+
+            <div class="survey-step-actions between">
+              <button type="button" class="btn-survey-action btn-survey-prev" onclick="goToSurveyStep(1)">
+                <i class="fa-solid fa-arrow-left"></i> <span>Quay lại Phần 1 (Câu 1–10)</span>
+              </button>
+              <button type="button" class="btn-survey-action btn-survey-next" onclick="goToSurveyStep(3)">
+                <span>Xem kết luận</span> <i class="fa-solid fa-circle-check"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- BƯỚC 3: TỔNG KẾT & ĐÁNH GIÁ KẾT QUẢ -->
+          <div id="survey-step-pane-3" class="survey-step-pane">
+            <!-- Banner cảnh báo thân thiện khi chưa trả lời đủ 21 câu -->
+            <div class="survey-incomplete-banner" id="survey-incomplete-banner">
+              <div class="banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="banner-body">
+                <h4 class="banner-title">Khảo sát chưa hoàn thành đầy đủ</h4>
+                <p class="banner-desc">
+                  Bạn chưa hoàn thành đầy đủ 21 câu hỏi (Hiện tại: <strong id="survey-missing-count">0</strong>/21 câu). Kết quả dưới đây là ước tính sơ bộ. Hãy hoàn thành các câu hỏi còn thiếu để có khuyến nghị chính xác nhất.
+                </p>
+                <div class="banner-quick-links">
+                  <button type="button" class="btn-banner-link" id="btn-banner-p1" onclick="goToSurveyStep(1)">
+                    <i class="fa-solid fa-arrow-left"></i> Hoàn thành Phần 1 (<span id="banner-p1-remain">10 câu còn thiếu</span>)
+                  </button>
+                  <button type="button" class="btn-banner-link" id="btn-banner-p2" onclick="goToSurveyStep(2)">
+                    <i class="fa-solid fa-arrow-right"></i> Hoàn thành Phần 2 (<span id="banner-p2-remain">11 câu còn thiếu</span>)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Huy hiệu xác thực hoàn tất khi trả lời đủ 21/21 câu -->
+            <div class="survey-complete-badge" id="survey-complete-badge" style="display: none;">
+              <div class="complete-badge-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="complete-badge-text">
+                <strong>Đã hoàn thành đầy đủ 21/21 câu hỏi</strong>
+                <span>Kết quả trắc nghiệm và khuyến nghị phân bổ tài sản đạt độ tin cậy và chính xác cao nhất</span>
+              </div>
+            </div>
+
+            <div class="survey-result-summary-card">
+              <div class="result-card-header">
+                <div class="result-card-badge">
+                  <i class="fa-solid fa-square-poll-vertical"></i>
+                </div>
+                <div class="result-card-text">
+                  <h3 class="result-card-title">KẾT QUẢ ĐÁNH GIÁ TỔNG HỢP &amp; KHUYẾN NGHỊ ĐẦU TƯ</h3>
+                  <p class="result-card-sub">Dựa trên đầy đủ 21 câu hỏi trắc nghiệm tâm lý rủi ro và hoàn cảnh tài chính thực tế</p>
+                </div>
+              </div>
+
+              <div class="result-dual-grid">
+                <div class="result-pillar-card pillar-risk">
+                  <div class="pillar-header-row">
+                    <div class="pillar-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="pillar-meta">
+                      <span class="pillar-badge-sub">Phần 1 • 10 câu</span>
+                      <h4 class="pillar-title">Khẩu vị rủi ro</h4>
+                    </div>
+                  </div>
+                  <div class="pillar-badge-box">
+                    <span class="pillar-value pillar-badge" id="survey-summary-risk-title">Đang xác định...</span>
+                  </div>
+                  <div class="pillar-desc-box">
+                    <div class="desc-box-label"><i class="fa-regular fa-lightbulb"></i> Khuyến nghị phân bổ:</div>
+                    <p class="pillar-desc" id="survey-summary-risk-desc">Vui lòng hoàn thành Phần 1 để xem phân tích chi tiết.</p>
+                  </div>
+                </div>
+
+                <div class="result-pillar-card pillar-circumstance">
+                  <div class="pillar-header-row">
+                    <div class="pillar-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="pillar-meta">
+                      <span class="pillar-badge-sub">Phần 2 • 11 câu</span>
+                      <h4 class="pillar-title">Điều kiện phát triển</h4>
+                    </div>
+                  </div>
+                  <div class="pillar-badge-box">
+                    <span class="pillar-value pillar-badge" id="survey-summary-circumstance-title">Đang xác định...</span>
+                  </div>
+                  <div class="pillar-desc-box">
+                    <div class="desc-box-label"><i class="fa-solid fa-seedling"></i> Đánh giá môi trường:</div>
+                    <p class="pillar-desc" id="survey-summary-circumstance-desc">Vui lòng hoàn thành Phần 2 để xem phân tích chi tiết.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="result-synthesis-callout">
+                <div class="synthesis-callout-icon">
+                  <i class="fa-solid fa-compass-drafting"></i>
+                </div>
+                <div class="synthesis-callout-body">
+                  <span class="synthesis-callout-title">Bước tiếp theo: Đồng bộ vào Kế hoạch Tài chính</span>
+                  <p class="synthesis-callout-text">
+                    Kết quả trắc nghiệm tâm lý và hoàn cảnh thực tế đã được đồng bộ hóa. Bạn có thể xem đề xuất phân bổ tài sản chi tiết tại mục Dashboard hoặc điều chỉnh câu trả lời bất cứ lúc nào.
+                  </p>
+                </div>
+              </div>
+
+              <div class="result-actions-footer">
+                <button type="button" class="btn-survey-action btn-survey-prev" onclick="goToSurveyStep(1)">
+                  <i class="fa-solid fa-pen-to-square"></i> <span>Chỉnh sửa câu trả lời</span>
+                </button>
+                <button type="button" class="btn-survey-action btn-survey-primary" onclick="switchTab('tab-dashboard')">
+                  <span>Xem Dashboard phân bổ tài sản</span> <i class="fa-solid fa-chart-pie"></i>
+                </button>
+              </div>
+            </div>
           </div>
 
         </div>

@@ -1,266 +1,437 @@
 # Bảng Quản Lý & Hoạch Định Tài Chính Cá Nhân Chuyên Sâu
 
-Hệ thống hoạch định và kiểm soát tài chính cá nhân toàn diện, kết hợp giữa mô hình quản trị dòng tiền thực tế, phân bổ tài sản theo chu kỳ cuộc đời và phân tích sự phù hợp giữa lộ trình phát triển sự nghiệp với các mục tiêu dài hạn.
+Hệ thống ứng dụng web quản lý tài chính cá nhân, hoạch định ngân sách 12 tháng và dự báo lộ trình tài sản 33 năm, kết hợp giữa mô hình quản trị dòng tiền thực tế, phân bổ tài sản theo chu kỳ cuộc đời và phân tích sự phù hợp giữa lộ trình phát triển sự nghiệp với các mục tiêu dài hạn.
 
 ---
 
-## Tổng quan & Mục đích sử dụng
+## 1. Tổng quan & Hướng dẫn sử dụng
 
-Quản lý tài chính cá nhân hiệu quả không chỉ đơn thuần là việc ghi chép sổ sách thu chi hàng ngày, mà đòi hỏi khả năng dự báo dòng tiền, phòng ngừa rủi ro lạm phát và thiết lập kỷ luật đầu tư xuyên suốt nhiều thập kỷ. Hệ thống được xây dựng nhằm giải quyết bài toán cốt lõi: **Làm thế nào để chuyển đổi các mục tiêu cuộc đời thành những con số định lượng cụ thể trên lộ trình nghề nghiệp và tích lũy hàng tháng?**
+### 1.1. Mục đích cốt lõi
+Hệ thống được xây dựng nhằm giải quyết bài toán: **Lượng hóa các mục tiêu cuộc đời thành những con số định lượng cụ thể trên lộ trình nghề nghiệp và tích lũy hàng tháng.** Ứng dụng cung cấp bức tranh tài chính toàn diện từ đối soát thu chi vi mô (hàng tháng) đến kế hoạch tích lũy vĩ mô (33 năm).
 
-### Mục tiêu cốt lõi
-* **Lượng hóa các mục tiêu cuộc sống:** Biến các ước mơ (mua nhà, học vấn cho con cái, hưu trí an nhàn, khởi nghiệp) thành kế hoạch tài chính có lộ trình dòng tiền chính xác qua từng năm thông qua ngôn ngữ gần gũi, dễ hiểu cho người dùng đại trà.
-* **Cầu nối giữa tài chính và sự nghiệp:** Xác định mức thu nhập cần thiết tại từng mốc tuổi và đối chiếu với năng lực tạo thu nhập thực tế từ nghề nghiệp, từ đó chủ động nâng cấp năng lực hoặc điều chỉnh mục tiêu kịp thời.
-* **Kiểm soát dòng tiền vi mô đến vĩ mô:** Kết hợp liền mạch giữa việc theo dõi ngân sách chi tiết trong 12 tháng và bức tranh tích lũy kéo dài hơn 30 năm.
-* **Quản trị rủi ro cá nhân hóa:** Định hình khẩu vị rủi ro và đánh giá bối cảnh gia đình thông qua hệ thống khảo sát định lượng, hỗ trợ lựa chọn danh mục đầu tư thích ứng theo từng giai đoạn cuộc đời.
+### 1.2. Các phân hệ chức năng chính
+1. **Từ khóa thiết lập (`tab-tukhoa`):** Quản lý danh mục nguồn thu, khoản chi, danh mục phát triển bản thân và rổ sản phẩm đầu tư tài chính.
+2. **Dashboard phân tích (`tab-dashboard`):** Trung tâm giám sát dòng tiền, cơ cấu tài sản, đối soát phương sai và tổng hợp dữ liệu thời gian thực.
+3. **Mục tiêu bản thân (`tab-muctieu-bt`):** Bảng nhập liệu trung tâm (Single Source of Input) chứa toàn bộ các mục tiêu nợ, tích lũy, hưu trí, kỹ năng nghề nghiệp và kết quả khảo sát.
+4. **Mục tiêu tài chính (`tab-muctieu-tc`):** Phân bổ chi tiết từng mục tiêu và ma trận dòng tiền 33 năm (tính năng Two-way Binding).
+5. **Cân đối lộ trình nghề nghiệp (`tab-candoi`):** So khớp thu nhập từ lộ trình thăng tiến với thu nhập cần đạt để hoàn thành các mục tiêu tài chính qua từng độ tuổi.
+6. **Kế hoạch thu nhập & chi tiêu (`tab-kehoach`):** Hoạch định ngân sách dự kiến cho 12 tháng trong năm.
+7. **Theo dõi thu chi 12 tháng (`tab-month`):** Nhật ký giao dịch thực tế theo từng tháng, đối soát phương sai ngân sách và theo dõi chi phí nâng cao năng lực bản thân.
+8. **Khảo sát đánh giá bản thân (`tab-khaosat`):** Hệ thống 21 câu hỏi định lượng chấm điểm khả năng chịu rủi ro và bối cảnh tài chính gia đình.
+
+### 1.3. Công nghệ sử dụng
+* **Frontend:** HTML5 ngữ nghĩa, CSS3 Custom Properties (Design Tokens chuẩn WCAG AA, hỗ trợ Light & Dark Mode), Vanilla JavaScript (ES6+).
+* **Trực quan hóa dữ liệu:** Chart.js (CDN).
+* **Biểu tượng:** FontAwesome 6 (CDN).
+* **Đồng bộ đám mây:** Firebase Cloud Firestore (REST API / SDK).
+* **Kiến trúc dữ liệu:** Mô hình luồng dữ liệu một chiều phản ứng (Reactive One-Way Data Flow) xoay quanh trạng thái trung tâm `AppState`.
+
+### 1.4. Hướng dẫn cài đặt & Chạy ứng dụng
+Dự án được xây dựng dưới dạng ứng dụng web tĩnh thuần túy (Static Web Application), không yêu cầu quy trình biên dịch hay cài đặt package phức tạp:
+1. **Cách 1 (Mở trực tiếp):** Nhấp đúp chuột vào file `index.html` hoặc mở bằng bất kỳ trình duyệt web hiện đại nào (Chrome, Edge, Firefox, Safari).
+2. **Cách 2 (Local Server):** Dùng VS Code Live Server hoặc chạy lệnh thông qua terminal:
+   ```bash
+   # Nếu có Python 3:
+   python -m http.server 8000
+   # Truy cập: http://localhost:8000
+   ```
 
 ---
 
-## Các trụ cột chức năng chính
+## 2. Chi tiết các mô hình thuật toán tài chính
 
-Hệ thống được thiết kế theo cấu trúc liên hoàn, đảm bảo tính đồng bộ dữ liệu hai chiều giữa các phân hệ:
-
-* **Thiết lập danh mục chủ (Từ khóa):** Không gian quản lý các danh mục thu nhập, chi phí, kế hoạch phát triển bản thân và rổ sản phẩm đầu tư với tỷ suất sinh lời cùng biên độ rủi ro kỳ vọng.
-* **Trung tâm chỉ huy dòng tiền (Dashboard):** Bảng điều khiển phân tích trực quan với các chỉ số tài chính tức thời, biểu đồ cơ cấu phân bổ, đối soát thu - chi - tiết kiệm và ma trận dữ liệu tổng hợp 12 tháng.
-* **Xác định mục tiêu bản thân (Bảng nhập liệu trung tâm):** Toàn bộ dữ liệu mục tiêu tài chính (cả nợ phải trả và đầu tư tích lũy) được chuyển trọn vẹn sang phân hệ này làm nguồn dữ liệu nhập vào (input data) duy nhất, đồng thời lưu trữ định vị năng lực, phân tích hoàn cảnh gia đình và môi trường làm việc.
-* **Kế hoạch mục tiêu tài chính (Tự động đồng bộ 2 phần):** Cấu trúc 2 phần được giữ nguyên vẹn nhưng không còn bảng nhập liệu hay nút bấm tính toán thủ công; mọi dữ liệu thẻ chi tiết và ma trận dòng tiền 33 năm được tự động liên kết và cập nhật liên tục từ tab Mục tiêu bản thân.
-* **Cân đối lộ trình nghề nghiệp:** Đối chiếu trực quan ba đường quỹ đạo thu nhập: *Thu nhập thực tế (năm hiện tại)*, *Thu nhập cần đạt mục tiêu* và *Thu nhập theo lộ trình sự nghiệp*, tự động cảnh báo các giai đoạn thâm hụt tài chính.
-* **Theo dõi & Đối soát thu chi 12 tháng:** Nhật ký ghi nhận giao dịch thu chi thực tế, phân tích phương sai so với kế hoạch ngân sách và tính toán tự động chi phí tái đầu tư vào vốn con người (phát triển bản thân).
-* **Đánh giá rủi ro & Hoàn cảnh (Khảo sát):** Hệ thống chấm điểm trắc nghiệm định lượng chuẩn xác nhằm xác định khẩu vị đầu tư và chỉ số thuận lợi về bối cảnh tài chính.
+```mermaid
+flowchart TD
+    A["Dữ liệu Mục tiêu (Tab Mục tiêu bản thân)"] --> B["Thuật toán Niên kim & Khấu hao (PMT)"]
+    A --> C["Thuật toán Quỹ tích lũy trượt giá (Sinking Fund)"]
+    B --> D["Ma trận Dòng tiền 33 Năm"]
+    C --> D
+    D --> E["Thuật toán Nghịch đảo thu nhập (Inversion)"]
+    E --> F["Thuật toán Động cơ Thâm hụt & Lộ trình Sự nghiệp"]
+    G["Nhật ký Giao dịch 12 Tháng"] --> H["Thuật toán Đối soát & Phương sai Lũy kế"]
+    I["Khảo sát Bản thân (21 Câu hỏi)"] --> J["Thuật toán Lượng hóa Tâm lý & Phân bổ Tài sản"]
+    J --> F
+```
 
 ---
 
-## Cơ sở lý thuyết & Các mô hình thuật toán áp dụng
+### THUẬT TOÁN 1: Mô hình Niên kim & Khấu hao nợ vay định kỳ (Loan Amortization PMT Model)
 
-Hệ thống tích hợp các công thức tài chính vi mô và lý thuyết danh mục đầu tư hiện đại nhằm đảm bảo tính chuẩn xác và khả thi của các kế hoạch.
+#### A. Mục tiêu & Vai trò
+Tính toán chính xác số tiền cố định người dùng bắt buộc phải thanh toán mỗi tháng ($PMT$) để tất toán một nghĩa vụ nợ (vay mua nhà, mua xe, vay tiêu dùng) trong khung thời gian xác định với mức lãi suất danh nghĩa cho trước.
 
-### 1. Mô hình dòng tiền niên kim và trả nợ định kỳ (Amortization & Annuity Model)
-Đối với các khoản nợ vay và nghĩa vụ tài chính cần hoàn tất trong một khoảng thời gian xác định, hệ thống áp dụng công thức tính khoản thanh toán cố định định kỳ (PMT) dựa trên nguyên lý chiết khấu dòng tiền:
+#### B. Dữ liệu đầu vào và đầu ra
+* **Dữ liệu đầu vào (`goal` object có `type === 'debt'`):**
+  | Tên biến | Kiểu dữ liệu | Ý nghĩa | Miền giá trị | Xử lý biên |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `goal.val` | `Number` | Tổng giá trị khoản nợ ban đầu (triệu VNĐ) | $\ge 0$ | Nếu thiếu, mặc định $0$ |
+  | `goal.paid` | `Number` | Số tiền gốc đã thanh toán sẵn (triệu VNĐ) | $\ge 0$ | Nếu thiếu, mặc định $0$ |
+  | `goal.rate` | `Number` | Lãi suất danh nghĩa hàng năm ($\%$) | $\ge 0$ | Nếu thiếu, mặc định $8.0\%$ |
+  | `goal.start` | `Integer` | Năm bắt đầu tính nghĩa vụ trả nợ | $\ge 2026$ | Mặc định năm hiện tại |
+  | `goal.end` | `Integer` | Năm hoàn thành tất toán nợ | $\ge start$ | Nếu $end < start$, lấy $start$ |
+* **Dữ liệu đầu ra:**
+  * `pmt` (`Number`): Số tiền phải trả hàng tháng (triệu VNĐ/tháng).
 
+#### C. Các bước xử lý
+1. Xác định số năm thanh toán: $n_{\text{years}} = \max(1, \text{end} - \text{start} + 1)$.
+2. Quy đổi tổng số kỳ thanh toán theo tháng: $n = n_{\text{years}} \times 12$.
+3. Quy đổi lãi suất danh nghĩa năm sang lãi suất tháng: $r_m = \frac{\text{rate}}{100 \times 12}$.
+4. Tính dư nợ gốc thực tế còn lại: $PV = \max(0, \text{val} - \text{paid})$.
+5. **Xử lý rẽ nhánh:**
+   * Nếu $PV \le 0$: Khoản nợ đã hết, trả về $0$.
+   * Nếu $r_m = 0$: Khoản vay không tính lãi, trả về $\frac{PV}{n}$.
+   * Nếu $r_m > 0$: Áp dụng công thức chiết khấu dòng tiền niên kim.
+6. **Xử lý an toàn số học:** Nếu kết quả là `NaN` hoặc vô cực (`!isFinite`), fallback về phép chia tuyến tính $\frac{PV}{n}$.
+
+#### D. Công thức toán học & Quy tắc
 $$PMT = \frac{PV \cdot r_m \cdot (1 + r_m)^n}{(1 + r_m)^n - 1}$$
 
 Trong đó:
-* $PV$: Dư nợ gốc còn lại cần thanh toán ($PV = \text{Tổng giá trị} - \text{Đã tích lũy/Đã trả}$).
-* $r_m$: Lãi suất danh nghĩa theo tháng, với $r_m = \frac{r_{\text{năm}}}{12}$.
-* $n$: Tổng số kỳ thanh toán theo tháng ($n = (\text{Năm kết thúc} - \text{Năm bắt đầu} + 1) \times 12$).
+* $PV$: Dư nợ gốc cần hoàn trả ($PV = \text{val} - \text{paid}$).
+* $r_m$: Lãi suất hàng tháng ($r_m = \frac{r}{12}$).
+* $n$: Tổng số tháng hoàn nợ ($n = (\text{end} - \text{start} + 1) \times 12$).
 
-### 2. Mô hình quỹ tích lũy mục tiêu và giá trị tương lai hiệu chỉnh lạm phát (Inflation-Adjusted Sinking Fund)
-Các mục tiêu chi tiêu dài hạn (mua chung cư, quỹ học vấn, hưu trí) chịu sự bào mòn nghiêm trọng của lạm phát. Thuật toán tiến hành theo quy trình hai bước:
+*Ví dụ tính toán:*
+Khoản vay mua nhà dư nợ $PV = 1{,}200$ triệu VNĐ, trả trong $10$ năm ($n = 120$ tháng), lãi suất $10\%/\text{năm}$ ($r_m = \frac{0.10}{12} \approx 0.008333$):
+$$(1 + r_m)^{120} = (1.008333)^{120} \approx 2.70704$$
+$$PMT = \frac{1200 \times 0.008333 \times 2.70704}{2.70704 - 1} \approx \frac{27.0704}{1.70704} \approx 15.858 \text{ triệu VNĐ/tháng}$$
 
-* **Bước 1: Tính giá trị tương lai kỳ vọng ($FV$) có tính đến lạm phát (trượt giá):**
-  $$FV = PV_0 \cdot (1 + i)^t$$
-  Với $PV_0$ là số tiền dự kiến tính theo thời giá hiện tại, $i$ là tỷ lệ trượt giá lạm phát bình quân hàng năm, và $t$ là số năm cho đến khi thực hiện mục tiêu ($t = \text{Năm kết thúc} - \text{Năm bắt đầu} + 1$).
+#### E. Pseudocode
+```text
+FUNCTION calculateMonthlyDebt(val, paid, rate, start, end):
+    nYears = MAX(1, end - start + 1)
+    nMonths = nYears * 12
+    rMonthly = (rate / 100) / 12
+    loanBalance = MAX(0, val - paid)
 
-* **Bước 2: Xác định lượng vốn cần tích lũy hàng tháng có chiết khấu tài sản sẵn có:**
-  Số tiền đã có sẵn tích lũy tăng trưởng đến thời điểm kết thúc:
-  $$FV_{\text{paid}} = \text{Tiền sẵn có} \cdot (1 + r_m)^n$$
-  Phần thiếu hụt thực tế cần tích lũy:
-  $$\Delta FV = \max(0, FV - FV_{\text{paid}})$$
-  Dựa trên công thức giá trị tương lai của dòng niên kim tích lũy định kỳ (Sinking Fund Factor):
-  $$PMT_{\text{invest}} = \frac{\Delta FV \cdot r_m}{(1 + r_m)^n - 1}$$
-  Với $r_m = \frac{r_{\text{kỳ vọng}}}{12}$ là tỷ suất sinh lời bình quân tháng của danh mục phân bổ.
+    IF loanBalance <= 0 THEN RETURN 0
+    IF rMonthly == 0 THEN RETURN loanBalance / nMonths
 
-### 3. Mô hình phân bổ tài sản thích ứng theo vòng đời (Lifecycle Asset Allocation Model)
-Khẩu vị rủi ro và khả năng gánh chịu tổn thất giảm dần theo độ tuổi khi thời gian phục hồi vốn ngắn lại. Thuật toán tự động tái cấu trúc tỷ trọng tài sản danh mục theo quy tắc điều chỉnh tuổi:
+    pmt = (loanBalance * rMonthly * (1 + rMonthly)^nMonths) / ((1 + rMonthly)^nMonths - 1)
+    IF isNaN(pmt) OR NOT isFinite(pmt) THEN
+        RETURN loanBalance / nMonths
+    RETURN pmt
+END FUNCTION
+```
 
-* **Tỷ trọng Cổ phiếu & Chứng chỉ quỹ tăng trưởng ($W_{\text{stocks}}$):**
-  $$W_{\text{stocks}} = \max\left(15\%,\ \min\left(75\%,\ 100 - \text{Tuổi} + 5\right)\right)$$
-* **Tỷ trọng Trái phiếu & Thu nhập cố định ($W_{\text{bonds}}$):**
-  $$W_{\text{bonds}} = \min\left(60\%,\ \max\left(15\%,\ \text{Tuổi} \times 0.9\right)\right)$$
-* **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Thiết lập mức cố định $7\%$ cho giai đoạn tích lũy sớm ($< 35$ tuổi) và nâng lên $10\%$ cho giai đoạn trung niên nhằm bảo vệ dòng thu nhập gia đình.
-* **Tỷ trọng Tiền gửi & Tài sản thanh khoản ($W_{\text{cash}}$):** Đảm bảo tính thanh khoản với mức sàn tối thiểu:
-  $$W_{\text{cash}} = \max\left(5\%,\ 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
-* **Tỷ suất sinh lời kỳ vọng tổng thể:**
-  $$\bar{R} = \sum_{j} W_j \cdot R_j$$
+#### F. Sơ đồ luồng (Flowchart)
+```mermaid
+flowchart TD
+    A["Bắt đầu: Nhận goal (debt)"] --> B["Tính nMonths = (end - start + 1) * 12"]
+    B --> C["Tính rMonthly = (rate / 100) / 12"]
+    C --> D["Tính dư nợ PV = val - paid"]
+    D --> E{"PV <= 0 ?"}
+    E -- Có --> F["Trả về 0"]
+    E -- Không --> G{"rMonthly == 0 ?"}
+    G -- Có --> H["Trả về PV / nMonths"]
+    G -- Không --> I["Tính PMT theo công thức chiết khấu"]
+    I --> J{"PMT hợp lệ (hữu hạn) ?"}
+    J -- Không --> H
+    J -- Có --> K["Trả về PMT"]
+```
 
-### 4. Thuật toán nghịch đảo thu nhập từ tỷ lệ tiết kiệm mục tiêu (Savings-to-Income Inversion)
-Thay vì chi tiêu trước rồi tiết kiệm phần thừa, hệ thống vận hành theo nguyên lý trả cho bản thân trước (*Pay Yourself First*). 
-
-Từ tổng số tiền tiết kiệm và nghĩa vụ nợ bắt buộc trong năm $y$ ($\sum PMT_{y}$), hệ thống nghịch đảo để tìm ra mức thu nhập ròng hàng tháng tối thiểu cần đạt:
-
-$$\text{Thu nhập cần có}_y = \frac{\sum PMT_y}{\text{Tỷ trọng tiết kiệm mục tiêu}}$$
-
-*(Tỷ trọng tiết kiệm mặc định được chuẩn hóa ở mức $40\%$ hoặc điều chỉnh tùy theo khả năng cá nhân).*
-
-### 5. Thuật toán phân tích thâm hụt và cảnh báo độ lệch sự nghiệp (Career Deficit Engine)
-Hệ thống thực hiện so khớp từng điểm dữ liệu trên dòng thời gian giữa lộ trình thu nhập từ vị trí công việc ($I_{\text{route}}$) và mức thu nhập cần thiết để hiện thực hóa các mục tiêu ($I_{\text{target}}$):
-
-$$\Delta I = I_{\text{route}} - I_{\text{target}}$$
-
-* **Trạng thái Đạt yêu cầu ($\Delta I \ge 0$):** Lộ trình sự nghiệp đủ sức chi trả cho các mục tiêu; phân đoạn biểu đồ hiển thị sắc xanh lục.
-* **Trạng thái Cảnh báo thâm hụt ($\Delta I < 0$):** Xuất hiện khoảng cách tài chính cần khắc phục; hệ thống tự động tính toán biên độ thiếu hụt và chuyển cảnh báo màu đỏ trên đồ thị.
-
-### 6. Mô hình phân tích phương sai ngân sách (Budget Variance & Reconciliation)
-Quy trình đối soát cuối mỗi tháng so sánh giữa dự toán ngân sách và số liệu thực tế phát sinh:
-
-* **Phương sai thu nhập:** $Variance_{\text{income}} = Actual - Plan$ (Dương là thuận lợi, âm là bất lợi).
-* **Phương sai chi phí:** $Variance_{\text{expense}} = Plan - Actual$ (Dương là tiết kiệm ngân sách, âm là vượt chi).
-* **Lũy kế chênh lệch chi tiêu:** Theo dõi xu hướng tích lũy chênh lệch qua 12 tháng nhằm kịp thời điều chỉnh hành vi chi tiêu trong các quý tiếp theo:
-  $$CumDiff_m = \sum_{k=1}^{m} \left(Actual_k - Plan_k\right)$$
-
-### 7. Mô hình lượng hóa tâm lý và bối cảnh tài chính (Psychometric Scoring)
-Hệ thống lượng hóa các yếu tố định tính thông qua hai bộ khảo sát với thang điểm có trọng số:
-* **Khảo sát chịu đựng rủi ro:** Chấm điểm dựa trên thái độ với thua lỗ ngắn hạn, tầm nhìn rút vốn, mức độ hiểu biết về lạm phát và quy mô tài sản. Điểm số phân tầng từ *Cực kỳ thận trọng* đến *Quyết liệt*, trực tiếp hỗ trợ định hướng tỷ trọng danh mục.
-* **Khảo sát hoàn cảnh tài chính:** Đo lường các nghĩa vụ phụ thuộc, bảo chứng từ gia đình, thói quen lập kế hoạch và tốc độ gia tăng thu nhập trong quá khứ để phân loại điều kiện phát triển tài chính từ *Bất lợi* đến *Cực kỳ thuận lợi*.
+#### G. Độ phức tạp & Giới hạn
+* **Độ phức tạp thời gian:** $O(1)$ - các phép tính lũy thừa và số học diễn ra trong thời gian hằng số.
+* **Độ phức tạp không gian:** $O(1)$ - không phát sinh bộ nhớ đệm phụ thuộc dữ liệu.
+* **Giới hạn giả định:** Lãi suất giả định cố định trong suốt kỳ hạn; phương thức tính lãi trên dư nợ giảm dần đều hàng tháng.
+* **Vị trí trong mã nguồn:** Hàm [`calculateMonthlyNeed(goal)`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L596-L608) tại `script.js`.
 
 ---
 
-## Kiến trúc luồng dữ liệu phản ứng (Reactive Data Flow)
+### THUẬT TOÁN 2: Mô hình Quỹ tích lũy trượt giá lạm phát kép & Hưu trí (Inflation-Adjusted Sinking Fund Model)
 
-Hệ thống hoạt động trên nguyên tắc truyền dữ liệu theo luồng một chiều kết hợp đồng bộ hóa tức thời:
+#### A. Mục tiêu & Vai trò
+Xác định số vốn cần trích lập đầu tư định kỳ hàng tháng ($PMT_{\text{invest}}$) để đạt được một mục tiêu tài chính tương lai (mua bất động sản, chuẩn bị học phí cho con cái, quỹ hưu trí). Mô hình tự động bù đắp mức suy giảm sức mua do lạm phát lũy kế và ghi nhận sự gia tăng giá trị theo lãi kép của số vốn đã tích lũy sẵn.
 
-* **Từ khóa làm gốc:** Việc chỉnh sửa bất kỳ danh mục chi phí hay sản phẩm tài chính nào tại trang *Từ khóa* sẽ tự động cập nhật đến toàn bộ danh mục lựa chọn ở bảng lập kế hoạch, các bảng theo dõi 12 tháng và nhãn hiển thị trên biểu đồ.
-* **Bảng mục tiêu tập trung:** Người dùng chỉ cần nhập dữ liệu mục tiêu một nơi duy nhất tại tab *Mục tiêu bản thân*. Dữ liệu ngay lập tức được tính toán và phản chiếu lên các Card kế hoạch ở Tab 4, ma trận 33 năm, kế hoạch chi trả nợ ở Tab 6 và biểu đồ lộ trình nghề nghiệp ở Tab 5.
-* **Liên kết phát triển bản thân:** Mọi khoản chi cho giáo dục và nâng cao kỹ năng tại phân hệ phát triển bản thân hàng tháng được tự động tổng hợp và ghi nhận vào chi phí thực tế của danh mục *Chi tiền phát triển bản thân*, đảm bảo không xảy ra hiện tượng lệch số liệu kế toán.
-* **Liên kết ma trận và biểu đồ sự nghiệp:** Khi người dùng thay đổi giá trị hoặc thời hạn của một mục tiêu trong bảng lập kế hoạch, ma trận 33 năm sẽ tự động tính lại dòng tiền, từ đó định hình lại đường mục tiêu tài chính trên biểu đồ lộ trình nghề nghiệp.
+#### B. Dữ liệu đầu vào và đầu ra
+* **Dữ liệu đầu vào (`goal` object có `type === 'invest'`):**
+  | Tên biến | Kiểu dữ liệu | Ý nghĩa | Miền giá trị |
+  | :--- | :--- | :--- | :--- |
+  | `goal.val` | `Number` | Giá trị mục tiêu theo thời giá hiện tại (triệu VNĐ) | $\ge 0$ |
+  | `goal.paid` | `Number` | Vốn sẵn có đã tích lũy cho mục tiêu này | $\ge 0$ |
+  | `goal.inflation`| `Number` | Tỷ lệ trượt giá lạm phát bình quân hàng năm ($\%$) | $\ge 0$ |
+  | `goal.rate` | `Number` | Tỷ suất sinh lời kỳ vọng hàng năm của danh mục đầu tư ($\%$) | $\ge 0$ |
+  | `goal.yearsRetire` | `Integer` | (Nếu là mục tiêu hưu trí) Số năm rút tiền an dưỡng | $\ge 0$ |
+  | `goal.monthlyRetire`| `Number` | (Hưu trí) Mức chi tiêu tháng mong muốn khi nghỉ hưu | $\ge 0$ |
+  | `goal.deathFund` | `Number` | (Hưu trí) Số tiền muốn để lại thừa kế khi qua đời | $\ge 0$ |
+* **Dữ liệu đầu ra:**
+  * `pmtInvest` (`Number`): Số tiền cần đầu tư đều đặn mỗi tháng (triệu VNĐ/tháng).
 
----
+#### C. Các bước xử lý
+1. **Xác định mục tiêu tương lai ($FV_{\text{target}}$):**
+   * Nếu có thiết lập hưu trí (`yearsRetire > 0`): Tính toán quy mô quỹ hưu trí cần có tại thời điểm bắt đầu nghỉ hưu bằng công thức hiện giá dòng niên kim rút tiền:
+     $$PV_{\text{retire}} = \frac{mRetire \cdot (1 - (1 + r_m)^{-n_r})}{r_m} + \frac{deathFund}{(1 + r_m)^{n_r}}$$
+     Gán $targetFV = PV_{\text{retire}}$.
+   * Nếu là mục tiêu mua tài sản thông thường: Điều chỉnh lạm phát trượt giá theo số năm:
+     $$targetFV = val \cdot (1 + inf)^{n_{\text{years}}}$$
+2. **Tính giá trị tương lai của vốn sẵn có ($FV_{\text{paid}}$):**
+   Số tiền `paid` được giả định tiếp tục sinh lời với lãi suất kỳ vọng cho đến hạn mục tiêu:
+   $$FV_{\text{paid}} = paid \cdot (1 + r_m)^n$$
+3. **Tính phần thiếu hụt ròng:** $\Delta FV = \max(0, targetFV - FV_{\text{paid}})$.
+4. **Tính mức tích lũy hàng tháng ($PMT_{\text{invest}}$):**
+   Áp dụng thừa số quỹ tích lũy (Sinking Fund Factor):
+   $$PMT_{\text{invest}} = \frac{\Delta FV \cdot r_m}{(1 + r_m)^n - 1}$$
 
-## Giá trị ứng dụng thực tiễn
+#### D. Công thức toán học
+$$\Delta FV = val \cdot (1 + inf)^{t} - paid \cdot (1 + r_m)^{12t}$$
+$$PMT_{\text{invest}} = \frac{\Delta FV \cdot r_m}{(1 + r_m)^{12t} - 1}$$
 
-Hệ thống loại bỏ hoàn toàn tính mơ hồ trong việc lập kế hoạch tài chính, mang lại cho người dùng:
-* Cái nhìn thấu đáo về khả năng tài chính trong suốt vòng đời làm việc và nghỉ hưu.
-* Động lực rõ ràng trong công việc khi hiểu chính xác một mức tăng lương tương ứng với việc hoàn thành mục tiêu cụ thể nào.
-* Kỷ luật kiểm soát ngân sách dựa trên số liệu đối soát định kỳ thay vì cảm tính.
-* Sự an tâm nhờ danh mục tài sản được thiết kế cân bằng giữa tăng trưởng và an toàn vốn qua từng mốc tuổi.
+*Ví dụ tính toán:*
+Mục tiêu mua xe ô tô trị giá $val = 600$ triệu VNĐ sau $t = 5$ năm ($n = 60$ tháng). Lạm phát kỳ vọng $inf = 4\%/\text{năm}$, tỷ suất sinh lời danh mục đầu tư $rate = 10\%/\text{năm}$ ($r_m = \frac{0.10}{12} \approx 0.008333$). Số vốn đã có sẵn $paid = 100$ triệu:
+1. $targetFV = 600 \times (1 + 0.04)^5 = 600 \times 1.21665 \approx 729.99$ triệu VNĐ.
+2. $FV_{\text{paid}} = 100 \times (1 + 0.008333)^{60} = 100 \times 1.6453 \approx 164.53$ triệu VNĐ.
+3. $\Delta FV = 729.99 - 164.53 = 565.46$ triệu VNĐ.
+4. $PMT_{\text{invest}} = \frac{565.46 \times 0.008333}{1.6453 - 1} \approx \frac{4.712}{0.6453} \approx 7.30$ triệu VNĐ/tháng.
 
----
+#### E. Pseudocode
+```text
+FUNCTION calculateMonthlyInvest(val, paid, rate, inflation, start, end, yearsRetire, monthlyRetire, deathFund):
+    nYears = MAX(1, end - start + 1)
+    nMonths = nYears * 12
+    rMonthly = (rate / 100) / 12
+    infRate = (inflation / 100)
 
-## Hiện thực Thuật toán & Kiến trúc Mã nguồn
+    IF yearsRetire > 0 THEN
+        nRetireMonths = yearsRetire * 12
+        IF rMonthly > 0 THEN
+            pvRetire = monthlyRetire * (1 - (1 + rMonthly)^(-nRetireMonths)) / rMonthly
+            pvRetire = pvRetire + deathFund / ((1 + rMonthly)^nRetireMonths)
+        ELSE
+            pvRetire = (monthlyRetire * nRetireMonths) + deathFund
+        targetFV = pvRetire
+    ELSE
+        targetFV = val * (1 + infRate)^nYears
+    END IF
 
-Hệ thống được thiết kế theo mô hình luồng dữ liệu một chiều phản ứng (Reactive One-Way Data Flow), trong đó `AppState` đóng vai trò là một Single Source of Truth (nguồn chân lý duy nhất). Tất cả các phép tính toán tài chính, cập nhật DOM và biểu đồ đều được kích hoạt tự động theo chuỗi phụ thuộc khi dữ liệu đầu vào biến động.
+    currentPaidFV = paid * (1 + rMonthly)^nMonths
+    deficitFV = MAX(0, targetFV - currentPaidFV)
 
----
+    IF deficitFV <= 0 THEN RETURN 0
+    IF rMonthly == 0 THEN RETURN deficitFV / nMonths
 
-### Quản lý Trạng thái Trung tâm và Chuỗi Phản ứng
+    pmt = (deficitFV * rMonthly) / ((1 + rMonthly)^nMonths - 1)
+    IF isNaN(pmt) OR NOT isFinite(pmt) THEN
+        RETURN deficitFV / nMonths
+    RETURN pmt
+END FUNCTION
+```
 
-Đối tượng `AppState` lưu giữ toàn bộ dữ liệu cấu hình danh mục, mục tiêu tích lũy, nghĩa vụ nợ, ngân sách tháng và điểm số khảo sát.
+#### F. Sơ đồ luồng (Flowchart)
+```mermaid
+flowchart TD
+    A["Bắt đầu: Nhận goal (invest)"] --> B{"yearsRetire > 0 ?"}
+    B -- Có --> C["Tính targetFV = Hiện giá quỹ hưu trí pvRetire"]
+    B -- Không --> D["Tính targetFV = val * (1 + inflation)^nYears"]
+    C --> E["Tính FV vốn sẵn có: currentPaidFV = paid * (1 + rMonthly)^nMonths"]
+    D --> E
+    E --> F["Tính thiếu hụt: deficitFV = MAX(0, targetFV - currentPaidFV)"]
+    F --> G{"deficitFV <= 0 ?"}
+    G -- Có --> H["Trả về 0"]
+    G -- Không --> I{"rMonthly == 0 ?"}
+    I -- Có --> J["Trả về deficitFV / nMonths"]
+    I -- Không --> K["Tính PMT quỹ tích lũy theo Sinking Fund"]
+    K --> L["Trả về PMT"]
+```
 
-- **Mục đích thiết kế**: Tránh việc lưu trữ phân mảnh trên giao diện HTML, loại bỏ nguy cơ sai lệch số liệu giữa các tab chức năng.
-- **Hàm điều phối trung tâm `recalculateAll()`**:
-  - Đóng vai trò làm nhạc trưởng kích hoạt chuỗi tính toán lại toàn bộ hệ thống.
-  - Tổng hợp dòng tiền 12 tháng từ `AppState.monthlyDetails` để cập nhật các thẻ chỉ số KPI tổng (Thu nhập, Chi tiêu, Tiết kiệm).
-  - Lần lượt gọi các hàm phụ thuộc: tái tạo bảng lộ trình nghề nghiệp (`renderCareerTables`), vẽ lại biểu đồ tương quan (`renderCareerChart`), cập nhật ma trận lưới (`renderDashboardMatrices`) và dựng lại hệ thống biểu đồ phân tích (`renderDashboardAllCharts`).
-  - Được chèn vào tất cả các sự kiện thay đổi dữ liệu (thêm/sửa/xóa dòng danh mục, cập nhật số tiền chi tiêu, chỉnh sửa lãi suất, thay đổi thông số mục tiêu).
-
----
-
-### Hiện thực Mô hình Niên kim và Giá trị Thời gian của Tiền tệ
-
-Thuật toán tính toán dòng tiền định kỳ được tích hợp bên trong hàm cốt lõi `calculateMonthlyNeed`.
-
-#### Hàm tính dòng tiền nghĩa vụ nợ và tích lũy mục tiêu (`calculateMonthlyNeed`)
-- **Vị trí trong mã nguồn**: Nhận tham số là một đối tượng `goal` từ danh sách `AppState.tcGoals` (được nhập tại tab Mục tiêu bản thân).
-- **Mục đích chèn thuật toán**: Xác định chính xác số tiền cần trích lập mỗi tháng để hoàn thành một mục tiêu cụ thể trong khung thời gian quy định, tự động phân hóa giữa khoản vay và khoản tiết kiệm.
-- **Cơ chế tính toán**:
-  - Chuyển đổi lãi suất danh nghĩa năm sang lãi suất tháng: `rMonthly = (goal.rate / 100) / 12`.
-  - Quy đổi tổng số năm thực hiện sang tổng số kỳ thanh toán tháng: `nMonths = nYears * 12`.
-  - Đối với khoản nợ (`goal.type === 'debt'`), hàm áp dụng công thức hoàn vốn gốc và lãi (Amortization):
-    ```javascript
-    pmt = (targetNeed * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1);
-    ```
-  - Đối với mục tiêu đầu tư (`goal.type === 'invest'`), hàm tự động tính trượt giá lạm phát kép:
-    ```javascript
-    targetFV = goal.val * Math.pow(1 + (goal.inflation / 100), nYears);
-    ```
-    Đồng thời trừ đi giá trị tương lai của số tiền sẵn có (`currentPaidFV`) và áp dụng công thức tích lũy định kỳ (Sinking Fund):
-    ```javascript
-    pmt = (deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
-    ```
-  - Đối với mục tiêu hưu trí (`goal.yearsRetire > 0`), hàm tính tổng nhu cầu rút tiền niên kim sau khi nghỉ hưu và tiền để lại thừa kế để làm mốc giá trị cần tích lũy.
-  - Xử lý trường hợp biên an toàn: Nếu người dùng thiết lập lãi suất bằng `0%` hoặc đầu vào phát sinh lỗi chia cho không (`NaN`/`Infinity`), hàm tự động chuyển sang phép chia tuyến tính đơn giản: `targetNeed / nMonths`.
-
----
-
-### Mô hình Phân bổ Tài sản Động theo Vòng đời
-
-Mô hình phân bổ danh mục đầu tư được tự động hóa thông qua hàm `calculateAgeMilestones`.
-
-- **Vị trí trong mã nguồn**: Thuộc phân hệ Cân đối lộ trình nghề nghiệp (Tab Cân đối).
-- **Mục đích chèn thuật toán**: Cung cấp cơ cấu danh mục mẫu phù hợp với mức độ chấp nhận rủi ro biến thiên nghịch với độ tuổi, giúp người dùng định hướng danh mục tài sản qua từng giai đoạn cuộc đời.
-- **Cơ chế tính toán**:
-  - Tỷ trọng cổ phiếu giảm dần theo tuổi và được chặn biên an toàn từ 15% đến 75%:
-    ```javascript
-    const stocks = Math.max(15, Math.min(75, 100 - age + 5));
-    ```
-  - Tỷ trọng trái phiếu tăng dần nhằm gia tăng sự an toàn:
-    ```javascript
-    const bonds = Math.min(60, Math.max(15, age * 0.9));
-    ```
-  - Tỷ trọng bảo hiểm nâng từ 7% lên 10% khi người dùng vượt qua cột mốc 35 tuổi để gia tăng lá chắn tài chính khi trách nhiệm gia đình gia tăng.
-  - Tỷ trọng tiền mặt được tính bằng phần bù còn lại để tổng danh mục luôn đạt 100%.
-  - Tính mức sinh lời cần thiết của danh mục dựa trên trung bình gia quyền tỷ trọng và tỷ suất kỳ vọng của từng nhóm tài sản:
-    ```javascript
-    const returnNeed = ((stocks * 13.5 + bonds * 9.5 + ins * 4.5 + cash * 5.0) / 100);
-    ```
-
----
-
-### Động cơ Ma trận Tài chính 33 Năm và Đồng bộ Hai Chiều
-
-Ma trận dòng tiền tương lai được điều khiển bởi hàm `renderTcMatrixTable` kết hợp sự kiện lắng nghe trực tiếp `onMatrixCellChange`.
-
-- **Mục đích chèn thuật toán**:
-  - Mô phỏng toàn diện dòng tiền cần tích lũy và thu nhập mục tiêu qua từng năm (từ độ tuổi hiện tại đến 32 năm tiếp theo).
-  - Cho phép người dùng trực tiếp tinh chỉnh số tiền trên từng ô của bảng (Two-way Data Binding) mà không làm phá vỡ logic tổng thể.
-- **Cơ chế hoạt động**:
-  - Dòng tiền tiết kiệm cần có mỗi tháng trong năm $y$ được tính bằng tổng nhu cầu của tất cả các mục tiêu đang kích hoạt trong năm đó:
-    ```javascript
-    let sSum = 0;
-    allGoals.forEach(g => {
-      if (yr >= g.start && yr <= g.end) {
-        sSum += (g.monthly || calculateMonthlyNeed(g));
-      }
-    });
-    ```
-  - Thu nhập tối thiểu cần có được nội suy ngược dựa trên tỷ lệ trích lập tiết kiệm mục tiêu cố định 40%:
-    ```javascript
-    const incNeed = sSum > 0 ? (sSum / 0.40) : 0;
-    ```
-  - Khi người dùng gõ trực tiếp vào ô trên ma trận (`onMatrixCellChange`), hàm sẽ duyệt lại toàn bộ các ô nhập liệu trong hàng, tính toán lại giá trị tổng tiết kiệm và thu nhập cần có, cập nhật tức thì dữ liệu vào biểu đồ `tcMatrixChart` và kích hoạt đồng bộ sang bảng lộ trình nghề nghiệp.
+#### G. Độ phức tạp & Giới hạn
+* **Độ phức tạp:** $O(1)$ thời gian, $O(1)$ không gian.
+* **Vị trí trong mã nguồn:** Hàm [`calculateMonthlyNeed(goal)`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L610-L641) tại `script.js`.
 
 ---
 
-### Thuật toán Phân tích Khoảng cách Thu nhập và Đồ họa Đổi màu Phân đoạn
+### THUẬT TOÁN 3: Mô hình Phân bổ tài sản thích ứng theo vòng đời (Lifecycle Asset Allocation Model)
 
-Sự tương thích giữa năng lực gia tăng thu nhập và áp lực mục tiêu tài chính được kiểm soát thông qua hàm `calculateCareerDetails` và xử lý hiển thị trong `renderCareerChart`.
+#### A. Mục tiêu & Vai trò
+Tự động tính toán cơ cấu tỷ trọng danh mục đầu tư mẫu (Cổ phiếu, Trái phiếu, Bảo hiểm, Tiền mặt) theo quy luật biến thiên của tuổi tác: khi tuổi càng cao, tỷ trọng tài sản rủi ro (cổ phiếu) giảm dần và tỷ trọng tài sản phòng thủ (trái phiếu, bảo hiểm, tiền mặt) tăng dần nhằm bảo toàn thành quả tích lũy.
 
-- **Mục đích chèn thuật toán**: Nhận diện sớm nguy cơ thiếu hụt ngân sách qua từng mốc tuổi và trực quan hóa trạng thái sức khỏe tài chính bằng màu sắc cảnh báo.
-- **Cơ chế xử lý logic**:
-  - So sánh trực tiếp giữa thu nhập theo lộ trình nghề nghiệp (`route`) và thu nhập cần có để đạt mục tiêu tài chính (`target`).
-  - Nếu `route < target`: Hệ thống gán nhãn cảnh báo thâm hụt tài chính (`deficit-badge`), tính toán chính xác số tiền thiếu hụt mỗi tháng (`target - route`) và đổi màu chữ hiển thị thành đỏ nguy hiểm.
-  - Nếu `route >= target`: Hệ thống xác nhận lộ trình khả thi (`success-badge`) với sắc thái xanh an toàn.
-- **Kỹ thuật Gradient tuyến tính liên tục trên Chart.js (`renderCareerChart`)**:
-  - Đường lộ trình nghề nghiệp sử dụng Canvas Linear Gradient chuyển màu mượt mà: Duyệt qua từng điểm dữ liệu trên trục hoành; phân đoạn nào thỏa mãn thu nhập sẽ mang sắc xanh lá (`#16a34a`), phân đoạn nào rơi vào vùng thiếu hụt sẽ tự động hòa sắc sang màu đỏ (`#dc2626`).
-  - Điểm dữ liệu (Data points) được cấu hình màu động theo hàm callback kiểm tra từng mốc:
-    ```javascript
-    pointBackgroundColor: ctx => {
-      const idx = ctx.dataIndex;
-      return routes[idx] >= targets[idx] ? "#16a34a" : "#dc2626";
-    }
-    ```
+#### B. Dữ liệu đầu vào và đầu ra
+* **Đầu vào:** `AppState.currentAge` (tuổi hiện tại của người dùng).
+* **Đầu ra:** Danh sách 6 cột mốc cuộc đời tương ứng với các độ tuổi ($age \in [\text{base}, +5, +9, +14, +19, +29]$), mỗi mốc gồm:
+  * `stocks`: Tỷ trọng Cổ phiếu ($\%$).
+  * `bonds`: Tỷ trọng Trái phiếu ($\%$).
+  * `ins`: Tỷ trọng Bảo hiểm ($\%$).
+  * `cash`: Tỷ trọng Tiền mặt thanh khoản ($\%$).
+  * `returnNeed`: Tỷ suất sinh lời kỳ vọng trung bình gia quyền của danh mục ($\%/\text{năm}$).
+
+#### C. Công thức toán học & Quy tắc phân bổ
+1. **Tỷ trọng Cổ phiếu ($W_{\text{stocks}}$):** Áp dụng biến thể hiện đại của quy tắc kinh điển "$100 - \text{Tuổi}$" kết hợp cận an toàn $[15\%, 75\%]$:
+   $$W_{\text{stocks}} = \max\left(15\%,\ \min\left(75\%,\ 100 - \text{Tuổi} + 5\right)\right)$$
+2. **Tỷ trọng Trái phiếu ($W_{\text{bonds}}$):** Tăng dần theo tỷ lệ $90\%$ tuổi đời, khống chế trong khoảng $[15\%, 60\%]$:
+   $$W_{\text{bonds}} = \min\left(60\%,\ \max\left(15\%,\ \text{Tuổi} \times 0.9\right)\right)$$
+3. **Tỷ trọng Bảo hiểm phòng hộ ($W_{\text{ins}}$):** Bước nhảy theo giai đoạn trách nhiệm gia đình:
+   $$W_{\text{ins}} = \begin{cases} 7.0\% & \text{nếu } \text{Tuổi} < 35 \\ 10.0\% & \text{nếu } \text{Tuổi} \ge 35 \end{cases}$$
+4. **Tỷ trọng Tiền mặt thanh khoản ($W_{\text{cash}}$):** Phần bù còn lại để tổng danh mục luôn bảo toàn $100\%$, mức sàn tối thiểu $5\%$:
+   $$W_{\text{cash}} = \max\left(5\%,\ 100\% - (W_{\text{stocks}} + W_{\text{bonds}} + W_{\text{ins}})\right)$$
+5. **Tỷ suất sinh lời kỳ vọng trung bình gia quyền ($\bar{R}$):**
+   $$\bar{R} = \frac{W_{\text{stocks}} \times 13.5\% + W_{\text{bonds}} \times 9.5\% + W_{\text{ins}} \times 4.5\% + W_{\text{cash}} \times 5.0\%}{100}$$
+
+#### D. Pseudocode
+```text
+FUNCTION calculateAgeMilestones():
+    baseAge = AppState.currentAge
+    offsets = [0, 5, 9, 14, 19, 29]
+    milestones = []
+
+    FOR EACH off IN offsets DO:
+        age = baseAge + off
+        stocks = MAX(15, MIN(75, 100 - age + 5))
+        bonds = MIN(60, MAX(15, age * 0.9))
+        ins = (age >= 35) ? 10.0 : 7.0
+        cash = MAX(5, 100 - (stocks + bonds + ins))
+        returnNeed = (stocks * 13.5 + bonds * 9.5 + ins * 4.5 + cash * 5.0) / 100
+
+        milestones.PUSH({ age, stocks, bonds, ins, cash, returnNeed })
+    END FOR
+    RETURN milestones
+END FUNCTION
+```
+
+#### E. Độ phức tạp & Vị trí
+* **Độ phức tạp:** $O(1)$ (vòng lặp 6 phần tử cố định).
+* **Vị trí trong mã nguồn:** Hàm [`calculateAgeMilestones()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L654-L681) tại `script.js`.
 
 ---
 
-### Thuật toán Lượng hóa Tâm lý Khảo sát và Đồng bộ Lũy kế
+### THUẬT TOÁN 4: Nghịch đảo thu nhập từ tỷ lệ tiết kiệm mục tiêu (Savings-to-Income Inversion)
 
-Hệ thống đánh giá định tính bản thân được chuyển đổi thành số liệu định lượng thông qua hàm `evaluateSurveys` và hệ thống theo dõi tháng `renderReconciliationTable`.
+#### A. Mục tiêu & Vai trò
+Thay vì cách tiếp cận bị động "Thu nhập trừ Chi tiêu bằng Tiết kiệm", hệ thống hoạt động theo triết lý "Trả cho bản thân trước" (*Pay Yourself First*). Bằng cách tổng hợp toàn bộ các khoản tích lũy và trả nợ bắt buộc trong năm $y$ ($\sum PMT$), thuật toán đảo ngược để tính mức thu nhập ròng tối thiểu mỗi tháng người dùng cần tạo ra ($I_{\text{target}}$) để đảm bảo không bị vỡ kế hoạch tài chính.
 
-#### Hàm lượng hóa điểm số trắc nghiệm (`evaluateSurveys`)
-- **Mục đích chèn thuật toán**: Biến các câu trả lời trắc nghiệm thành điểm số có trọng số, từ đó đưa ra hồ sơ rủi ro và điều kiện tài chính khách quan.
-- **Cơ chế tính toán**:
-  - Mỗi lựa chọn được gắn một trọng số điểm cụ thể trong mảng cấu hình `weights`.
-  - Tổng điểm khảo sát khả năng chịu rủi ro ($S_1$) và khảo sát hoàn cảnh ($S_2$) được cộng dồn theo các câu hỏi đã chọn.
-  - Áp dụng các ngưỡng phân loại điều kiện để xuất ra khuyến nghị phân bổ tài sản phù hợp, đồng thời tự động cập nhật kết quả sang bảng tóm tắt mục tiêu bản thân (`survey-result-risk` và `survey-result-context`).
+#### B. Dữ liệu đầu vào và đầu ra
+* **Đầu vào:**
+  * `yearOffset`: Khoảng lệch năm tính từ năm hiện tại ($0 \le yearOffset \le 32$).
+  * Danh sách `AppState.tcGoals` chứa toàn bộ các mục tiêu đang kích hoạt.
+* **Đầu ra:**
+  * `incNeed` (`Number`): Thu nhập tối thiểu cần có (triệu VNĐ/tháng).
 
-#### Thuật toán bù trừ và lũy kế phương sai chi tiêu
-- **Vị trí trong mã nguồn**: Triển khai tại hàm `renderReconciliationTable` và biểu đồ `chartDashVariance`.
-- **Mục đích chèn thuật toán**: Kiểm soát kỷ luật tài chính trong năm thông qua việc so sánh liên tục giữa kế hoạch đã định và chi tiêu thực tế.
-- **Cơ chế tính toán**:
-  - Tính toán mức chênh lệch tuyệt đối: `diff = actual - plan`.
-  - Tính phương sai lũy kế qua 12 tháng:
-    ```javascript
-    runningDiff += (actualMonthExpense - planMonthExpense);
-    cumDiff.push(runningDiff);
-    ```
-  - Giúp phát hiện sớm xu hướng bội chi tích lũy trước khi nó ảnh hưởng tiêu cực đến các khoản đầu tư dài hạn.
+#### C. Công thức toán học
+1. **Tổng nhu cầu tiết kiệm tháng trong năm $y$ ($S_{\text{sum}}$):**
+   $$S_{\text{sum}}(y) = \sum_{g \in \text{Goals},\ y \in [start_g, end_g]} PMT(g)$$
+2. **Nghịch đảo mức thu nhập mục tiêu với tỷ lệ tiết kiệm chuẩn $40\%$:**
+   $$I_{\text{target}}(y) = \begin{cases} \frac{S_{\text{sum}}(y)}{0.40} & \text{khi } S_{\text{sum}}(y) > 0 \\ 0 & \text{khi } S_{\text{sum}}(y) = 0 \end{cases}$$
+
+#### D. Pseudocode
+```text
+FUNCTION getMatrixIncomeNeed(yearOffset):
+    sSum = 0
+    targetYear = AppState.currentYear + yearOffset
+
+    FOR EACH goal IN AppState.tcGoals DO:
+        IF targetYear >= goal.start AND targetYear <= goal.end THEN
+            sSum = sSum + (goal.monthly != null ? goal.monthly : calculateMonthlyNeed(goal))
+        END IF
+    END FOR
+
+    IF sSum > 0 THEN
+        RETURN sSum / 0.40
+    ELSE
+        RETURN 0
+    END IF
+END FUNCTION
+```
+
+#### E. Độ phức tạp & Vị trí
+* **Độ phức tạp:** $O(G)$ với $G$ là tổng số lượng mục tiêu tài chính ($G \le 50$, tức thời gian tính toán tức thì $< 1\text{ms}$).
+* **Vị trí trong mã nguồn:** Hàm [`getMatrixIncomeNeed()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L643-L652) và [`renderTcMatrixTable()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L3387-L3430) tại `script.js`.
+
+---
+
+### THUẬT TOÁN 5: Động cơ Thâm hụt sự nghiệp & Chuyển màu đồ họa phân đoạn (Career Deficit Engine)
+
+#### A. Mục tiêu & Vai trò
+Đối soát trên từng mốc tuổi giữa khả năng tạo thu nhập từ lộ trình công việc ($I_{\text{route}}$) và áp lực dòng tiền từ các mục tiêu tài chính ($I_{\text{target}}$). Nhận diện nguy cơ thâm hụt và trực quan hóa cảnh báo bằng kỹ thuật đổi màu phân đoạn liên tục (*Canvas Linear Gradient*) trên biểu đồ Chart.js.
+
+#### B. Dữ liệu đầu vào và đầu ra
+* **Đầu vào:** Mảng đối tượng sự nghiệp theo từng độ tuổi gồm `age`, `route` (thu nhập dự kiến kiếm được), `target` (thu nhập cần có từ Thuật toán 4).
+* **Đầu ra:**
+  * Độ lệch thu nhập: $\Delta I = route - target$.
+  * Phân đoạn trạng thái: `Đạt` hoặc `Thâm hụt`.
+  * Gradient chuyển màu trên trục thời gian của biểu đồ đường: sắc xanh `#159F87` cho vùng thặng dư và sắc đỏ `#F06E78` cho vùng thiếu hụt.
+
+#### C. Công thức phân đoạn màu Canvas Gradient
+Với mảng $M$ điểm dữ liệu trên trục hoành ($0 \le i < M$):
+$$\text{stop}_i = \frac{i}{M - 1}$$
+$$\text{Color}_i = \begin{cases} \text{\#159F87 (Xanh lục)} & \text{khi } route_i \ge target_i \\ \text{\#F06E78 (Đỏ hồng)} & \text{khi } route_i < target_i \end{cases}$$
+
+#### D. Sơ đồ xử lý (Flowchart)
+```mermaid
+flowchart LR
+    A["Dữ liệu Lộ trình: route"] & B["Dữ liệu Mục tiêu: target"] --> C["So sánh: route >= target ?"]
+    C -- Đúng --> D["Gán sắc Xanh #159F87 (Đạt)"]
+    C -- Sai --> E["Gán sắc Đỏ #F06E78 (Thâm hụt)"]
+    D & E --> F["Nạp vào Canvas Linear Gradient của Chart.js"]
+```
+
+#### E. Vị trí trong mã nguồn
+* Hàm [`calculateCareerDetails()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L683-L725) và [`renderCareerChart()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L2530-L2637) tại `script.js`.
+
+---
+
+### THUẬT TOÁN 6: Đối soát & Phương sai ngân sách lũy kế 12 tháng (Budget Variance Engine)
+
+#### A. Mục tiêu & Vai trò
+Đo lường kỷ luật tài chính trong năm thực tế thông qua việc so sánh liên tục giữa kế hoạch đã định ($Plan$) và số tiền thực tế phát sinh ($Actual$). Cảnh báo sớm xu hướng bội chi tích lũy qua chỉ số phương sai lũy kế ($CumDiff$).
+
+#### B. Công thức toán học
+1. **Phương sai chi phí tháng $m$:**
+   $$Variance_m = Actual_m - Plan_m$$
+   * $Variance_m \le 0$: Chi tiêu trong hạn mức (Tiết kiệm ngân sách).
+   * $Variance_m > 0$: Bội chi ngân sách (Cảnh báo đỏ).
+2. **Phương sai lũy kế 12 tháng ($CumDiff_m$):**
+   $$CumDiff_m = \sum_{k=1}^m \left(Actual_k - Plan_k\right)$$
+
+#### C. Vị trí trong mã nguồn
+* Hàm [`renderReconciliationTable(m)`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L2063-L2110) và biểu đồ `chartDashVariance` tại [`renderDashboardAllCharts()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L1339-L1372).
+
+---
+
+### THUẬT TOÁN 7: Lượng hóa tâm lý khảo sát & Khuyến nghị đầu tư (Psychometric Scoring Engine)
+
+#### A. Mục tiêu & Vai trò
+Chuyển đổi các câu trả lời định tính trong 21 câu hỏi trắc nghiệm thành điểm số định lượng chuẩn xác nhằm xác định:
+1. **Khả năng chịu đựng rủi ro ($S_1$):** Đánh giá tâm lý đối diện với thua lỗ và tầm nhìn đầu tư.
+2. **Bối cảnh & Hoàn cảnh tài chính ($S_2$):** Đánh giá nguồn lực hậu thuẫn từ gia đình, nghĩa vụ phụ thuộc và độ ổn định của sự nghiệp.
+
+#### B. Quy tắc tính điểm và Ngưỡng phân loại
+
+1. **Phần 1: Khảo sát rủi ro (10 câu hỏi $\implies S_1 \in [10, 50]$):**
+   $$S_1 = \sum_{q=1}^{10} \text{weights}_q[\text{choice}_q]$$
+   * **$S_1 < 18$ (Thận trọng - Ngại rủi ro):** Duy trì tỷ trọng tài sản rủi ro ở mức thấp; ưu tiên tiền gửi và trái phiếu an toàn.
+   * **$18 \le S_1 < 28$ (Cân bằng - Trung lập rủi ro):** Duy trì tỷ trọng cân bằng giữa tăng trưởng và an toàn vốn.
+   * **$S_1 \ge 28$ (Tăng trưởng - Chấp nhận rủi ro):** Có thể gia tăng mạnh tỷ trọng cổ phiếu và quỹ đầu tư tăng trưởng.
+
+2. **Phần 2: Khảo sát hoàn cảnh (11 câu hỏi $\implies S_2 \in [11, 55]$):**
+   $$S_2 = \sum_{q=1}^{11} \text{weights}_q[\text{choice}_q]$$
+   * **$S_2 \le 20$:** Điều kiện không thuận lợi.
+   * **$21 \le S_2 \le 29$:** Điều kiện ít thuận lợi.
+   * **$30 \le S_2 \le 38$:** Điều kiện bình thường.
+   * **$39 \le S_2 \le 41$:** Điều kiện thuận lợi.
+   * **$S_2 \ge 42$:** Điều kiện cực kỳ thuận lợi.
+
+#### C. Vị trí trong mã nguồn
+* Mảng câu hỏi và trọng số: `surveyQuestionsPart1` & `surveyQuestionsPart2` ([Dòng 3012-3280](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L3012-L3280)).
+* Hàm tính điểm: [`evaluateSurveys()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L2894-L2971) tại `script.js`.
+
+---
+
+## 3. Kiến trúc luồng dữ liệu trung tâm (`AppState`)
+
+```mermaid
+stateDiagram-v2
+    [*] --> AppState : Khởi tạo cấu hình mặc định hoặc tải từ Cloud
+    AppState --> SetupTables : Render Từ khóa thiết lập
+    AppState --> GoalsMatrix : Render Ma trận mục tiêu 33 năm
+    AppState --> MonthlyView : Render Thu - Chi 12 tháng
+    AppState --> SurveyEngine : Chấm điểm 21 câu hỏi khảo sát
+    
+    SetupTables --> RecalculateAll : Thay đổi danh mục / Lãi suất
+    GoalsMatrix --> RecalculateAll : Sửa số tiền trên ô ma trận (Two-way binding)
+    MonthlyView --> RecalculateAll : Nhập giao dịch thực tế
+    SurveyEngine --> RecalculateAll : Thay đổi đáp án khảo sát
+    
+    RecalculateAll --> DashboardCharts : Cập nhật 6 biểu đồ phân tích
+    RecalculateAll --> CareerChart : Cập nhật đường phân đoạn lộ trình
+    RecalculateAll --> AppState : Đồng bộ trạng thái trung tâm
+```
+
+Mọi tương tác từ người dùng đều kích hoạt hàm nhạc trưởng [`recalculateAll()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L1412), đảm bảo dữ liệu luôn được tính toán lại theo chuỗi phụ thuộc và không bao giờ xảy ra tình trạng lệch số liệu giữa các tab chức năng.
