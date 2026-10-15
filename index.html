@@ -1347,30 +1347,11 @@
             </div>
           </div>
           
-          <!-- Hộp thoại cảnh báo ghi đè khi khôi phục -->
-          <div id="backup-confirm-warning" class="backup-confirm-box" style="display: none;">
-            <div class="backup-warning-title">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>Cảnh báo ghi đè dữ liệu</span>
-            </div>
-            <p class="backup-warning-text">
-              Khôi phục bản <strong id="confirm-target-name">...</strong> sẽ thay thế toàn bộ dữ liệu hiện tại trên màn hình. Hệ thống sẽ tự động tạo một bản sao lưu an toàn cho trạng thái hiện tại trước khi khôi phục.
-            </p>
-            <div class="backup-confirm-actions">
-              <button type="button" class="btn-backup-confirm" id="btn-execute-restore" onclick="executeRestoreSelectedBackup()">
-                <i class="fa-solid fa-check"></i> Xác nhận khôi phục
-              </button>
-              <button type="button" class="btn-backup-cancel" onclick="cancelRestoreConfirm()">
-                Hủy bỏ
-              </button>
-            </div>
-          </div>
-
           <div class="backup-preview-actions" id="backup-preview-actions">
-            <button type="button" class="btn-primary" onclick="showRestoreConfirm()">
+            <button type="button" class="btn-primary" onclick="openRestoreConfirmModal(selectedBackupId)">
               <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục bản này
             </button>
-            <button type="button" class="btn-danger-outline" onclick="deleteSelectedBackup()">
+            <button type="button" class="btn-danger-outline" onclick="openDeleteConfirmModal(selectedBackupId)">
               <i class="fa-solid fa-trash-can"></i> Xóa bản này
             </button>
           </div>
@@ -1383,6 +1364,74 @@
         </button>
         <button type="button" class="btn-modal-submit" onclick="saveAppStateToCloud();">
           <i class="fa-solid fa-plus"></i> <span>Tạo bản lưu mới</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== HỘP THOẠI XÁC NHẬN THAO TÁC (RESTORE / DELETE / OVERWRITE) ==================== -->
+  <div id="confirm-modal-overlay" class="modal-overlay confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" style="display: none;">
+    <div class="modal-card confirm-modal-card" id="confirm-modal-card">
+      <div class="modal-header confirm-modal-header" id="confirm-modal-header">
+        <div class="modal-icon-badge" id="confirm-modal-icon-badge">
+          <i class="fa-solid fa-triangle-exclamation" id="confirm-modal-icon"></i>
+        </div>
+        <div class="modal-title-group">
+          <h3 id="confirm-modal-title">Xác nhận thao tác</h3>
+          <p id="confirm-modal-subtitle">Vui lòng kiểm tra kỹ thông tin trước khi tiếp tục</p>
+        </div>
+        <button type="button" class="btn-modal-close" id="btn-confirm-close" onclick="closeConfirmModal()" aria-label="Đóng hộp thoại">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body confirm-modal-body">
+        <!-- Thông tin nhận diện bản sao lưu được chọn -->
+        <div class="confirm-backup-info-card" id="confirm-backup-info-card">
+          <div class="confirm-bk-row">
+            <span class="confirm-bk-label"><i class="fa-solid fa-database"></i> Bản sao lưu:</span>
+            <strong class="confirm-bk-val" id="confirm-bk-name">Backup 1</strong>
+          </div>
+          <div class="confirm-bk-row">
+            <span class="confirm-bk-label"><i class="fa-regular fa-clock"></i> Thời gian tạo:</span>
+            <span class="confirm-bk-val font-mono" id="confirm-bk-time">14:30 — 15/10/2026</span>
+          </div>
+          <div class="confirm-bk-row">
+            <span class="confirm-bk-label"><i class="fa-solid fa-user-circle"></i> Hồ sơ:</span>
+            <span class="confirm-bk-val" id="confirm-bk-user">Nguyễn Văn A (@doc_id)</span>
+          </div>
+          <div class="confirm-bk-row" id="confirm-bk-details-row">
+            <span class="confirm-bk-label"><i class="fa-solid fa-circle-info"></i> Tóm tắt:</span>
+            <span class="confirm-bk-val" id="confirm-bk-summary">Năm 2026 • 2 mục tiêu tài chính</span>
+          </div>
+        </div>
+
+        <!-- Cảnh báo hệ quả thao tác (Khôi phục / Xóa) -->
+        <div class="confirm-warning-banner" id="confirm-warning-banner">
+          <div class="confirm-warning-icon-wrap">
+            <i class="fa-solid fa-triangle-exclamation" id="confirm-warning-icon"></i>
+          </div>
+          <div class="confirm-warning-content">
+            <strong id="confirm-warning-heading">Cảnh báo ghi đè dữ liệu</strong>
+            <p id="confirm-warning-text">
+              Thao tác này sẽ thay thế dữ liệu tài chính hiện tại trên màn hình bằng dữ liệu từ bản sao lưu được chọn. Một bản lưu an toàn cho phiên hiện tại sẽ được tự động tạo trước khi khôi phục.
+            </p>
+          </div>
+        </div>
+
+        <!-- Banner trạng thái đang thực hiện / kết quả thất bại -->
+        <div id="confirm-status-alert" class="confirm-status-alert" style="display: none;">
+          <i class="fa-solid fa-spinner fa-spin" id="confirm-status-icon"></i>
+          <span id="confirm-status-msg">Đang kết nối Firebase và thực hiện thao tác...</span>
+        </div>
+      </div>
+
+      <div class="modal-footer confirm-modal-footer">
+        <button type="button" class="btn-modal-cancel" id="btn-confirm-cancel" onclick="closeConfirmModal()">
+          Hủy
+        </button>
+        <button type="button" class="btn-modal-submit" id="btn-confirm-action" onclick="executeConfirmedAction()">
+          <span id="confirm-action-btn-text">Xác nhận khôi phục</span>
         </button>
       </div>
     </div>

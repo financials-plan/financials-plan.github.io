@@ -5021,6 +5021,220 @@ input.cell-blue { padding: 7px 10px; }
   border-radius: var(--radius-card);
 }
 
+/* ==================== CONFIRM MODAL OVERLAY (RESTORE / DELETE) ==================== */
+.confirm-modal-overlay {
+  z-index: 10050;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(15, 23, 42, 0.65);
+}
+
+.confirm-modal-overlay.active {
+  display: flex !important;
+}
+
+.confirm-modal-card {
+  max-width: 500px;
+  width: 100%;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.confirm-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+
+.confirm-modal-header .btn-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-btn);
+  transition: all 0.15s ease;
+}
+
+.confirm-modal-header .btn-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.confirm-backup-info-card {
+  background: var(--bg-card-inner);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.confirm-bk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.835rem;
+}
+
+.confirm-bk-label {
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.confirm-bk-val {
+  color: var(--text-main);
+  text-align: right;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirm-warning-banner {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  margin-top: 14px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.confirm-warning-icon-wrap {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.confirm-warning-content strong {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.confirm-warning-content p {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: 0;
+  color: var(--text-main);
+  opacity: 0.9;
+}
+
+/* Phân nhánh kiểu dáng theo hành động: RESTORE vs DELETE */
+.confirm-type-restore #confirm-modal-icon-badge {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  box-shadow: 0 6px 14px -4px rgba(59, 130, 246, 0.5);
+}
+
+.confirm-type-restore .confirm-warning-banner {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.confirm-type-restore .confirm-warning-icon-wrap,
+.confirm-type-restore .confirm-warning-content strong {
+  color: #d97706;
+}
+
+[data-theme="dark"] .confirm-type-restore .confirm-warning-content strong,
+[data-theme="dark"] .confirm-type-restore .confirm-warning-icon-wrap {
+  color: #fbbf24;
+}
+
+.confirm-type-restore #btn-confirm-action {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.confirm-type-restore #btn-confirm-action:hover {
+  background: #4338ca;
+}
+
+.confirm-type-delete #confirm-modal-icon-badge {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 6px 14px -4px rgba(239, 68, 68, 0.5);
+}
+
+.confirm-type-delete .confirm-warning-banner {
+  background: rgba(239, 68, 68, 0.09);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.confirm-type-delete .confirm-warning-icon-wrap,
+.confirm-type-delete .confirm-warning-content strong {
+  color: #dc2626;
+}
+
+[data-theme="dark"] .confirm-type-delete .confirm-warning-content strong,
+[data-theme="dark"] .confirm-type-delete .confirm-warning-icon-wrap {
+  color: #f87171;
+}
+
+.confirm-type-delete #btn-confirm-action {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.confirm-type-delete #btn-confirm-action:hover {
+  background: #b91c1c;
+}
+
+/* Alert trạng thái xử lý / thông báo kết quả */
+.confirm-status-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-btn);
+  margin-top: 12px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  animation: fadeIn 0.18s ease;
+}
+
+.confirm-status-alert.is-processing {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--text-main);
+}
+
+.confirm-status-alert.is-processing i {
+  color: #6366f1;
+}
+
+.confirm-status-alert.is-error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.confirm-status-alert.is-success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
+
 /* ==================== 17. REDUCED MOTION ==================== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

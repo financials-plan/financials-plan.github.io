@@ -8,7 +8,9 @@ import {
   getFirestore, 
   doc, 
   setDoc, 
-  getDoc, 
+  getDoc,
+  updateDoc,
+  deleteDoc,
   onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -206,7 +208,7 @@ window.CloudDB = {
   },
 
   /**
-   * Xóa một bản sao lưu cụ thể
+   * Xóa một bản sao lưu cụ thể thực sự trên Cloud Firestore
    * @param {string} docId - Định danh tài liệu người dùng
    * @param {string} backupId - ID của bản sao lưu cần xóa
    */
@@ -215,22 +217,42 @@ window.CloudDB = {
       const targetDocId = docId || LEGACY_DOC_ID;
       const docRef = doc(db, COLLECTION_NAME, targetDocId);
       const snap = await getDoc(docRef);
-      if (!snap.exists()) return { success: false, notFound: true };
+      if (!snap.exists()) {
+        return { success: false, notFound: true, message: "Hồ sơ không tồn tại trên Cloud Firestore" };
+      }
 
       const docData = snap.data();
       let backups = Array.isArray(docData._backups) ? docData._backups : [];
-      backups = backups.filter(b => b.id !== backupId);
-      docData._backups = backups;
+      const backupIndex = backups.findIndex(b => b.id === backupId);
+      if (backupIndex === -1) {
+        return { success: false, notFound: true, message: "Không tìm thấy bản sao lưu cần xóa trên Firebase" };
+      }
 
+      const updatedBackups = backups.filter(b => b.id !== backupId);
+
+      // 1. Cập nhật thực sự lên Cloud Firestore qua updateDoc
+      await updateDoc(docRef, {
+        _backups: updatedBackups,
+        _lastUpdated: new Date().toISOString()
+      });
+
+      // 2. Thử xóa document tương ứng nếu có lưu trữ subcollection
       try {
-        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(backups));
+        const subDocRef = doc(db, COLLECTION_NAME, targetDocId, "backups", backupId);
+        await deleteDoc(subDocRef);
+      } catch (subErr) {
+        // Bỏ qua nếu subcollection không được kích hoạt
+      }
+
+      // 3. CHỈ cập nhật localStorage dự phòng SAU KHI Firebase xác nhận xóa thành công!
+      try {
+        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(updatedBackups));
       } catch (e) {}
 
-      await setDoc(docRef, docData);
-      return { success: true, backups };
+      return { success: true, backups: updatedBackups };
     } catch (error) {
-      console.error("Lỗi khi xóa bản sao lưu:", error);
-      return { success: false, error };
+      console.error("Lỗi khi xóa bản sao lưu trên Cloud Firestore:", error);
+      return { success: false, error: error?.message || "Lỗi kết nối Firebase Firestore" };
     }
   },
 

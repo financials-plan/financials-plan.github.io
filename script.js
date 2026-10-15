@@ -3659,7 +3659,7 @@ function showToast(message, type = 'success') {
  */
 window.saveAppStateToCloud = async function() {
   if (!window.CloudDB) {
-    alert("Dịch vụ lưu trữ chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
+    showToast("Dịch vụ lưu trữ chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!", "error");
     return;
   }
 
@@ -3912,10 +3912,10 @@ window.renderBackupList = function(backups) {
           </div>
         </div>
         <div class="backup-item-actions" onclick="event.stopPropagation()">
-          <button type="button" class="btn-bk-action btn-bk-select" onclick="selectBackupForPreview('${b.id}')" title="Xem chi tiết & Khôi phục">
-            <i class="fa-solid fa-arrow-right"></i> Chọn
+          <button type="button" class="btn-bk-action btn-bk-select" onclick="openRestoreConfirmModal('${b.id}')" title="Khôi phục bản sao lưu này">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục
           </button>
-          <button type="button" class="btn-bk-action btn-bk-del" onclick="deleteBackupItem('${b.id}')" title="Xóa bản sao lưu này">
+          <button type="button" class="btn-bk-action btn-bk-del" onclick="openDeleteConfirmModal('${b.id}')" title="Xóa bản sao lưu này">
             <i class="fa-solid fa-trash-can"></i>
           </button>
         </div>
@@ -3962,116 +3962,372 @@ window.selectBackupForPreview = function(backupId) {
   window.cancelRestoreConfirm();
 };
 
-window.showRestoreConfirm = function() {
-  const confirmBox = document.getElementById('backup-confirm-warning');
-  const actionsBox = document.getElementById('backup-preview-actions');
-  if (confirmBox) confirmBox.style.display = 'flex';
-  if (actionsBox) actionsBox.style.display = 'none';
-};
+// ==================== ĐIỀU KHIỂN HỘP THOẠI XÁC NHẬN (RESTORE & DELETE) ====================
+let pendingConfirmAction = null; // { type: 'restore' | 'delete', backupId: string, backup: object }
+let isConfirmProcessing = false;
 
-window.cancelRestoreConfirm = function() {
-  const confirmBox = document.getElementById('backup-confirm-warning');
-  const actionsBox = document.getElementById('backup-preview-actions');
-  if (confirmBox) confirmBox.style.display = 'none';
-  if (actionsBox) actionsBox.style.display = 'flex';
-};
-
-window.executeRestoreSelectedBackup = async function() {
-  if (!selectedBackupId) return;
-  const backup = currentLoadedBackups.find(b => b.id === selectedBackupId);
-  if (!backup || !backup.data) {
-    showToast("Không tìm thấy nội dung bản sao lưu!", "error");
+window.openRestoreConfirmModal = function(backupId) {
+  const targetId = backupId || selectedBackupId;
+  const backup = currentLoadedBackups.find(b => b.id === targetId);
+  if (!backup) {
+    showToast("Không tìm thấy thông tin bản sao lưu cần khôi phục!", "error");
     return;
   }
 
-  // Tự động tạo bản lưu an toàn trước khi khôi phục
-  try {
-    const safetySnapshot = JSON.parse(JSON.stringify(AppState));
-    const safetyEntry = {
-      id: "bk_safety_" + Date.now(),
-      name: "Tự động sao lưu trước khôi phục",
-      timestamp: new Date().toISOString(),
-      summary: {
-        year: safetySnapshot.currentYear || 2026,
-        age: safetySnapshot.currentAge || 25,
-        goalsCount: (safetySnapshot.tcGoals || []).length
-      },
-      data: safetySnapshot
-    };
-    const userDocId = UserSession.currentUser.docId;
-    const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + userDocId) || "[]");
-    localBk.unshift(safetyEntry);
-    localStorage.setItem("FIN_APP_BACKUPS_" + userDocId, JSON.stringify(localBk.slice(0, 25)));
-  } catch (e) {
-    console.warn("Không thể tạo safety backup:", e);
+  pendingConfirmAction = { type: 'restore', backupId: backup.id, backup: backup };
+
+  const modalOverlay = document.getElementById('confirm-modal-overlay');
+  const modalCard = document.getElementById('confirm-modal-card');
+  const iconEl = document.getElementById('confirm-modal-icon');
+  const titleEl = document.getElementById('confirm-modal-title');
+  const subtitleEl = document.getElementById('confirm-modal-subtitle');
+  const bkNameEl = document.getElementById('confirm-bk-name');
+  const bkTimeEl = document.getElementById('confirm-bk-time');
+  const bkUserEl = document.getElementById('confirm-bk-user');
+  const bkSummaryEl = document.getElementById('confirm-bk-summary');
+  const warningHeading = document.getElementById('confirm-warning-heading');
+  const warningText = document.getElementById('confirm-warning-text');
+  const statusAlert = document.getElementById('confirm-status-alert');
+  const btnAction = document.getElementById('btn-confirm-action');
+  const btnActionText = document.getElementById('confirm-action-btn-text');
+  const btnCancel = document.getElementById('btn-confirm-cancel');
+  const btnClose = document.getElementById('btn-confirm-close');
+
+  if (!modalOverlay) return;
+
+  // Cấu hình giao diện loại RESTORE
+  if (modalCard) {
+    modalCard.classList.remove('confirm-type-delete');
+    modalCard.classList.add('confirm-type-restore');
+  }
+  if (iconEl) iconEl.className = 'fa-solid fa-cloud-arrow-down';
+  if (titleEl) titleEl.textContent = 'Khôi phục bản sao lưu';
+  if (subtitleEl) subtitleEl.textContent = 'Dữ liệu hiện tại trên ứng dụng sẽ được thay thế theo bản sao lưu này';
+
+  // Thông tin nhận diện bản sao lưu
+  if (bkNameEl) bkNameEl.textContent = backup.name || 'Bản sao lưu';
+  if (bkTimeEl) bkTimeEl.textContent = formatBackupTimestamp(backup.timestamp);
+  if (bkUserEl) {
+    bkUserEl.textContent = UserSession.currentUser
+      ? `${UserSession.currentUser.rawName} (@${UserSession.currentUser.docId})`
+      : 'Hồ sơ người dùng';
+  }
+  if (bkSummaryEl) {
+    const yr = backup.summary?.year || backup.data?.currentYear || AppState.currentYear || 2026;
+    const goalsCount = backup.summary?.goalsCount ?? (backup.data?.tcGoals?.length || 0);
+    const inc = Number(backup.summary?.planIncomeTotal || 0);
+    bkSummaryEl.textContent = `Năm ${yr} • ${goalsCount} mục tiêu • ${inc > 0 ? inc.toLocaleString('vi-VN') + ' tr/th' : 'Chưa có thu'}`;
   }
 
-  // Khôi phục dữ liệu vào AppState
-  const restoreData = backup.data;
-  Object.keys(restoreData).forEach(key => {
-    if (!key.startsWith('_')) {
-      AppState[key] = restoreData[key];
+  // Cảnh báo ghi đè
+  if (warningHeading) warningHeading.textContent = 'Cảnh báo thay thế dữ liệu';
+  if (warningText) {
+    warningText.textContent = `Toàn bộ dữ liệu tài chính hiện tại trên màn hình sẽ được cập nhật lại theo bản ghi [${backup.name || 'Bản sao lưu'}]. Hệ thống sẽ tự động tạo một bản sao lưu an toàn ngay trước khi khôi phục để bảo vệ phiên làm việc của bạn.`;
+  }
+
+  // Trạng thái nút bấm & Banner
+  if (statusAlert) statusAlert.style.display = 'none';
+  if (btnAction) {
+    btnAction.disabled = false;
+    btnAction.className = 'btn-modal-submit';
+  }
+  if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Xác nhận khôi phục';
+  if (btnCancel) btnCancel.disabled = false;
+  if (btnClose) btnClose.disabled = false;
+
+  modalOverlay.style.display = 'flex';
+  modalOverlay.classList.add('active');
+  if (btnAction) setTimeout(() => btnAction.focus(), 60);
+};
+
+window.openDeleteConfirmModal = function(backupId) {
+  const targetId = backupId || selectedBackupId;
+  const backup = currentLoadedBackups.find(b => b.id === targetId);
+  if (!backup) {
+    showToast("Không tìm thấy thông tin bản sao lưu cần xóa!", "error");
+    return;
+  }
+
+  pendingConfirmAction = { type: 'delete', backupId: backup.id, backup: backup };
+
+  const modalOverlay = document.getElementById('confirm-modal-overlay');
+  const modalCard = document.getElementById('confirm-modal-card');
+  const iconEl = document.getElementById('confirm-modal-icon');
+  const titleEl = document.getElementById('confirm-modal-title');
+  const subtitleEl = document.getElementById('confirm-modal-subtitle');
+  const bkNameEl = document.getElementById('confirm-bk-name');
+  const bkTimeEl = document.getElementById('confirm-bk-time');
+  const bkUserEl = document.getElementById('confirm-bk-user');
+  const bkSummaryEl = document.getElementById('confirm-bk-summary');
+  const warningHeading = document.getElementById('confirm-warning-heading');
+  const warningText = document.getElementById('confirm-warning-text');
+  const statusAlert = document.getElementById('confirm-status-alert');
+  const btnAction = document.getElementById('btn-confirm-action');
+  const btnActionText = document.getElementById('confirm-action-btn-text');
+  const btnCancel = document.getElementById('btn-confirm-cancel');
+  const btnClose = document.getElementById('btn-confirm-close');
+
+  if (!modalOverlay) return;
+
+  // Cấu hình giao diện loại DELETE
+  if (modalCard) {
+    modalCard.classList.remove('confirm-type-restore');
+    modalCard.classList.add('confirm-type-delete');
+  }
+  if (iconEl) iconEl.className = 'fa-solid fa-trash-can';
+  if (titleEl) titleEl.textContent = 'Xóa vĩnh viễn bản sao lưu';
+  if (subtitleEl) subtitleEl.textContent = 'Bản sao lưu sẽ bị xóa khỏi đám mây Cloud Firestore';
+
+  // Thông tin nhận diện bản sao lưu
+  if (bkNameEl) bkNameEl.textContent = backup.name || 'Bản sao lưu';
+  if (bkTimeEl) bkTimeEl.textContent = formatBackupTimestamp(backup.timestamp);
+  if (bkUserEl) {
+    bkUserEl.textContent = UserSession.currentUser
+      ? `${UserSession.currentUser.rawName} (@${UserSession.currentUser.docId})`
+      : 'Hồ sơ người dùng';
+  }
+  if (bkSummaryEl) {
+    const yr = backup.summary?.year || backup.data?.currentYear || AppState.currentYear || 2026;
+    const goalsCount = backup.summary?.goalsCount ?? (backup.data?.tcGoals?.length || 0);
+    bkSummaryEl.textContent = `Năm ${yr} • ${goalsCount} mục tiêu tài chính`;
+  }
+
+  // Cảnh báo không thể hoàn tác
+  if (warningHeading) warningHeading.textContent = 'Hành động không thể hoàn tác';
+  if (warningText) {
+    warningText.textContent = `Bản sao lưu [${backup.name || 'này'}] (${formatBackupTimestamp(backup.timestamp)}) sẽ bị xóa vĩnh viễn khỏi Cloud Firestore. Bạn sẽ không thể khôi phục lại dữ liệu từ bản lưu này sau khi đã xác nhận xóa.`;
+  }
+
+  // Trạng thái nút bấm & Banner
+  if (statusAlert) statusAlert.style.display = 'none';
+  if (btnAction) {
+    btnAction.disabled = false;
+    btnAction.className = 'btn-modal-submit';
+  }
+  if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-trash-can"></i> Xác nhận xóa vĩnh viễn';
+  if (btnCancel) btnCancel.disabled = false;
+  if (btnClose) btnClose.disabled = false;
+
+  modalOverlay.style.display = 'flex';
+  modalOverlay.classList.add('active');
+  if (btnCancel) setTimeout(() => btnCancel.focus(), 60);
+};
+
+window.closeConfirmModal = function() {
+  if (isConfirmProcessing) return; // Khóa thao tác đóng khi đang xử lý mạng Firestore
+  const modalOverlay = document.getElementById('confirm-modal-overlay');
+  if (modalOverlay) {
+    modalOverlay.classList.remove('active');
+    modalOverlay.style.display = 'none';
+  }
+  pendingConfirmAction = null;
+};
+
+window.executeConfirmedAction = async function() {
+  if (isConfirmProcessing || !pendingConfirmAction) return;
+
+  const action = pendingConfirmAction;
+  const statusAlert = document.getElementById('confirm-status-alert');
+  const statusMsg = document.getElementById('confirm-status-msg');
+  const statusIcon = document.getElementById('confirm-status-icon');
+  const btnAction = document.getElementById('btn-confirm-action');
+  const btnActionText = document.getElementById('confirm-action-btn-text');
+  const btnCancel = document.getElementById('btn-confirm-cancel');
+  const btnClose = document.getElementById('btn-confirm-close');
+
+  // Khóa tương tác UI trong suốt quá trình xử lý
+  isConfirmProcessing = true;
+  if (btnAction) btnAction.disabled = true;
+  if (btnCancel) btnCancel.disabled = true;
+  if (btnClose) btnClose.disabled = true;
+
+  if (statusAlert) {
+    statusAlert.className = 'confirm-status-alert is-processing';
+    statusAlert.style.display = 'flex';
+  }
+
+  if (action.type === 'restore') {
+    if (statusMsg) statusMsg.textContent = 'Đang tự động sao lưu an toàn và khôi phục dữ liệu...';
+    if (statusIcon) statusIcon.className = 'fa-solid fa-spinner fa-spin';
+    if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang khôi phục...';
+
+    try {
+      const backup = action.backup;
+      if (!backup || !backup.data) {
+        throw new Error('Dữ liệu bản sao lưu không hợp lệ!');
+      }
+
+      // 1. Tự động tạo bản lưu an toàn (safety snapshot) của phiên hiện tại trước khi khôi phục
+      try {
+        const safetySnapshot = JSON.parse(JSON.stringify(AppState));
+        const safetyEntry = {
+          id: "bk_safety_" + Date.now(),
+          name: "Tự động sao lưu trước khôi phục",
+          timestamp: new Date().toISOString(),
+          summary: {
+            year: safetySnapshot.currentYear || 2026,
+            age: safetySnapshot.currentAge || 25,
+            goalsCount: (safetySnapshot.tcGoals || []).length
+          },
+          data: safetySnapshot
+        };
+        const userDocId = UserSession.currentUser ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
+        const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + userDocId) || "[]");
+        localBk.unshift(safetyEntry);
+        localStorage.setItem("FIN_APP_BACKUPS_" + userDocId, JSON.stringify(localBk.slice(0, 25)));
+      } catch (safeErr) {
+        console.warn("Không thể tạo safety backup:", safeErr);
+      }
+
+      // 2. Khôi phục dữ liệu vào AppState
+      const restoreData = backup.data;
+      Object.keys(restoreData).forEach(key => {
+        if (!key.startsWith('_')) {
+          AppState[key] = restoreData[key];
+        }
+      });
+
+      // 3. Đồng bộ lại UI Năm và Tuổi
+      const yEl = document.getElementById('input-year');
+      const aEl = document.getElementById('input-age');
+      if (yEl) yEl.innerText = AppState.currentYear;
+      if (aEl) aEl.innerText = AppState.currentAge;
+      document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+      // 4. Vẽ lại toàn bộ các bảng, khảo sát, và tính toán
+      renderSetupTables();
+      renderPlanTables();
+      renderTcGoalsFormTable();
+      renderSkillsFamilyJob();
+      renderGoogleFormSurvey();
+      evaluateSurveys();
+      renderCareerTables();
+      renderMonthView(AppState.currentMonth);
+      syncGoalsToCards();
+      recalculateAll();
+
+      // 5. Lưu trạng thái vừa khôi phục lên Cloud Firestore
+      try {
+        if (window.CloudDB && UserSession.currentUser) {
+          const userDocId = UserSession.currentUser.docId;
+          await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
+        }
+      } catch (saveErr) {
+        console.warn("Lỗi đồng bộ Cloud sau khi khôi phục:", saveErr);
+      }
+
+      isConfirmProcessing = false;
+      window.closeConfirmModal();
+      window.closeBackupManagerModal();
+      showToast(`Đã khôi phục thành công bản sao lưu [${backup.name}]!`, "success");
+    } catch (err) {
+      console.error("Lỗi khi khôi phục bản sao lưu:", err);
+      isConfirmProcessing = false;
+      if (statusAlert) {
+        statusAlert.className = 'confirm-status-alert is-error';
+        statusAlert.style.display = 'flex';
+      }
+      if (statusIcon) statusIcon.className = 'fa-solid fa-circle-exclamation';
+      if (statusMsg) statusMsg.textContent = `Lỗi khôi phục: ${err.message || 'Không thể đọc dữ liệu'}`;
+      if (btnAction) btnAction.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+      if (btnClose) btnClose.disabled = false;
+      if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Thử lại';
     }
-  });
+  } else if (action.type === 'delete') {
+    if (statusMsg) statusMsg.textContent = 'Đang kết nối Firebase Firestore và xóa bản sao lưu...';
+    if (statusIcon) statusIcon.className = 'fa-solid fa-spinner fa-spin';
+    if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xóa...';
 
-  // Đồng bộ lại UI Năm và Tuổi
-  const yEl = document.getElementById('input-year');
-  const aEl = document.getElementById('input-age');
-  if (yEl) yEl.innerText = AppState.currentYear;
-  if (aEl) aEl.innerText = AppState.currentAge;
-  document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+    try {
+      const userDocId = UserSession.currentUser ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
+      const res = await window.CloudDB.deleteBackup(userDocId, action.backupId);
 
-  // Vẽ lại toàn bộ các bảng và biểu đồ
-  renderSetupTables();
-  renderPlanTables();
-  renderTcGoalsFormTable();
-  renderSkillsFamilyJob();
-  renderGoogleFormSurvey();
-  evaluateSurveys();
-  renderCareerTables();
-  renderMonthView(AppState.currentMonth);
-  syncGoalsToCards();
-  recalculateAll();
+      if (res.success) {
+        // Chỉ cập nhật UI danh sách sau khi Firebase xác nhận xóa thành công!
+        currentLoadedBackups = res.backups || [];
+        if (selectedBackupId === action.backupId) {
+          selectedBackupId = (currentLoadedBackups.length > 0) ? currentLoadedBackups[0].id : null;
+        }
 
-  // Lưu bản snapshot vừa khôi phục thành bản ghi chính thức
-  try {
-    const userDocId = UserSession.currentUser.docId;
-    await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
-  } catch (e) {}
+        window.filterAndSortBackups();
+        isConfirmProcessing = false;
+        window.closeConfirmModal();
+        showToast(`Đã xóa vĩnh viễn bản sao lưu [${action.backup.name || 'được chọn'}] trên Cloud!`, "success");
+      } else {
+        // Nếu Firebase xóa thất bại: GIỮ NGUYÊN danh sách bản ghi và hiển thị lỗi trên UI
+        isConfirmProcessing = false;
+        if (statusAlert) {
+          statusAlert.className = 'confirm-status-alert is-error';
+          statusAlert.style.display = 'flex';
+        }
+        if (statusIcon) statusIcon.className = 'fa-solid fa-circle-exclamation';
+        if (statusMsg) statusMsg.textContent = `Không thể xóa trên Cloud Firestore: ${res.error || res.message || 'Lỗi mạng hoặc phân quyền'}. Vui lòng thử lại!`;
+        if (btnAction) btnAction.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+        if (btnClose) btnClose.disabled = false;
+        if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Thử xóa lại';
+        showToast("Xóa bản sao lưu trên Cloud thất bại!", "error");
+      }
+    } catch (err) {
+      console.error("Lỗi ngoại lệ khi xóa bản sao lưu:", err);
+      isConfirmProcessing = false;
+      if (statusAlert) {
+        statusAlert.className = 'confirm-status-alert is-error';
+        statusAlert.style.display = 'flex';
+      }
+      if (statusIcon) statusIcon.className = 'fa-solid fa-circle-exclamation';
+      if (statusMsg) statusMsg.textContent = `Lỗi hệ thống: ${err.message || 'Không thể thực hiện kết nối'}`;
+      if (btnAction) btnAction.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+      if (btnClose) btnClose.disabled = false;
+      if (btnActionText) btnActionText.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Thử xóa lại';
+      showToast("Lỗi khi kết nối dịch vụ xóa đám mây!", "error");
+    }
+  }
+};
 
-  window.closeBackupManagerModal();
-  showToast(`Đã khôi phục thành công [${backup.name}] (${formatBackupTimestamp(backup.timestamp)})!`, "success");
+// Khôi phục các hàm tương thích cũ để tránh lỗi gọi hàm
+window.showRestoreConfirm = function() {
+  if (selectedBackupId) window.openRestoreConfirmModal(selectedBackupId);
+};
+
+window.cancelRestoreConfirm = function() {
+  window.closeConfirmModal();
+};
+
+window.executeRestoreSelectedBackup = async function() {
+  if (selectedBackupId) window.openRestoreConfirmModal(selectedBackupId);
 };
 
 window.deleteSelectedBackup = async function() {
-  if (!selectedBackupId) return;
-  const backup = currentLoadedBackups.find(b => b.id === selectedBackupId);
-  if (!backup) return;
+  if (selectedBackupId) window.openDeleteConfirmModal(selectedBackupId);
+};
 
-  const confirmed = confirm(`Bạn có chắc chắn muốn xóa bản sao lưu [${backup.name}] (${formatBackupTimestamp(backup.timestamp)}) không?`);
-  if (!confirmed) return;
+window.deleteBackupItem = function(backupId) {
+  window.openDeleteConfirmModal(backupId);
+};
 
-  try {
-    const userDocId = UserSession.currentUser.docId;
-    const res = await window.CloudDB.deleteBackup(userDocId, selectedBackupId);
-    if (res.success) {
-      showToast(`Đã xóa bản sao lưu [${backup.name}]!`, "success");
-      currentLoadedBackups = res.backups;
-      selectedBackupId = null;
-      window.filterAndSortBackups();
-    } else {
-      showToast("Không thể xóa bản sao lưu!", "error");
+// Thiết lập lắng nghe sự kiện đóng hộp thoại xác nhận qua Escape và click backdrop
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const confirmModal = document.getElementById('confirm-modal-overlay');
+    if (confirmModal && confirmModal.classList.contains('active') && !isConfirmProcessing) {
+      window.closeConfirmModal();
     }
-  } catch (e) {
-    console.error("Lỗi khi xóa bản sao lưu:", e);
-    showToast("Lỗi khi xóa bản sao lưu!", "error");
   }
-};
+});
 
-window.deleteBackupItem = async function(backupId) {
-  selectedBackupId = backupId;
-  await window.deleteSelectedBackup();
-};
+document.addEventListener('DOMContentLoaded', () => {
+  const confirmModal = document.getElementById('confirm-modal-overlay');
+  if (confirmModal) {
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal && !isConfirmProcessing) {
+        window.closeConfirmModal();
+      }
+    });
+  }
+});
 
 // ==================== ĐIỀU KHIỂN MODAL NHẬN DIỆN NGƯỜI DÙNG ====================
 
