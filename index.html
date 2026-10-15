@@ -114,13 +114,48 @@
 
         <div class="account-menu-divider"></div>
 
+        <!-- Chế độ giao diện Day–night sky switch (Lucian UX/UI Prompt #021 - MIT License) -->
+        <div class="account-theme-row">
+          <div class="account-theme-info">
+            <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
+            <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
+          </div>
+          <!-- Day–night sky switch — Lucian UX/UI Prompt #021 -->
+          <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
+            <span class="u021-track">
+              <!-- Sky Day -->
+              <span class="u021-sky u021-sky-day">
+                <span class="u021-cloud u021-cloud-1"></span>
+                <span class="u021-cloud u021-cloud-2"></span>
+                <span class="u021-cloud u021-cloud-3"></span>
+              </span>
+              <!-- Sky Night -->
+              <span class="u021-sky u021-sky-night">
+                <span class="u021-star u021-star-1"></span>
+                <span class="u021-star u021-star-2"></span>
+                <span class="u021-star u021-star-3"></span>
+                <span class="u021-star u021-star-4"></span>
+                <span class="u021-star u021-star-5"></span>
+              </span>
+              <!-- Knob: Sun / Moon with craters -->
+              <span class="u021-knob">
+                <span class="u021-crater u021-crater-1"></span>
+                <span class="u021-crater u021-crater-2"></span>
+                <span class="u021-crater u021-crater-3"></span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div class="account-menu-divider"></div>
+
         <!-- Các thao tác thực tế -->
         <div class="account-actions">
           <button type="button" class="account-action-btn" onclick="openUserModal(true); closeAccountMenu();">
             <i class="fa-solid fa-user-plus text-primary"></i> <span>Thêm / Đổi hồ sơ mới</span>
           </button>
           <button type="button" class="account-action-btn" onclick="saveAppStateToCloud(); closeAccountMenu();">
-            <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu lên Cloud</span>
+            <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu</span>
           </button>
           <button type="button" class="account-action-btn text-danger" onclick="logoutUserProfile(); closeAccountMenu();">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất hồ sơ</span>
@@ -153,22 +188,16 @@
       
       <!-- Nút điều khiển lưu / tải dữ liệu đám mây & Huy hiệu nhận diện người dùng -->
       <div class="topbar-right">
-        <!-- Nút chuyển đổi giao diện Sáng / Tối (Light / Dark Theme) -->
-        <button type="button" class="btn-theme-toggle" id="btn-theme-toggle" onclick="toggleTheme()" aria-label="Chuyển chế độ giao diện Sáng / Tối" title="Chuyển chế độ giao diện Sáng / Tối">
-          <i class="fa-solid fa-moon icon-theme-dark" aria-hidden="true"></i>
-          <i class="fa-solid fa-sun icon-theme-light" aria-hidden="true"></i>
-        </button>
-
         <span id="cloud-status-badge" class="cloud-badge cloud-ready">
           <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
         </span>
 
-        <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="loadAppStateFromCloud()" title="Tải dữ liệu mới nhất từ Firebase">
-          <i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>
+        <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="openBackupManagerModal()" title="Quản lý và khôi phục các bản sao lưu">
+          <i class="fa-solid fa-cloud-arrow-down"></i> <span>Nhập dữ liệu</span>
         </button>
 
-        <button type="button" class="btn-cloud-sync btn-cloud-save" id="btn-cloud-save" onclick="saveAppStateToCloud()" title="Lưu dữ liệu hiện tại lên Cloud">
-          <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>
+        <button type="button" class="btn-cloud-sync btn-cloud-save" id="btn-cloud-save" onclick="saveAppStateToCloud()" title="Lưu dữ liệu hiện tại">
+          <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
 
         <span class="currency-tag"><i class="fa-solid fa-coins"></i> Đơn vị tính: Triệu VNĐ</span>
@@ -626,7 +655,7 @@
               </button>
             </div>
 
-            <div class="tc-two-columns-grid">
+            <div class="tc-two-columns-grid" id="tc-two-columns-grid">
               <div class="tc-column tc-col-debt">
                 <div class="tc-column-banner debt-banner-head"><i class="fa-solid fa-hand-holding-dollar"></i> DANH MỤC TRẢ NỢ ĐỊNH KỲ</div>
                 <div class="tc-cards-list" id="tc-debt-cards-container"></div>
@@ -634,6 +663,21 @@
               <div class="tc-column tc-col-invest">
                 <div class="tc-column-banner invest-banner-head"><i class="fa-solid fa-chart-pie"></i> DANH MỤC TÍCH LŨY & ĐẦU TƯ TĂNG TRƯỞNG</div>
                 <div class="tc-cards-list" id="tc-invest-cards-container"></div>
+              </div>
+            </div>
+
+            <!-- Trạng thái trống sạch sẽ khi cả 2 danh mục đều không có dữ liệu -->
+            <div id="tc-empty-state" class="tc-empty-state" style="display: none;">
+              <div class="tc-empty-icon"><i class="fa-solid fa-vault"></i></div>
+              <div class="tc-empty-title">Chưa có mục tiêu trả nợ định kỳ hoặc tích lũy đầu tư</div>
+              <div class="tc-empty-desc">Danh mục này hiện chưa có dữ liệu mục tiêu tài chính hợp lệ để hiển thị thẻ tính toán. Hãy thêm mục tiêu tại bảng thiết lập hoặc nhập dữ liệu đã sao lưu.</div>
+              <div class="tc-empty-actions">
+                <button type="button" class="btn-primary" onclick="switchTcSection(3)">
+                  <i class="fa-solid fa-plus"></i> Thêm mục tiêu tài chính
+                </button>
+                <button type="button" class="btn-secondary" onclick="openBackupManagerModal()">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> Nhập dữ liệu sao lưu
+                </button>
               </div>
             </div>
           </div>
@@ -1215,6 +1259,134 @@
 
     </section>
   </main>
+
+  <!-- ==================== MODAL QUẢN LÝ BẢN SAO LƯU & NHẬP DỮ LIỆU ==================== -->
+  <div id="backup-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title">
+    <div class="modal-card backup-modal-card">
+      <div class="modal-header">
+        <div class="modal-icon-badge"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="modal-title-group">
+          <h3 id="backup-modal-title">Nhập dữ liệu &amp; Quản lý sao lưu</h3>
+          <p>Hồ sơ: <strong id="backup-modal-user-name">Đang xác định...</strong> <code class="backup-slug-badge" id="backup-modal-user-slug">@guest</code></p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeBackupManagerModal()" aria-label="Đóng hộp thoại"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body backup-modal-body">
+        <!-- Thanh công cụ tìm kiếm và sắp xếp -->
+        <div class="backup-toolbar">
+          <div class="backup-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="backup-search-input" placeholder="Tìm bản sao lưu theo tên hoặc ngày..." oninput="filterAndSortBackups()">
+          </div>
+          <div class="backup-sort-wrap">
+            <label for="backup-sort-select"><i class="fa-solid fa-arrow-down-short-wide"></i></label>
+            <select id="backup-sort-select" onchange="filterAndSortBackups()">
+              <option value="newest">Mới nhất</option>
+              <option value="oldest">Cũ nhất</option>
+              <option value="name">Tên A-Z</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Trạng thái đang tải -->
+        <div id="backup-loading-state" class="backup-state-box" style="display: none;">
+          <i class="fa-solid fa-spinner fa-spin backup-spin-icon"></i>
+          <span>Đang tải danh sách bản sao lưu từ hệ thống...</span>
+        </div>
+
+        <!-- Trạng thái rỗng -->
+        <div id="backup-empty-state" class="backup-state-box" style="display: none;">
+          <i class="fa-solid fa-folder-open backup-empty-icon"></i>
+          <strong>Chưa có bản sao lưu nào</strong>
+          <p>Hồ sơ này chưa lưu bản sao lưu nào. Hãy bấm "Lưu" để tạo bản sao lưu đầu tiên!</p>
+          <button type="button" class="btn-primary btn-sm" onclick="saveAppStateToCloud(); closeBackupManagerModal();">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Lưu bản hiện tại ngay
+          </button>
+        </div>
+
+        <!-- Trạng thái lỗi mạng -->
+        <div id="backup-error-state" class="backup-state-box backup-error-box" style="display: none;">
+          <i class="fa-solid fa-circle-exclamation text-danger"></i>
+          <span id="backup-error-msg">Không thể tải danh sách sao lưu. Vui lòng kiểm tra kết nối mạng.</span>
+          <button type="button" class="btn-secondary btn-sm" onclick="openBackupManagerModal()">
+            <i class="fa-solid fa-rotate-right"></i> Thử lại
+          </button>
+        </div>
+
+        <!-- Danh sách các bản sao lưu -->
+        <div class="backup-list-container" id="backup-items-list" role="list">
+          <!-- Render động từ JS -->
+        </div>
+
+        <!-- Khung xem trước thông tin bản sao lưu được chọn -->
+        <div id="backup-preview-card" class="backup-preview-card" style="display: none;">
+          <div class="backup-preview-head">
+            <div class="backup-preview-title">
+              <i class="fa-solid fa-file-invoice-dollar text-primary"></i>
+              <strong id="preview-bk-name">Bản sao lưu #1</strong>
+            </div>
+            <span class="backup-preview-time" id="preview-bk-time">14:30 — 15/10/2026</span>
+          </div>
+          <div class="backup-preview-grid">
+            <div class="bk-meta-item">
+              <span class="bk-meta-lbl">Năm kế hoạch:</span>
+              <strong class="bk-meta-val" id="preview-bk-year">2026</strong>
+            </div>
+            <div class="bk-meta-item">
+              <span class="bk-meta-lbl">Tuổi hiện tại:</span>
+              <strong class="bk-meta-val" id="preview-bk-age">25</strong>
+            </div>
+            <div class="bk-meta-item">
+              <span class="bk-meta-lbl">Mục tiêu tài chính:</span>
+              <strong class="bk-meta-val" id="preview-bk-goals">0 mục tiêu</strong>
+            </div>
+            <div class="bk-meta-item">
+              <span class="bk-meta-lbl">Tổng thu dự kiến:</span>
+              <strong class="bk-meta-val text-success" id="preview-bk-income">0 tr/th</strong>
+            </div>
+          </div>
+          
+          <!-- Hộp thoại cảnh báo ghi đè khi khôi phục -->
+          <div id="backup-confirm-warning" class="backup-confirm-box" style="display: none;">
+            <div class="backup-warning-title">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>Cảnh báo ghi đè dữ liệu</span>
+            </div>
+            <p class="backup-warning-text">
+              Khôi phục bản <strong id="confirm-target-name">...</strong> sẽ thay thế toàn bộ dữ liệu hiện tại trên màn hình. Hệ thống sẽ tự động tạo một bản sao lưu an toàn cho trạng thái hiện tại trước khi khôi phục.
+            </p>
+            <div class="backup-confirm-actions">
+              <button type="button" class="btn-backup-confirm" id="btn-execute-restore" onclick="executeRestoreSelectedBackup()">
+                <i class="fa-solid fa-check"></i> Xác nhận khôi phục
+              </button>
+              <button type="button" class="btn-backup-cancel" onclick="cancelRestoreConfirm()">
+                Hủy bỏ
+              </button>
+            </div>
+          </div>
+
+          <div class="backup-preview-actions" id="backup-preview-actions">
+            <button type="button" class="btn-primary" onclick="showRestoreConfirm()">
+              <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục bản này
+            </button>
+            <button type="button" class="btn-danger-outline" onclick="deleteSelectedBackup()">
+              <i class="fa-solid fa-trash-can"></i> Xóa bản này
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer backup-modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeBackupManagerModal()">
+          Đóng
+        </button>
+        <button type="button" class="btn-modal-submit" onclick="saveAppStateToCloud();">
+          <i class="fa-solid fa-plus"></i> <span>Tạo bản lưu mới</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==================== MODAL NHẬN DIỆN NGƯỜI DÙNG ==================== -->
   <div id="user-modal-overlay" class="modal-overlay">

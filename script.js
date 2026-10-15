@@ -40,6 +40,23 @@ window.applyTheme = function(theme, shouldRefreshCharts = true) {
     themeBtn.setAttribute('aria-label', isDark ? 'Chuyển sang chế độ Sáng' : 'Chuyển sang chế độ Tối');
   }
 
+  // Đồng bộ trạng thái Day–night sky switch (Lucian #021)
+  const u021Switch = document.getElementById('u021-theme-switch');
+  const u021Label = document.getElementById('u021-theme-label');
+  if (u021Switch) {
+    u021Switch.setAttribute('aria-checked', isDark ? 'true' : 'false');
+    u021Switch.setAttribute('title', isDark ? 'Đang bật Giao diện Tối (Bấm để chuyển sang Sáng)' : 'Đang bật Giao diện Sáng (Bấm để chuyển sang Tối)');
+    u021Switch.setAttribute('aria-label', isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối');
+    if (isDark) {
+      u021Switch.classList.add('u021-is-dark');
+    } else {
+      u021Switch.classList.remove('u021-is-dark');
+    }
+  }
+  if (u021Label) {
+    u021Label.textContent = isDark ? 'Giao diện tối' : 'Giao diện sáng';
+  }
+
   if (typeof Chart !== 'undefined') {
     const tokens = window.getChartThemeTokens();
     Chart.defaults.color = tokens.textMuted;
@@ -51,13 +68,14 @@ window.applyTheme = function(theme, shouldRefreshCharts = true) {
   }
 };
 
-window.toggleTheme = function() {
+window.toggleTheme = function(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
   const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
   try {
     localStorage.setItem('FIN_APP_THEME', newTheme);
-  } catch (e) {}
+  } catch (err) {}
 
   window.applyTheme(newTheme, true);
 };
@@ -3149,12 +3167,59 @@ function syncDebtGoalToOverallData() {
 function syncGoalsToCards() {
   const dWrap = document.getElementById('tc-debt-cards-container');
   const iWrap = document.getElementById('tc-invest-cards-container');
+  const colDebt = document.querySelector('.tc-col-debt');
+  const colInvest = document.querySelector('.tc-col-invest');
+  const grid = document.getElementById('tc-two-columns-grid') || document.querySelector('.tc-two-columns-grid');
+  const emptyState = document.getElementById('tc-empty-state');
 
-  const debts = AppState.tcGoals.filter(g => g.type === 'debt');
-  const invests = AppState.tcGoals.filter(g => g.type === 'invest');
+  // Kiểm tra tính hợp lệ của mục tiêu (phải có tên hoặc có giá trị/khoản tích lũy)
+  const isValidGoal = (g) => g && typeof g === 'object' && ((g.name && g.name.trim() !== '') || Number(g.val) > 0 || Number(g.monthly) > 0);
 
-  if (dWrap) dWrap.innerHTML = debts.map((g, i) => createCardHtmlDebt(g, i + 1)).join('');
-  if (iWrap) iWrap.innerHTML = invests.map((g, i) => createCardHtmlInvest(g, i + 1)).join('');
+  const allGoals = Array.isArray(AppState.tcGoals) ? AppState.tcGoals : [];
+  const debts = allGoals.filter(g => g.type === 'debt' && isValidGoal(g));
+  const invests = allGoals.filter(g => g.type === 'invest' && isValidGoal(g));
+
+  const hasDebts = debts.length > 0;
+  const hasInvests = invests.length > 0;
+
+  // 1. Tự động ẩn/hiện cột Trả nợ định kỳ
+  if (colDebt) {
+    if (hasDebts) {
+      colDebt.style.display = '';
+      if (dWrap) dWrap.innerHTML = debts.map((g, i) => createCardHtmlDebt(g, i + 1)).join('');
+    } else {
+      colDebt.style.display = 'none';
+      if (dWrap) dWrap.innerHTML = '';
+    }
+  }
+
+  // 2. Tự động ẩn/hiện cột Tích lũy & Đầu tư
+  if (colInvest) {
+    if (hasInvests) {
+      colInvest.style.display = '';
+      if (iWrap) iWrap.innerHTML = invests.map((g, i) => createCardHtmlInvest(g, i + 1)).join('');
+    } else {
+      colInvest.style.display = 'none';
+      if (iWrap) iWrap.innerHTML = '';
+    }
+  }
+
+  // 3. Tự động co giãn bố cục: nếu 1 cột ẩn thì cột còn lại chiếm trọn chiều rộng (1fr); nếu cả 2 trống thì hiện empty state
+  if (grid) {
+    if (hasDebts && hasInvests) {
+      grid.style.display = 'grid';
+      grid.classList.remove('tc-single-col');
+      if (emptyState) emptyState.style.display = 'none';
+    } else if (hasDebts || hasInvests) {
+      grid.style.display = 'grid';
+      grid.classList.add('tc-single-col');
+      if (emptyState) emptyState.style.display = 'none';
+    } else {
+      // Cả 2 danh mục đều không có dữ liệu: ẩn grid và hiển thị thông báo trạng thái trống
+      grid.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'flex';
+    }
+  }
 }
 
 function createCardHtmlDebt(g, num) {
@@ -3594,7 +3659,7 @@ function showToast(message, type = 'success') {
  */
 window.saveAppStateToCloud = async function() {
   if (!window.CloudDB) {
-    alert("Dịch vụ Firebase chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
+    alert("Dịch vụ lưu trữ chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!");
     return;
   }
 
@@ -3609,19 +3674,29 @@ window.saveAppStateToCloud = async function() {
     btnSave.disabled = true;
     btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang lưu...</span>`;
   }
-  updateCloudStatus('loading', 'Đang lưu lên Cloud...');
+  updateCloudStatus('loading', 'Đang lưu dữ liệu...');
 
   const userDocId = UserSession.currentUser.docId;
   const result = await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
 
   if (btnSave) {
     btnSave.disabled = false;
-    btnSave.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu Cloud</span>`;
+    btnSave.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>`;
   }
 
   if (result.success) {
     updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
-    showToast(`Đã lưu thành công dữ liệu của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
+    const bkName = result.newBackup?.name || 'Bản sao lưu mới';
+    showToast(`Đã lưu thành công [${bkName}] của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
+    
+    // Nếu modal Quản lý sao lưu đang mở, làm mới danh sách ngay lập tức
+    const backupModal = document.getElementById('backup-modal-overlay');
+    if (backupModal && backupModal.classList.contains('active')) {
+      if (Array.isArray(result.backups)) {
+        currentLoadedBackups = result.backups;
+        window.filterAndSortBackups();
+      }
+    }
   } else {
     updateCloudStatus('error', 'Lỗi khi lưu!');
     showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
@@ -3630,23 +3705,31 @@ window.saveAppStateToCloud = async function() {
 
 /**
  * ĐỌC DỮ LIỆU: Nạp dữ liệu từ Document ID của người dùng hiện tại
+ * Khi người dùng bấm nút: Mở modal Quản lý bản sao lưu (Nhập dữ liệu)
+ * Khi khởi động trang: Tự động nạp bản mới nhất trong nền
  */
 window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   if (!window.CloudDB || !UserSession.currentUser) return;
 
+  // Người dùng chủ động bấm "Nhập dữ liệu" -> Mở hộp thoại chọn bản sao lưu
+  if (!isInitialLoad) {
+    window.openBackupManagerModal();
+    return;
+  }
+
   const btnLoad = document.getElementById('btn-cloud-load');
   if (btnLoad) {
     btnLoad.disabled = true;
-    btnLoad.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang tải...</span>`;
+    btnLoad.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang nạp...</span>`;
   }
-  updateCloudStatus('loading', 'Đang tải từ Cloud...');
+  updateCloudStatus('loading', 'Đang nạp dữ liệu...');
 
   const userDocId = UserSession.currentUser.docId;
   const result = await window.CloudDB.loadData(userDocId);
 
   if (btnLoad) {
     btnLoad.disabled = false;
-    btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Tải từ Cloud</span>`;
+    btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Nhập dữ liệu</span>`;
   }
 
   if (result.success && result.data) {
@@ -3679,20 +3762,315 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     recalculateAll();
 
     updateCloudStatus('ready', 'Đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
-    if (!isInitialLoad) {
-      showToast(`Đã cập nhật dữ liệu của [${UserSession.currentUser.rawName}]!`, "success");
-    }
   } else if (result.notFound) {
-    updateCloudStatus('ready', 'Hồ sơ mới tạo');
-    if (!isInitialLoad) {
-      showToast("Hồ sơ này chưa có bản lưu trên Cloud. Hãy bấm 'Lưu Cloud' để tạo!", "success");
-    }
+    updateCloudStatus('ready', 'Hồ sơ mới');
   } else {
     updateCloudStatus('error', 'Lỗi tải dữ liệu');
-    if (!isInitialLoad) {
-      showToast("Không thể nạp dữ liệu từ Cloud!", "error");
+  }
+};
+
+// ==================== QUẢN LÝ CÁC BẢN SAO LƯU & NHẬP DỮ LIỆU ====================
+
+function formatBackupTimestamp(isoString) {
+  if (!isoString) return 'Không có thời gian';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return 'Thời gian không xác định';
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${hours}:${minutes} — ${day}/${month}/${year}`;
+}
+
+let currentLoadedBackups = [];
+let selectedBackupId = null;
+
+window.openBackupManagerModal = async function() {
+  if (!UserSession.currentUser) {
+    showToast("Vui lòng xác nhận danh tính người dùng trước!", "error");
+    openUserModal(false);
+    return;
+  }
+
+  const modal = document.getElementById('backup-modal-overlay');
+  const nameEl = document.getElementById('backup-modal-user-name');
+  const slugEl = document.getElementById('backup-modal-user-slug');
+  const loadingEl = document.getElementById('backup-loading-state');
+  const emptyEl = document.getElementById('backup-empty-state');
+  const errorEl = document.getElementById('backup-error-state');
+  const listEl = document.getElementById('backup-items-list');
+  const previewEl = document.getElementById('backup-preview-card');
+  const searchInput = document.getElementById('backup-search-input');
+
+  if (!modal) return;
+  modal.classList.add('active');
+
+  if (nameEl) nameEl.textContent = UserSession.currentUser.rawName || 'Người dùng';
+  if (slugEl) slugEl.textContent = '@' + (UserSession.currentUser.docId || 'guest');
+  if (searchInput) searchInput.value = '';
+  if (previewEl) previewEl.style.display = 'none';
+  window.cancelRestoreConfirm();
+
+  if (loadingEl) loadingEl.style.display = 'flex';
+  if (emptyEl) emptyEl.style.display = 'none';
+  if (errorEl) errorEl.style.display = 'none';
+  if (listEl) listEl.innerHTML = '';
+
+  try {
+    const userDocId = UserSession.currentUser.docId;
+    const res = await window.CloudDB.getBackups(userDocId);
+    if (loadingEl) loadingEl.style.display = 'none';
+
+    if (res.success && Array.isArray(res.backups)) {
+      currentLoadedBackups = res.backups;
+      window.filterAndSortBackups();
+    } else {
+      if (errorEl) {
+        errorEl.style.display = 'flex';
+        const msg = document.getElementById('backup-error-msg');
+        if (msg) msg.textContent = "Không thể tải danh sách sao lưu. Vui lòng thử lại.";
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi khi mở modal backup:", err);
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'flex';
+  }
+};
+
+window.closeBackupManagerModal = function() {
+  const modal = document.getElementById('backup-modal-overlay');
+  if (modal) modal.classList.remove('active');
+  selectedBackupId = null;
+  window.cancelRestoreConfirm();
+};
+
+window.filterAndSortBackups = function() {
+  const searchInput = document.getElementById('backup-search-input');
+  const sortSelect = document.getElementById('backup-sort-select');
+  const query = (searchInput?.value || '').trim().toLowerCase();
+  const sortMode = sortSelect?.value || 'newest';
+
+  let filtered = [...currentLoadedBackups];
+
+  if (query) {
+    filtered = filtered.filter(b => {
+      const name = (b.name || '').toLowerCase();
+      const time = formatBackupTimestamp(b.timestamp).toLowerCase();
+      const yr = String(b.summary?.year || '');
+      return name.includes(query) || time.includes(query) || yr.includes(query);
+    });
+  }
+
+  if (sortMode === 'newest') {
+    filtered.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+  } else if (sortMode === 'oldest') {
+    filtered.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+  } else if (sortMode === 'name') {
+    filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }
+
+  window.renderBackupList(filtered);
+};
+
+window.renderBackupList = function(backups) {
+  const listEl = document.getElementById('backup-items-list');
+  const emptyEl = document.getElementById('backup-empty-state');
+  const previewEl = document.getElementById('backup-preview-card');
+
+  if (!listEl) return;
+
+  if (!backups || backups.length === 0) {
+    listEl.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'flex';
+    if (previewEl) previewEl.style.display = 'none';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = backups.map(b => {
+    const isSelected = (b.id === selectedBackupId);
+    const timeStr = formatBackupTimestamp(b.timestamp);
+    const yr = b.summary?.year || AppState.currentYear || 2026;
+    const goalsCount = b.summary?.goalsCount ?? (b.data?.tcGoals?.length || 0);
+
+    return `
+      <div class="backup-item ${isSelected ? 'active-preview' : ''}" onclick="selectBackupForPreview('${b.id}')" role="button" tabindex="0">
+        <div class="backup-item-left">
+          <div class="backup-item-icon">
+            <i class="fa-solid fa-database"></i>
+          </div>
+          <div class="backup-item-info">
+            <div class="backup-item-name">${escapeHtml(b.name || 'Bản sao lưu')}</div>
+            <div class="backup-item-time"><i class="fa-regular fa-clock"></i> ${timeStr}</div>
+            <div class="backup-item-pills">
+              <span class="backup-pill">Năm: ${yr}</span>
+              <span class="backup-pill">${goalsCount} mục tiêu</span>
+            </div>
+          </div>
+        </div>
+        <div class="backup-item-actions" onclick="event.stopPropagation()">
+          <button type="button" class="btn-bk-action btn-bk-select" onclick="selectBackupForPreview('${b.id}')" title="Xem chi tiết & Khôi phục">
+            <i class="fa-solid fa-arrow-right"></i> Chọn
+          </button>
+          <button type="button" class="btn-bk-action btn-bk-del" onclick="deleteBackupItem('${b.id}')" title="Xóa bản sao lưu này">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  if (!selectedBackupId || !backups.find(b => b.id === selectedBackupId)) {
+    if (backups.length > 0) {
+      window.selectBackupForPreview(backups[0].id);
     }
   }
+};
+
+window.selectBackupForPreview = function(backupId) {
+  selectedBackupId = backupId;
+  const backup = currentLoadedBackups.find(b => b.id === backupId);
+  const previewEl = document.getElementById('backup-preview-card');
+  if (!previewEl || !backup) return;
+
+  document.querySelectorAll('.backup-item').forEach(el => el.classList.remove('active-preview'));
+  const activeItem = document.querySelector(`.backup-item[onclick*="${backupId}"]`);
+  if (activeItem) activeItem.classList.add('active-preview');
+
+  const pName = document.getElementById('preview-bk-name');
+  const pTime = document.getElementById('preview-bk-time');
+  const pYear = document.getElementById('preview-bk-year');
+  const pAge = document.getElementById('preview-bk-age');
+  const pGoals = document.getElementById('preview-bk-goals');
+  const pIncome = document.getElementById('preview-bk-income');
+  const cTargetName = document.getElementById('confirm-target-name');
+
+  if (pName) pName.textContent = backup.name || 'Bản sao lưu';
+  if (pTime) pTime.textContent = formatBackupTimestamp(backup.timestamp);
+  if (pYear) pYear.textContent = backup.summary?.year || backup.data?.currentYear || 2026;
+  if (pAge) pAge.textContent = backup.summary?.age || backup.data?.currentAge || 25;
+  if (pGoals) pGoals.textContent = `${backup.summary?.goalsCount ?? (backup.data?.tcGoals?.length || 0)} mục tiêu`;
+  
+  const inc = Number(backup.summary?.planIncomeTotal || 0);
+  if (pIncome) pIncome.textContent = `${inc.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr/th`;
+  if (cTargetName) cTargetName.textContent = `${backup.name} (${formatBackupTimestamp(backup.timestamp)})`;
+
+  previewEl.style.display = 'flex';
+  window.cancelRestoreConfirm();
+};
+
+window.showRestoreConfirm = function() {
+  const confirmBox = document.getElementById('backup-confirm-warning');
+  const actionsBox = document.getElementById('backup-preview-actions');
+  if (confirmBox) confirmBox.style.display = 'flex';
+  if (actionsBox) actionsBox.style.display = 'none';
+};
+
+window.cancelRestoreConfirm = function() {
+  const confirmBox = document.getElementById('backup-confirm-warning');
+  const actionsBox = document.getElementById('backup-preview-actions');
+  if (confirmBox) confirmBox.style.display = 'none';
+  if (actionsBox) actionsBox.style.display = 'flex';
+};
+
+window.executeRestoreSelectedBackup = async function() {
+  if (!selectedBackupId) return;
+  const backup = currentLoadedBackups.find(b => b.id === selectedBackupId);
+  if (!backup || !backup.data) {
+    showToast("Không tìm thấy nội dung bản sao lưu!", "error");
+    return;
+  }
+
+  // Tự động tạo bản lưu an toàn trước khi khôi phục
+  try {
+    const safetySnapshot = JSON.parse(JSON.stringify(AppState));
+    const safetyEntry = {
+      id: "bk_safety_" + Date.now(),
+      name: "Tự động sao lưu trước khôi phục",
+      timestamp: new Date().toISOString(),
+      summary: {
+        year: safetySnapshot.currentYear || 2026,
+        age: safetySnapshot.currentAge || 25,
+        goalsCount: (safetySnapshot.tcGoals || []).length
+      },
+      data: safetySnapshot
+    };
+    const userDocId = UserSession.currentUser.docId;
+    const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + userDocId) || "[]");
+    localBk.unshift(safetyEntry);
+    localStorage.setItem("FIN_APP_BACKUPS_" + userDocId, JSON.stringify(localBk.slice(0, 25)));
+  } catch (e) {
+    console.warn("Không thể tạo safety backup:", e);
+  }
+
+  // Khôi phục dữ liệu vào AppState
+  const restoreData = backup.data;
+  Object.keys(restoreData).forEach(key => {
+    if (!key.startsWith('_')) {
+      AppState[key] = restoreData[key];
+    }
+  });
+
+  // Đồng bộ lại UI Năm và Tuổi
+  const yEl = document.getElementById('input-year');
+  const aEl = document.getElementById('input-age');
+  if (yEl) yEl.innerText = AppState.currentYear;
+  if (aEl) aEl.innerText = AppState.currentAge;
+  document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+  // Vẽ lại toàn bộ các bảng và biểu đồ
+  renderSetupTables();
+  renderPlanTables();
+  renderTcGoalsFormTable();
+  renderSkillsFamilyJob();
+  renderGoogleFormSurvey();
+  evaluateSurveys();
+  renderCareerTables();
+  renderMonthView(AppState.currentMonth);
+  syncGoalsToCards();
+  recalculateAll();
+
+  // Lưu bản snapshot vừa khôi phục thành bản ghi chính thức
+  try {
+    const userDocId = UserSession.currentUser.docId;
+    await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
+  } catch (e) {}
+
+  window.closeBackupManagerModal();
+  showToast(`Đã khôi phục thành công [${backup.name}] (${formatBackupTimestamp(backup.timestamp)})!`, "success");
+};
+
+window.deleteSelectedBackup = async function() {
+  if (!selectedBackupId) return;
+  const backup = currentLoadedBackups.find(b => b.id === selectedBackupId);
+  if (!backup) return;
+
+  const confirmed = confirm(`Bạn có chắc chắn muốn xóa bản sao lưu [${backup.name}] (${formatBackupTimestamp(backup.timestamp)}) không?`);
+  if (!confirmed) return;
+
+  try {
+    const userDocId = UserSession.currentUser.docId;
+    const res = await window.CloudDB.deleteBackup(userDocId, selectedBackupId);
+    if (res.success) {
+      showToast(`Đã xóa bản sao lưu [${backup.name}]!`, "success");
+      currentLoadedBackups = res.backups;
+      selectedBackupId = null;
+      window.filterAndSortBackups();
+    } else {
+      showToast("Không thể xóa bản sao lưu!", "error");
+    }
+  } catch (e) {
+    console.error("Lỗi khi xóa bản sao lưu:", e);
+    showToast("Lỗi khi xóa bản sao lưu!", "error");
+  }
+};
+
+window.deleteBackupItem = async function(backupId) {
+  selectedBackupId = backupId;
+  await window.deleteSelectedBackup();
 };
 
 // ==================== ĐIỀU KHIỂN MODAL NHẬN DIỆN NGƯỜI DÙNG ====================
@@ -3976,6 +4354,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Lắng nghe sự kiện bàn phím cho Day–night sky switch (Prompt #021)
+  const u021Switch = document.getElementById('u021-theme-switch');
+  if (u021Switch) {
+    u021Switch.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        window.toggleTheme(e);
+      }
+    });
+  }
+
+  // Đóng modal backup khi click bên ngoài vùng hộp thoại hoặc nhấn phím Escape
+  const backupOverlay = document.getElementById('backup-modal-overlay');
+  if (backupOverlay) {
+    backupOverlay.addEventListener('click', (e) => {
+      if (e.target === backupOverlay) {
+        window.closeBackupManagerModal();
+      }
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const backupModal = document.getElementById('backup-modal-overlay');
+      if (backupModal && backupModal.classList.contains('active')) {
+        window.closeBackupManagerModal();
+      }
+    }
+  });
 });
 
 // Khi Firebase sẵn sàng

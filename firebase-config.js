@@ -50,6 +50,7 @@ window.CloudDB = {
 
   /**
    * Lưu toàn bộ trạng thái AppState lên Cloud Firestore theo Document ID chỉ định
+   * Đồng thời lưu bản sao lưu tuần tự (Backup 1, Backup 2,...) kèm timestamp thực tế
    * @param {Object} data - Dữ liệu AppState cần lưu
    * @param {string} docId - Định danh tài liệu Firestore của người dùng
    * @param {Object} userMeta - Thông tin nhận diện người dùng đính kèm
@@ -60,21 +61,175 @@ window.CloudDB = {
       const docRef = doc(db, COLLECTION_NAME, targetDocId);
       const cleanData = JSON.parse(JSON.stringify(data));
       
-      // Đính kèm metadata nhận diện người dùng và thời gian cập nhật
-      cleanData._lastUpdated = new Date().toISOString();
+      // Đọc bản ghi hiện tại để bảo toàn và nối tiếp danh sách _backups
+      let existingBackups = [];
+      try {
+        const currentSnap = await getDoc(docRef);
+        if (currentSnap.exists()) {
+          const currentDoc = currentSnap.data();
+          if (Array.isArray(currentDoc._backups)) {
+            existingBackups = currentDoc._backups;
+          } else if (currentDoc._lastUpdated) {
+            existingBackups = [{
+              id: "bk_initial_" + targetDocId,
+              name: "Backup 1",
+              timestamp: currentDoc._lastUpdated,
+              summary: {
+                year: currentDoc.currentYear || new Date().getFullYear(),
+                age: currentDoc.currentAge || 25,
+                goalsCount: (currentDoc.tcGoals || []).length,
+                planIncomeTotal: (currentDoc.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
+                planExpenseTotal: (currentDoc.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
+              },
+              data: (() => {
+                const d = JSON.parse(JSON.stringify(currentDoc));
+                delete d._backups;
+                delete d._userMeta;
+                return d;
+              })()
+            }];
+          }
+        }
+      } catch (e) {
+        console.warn("Không thể đọc snapshot hiện tại từ Cloud, đọc từ bộ nhớ cục bộ:", e);
+      }
+
+      // Fallback từ localStorage nếu Cloud chưa có
+      if (existingBackups.length === 0) {
+        try {
+          const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+          if (Array.isArray(localBk) && localBk.length > 0) existingBackups = localBk;
+        } catch (e) {}
+      }
+
+      // Tạo bản sao lưu mới tuần tự
+      const nextIndex = existingBackups.length + 1;
+      const nowIso = new Date().toISOString();
+
+      const dataSnapshot = JSON.parse(JSON.stringify(data));
+      delete dataSnapshot._backups;
+      delete dataSnapshot._userMeta;
+      delete dataSnapshot._lastUpdated;
+
+      const newBackupEntry = {
+        id: `bk_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: `Backup ${nextIndex}`,
+        timestamp: nowIso,
+        summary: {
+          year: dataSnapshot.currentYear || new Date().getFullYear(),
+          age: dataSnapshot.currentAge || 25,
+          goalsCount: (dataSnapshot.tcGoals || []).length,
+          planIncomeTotal: (dataSnapshot.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
+          planExpenseTotal: (dataSnapshot.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
+        },
+        data: dataSnapshot
+      };
+
+      // Giữ tối đa 20 bản sao lưu gần nhất (mới nhất lên đầu)
+      const updatedBackups = [newBackupEntry, ...existingBackups.filter(b => b.id !== newBackupEntry.id)].slice(0, 20);
+
+      try {
+        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(updatedBackups));
+      } catch (e) {}
+
+      cleanData._backups = updatedBackups;
+      cleanData._lastUpdated = nowIso;
       if (userMeta) {
         cleanData._userMeta = {
           rawName: userMeta.rawName || "",
           normalizedName: userMeta.normalizedName || "",
           userDocId: targetDocId,
-          lastSavedAt: new Date().toISOString()
+          lastSavedAt: nowIso
         };
       }
 
       await setDoc(docRef, cleanData);
-      return { success: true, docId: targetDocId };
+      return { success: true, docId: targetDocId, newBackup: newBackupEntry, backups: updatedBackups };
     } catch (error) {
       console.error("Lỗi khi lưu lên Firestore:", error);
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Lấy danh sách các bản sao lưu của người dùng
+   * @param {string} docId - Định danh tài liệu người dùng
+   */
+  getBackups: async (docId) => {
+    const targetDocId = docId || LEGACY_DOC_ID;
+    try {
+      let backups = [];
+      const docRef = doc(db, COLLECTION_NAME, targetDocId);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data._backups) && data._backups.length > 0) {
+          backups = data._backups;
+        } else if (data._lastUpdated) {
+          backups = [{
+            id: "bk_initial_" + targetDocId,
+            name: "Backup 1",
+            timestamp: data._lastUpdated,
+            summary: {
+              year: data.currentYear || new Date().getFullYear(),
+              age: data.currentAge || 25,
+              goalsCount: (data.tcGoals || []).length,
+              planIncomeTotal: (data.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
+              planExpenseTotal: (data.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
+            },
+            data: (() => {
+              const d = JSON.parse(JSON.stringify(data));
+              delete d._backups;
+              delete d._userMeta;
+              return d;
+            })()
+          }];
+        }
+      }
+      if (backups.length === 0) {
+        try {
+          const local = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+          if (Array.isArray(local) && local.length > 0) backups = local;
+        } catch (e) {}
+      }
+      return { success: true, backups };
+    } catch (error) {
+      console.error("Lỗi khi đọc danh sách sao lưu từ Cloud:", error);
+      try {
+        const local = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+        if (Array.isArray(local) && local.length > 0) {
+          return { success: true, backups: local, fromCache: true };
+        }
+      } catch (e) {}
+      return { success: false, error };
+    }
+  },
+
+  /**
+   * Xóa một bản sao lưu cụ thể
+   * @param {string} docId - Định danh tài liệu người dùng
+   * @param {string} backupId - ID của bản sao lưu cần xóa
+   */
+  deleteBackup: async (docId, backupId) => {
+    try {
+      const targetDocId = docId || LEGACY_DOC_ID;
+      const docRef = doc(db, COLLECTION_NAME, targetDocId);
+      const snap = await getDoc(docRef);
+      if (!snap.exists()) return { success: false, notFound: true };
+
+      const docData = snap.data();
+      let backups = Array.isArray(docData._backups) ? docData._backups : [];
+      backups = backups.filter(b => b.id !== backupId);
+      docData._backups = backups;
+
+      try {
+        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(backups));
+      } catch (e) {}
+
+      await setDoc(docRef, docData);
+      return { success: true, backups };
+    } catch (error) {
+      console.error("Lỗi khi xóa bản sao lưu:", error);
       return { success: false, error };
     }
   },
