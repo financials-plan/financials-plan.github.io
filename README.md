@@ -63,7 +63,8 @@ Toàn bộ cài đặt sâu của Firebase đã được đóng gói trong thư 
      firebase use <project-id>
      firebase deploy --only firestore
      ```
-   * *(Xem hướng dẫn cài đặt chi tiết từng bước kèm giải thích đầy đủ trong tài liệu LaTeX [`./firebase/FIRESTORE_SETUP_GUIDE.tex`](./firebase/FIRESTORE_SETUP_GUIDE.tex) và [`./firebase/FIRESTORE_SETUP_CHECKLIST.md`](./firebase/FIRESTORE_SETUP_CHECKLIST.md)).*
+   * *(Xem hướng dẫn cài đặt chi tiết từng bước kèm giải thích đầy đủ trong guideline dưới đây: * *
+      [`./firebase/FIRESTORE_SETUP_CHECKLIST.md`](./firebase/FIRESTORE_SETUP_CHECKLIST.md))
 
 #### B. Chạy ứng dụng trên máy cục bộ (Localhost) hoặc GitHub Pages
 Do ứng dụng nạp Firebase SDK theo chuẩn ES Modules (`<script type="module" src="./firebase/firestore-service.js">`), cần chạy qua giao thức `http://` hoặc `https://` để trình duyệt không chặn CORS:
