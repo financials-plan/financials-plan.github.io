@@ -19,22 +19,65 @@ Hệ thống được xây dựng nhằm giải quyết bài toán: **Lượng h
 7. **Theo dõi thu chi 12 tháng (`tab-month`):** Nhật ký giao dịch thực tế theo từng tháng, đối soát phương sai ngân sách và theo dõi chi phí nâng cao năng lực bản thân.
 8. **Khảo sát đánh giá bản thân (`tab-khaosat`):** Hệ thống 21 câu hỏi định lượng chấm điểm khả năng chịu rủi ro và bối cảnh tài chính gia đình.
 
-### 1.3. Công nghệ sử dụng
+### 1.3. Công nghệ sử dụng & Cấu trúc thư mục
 * **Frontend:** HTML5 ngữ nghĩa, CSS3 Custom Properties (Design Tokens chuẩn WCAG AA, hỗ trợ Light & Dark Mode), Vanilla JavaScript (ES6+).
 * **Trực quan hóa dữ liệu:** Chart.js (CDN).
 * **Biểu tượng:** FontAwesome 6 (CDN).
-* **Đồng bộ đám mây:** Firebase Cloud Firestore (REST API / SDK).
+* **Đồng bộ đám mây & Sao lưu phiên bản:** Google Cloud Firestore (Firebase Modular Web SDK v10.12.0 qua ES Modules).
 * **Kiến trúc dữ liệu:** Mô hình luồng dữ liệu một chiều phản ứng (Reactive One-Way Data Flow) xoay quanh trạng thái trung tâm `AppState`.
 
+#### Cấu trúc thư mục dự án
+```text
+financials-plan.github.io-main/
+├── index.html                           # Giao diện chính (ở ngoài cùng)
+├── style.css                            # Toàn bộ CSS giao diện Light/Dark & Responsive (ở ngoài cùng)
+├── script.js                            # Logic nghiệp vụ & thuật toán tài chính (ở ngoài cùng)
+├── firebase-config.js                   # File cấu hình duy nhất cho phép thay đổi (firebaseConfig, firestoreSettings)
+├── README.md                            # Tài liệu tổng quan & mô hình thuật toán
+└── firebase/                            # Thư mục riêng chứa toàn bộ lõi cài đặt Firebase
+    ├── firestore-service.js             # Mô-đun kết nối Firebase SDK v10.12.0 & định nghĩa window.CloudDB
+    ├── firestore.rules                  # Quy tắc bảo mật Cloud Firestore (Rules v2)
+    ├── firestore.indexes.json           # Cấu hình miễn trừ chỉ mục (fieldOverrides)
+    ├── firebase.json                    # Cấu hình Firebase CLI
+    ├── .firebaserc                      # Khai báo Project ID mặc định (financials-plan)
+    ├── FIRESTORE_SETUP_GUIDE.tex        # Tài liệu LaTeX hướng dẫn cài đặt Firebase chi tiết từng bước
+    └── FIRESTORE_SETUP_CHECKLIST.md     # Bảng kiểm tra nhanh quy trình cài đặt
+```
+
 ### 1.4. Hướng dẫn cài đặt & Chạy ứng dụng
-Dự án được xây dựng dưới dạng ứng dụng web tĩnh thuần túy (Static Web Application), không yêu cầu quy trình biên dịch hay cài đặt package phức tạp:
-1. **Cách 1 (Mở trực tiếp):** Nhấp đúp chuột vào file [index.html](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/index.html) hoặc mở bằng bất kỳ trình duyệt web hiện đại nào (Chrome, Edge, Firefox, Safari).
-2. **Cách 2 (Local Server):** Dùng VS Code Live Server hoặc chạy lệnh thông qua terminal:
+
+#### A. Cấu hình kết nối Firebase Cloud Firestore (Khi cài đặt Project mới)
+Toàn bộ cài đặt sâu của Firebase đã được đóng gói trong thư mục [`./firebase/`](./firebase/). Khi muốn thay đổi sang dự án Firebase của riêng bạn, bạn **chỉ cần chỉnh sửa file [`firebase-config.js`](./firebase-config.js)** ở ngoài cùng:
+
+1. **Tạo Project & Firestore Database:**
+   * Truy cập [Firebase Console](https://console.firebase.google.com/), tạo project mới và đăng ký một **Web App (`</>`)** để lấy khối thông số `firebaseConfig`.
+   * Vào mục **Build → Firestore Database → Create database**, giữ ID mặc định là `(default)`, chọn **Native Mode**, chọn vị trí máy chủ (`asia-southeast1`) và nhấn **Create**.
+2. **Cập nhật thông số vào [`firebase-config.js`](./firebase-config.js):**
+   * Mở file [`firebase-config.js`](./firebase-config.js) ở thư mục gốc và thay thế các trường trong `firebaseConfig` (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`, `measurementId`).
+3. **Cài đặt Quy tắc bảo mật (`firestore.rules`) & Miễn trừ chỉ mục (`firestore.indexes.json`):**
+   * **Cách 1 (Trực tiếp trên Firebase Console):** Mở **Firestore Database → Rules**, dán nội dung file [`./firebase/firestore.rules`](./firebase/firestore.rules) và nhấn **Publish**. Tại tab **Indexes → Single-field**, thêm miễn trừ (Exemption) tắt lập chỉ mục cho 2 trường `_backups` và `monthlyDetails` thuộc collection `financial_data`.
+   * **Cách 2 (Dùng Firebase CLI):**
+     ```bash
+     cd firebase
+     firebase login
+     firebase use <project-id>
+     firebase deploy --only firestore
+     ```
+   * *(Xem hướng dẫn cài đặt chi tiết từng bước kèm giải thích đầy đủ trong tài liệu LaTeX [`./firebase/FIRESTORE_SETUP_GUIDE.tex`](./firebase/FIRESTORE_SETUP_GUIDE.tex) và [`./firebase/FIRESTORE_SETUP_CHECKLIST.md`](./firebase/FIRESTORE_SETUP_CHECKLIST.md)).*
+
+#### B. Chạy ứng dụng trên máy cục bộ (Localhost) hoặc GitHub Pages
+Do ứng dụng nạp Firebase SDK theo chuẩn ES Modules (`<script type="module" src="./firebase/firestore-service.js">`), cần chạy qua giao thức `http://` hoặc `https://` để trình duyệt không chặn CORS:
+
+1. **Cách 1 (VS Code Live Server — Khuyên dùng):** Nhấp chuột phải vào [`index.html`](./index.html) → chọn **Open with Live Server**.
+2. **Cách 2 (Python / Node.js Local Server):**
    ```bash
-   # Nếu có Python 3:
+   # Dùng Python 3:
    python -m http.server 8000
+   # Hoặc dùng Node.js:
+   npx serve .
    # Truy cập: http://localhost:8000
    ```
+3. **Cách 3 (GitHub Pages):** Đẩy toàn bộ mã nguồn lên nhánh `main`, vào **Settings → Pages**, chọn **Deploy from a branch (`main` / `root`)** và nhấn **Save**.
 
 ---
 

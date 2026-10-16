@@ -420,7 +420,7 @@ window.switchUserProfile = function(docId) {
   closeAccountMenu();
 
   if (window.CloudDB) {
-    window.loadAppStateFromCloud(false);
+    window.loadAppStateFromCloud(true);
   }
   showToast(`Đã chuyển sang hồ sơ [${target.rawName}]!`, "success");
 };
@@ -4462,7 +4462,7 @@ function applyUserProfile(rawName, normalizedName, docId, loadExistingData = fal
 
   // Nạp dữ liệu từ Cloud tương ứng với hồ sơ
   if (window.CloudDB) {
-    window.loadAppStateFromCloud(false);
+    window.loadAppStateFromCloud(true);
   }
 }
 

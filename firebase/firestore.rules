@@ -1,0 +1,83 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================================
+    // HELPER FUNCTIONS: Kiểm tra định danh tài liệu & cấu trúc dữ liệu hợp lệ
+    // =========================================================================
+
+    // Kiểm tra Document ID tuân thủ chuẩn định danh của ứng dụng:
+    // - Hồ sơ người dùng chuẩn hóa: user_<slug> (chỉ gồm chữ thường a-z, số 0-9, dấu gạch dưới _)
+    // - Bản ghi kế thừa (legacy): main_financial_record
+    function isValidDocId(docId) {
+      return docId == 'main_financial_record'
+          || docId.matches('^user_[a-z0-9_]{1,64}$');
+    }
+
+    // Kiểm tra tính hợp lệ của payload khi tạo mới hoặc cập nhật toàn bộ (setDoc)
+    function isValidFinancialPayload(data, docId) {
+      return data.keys().hasAll(['currentYear', 'currentAge', '_lastUpdated', '_userMeta'])
+          && data.currentYear is number
+          && data.currentYear >= 1900
+          && data.currentYear <= 2100
+          && data.currentAge is number
+          && data.currentAge >= 1
+          && data.currentAge <= 120
+          && data._lastUpdated is string
+          && data._lastUpdated.size() >= 10
+          && data._lastUpdated.size() <= 40
+          && data._userMeta is map
+          && data._userMeta.keys().hasAll(['rawName', 'normalizedName', 'userDocId', 'lastSavedAt'])
+          && data._userMeta.userDocId == docId
+          && (!('tcGoals' in data) || data.tcGoals is list)
+          && (!('planIncome' in data) || data.planIncome is list)
+          && (!('planExpense' in data) || data.planExpense is list)
+          && (!('investProducts' in data) || data.investProducts is list)
+          && (!('monthlyDetails' in data) || data.monthlyDetails is map)
+          && (!('surveyP1Choices' in data) || data.surveyP1Choices is map)
+          && (!('surveyP2Choices' in data) || data.surveyP2Choices is map)
+          && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 20));
+    }
+
+    // Kiểm tra thao tác cập nhật một phần (updateDoc khi xóa 1 bản sao lưu trong _backups)
+    function isValidBackupUpdate(data, prevData) {
+      let affected = data.diff(prevData).affectedKeys();
+      return affected.hasOnly(['_backups', '_lastUpdated'])
+          && data._backups is list
+          && data._backups.size() <= 20
+          && data._lastUpdated is string;
+    }
+
+    // =========================================================================
+    // COLLECTION CHÍNH: financial_data/{docId}
+    // =========================================================================
+    match /financial_data/{docId} {
+
+      // Cho phép đọc hồ sơ khi biết đúng Document ID hợp lệ
+      allow get, list: if isValidDocId(docId);
+
+      // Cho phép tạo mới khi Document ID hợp lệ và cấu trúc dữ liệu đạt chuẩn
+      allow create: if isValidDocId(docId)
+                    && isValidFinancialPayload(request.resource.data, docId);
+
+      // Cho phép cập nhật khi:
+      // 1. Lưu toàn bộ trạng thái mới (setDoc) hợp lệ, HOẶC
+      // 2. Xóa một bản sao lưu trong mảng _backups (updateDoc)
+      allow update: if isValidDocId(docId)
+                    && (isValidFinancialPayload(request.resource.data, docId)
+                        || isValidBackupUpdate(request.resource.data, resource.data));
+
+      // Bảo vệ an toàn dữ liệu: Không cho phép xóa toàn bộ document hồ sơ từ phía client
+      // (Việc xóa từng bản sao lưu thực hiện qua updateDoc trên mảng _backups)
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // MẶC ĐỊNH: Chặn toàn bộ các collection và subcollection khác
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

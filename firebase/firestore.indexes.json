@@ -1,0 +1,17 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "financial_data",
+      "fieldPath": "_backups",
+      "ttl": false,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "financial_data",
+      "fieldPath": "monthlyDetails",
+      "ttl": false,
+      "indexes": []
+    }
+  ]
+}
