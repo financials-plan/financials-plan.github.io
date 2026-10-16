@@ -507,8 +507,8 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false">50 tuổi</td>
-                    <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false">Từng bước đạt mục tiêu tài chính trong tương lai và độc lập tài chính bền vững</td>
+                    <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false" id="vision-age-cell"></td>
+                    <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false" id="vision-desc-cell"></td>
                   </tr>
                 </tbody>
               </table>
@@ -571,8 +571,10 @@
                 <thead>
                   <tr>
                     <th class="text-left">
-                      <i class="fa-solid fa-award"></i> Điểm mạnh & Giá trị cốt lõi bản thân
-                      <button class="btn-table-add ml-2" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                      <div class="table-header-flex">
+                        <span class="title"><i class="fa-solid fa-award"></i> Điểm mạnh & Giá trị cốt lõi bản thân</span>
+                        <button type="button" class="btn-table-add" onclick="addSkillRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                      </div>
                     </th>
                     <th style="width: 60px;" class="text-center">Xoá</th>
                   </tr>
@@ -588,8 +590,10 @@
                 <thead>
                   <tr>
                     <th class="text-left">
-                      <i class="fa-solid fa-people-roof"></i> Gia đình & Điểm tựa nguồn lực
-                      <button class="btn-table-add ml-2" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                      <div class="table-header-flex">
+                        <span class="title"><i class="fa-solid fa-people-roof"></i> Gia đình & Điểm tựa nguồn lực</span>
+                        <button type="button" class="btn-table-add" onclick="addFamilyRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                      </div>
                     </th>
                     <th style="width: 60px;" class="text-center">Xoá</th>
                   </tr>
@@ -605,8 +609,10 @@
                 <thead>
                   <tr>
                     <th class="text-left">
-                      <i class="fa-solid fa-briefcase"></i> Môi trường làm việc & Tiềm năng bứt phá
-                      <button class="btn-table-add ml-2" onclick="addJobRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                      <div class="table-header-flex">
+                        <span class="title"><i class="fa-solid fa-briefcase"></i> Môi trường làm việc & Tiềm năng bứt phá</span>
+                        <button type="button" class="btn-table-add" onclick="addJobRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
+                      </div>
                     </th>
                     <th style="width: 60px;" class="text-center">Xoá</th>
                   </tr>
@@ -672,10 +678,10 @@
               <div class="tc-empty-title">Chưa có mục tiêu trả nợ định kỳ hoặc tích lũy đầu tư</div>
               <div class="tc-empty-desc">Danh mục này hiện chưa có dữ liệu mục tiêu tài chính hợp lệ để hiển thị thẻ tính toán. Hãy thêm mục tiêu tại bảng thiết lập hoặc nhập dữ liệu đã sao lưu.</div>
               <div class="tc-empty-actions">
-                <button type="button" class="btn-primary" onclick="switchTcSection(3)">
+                <button type="button" class="btn-table-add-prominent" onclick="switchTcSection(3)">
                   <i class="fa-solid fa-plus"></i> Thêm mục tiêu tài chính
                 </button>
-                <button type="button" class="btn-secondary" onclick="openBackupManagerModal()">
+                <button type="button" class="btn-cloud-sync" onclick="openBackupManagerModal()">
                   <i class="fa-solid fa-cloud-arrow-down"></i> Nhập dữ liệu sao lưu
                 </button>
               </div>
@@ -777,7 +783,7 @@
           <div class="data-panel mb-4">
             <div class="sheet-title-banner flex-between">
               <span><i class="fa-solid fa-coins"></i> PHẦN 1: TIỀN DỰ TÍNH KIẾM ĐƯỢC MỖI THÁNG</span>
-              <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản thu</button>
+              <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm khoản thu</span></button>
             </div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
@@ -806,7 +812,7 @@
           <div class="data-panel">
             <div class="sheet-title-banner flex-between">
               <span><i class="fa-solid fa-credit-card"></i> PHẦN 2: MỨC TIỀN DỰ TÍNH TIÊU MỖI THÁNG</span>
-              <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i> Thêm khoản chi</button>
+              <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm khoản chi</span></button>
             </div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
@@ -874,7 +880,7 @@
               <div class="side-table-col">
                 <div class="table-header-bar success-bar">
                   <span><i class="fa-solid fa-circle-plus"></i> Nhật ký thu nhập chi tiết</span>
-                  <button class="btn-table-add" onclick="addMonthDetailIncomeRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                  <button class="btn-table-add" onclick="addMonthDetailIncomeRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
@@ -883,7 +889,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Nguồn thu</th>
                         <th>Chi tiết giao dịch</th>
-                        <th style="width: 85px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -927,7 +933,7 @@
               <div class="side-table-col">
                 <div class="table-header-bar warning-bar">
                   <span><i class="fa-solid fa-circle-minus"></i> Nhật ký chi tiêu chi tiết</span>
-                  <button class="btn-table-add" onclick="addMonthDetailExpenseRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                  <button class="btn-table-add" onclick="addMonthDetailExpenseRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
@@ -936,7 +942,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Khoản chi</th>
                         <th>Chi tiết giao dịch</th>
-                        <th style="width: 85px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -1008,7 +1014,7 @@
               <div class="learning-left-col">
                 <div class="table-header-bar info-bar">
                   <span><i class="fa-solid fa-book-open"></i> Nhật ký chi phí học tập & Đào tạo</span>
-                  <button class="btn-table-add" onclick="addMonthLearningRow()"><i class="fa-solid fa-plus"></i> Thêm</button>
+                  <button class="btn-table-add" onclick="addMonthLearningRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                 </div>
                 <div class="mobile-scroll-hint"><i class="fa-solid fa-arrows-left-right"></i> Cuộn ngang để xem đầy đủ cột</div>
                 <div class="table-scroll-x">
@@ -1018,7 +1024,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Hạng mục</th>
                         <th>Khóa học / Chứng chỉ / Sách</th>
-                        <th style="width: 85px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
                         <th>Kỳ vọng đầu ra</th>
                         <th>Thực tế đạt được</th>
                         <th style="width: 40px;"></th>
@@ -1300,7 +1306,7 @@
           <i class="fa-solid fa-folder-open backup-empty-icon"></i>
           <strong>Chưa có bản sao lưu nào</strong>
           <p>Hồ sơ này chưa lưu bản sao lưu nào. Hãy bấm "Lưu" để tạo bản sao lưu đầu tiên!</p>
-          <button type="button" class="btn-primary btn-sm" onclick="saveAppStateToCloud(); closeBackupManagerModal();">
+          <button type="button" class="btn-modal-submit btn-sm" onclick="saveAppStateToCloud(); closeBackupManagerModal();">
             <i class="fa-solid fa-cloud-arrow-up"></i> Lưu bản hiện tại ngay
           </button>
         </div>
@@ -1309,7 +1315,7 @@
         <div id="backup-error-state" class="backup-state-box backup-error-box" style="display: none;">
           <i class="fa-solid fa-circle-exclamation text-danger"></i>
           <span id="backup-error-msg">Không thể tải danh sách sao lưu. Vui lòng kiểm tra kết nối mạng.</span>
-          <button type="button" class="btn-secondary btn-sm" onclick="openBackupManagerModal()">
+          <button type="button" class="btn-cloud-sync btn-sm" onclick="openBackupManagerModal()">
             <i class="fa-solid fa-rotate-right"></i> Thử lại
           </button>
         </div>
@@ -1348,10 +1354,10 @@
           </div>
           
           <div class="backup-preview-actions" id="backup-preview-actions">
-            <button type="button" class="btn-primary" onclick="openRestoreConfirmModal(selectedBackupId)">
+            <button type="button" class="btn-modal-submit btn-sm" onclick="openRestoreConfirmModal(selectedBackupId)">
               <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục bản này
             </button>
-            <button type="button" class="btn-danger-outline" onclick="openDeleteConfirmModal(selectedBackupId)">
+            <button type="button" class="btn-danger-outline btn-sm" onclick="openDeleteConfirmModal(selectedBackupId)">
               <i class="fa-solid fa-trash-can"></i> Xóa bản này
             </button>
           </div>
@@ -1432,6 +1438,55 @@
         </button>
         <button type="button" class="btn-modal-submit" id="btn-confirm-action" onclick="executeConfirmedAction()">
           <span id="confirm-action-btn-text">Xác nhận khôi phục</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL HỎI LƯU DỮ LIỆU TRƯỚC KHI TẮT TRANG WEB ==================== -->
+  <div id="exit-save-modal-overlay" class="modal-overlay confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="exit-save-modal-title" style="display: none;">
+    <div class="modal-card confirm-modal-card confirm-type-restore">
+      <div class="modal-header confirm-modal-header">
+        <div class="modal-icon-badge confirm-icon-badge">
+          <i class="fa-solid fa-floppy-disk"></i>
+        </div>
+        <div class="modal-title-group">
+          <h3 id="exit-save-modal-title">Lưu dữ liệu trước khi đóng trang?</h3>
+          <p id="exit-save-modal-subtitle">Bạn có dữ liệu chưa được lưu vào hồ sơ trên đám mây</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeExitSaveModal()" aria-label="Đóng hộp thoại">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body confirm-modal-body">
+        <div class="confirm-warning-banner">
+          <div class="confirm-warning-icon-wrap">
+            <i class="fa-solid fa-circle-question"></i>
+          </div>
+          <div class="confirm-warning-content">
+            <strong>Bạn có muốn lưu dữ liệu hiện tại không?</strong>
+            <p id="exit-save-warning-text">
+              Nếu bạn tắt trang web mà không lưu, những thông tin vừa nhập hoặc chỉnh sửa trong phiên làm việc này sẽ không được ghi nhận. Hãy nhấn <strong>"Lưu dữ liệu ngay"</strong> để bảo toàn dữ liệu trước khi thoát.
+            </p>
+          </div>
+        </div>
+
+        <div id="exit-save-status-alert" class="confirm-status-alert" style="display: none;">
+          <i class="fa-solid fa-spinner fa-spin" id="exit-save-status-icon"></i>
+          <span id="exit-save-status-msg">Đang lưu dữ liệu lên Cloud Firestore...</span>
+        </div>
+      </div>
+
+      <div class="modal-footer confirm-modal-footer">
+        <button type="button" class="btn-modal-cancel" id="btn-exit-stay" onclick="closeExitSaveModal()">
+          Ở lại trang
+        </button>
+        <button type="button" class="btn-danger-outline" id="btn-exit-discard" onclick="confirmExitWithoutSaving()">
+          <i class="fa-solid fa-trash-can"></i> Không lưu
+        </button>
+        <button type="button" class="btn-modal-submit" id="btn-exit-save-now" onclick="confirmSaveBeforeExit()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-exit-save-text">Lưu dữ liệu ngay</span>
         </button>
       </div>
     </div>

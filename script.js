@@ -406,7 +406,7 @@ window.closeAccountMenu = function() {
   if (chip) chip.setAttribute('aria-expanded', 'false');
 };
 
-window.switchUserProfile = function(docId) {
+window.performSwitchUserProfile = function(docId) {
   const profiles = UserSession.getProfilesList();
   const target = profiles.find(p => p.docId === docId);
   if (!target) return;
@@ -419,17 +419,42 @@ window.switchUserProfile = function(docId) {
   UserSession.updateUI();
   closeAccountMenu();
 
-  if (window.CloudDB) {
-    window.loadAppStateFromCloud(true);
+  window.resetAppStateToEmpty();
+  showToast(`Đã chuyển sang hồ sơ [${target.rawName}]! Nhấn "Nhập dữ liệu" nếu muốn nạp bản lưu trước đó.`, "success");
+};
+
+window.switchUserProfile = function(docId) {
+  if (UserSession.currentUser && UserSession.currentUser.docId === docId) {
+    closeAccountMenu();
+    return;
   }
-  showToast(`Đã chuyển sang hồ sơ [${target.rawName}]!`, "success");
+  if (window.hasUnsavedChanges) {
+    closeAccountMenu();
+    window.openExitSaveModal(() => {
+      window.performSwitchUserProfile(docId);
+    });
+    return;
+  }
+  window.performSwitchUserProfile(docId);
+};
+
+window.performLogoutUserProfile = function() {
+  UserSession.clear();
+  closeAccountMenu();
+  window.resetAppStateToEmpty();
+  showToast("Đã đăng xuất hồ sơ", "info");
+  openUserModal(true);
 };
 
 window.logoutUserProfile = function() {
-  UserSession.clear();
-  closeAccountMenu();
-  showToast("Đã đăng xuất hồ sơ", "info");
-  openUserModal(true);
+  if (window.hasUnsavedChanges) {
+    closeAccountMenu();
+    window.openExitSaveModal(() => {
+      window.performLogoutUserProfile();
+    });
+    return;
+  }
+  window.performLogoutUserProfile();
 };
 
 window.handleAccountItemKeyDown = function(e, docId) {
@@ -439,163 +464,82 @@ window.handleAccountItemKeyDown = function(e, docId) {
   }
 };
 
-const AppState = {
-  currentYear: 2026,
-  currentAge: 21,
-  birthYear: 2005,
-  currentMonth: 1,
-
-  expenses: [
-    "Mua thực phẩm", "Mua đồ dùng trong nhà", "Đi ăn ở ngoài",
-    "Chi tiền phát triển bản thân", "Chi tiền bảo hiểm",
-    "Chi tiền điện, nước, internet, điện thoại, xăng xe",
-    "Chi tiền giải trí, quà tặng", "Chi tiền cho con học đại học", "Chi tiền trả nợ", "Chi tiền cho tặng gia đình"
-  ],
-  incomeList: [
-    "Lương từ công ty", "Thu nhập kinh doanh", "Lãi tiền gửi & đầu tư", "Thu nhập khác"
-  ],
-  planList: [
-    "Mua sách", "Khóa học ngắn hạn", "Khóa học dài hạn", "Tham gia các buổi diễn thuyết", "Chi phát triển bản thân khác"
-  ],
-  investProducts: [
-    { name: "ETF - ETFVFM", returnRate: 13.0, risk: 18.0 },
-    { name: "ETF - ETFFINLEAD", returnRate: 15.0, risk: 20.0 },
-    { name: "DCBC", returnRate: 16.0, risk: 20.0 },
-    { name: "DCDS", returnRate: 11.0, risk: 10.0 },
-    { name: "DCBF", returnRate: 9.0, risk: 8.0 },
-    { name: "Trái phiếu Techcombank", returnRate: 10.5, risk: 6.0 },
-    { name: "Trái phiếu FE Credit", returnRate: 10.0, risk: 8.0 },
-    { name: "Finhay", returnRate: 6.0, risk: 7.0 },
-    { name: "Bảo hiểm thuần túy", returnRate: 4.0, risk: 5.0 },
-    { name: "BH liên kết đầu tư", returnRate: 12.0, risk: 5.0 },
-    { name: "Tiền gửi ngân hàng", returnRate: 5.0, risk: 2.0 },
-    { name: "Cổ phiếu riêng lẻ", returnRate: 12.0, risk: 6.0 }
-  ],
-
-  // BẢNG DỮ LIỆU ĐĂNG KÝ MỤC TIÊU DUY NHẤT TẠI TAB "MỤC TIÊU BẢN THÂN"
-  tcGoals: [
-    { 
-      id: "g1", name: "Vay mua chung cư", type: "debt", 
-      val: 500.0, paid: 50.0, start: 2026, end: 2035, 
-      inflation: 0.0, rate: 8.5, monthly: 6.2, 
-      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
-      allocProducts: [] 
-    },
-    { 
-      id: "g2", name: "Du lịch xuyên Thái Lan", type: "invest", 
-      val: 50.0, paid: 10.0, start: 2026, end: 2027, 
-      inflation: 4.0, rate: 8.0, monthly: 3.3, 
-      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
-      allocProducts: [] 
-    },
-    { 
-      id: "g3", name: "Quỹ dự phòng tài chính", type: "invest", 
-      val: 100.0, paid: 20.0, start: 2026, end: 2028, 
-      inflation: 4.0, rate: 7.0, monthly: 3.5, 
-      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
-      allocProducts: [] 
-    },
-    { 
-      id: "g4", name: "Đám cưới", type: "invest", 
-      val: 200.0, paid: 30.0, start: 2026, end: 2028, 
-      inflation: 4.5, rate: 9.0, monthly: 5.2, 
-      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
-      allocProducts: [] 
-    },
-    { 
-      id: "g5", name: "Khởi nghiệp", type: "invest", 
-      val: 500.0, paid: 50.0, start: 2026, end: 2030, 
-      inflation: 4.0, rate: 12.0, monthly: 8.5, 
-      yearsRetire: 0, monthlyRetire: 0, deathFund: 0, 
-      allocProducts: [] 
-    },
-    { 
-      id: "g6", name: "Cho con đi học đại học", type: "invest", 
-      val: 500.0, paid: 0.0, start: 2030, end: 2046, 
-      inflation: 5.0, rate: 10.0, monthly: 1.4,
-      yearsRetire: 10, monthlyRetire: 5.0, deathFund: 100.0,
-      allocProducts: [
-        { prodName: "ETF - ETFVFM", weight: 50.0, returnRate: 13.0, risk: 18.0 },
-        { prodName: "DCBC", weight: 50.0, returnRate: 16.0, risk: 20.0 },
-        { prodName: "Tiền gửi ngân hàng", weight: 0.0, returnRate: 5.0, risk: 2.0 }
-      ]
-    },
-    { 
-      id: "g7", name: "Hưu trí", type: "invest", 
-      val: 800.0, paid: 50.0, start: 2028, end: 2050, 
-      inflation: 4.0, rate: 9.0, monthly: 1.8,
-      yearsRetire: 25, monthlyRetire: 12.0, deathFund: 300.0,
-      allocProducts: [
-        { prodName: "ETF - ETFFINLEAD", weight: 40.0, returnRate: 15.0, risk: 20.0 },
-        { prodName: "Trái phiếu Techcombank", weight: 40.0, returnRate: 10.5, risk: 6.0 },
-        { prodName: "Tiền gửi ngân hàng", weight: 20.0, returnRate: 5.0, risk: 2.0 }
-      ]
-    }
-  ],
-
-  skillsList: ["Sẵn sàng học hỏi cái mới", "Nhiệt huyết trong công việc", "Ngoại ngữ chuyên ngành vững"],
-  familyList: ["Ba mẹ có hỗ trợ mua chung cư , lo đám cưới"],
-  jobList: [
-    "Môi trường đa quốc gia, có nhiều cơ hội phát triển",
-    "Môi trường làm việc có sự cạnh tranh gay gắt, áp lực KPI",
-    "Có chế độ đãi ngộ tốt về lương thưởng, lương bổng"
-  ],
-
-  planIncome: [
-    { name: "Lương từ công ty", plan: 25.0, note: "Lương chính thức", analysis: "Nguồn thu ổn định chiếm tỷ trọng lớn" },
-    { name: "Thu nhập kinh doanh", plan: 10.0, note: "Doanh thu ngoài giờ", analysis: "Biến động phụ thuộc vào thị trường" },
-    { name: "Lãi tiền gửi & đầu tư", plan: 5.0, note: "Cổ tức & tiền gửi", analysis: "Thu nhập thụ động dòng tiền định kỳ" }
-  ],
-  planExpense: [
-    { name: "Mua thực phẩm", plan: 6.0, note: "Tiền chợ, đồ tươi", analysis: "Chi phí thiết yếu bắt buộc" },
-    { name: "Mua đồ dùng trong nhà", plan: 1.0, note: "Gia dụng", analysis: "Tối ưu hóa mua sắm định kỳ" },
-    { name: "Đi ăn ở ngoài", plan: 2.0, note: "Tiếp khách & bạn bè", analysis: "Chi phí linh hoạt cần kiểm soát" },
-    { name: "Chi tiền phát triển bản thân", plan: 3.5, note: "Sách & khóa học", analysis: "Đầu tư vốn con người tạo ROI cao" },
-    { name: "Chi tiền bảo hiểm", plan: 1.0, note: "Bảo vệ dòng tiền", analysis: "Quản trị rủi ro sức khỏe" },
-    { name: "Chi tiền điện, nước, internet, điện thoại, xăng xe", plan: 2.0, note: "Hóa đơn cố định", analysis: "Chi tiêu sinh hoạt cơ bản" },
-    { name: "Chi tiền trả nợ", plan: 6.2, note: "Gốc + lãi vay", analysis: "Nghĩa vụ nợ cần ưu tiên trích trước" }
-  ],
-
-  skillsStore: {
-    0: "Kỹ năng làm việc nhóm, chuyên môn marketing",
-    1: "Kỹ năng leader, quản trị dự án, xây dựng mô hình",
-    2: "Kỹ năng lãnh đạo chiến lược, mở rộng quan hệ đối tác",
-    3: "Kỹ năng quản lý doanh nghiệp, hoạch định ngân sách lớn",
-    4: "Kỹ năng tạo lập cộng đồng, tái cấu trúc tài sản",
-    5: "Kỹ năng chuyển giao thế hệ, quản trị danh mục bảo toàn"
-  },
-
-  careerDetailList: [],
-  monthlyDetails: {},
-
-  surveyP1Choices: { 1: 4, 2: 4, 3: 2, 4: 2, 5: 1, 6: 1, 7: 2, 8: 1, 9: 0, 10: 1 },
-  surveyP2Choices: { 1: 2, 2: 2, 3: 0, 4: 4, 5: 2, 6: 4, 7: 3, 8: 3, 9: 0, 10: 1, 11: 2 }
-};
-
-// Khởi tạo 12 tháng dữ liệu mẫu
-for (let m = 1; m <= 12; m++) {
-  const mStr = m < 10 ? `0${m}` : `${m}`;
-  AppState.monthlyDetails[m] = {
-    incomes: [
-      { date: `2026-${mStr}-15`, cat: "Lương từ công ty", desc: "Lương chính thức", val: 25.0 },
-      { date: `2026-${mStr}-28`, cat: "Thu nhập kinh doanh", desc: "Thu nhập ngoài giờ", val: 8.0 }
-    ],
-    expenses: [
-      { date: `2026-${mStr}-01`, cat: "Mua thực phẩm", desc: "Đi chợ, siêu thị", val: 6.0 },
-      { date: `2026-${mStr}-05`, cat: "Đi ăn ở ngoài", desc: "Ăn uống giao lưu", val: 1.8 },
-      { date: `2026-${mStr}-10`, cat: "Chi tiền trả nợ", desc: "Khoản nợ định kỳ", val: 6.2 },
-      { date: `2026-${mStr}-15`, cat: "Chi tiền điện, nước, internet, điện thoại, xăng xe", desc: "Hóa đơn", val: 1.8 },
-      { date: `2026-${mStr}-20`, cat: "Chi tiền phát triển bản thân", desc: "Sách & khóa đào tạo", val: 1.2 }
-    ],
-    reconIncomeNotes: {},
-    reconExpenseNotes: {},
-    learningDetails: [
-      { date: `2026-${mStr}-05`, cat: "Khóa học ngắn hạn", desc: "Sách tài chính & chuyên ngành", val: 0.4, expRes: "Bổ sung kiến thức", actRes: "Ứng dụng thực tế" },
-      { date: `2026-${mStr}-18`, cat: "Khóa học dài hạn", desc: "Khóa đào tạo kỹ năng", val: 0.8, expRes: "Nâng cao năng lực", actRes: "Hoàn thành chứng chỉ" }
-    ]
+function createEmptyAppState() {
+  const emptyMonthly = {};
+  for (let m = 1; m <= 12; m++) {
+    emptyMonthly[m] = {
+      incomes: [],
+      expenses: [],
+      reconIncomeNotes: {},
+      reconExpenseNotes: {},
+      learningDetails: []
+    };
+  }
+  return {
+    currentYear: 2026,
+    currentAge: 21,
+    birthYear: 2005,
+    currentMonth: 1,
+    targetSavingsRate: 40,
+    visionAge: "",
+    visionDesc: "",
+    expenses: [],
+    incomeList: [],
+    planList: [],
+    investProducts: [],
+    tcGoals: [],
+    skillsList: [],
+    familyList: [],
+    jobList: [],
+    planIncome: [],
+    planExpense: [],
+    skillsStore: {},
+    careerDetailList: [],
+    monthlyDetails: emptyMonthly,
+    surveyP1Choices: {},
+    surveyP2Choices: {}
   };
 }
+
+const AppState = createEmptyAppState();
 window.AppState = AppState;
+
+window.resetAppStateToEmpty = function() {
+  const fresh = createEmptyAppState();
+  Object.keys(fresh).forEach(k => {
+    AppState[k] = fresh[k];
+  });
+  window.hasUnsavedChanges = false;
+  window.hasSavedInSession = false;
+
+  const yEl = document.getElementById('input-year');
+  const aEl = document.getElementById('input-age');
+  if (yEl) yEl.innerText = AppState.currentYear;
+  if (aEl) aEl.innerText = AppState.currentAge;
+  document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+  const vAge = document.getElementById('vision-age-cell');
+  const vDesc = document.getElementById('vision-desc-cell');
+  const tSav = document.getElementById('target-savings-rate-val');
+  if (vAge) vAge.innerText = AppState.visionAge || '';
+  if (vDesc) vDesc.innerText = AppState.visionDesc || '';
+  if (tSav) tSav.innerText = `${AppState.targetSavingsRate || 40}%`;
+
+  renderSetupTables();
+  renderPlanTables();
+  renderTcGoalsFormTable();
+  renderSkillsFamilyJob();
+  renderGoogleFormSurvey();
+  evaluateSurveys();
+  if (window.updateSurveyProgress) {
+    window.updateSurveyProgress();
+  }
+  renderCareerTables();
+  renderMonthView(AppState.currentMonth);
+  syncGoalsToCards();
+  renderTcMatrixTable();
+  recalculateAll();
+};
 
 const surveyQuestionsPart1 = [
   { q: "Bạn có bao nhiêu mục tiêu tài chính?", opts: ["1", "2", "3", "4", ">4"], weights: [1, 2, 3, 4, 5] },
@@ -626,13 +570,13 @@ const surveyQuestionsPart2 = [
 
 // ==================== CÔNG THỨC TÀI CHÍNH SPREADSHEET CHUẨN ====================
 function calculateMonthlyNeed(goal) {
-  const nYears = Math.max(1, goal.end - goal.start + 1);
+  const nYears = Math.max(1, (Number(goal.end) || AppState.currentYear) - (Number(goal.start) || AppState.currentYear) + 1);
   const nMonths = nYears * 12;
-  const rAnnual = (goal.rate || 8.0) / 100;
+  const rAnnual = (Number(goal.rate) || 8.0) / 100;
   const rMonthly = rAnnual / 12;
 
   if (goal.type === 'debt') {
-    const loanBalance = Math.max(0, goal.val - (goal.paid || 0));
+    const loanBalance = Math.max(0, (Number(goal.val) || 0) - (Number(goal.paid) || 0));
     if (loanBalance <= 0) return 0;
     if (rMonthly === 0) return loanBalance / nMonths;
     const pmt = (loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1);
@@ -640,12 +584,12 @@ function calculateMonthlyNeed(goal) {
   }
 
   // Đầu tư & hưu trí
-  const infRate = (goal.inflation || 0) / 100;
+  const infRate = (Number(goal.inflation) || 0) / 100;
   let targetFV = 0;
 
   if (goal.yearsRetire && goal.yearsRetire > 0) {
-    const mRetire = goal.monthlyRetire || 15.0;
-    const deathFund = goal.deathFund || 0;
+    const mRetire = Number(goal.monthlyRetire) || 15.0;
+    const deathFund = Number(goal.deathFund) || 0;
     const nRetireMonths = goal.yearsRetire * 12;
 
     let pvRetire = 0;
@@ -658,10 +602,10 @@ function calculateMonthlyNeed(goal) {
     targetFV = pvRetire;
   } else {
     // Điều chỉnh lạm phát trượt giá: FV = Giá trị hiện tại * (1 + lạm phát)^n
-    targetFV = (goal.val || 0) * Math.pow(1 + infRate, nYears);
+    targetFV = (Number(goal.val) || 0) * Math.pow(1 + infRate, nYears);
   }
 
-  const currentPaidFV = (goal.paid || 0) * Math.pow(1 + rMonthly, nMonths);
+  const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
   const deficitFV = Math.max(0, targetFV - currentPaidFV);
 
   if (deficitFV <= 0) return 0;
@@ -672,42 +616,76 @@ function calculateMonthlyNeed(goal) {
   return isNaN(pmtInvest) || !isFinite(pmtInvest) ? (deficitFV / nMonths) : pmtInvest;
 }
 
+function getEffectiveSavingsRateRatio() {
+  const pct = parseFloat(AppState.targetSavingsRate);
+  if (!isNaN(pct) && pct > 0 && pct <= 100) {
+    return pct / 100;
+  }
+  return 0.40;
+}
+
 function getMatrixIncomeNeed(yearOffset) {
   let sSum = 0;
   const yr = AppState.currentYear + yearOffset;
   AppState.tcGoals.forEach(g => {
     if (yr >= g.start && yr <= g.end) {
-      sSum += (g.monthly !== undefined ? g.monthly : calculateMonthlyNeed(g));
+      const mNeed = calculateMonthlyNeed(g);
+      g.monthly = mNeed;
+      sSum += mNeed;
     }
   });
-  return sSum > 0 ? (sSum / 0.40) : 0;
+  const rate = getEffectiveSavingsRateRatio();
+  return sSum > 0 ? (sSum / rate) : 0;
 }
 
 function calculateAgeMilestones() {
   const baseAge = AppState.currentAge;
   const offsets = [0, 5, 9, 14, 19, 29];
+
+  // Tính điểm khẩu vị rủi ro từ khảo sát Phần 1 (nếu người dùng đã chọn)
+  let s1 = 0, count1 = 0;
+  surveyQuestionsPart1.forEach((q, idx) => {
+    const c = AppState.surveyP1Choices?.[idx + 1];
+    if (c !== undefined && q.weights[c] !== undefined) {
+      s1 += q.weights[c];
+      count1++;
+    }
+  });
+  let riskStockShift = 0;
+  if (count1 > 0) {
+    if (s1 < 18) riskStockShift = -10;
+    else if (s1 >= 28) riskStockShift = 10;
+  }
+
+  // Lấy lãi suất kỳ vọng từ Danh mục sản phẩm đầu tư nếu có
+  const prodRates = (AppState.investProducts || []).map(p => Number(p.returnRate) || 0).filter(r => r > 0);
+  const stockRate = prodRates.length > 0 ? Math.max(...prodRates, 13.5) : 13.5;
+  const bondRate = prodRates.length > 1 ? prodRates[1] : 9.5;
+  const insRate = 4.5;
+  const cashRate = prodRates.length > 2 ? Math.min(...prodRates, 6.0) : 5.0;
+
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = AppState.currentYear + off;
     const yrIndex = Math.min(32, off);
     const incNeedFromMatrix = getMatrixIncomeNeed(yrIndex);
 
-    const stocks = Math.max(15, Math.min(75, 100 - age + 5));
-    const bonds = Math.min(60, Math.max(15, age * 0.9));
+    const stocks = Math.max(10, Math.min(80, 100 - age + 5 + riskStockShift));
+    const bonds = Math.min(65, Math.max(10, age * 0.9 - (riskStockShift * 0.5)));
     const ins = age >= 35 ? 10.0 : 7.0;
     const cash = Math.max(5, 100 - (stocks + bonds + ins));
-    const returnNeed = ((stocks * 13.5 + bonds * 9.5 + ins * 4.5 + cash * 5.0) / 100);
+    const returnNeed = ((stocks * stockRate + bonds * bondRate + ins * insRate + cash * cashRate) / 100);
 
     return {
       age,
       year,
-      incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : (idx === 0 ? 15.0 : (idx === 1 ? 32.0 : 45.0 + off)),
+      incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
       stocks,
       bonds,
       ins,
       cash,
       returnNeed,
-      skills: AppState.skillsStore[idx] || "Kỹ năng làm việc nhóm, chuyên môn marketing"
+      skills: AppState.skillsStore[idx] || ""
     };
   });
 }
@@ -729,31 +707,40 @@ function calculateCareerDetails() {
   }
 
   let actualCurrentYear = 0;
+  let activeIncomeMonths = 0;
   for (let m = 1; m <= 12; m++) {
-    actualCurrentYear += (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + x.val, 0);
+    const mInc = (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+    if (mInc > 0) {
+      actualCurrentYear += mInc;
+      activeIncomeMonths++;
+    }
   }
-  const avgMonthlyActual2026 = actualCurrentYear > 0 ? (actualCurrentYear / 12) : 25.0;
+  const planMonthlyInc = (AppState.planIncome || []).reduce((s, p) => s + (Number(p.plan) || 0), 0);
+  const autoCurrentIncome = activeIncomeMonths > 0
+    ? (actualCurrentYear / activeIncomeMonths)
+    : planMonthlyInc;
 
-  return ages.map((age, i) => {
+  return ages.map((age) => {
     const yearOffset = age - baseAge;
-    const targetVal = getMatrixIncomeNeed(Math.min(32, yearOffset)) || (15 + yearOffset * 2.2);
-
-    let defaultRoute = 15.0 + yearOffset * 2.5;
-    if (i === 1) defaultRoute = targetVal - 3.0;
-    if (i === 2) defaultRoute = targetVal - 1.5;
-    if (i >= 4) defaultRoute = targetVal + (i % 2 === 0 ? 4.0 : -1.5);
+    const targetVal = getMatrixIncomeNeed(Math.min(32, yearOffset)) || 0;
 
     const exist = existingMap[age];
-    const actualVal = (yearOffset === 0) 
-      ? (exist && exist.actual !== undefined ? exist.actual : avgMonthlyActual2026) 
+    const hasManualActual = exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null;
+    const actualVal = (yearOffset === 0)
+      ? (hasManualActual ? exist.actual : autoCurrentIncome)
       : null;
+
+    const hasManualRoute = exist && exist.manualRoute === true && exist.route !== undefined;
+    const defaultRoute = (yearOffset === 0 && !hasManualRoute) ? autoCurrentIncome : 0;
 
     return {
       age,
       year: AppState.currentYear + yearOffset,
       actual: actualVal,
+      manualActual: hasManualActual,
       target: targetVal,
-      route: exist && exist.route !== undefined ? exist.route : defaultRoute
+      route: hasManualRoute ? exist.route : (exist && exist.route ? exist.route : defaultRoute),
+      manualRoute: hasManualRoute || Boolean(exist && exist.route)
     };
   });
 }
@@ -1011,6 +998,10 @@ window.switchMonthSection = function(secNum) {
 };
 
 window.switchTcSection = function(secNum) {
+  if (secNum === 3) {
+    window.switchTab('tab-muctieu-bt');
+    return;
+  }
   document.getElementById('btn-tc-sec1')?.classList.toggle('active', secNum === 1);
   document.getElementById('btn-tc-sec2')?.classList.toggle('active', secNum === 2);
   document.getElementById('tc-section-1')?.classList.toggle('active', secNum === 1);
@@ -1063,10 +1054,47 @@ function drawSparkline(canvasId, values, color = '#159F87') {
 }
 
 // ==================== DASHBOARD MATRICES ====================
+function getUniqueNonEmptyList(arrays) {
+  const seen = new Set();
+  const result = [];
+  arrays.forEach(arr => {
+    if (!Array.isArray(arr)) return;
+    arr.forEach(item => {
+      const s = typeof item === 'string' ? item.trim() : '';
+      if (s && !seen.has(s)) {
+        seen.add(s);
+        result.push(s);
+      }
+    });
+  });
+  return result;
+}
+
+function getAllMonthlyCats(typeField) {
+  const cats = [];
+  for (let m = 1; m <= 12; m++) {
+    const list = AppState.monthlyDetails?.[m]?.[typeField] || [];
+    list.forEach(x => {
+      if (x && x.cat) cats.push(x.cat);
+    });
+  }
+  return cats;
+}
+
 function renderDashboardMatrices() {
-  const incCats = AppState.incomeList;
+  const incCats = getUniqueNonEmptyList([
+    AppState.incomeList,
+    (AppState.planIncome || []).map(p => p.name),
+    getAllMonthlyCats('incomes')
+  ]);
   const incMonthlySums = Array(13).fill(0);
   const sparkIncData = {};
+
+  for (let m = 1; m <= 12; m++) {
+    const mTotal = (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+    incMonthlySums[m] = mTotal;
+    incMonthlySums[0] += mTotal;
+  }
 
   const incRows = incCats.map((cat, idx) => {
     let rowSum = 0;
@@ -1075,18 +1103,16 @@ function renderDashboardMatrices() {
     for (let m = 1; m <= 12; m++) {
       const val = (AppState.monthlyDetails[m]?.incomes || [])
         .filter(x => x.cat === cat)
-        .reduce((s, x) => s + x.val, 0);
+        .reduce((s, x) => s + (Number(x.val) || 0), 0);
       rowSum += val;
-      incMonthlySums[m] += val;
       rowVals.push(val);
       tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`);
     }
-    incMonthlySums[0] += rowSum;
     sparkIncData[`spark-inc-${idx}`] = rowVals;
 
     return `
       <tr>
-        <td class="font-semibold">${cat}</td>
+        <td class="font-semibold">${escapeHtml(cat)}</td>
         ${tds.join('')}
         <td class="text-right font-bold text-success font-mono">${rowSum.toFixed(1)}</td>
         <td class="text-center"><canvas id="spark-inc-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
@@ -1110,9 +1136,19 @@ function renderDashboardMatrices() {
     sparkIncData['spark-inc-total'] = totVals;
   }
 
-  const expCats = AppState.expenses;
+  const expCats = getUniqueNonEmptyList([
+    AppState.expenses,
+    (AppState.planExpense || []).map(p => p.name),
+    getAllMonthlyCats('expenses')
+  ]);
   const expMonthlySums = Array(13).fill(0);
   const sparkExpData = {};
+
+  for (let m = 1; m <= 12; m++) {
+    const mTotal = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+    expMonthlySums[m] = mTotal;
+    expMonthlySums[0] += mTotal;
+  }
 
   const expRows = expCats.map((cat, idx) => {
     let rowSum = 0;
@@ -1121,18 +1157,16 @@ function renderDashboardMatrices() {
     for (let m = 1; m <= 12; m++) {
       const val = (AppState.monthlyDetails[m]?.expenses || [])
         .filter(x => x.cat === cat)
-        .reduce((s, x) => s + x.val, 0);
+        .reduce((s, x) => s + (Number(x.val) || 0), 0);
       rowSum += val;
-      expMonthlySums[m] += val;
       rowVals.push(val);
       tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`);
     }
-    expMonthlySums[0] += rowSum;
     sparkExpData[`spark-exp-${idx}`] = rowVals;
 
     return `
       <tr>
-        <td class="font-semibold">${cat}</td>
+        <td class="font-semibold">${escapeHtml(cat)}</td>
         ${tds.join('')}
         <td class="text-right font-bold text-danger font-mono">${rowSum.toFixed(1)}</td>
         <td class="text-center"><canvas id="spark-exp-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
@@ -1144,7 +1178,7 @@ function renderDashboardMatrices() {
   if (tbExp) tbExp.innerHTML = expRows;
 
   const tfExpTot = document.getElementById('tfoot-db-expense-total');
-  const planExpSum = AppState.planExpense.reduce((s, x) => s + x.plan, 0);
+  const planExpSum = (AppState.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0);
   if (tfExpTot) {
     let tfHtml = `<td class="font-bold">Tổng chi thực tế</td>`;
     const totExpVals = [];
@@ -1165,6 +1199,20 @@ function renderDashboardMatrices() {
     tfExpPlan.innerHTML = tfPlanHtml;
   }
 
+  const tfExpCumDiff = document.getElementById('tfoot-db-expense-cumdiff');
+  if (tfExpCumDiff) {
+    let tfCumHtml = `<td class="font-semibold text-muted">Chênh lệch lũy kế</td>`;
+    let runningDiff = 0;
+    for (let m = 1; m <= 12; m++) {
+      runningDiff += (planExpSum - expMonthlySums[m]);
+      const cls = runningDiff >= 0 ? 'text-success' : 'text-danger';
+      tfCumHtml += `<td class="text-right font-mono ${cls}">${runningDiff.toFixed(1)}</td>`;
+    }
+    const finalCls = runningDiff >= 0 ? 'text-success' : 'text-danger';
+    tfCumHtml += `<td class="text-right font-bold font-mono ${finalCls}">${runningDiff.toFixed(1)}</td><td></td>`;
+    tfExpCumDiff.innerHTML = tfCumHtml;
+  }
+
   const trSav = document.getElementById('trow-db-savings');
   const sparkSavData = [];
   if (trSav) {
@@ -1176,13 +1224,22 @@ function renderDashboardMatrices() {
       sparkSavData.push(sav);
       sHtml += `<td class="text-right font-bold font-mono ${sav >= 0 ? 'text-success' : 'text-danger'}">${sav.toFixed(1)}</td>`;
     }
-    sHtml += `<td class="text-right font-bold text-success font-mono">${yearSav.toFixed(1)}</td><td class="text-center"><canvas id="spark-sav-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
+    sHtml += `<td class="text-right font-bold ${yearSav >= 0 ? 'text-success' : 'text-danger'} font-mono">${yearSav.toFixed(1)}</td><td class="text-center"><canvas id="spark-sav-total" class="sparkline-canvas" width="90" height="22"></canvas></td>`;
     trSav.innerHTML = sHtml;
   }
 
-  const lrnCats = AppState.planList;
+  const lrnCats = getUniqueNonEmptyList([
+    AppState.planList,
+    getAllMonthlyCats('learningDetails')
+  ]);
   const lrnMonthlySums = Array(13).fill(0);
   const sparkLrnData = {};
+
+  for (let m = 1; m <= 12; m++) {
+    const mTotal = (AppState.monthlyDetails[m]?.learningDetails || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+    lrnMonthlySums[m] = mTotal;
+    lrnMonthlySums[0] += mTotal;
+  }
 
   const lrnRows = lrnCats.map((cat, idx) => {
     let rowSum = 0;
@@ -1191,18 +1248,16 @@ function renderDashboardMatrices() {
     for (let m = 1; m <= 12; m++) {
       const val = (AppState.monthlyDetails[m]?.learningDetails || [])
         .filter(x => x.cat === cat)
-        .reduce((s, x) => s + x.val, 0);
+        .reduce((s, x) => s + (Number(x.val) || 0), 0);
       rowSum += val;
-      lrnMonthlySums[m] += val;
       rowVals.push(val);
       tds.push(`<td class="text-right font-mono">${val > 0 ? val.toFixed(2) : '-'}</td>`);
     }
-    lrnMonthlySums[0] += rowSum;
     sparkLrnData[`spark-lrn-${idx}`] = rowVals;
 
     return `
       <tr>
-        <td class="font-semibold">${cat}</td>
+        <td class="font-semibold">${escapeHtml(cat)}</td>
         ${tds.join('')}
         <td class="text-right font-bold text-warning font-mono">${rowSum.toFixed(2)}</td>
         <td class="text-center"><canvas id="spark-lrn-${idx}" class="sparkline-canvas" width="90" height="22"></canvas></td>
@@ -1247,8 +1302,8 @@ function renderDashboardAllCharts() {
   const cv1 = document.getElementById('chartDashGoalsPie');
   if (cv1) {
     if (dashChartInstances.goalsPie) dashChartInstances.goalsPie.destroy();
-    const debtsVal = AppState.tcGoals.filter(g => g.type === 'debt').reduce((s, g) => s + g.val, 0);
-    const investsVal = AppState.tcGoals.filter(g => g.type === 'invest').reduce((s, g) => s + g.val, 0);
+    const debtsVal = AppState.tcGoals.filter(g => g.type === 'debt').reduce((s, g) => s + (Number(g.val) || 0), 0);
+    const investsVal = AppState.tcGoals.filter(g => g.type === 'invest').reduce((s, g) => s + (Number(g.val) || 0), 0);
     dashChartInstances.goalsPie = new Chart(cv1.getContext('2d'), {
       type: 'doughnut',
       data: {
@@ -1273,7 +1328,7 @@ function renderDashboardAllCharts() {
     for (let i = 0; i <= 10; i++) {
       const yr = AppState.currentYear + i;
       labels.push(`${yr}`);
-      const yrVal = AppState.tcGoals.filter(g => g.end === yr).reduce((s, g) => s + g.val, 0);
+      const yrVal = AppState.tcGoals.filter(g => Number(g.end) === yr).reduce((s, g) => s + (Number(g.val) || 0), 0);
       cum += yrVal;
       cumData.push(cum);
     }
@@ -1314,7 +1369,7 @@ function renderDashboardAllCharts() {
       data: {
         labels: AppState.investProducts.slice(0, 5).map(x => x.name),
         datasets: [{
-          data: AppState.investProducts.slice(0, 5).map(x => x.returnRate),
+          data: AppState.investProducts.slice(0, 5).map(x => Number(x.returnRate) || 0),
           backgroundColor: ['#6258F5', '#31C8DB', '#31CDB1', '#D8F36E', '#BD7B23'],
           borderWidth: 2,
           borderColor: themeTokens.border
@@ -1334,8 +1389,8 @@ function renderDashboardAllCharts() {
     const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
     const incs = [], exps = [], savs = [];
     for (let m = 1; m <= 12; m++) {
-      const inc = (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + x.val, 0);
-      const exp = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + x.val, 0);
+      const inc = (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+      const exp = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
       incs.push(inc);
       exps.push(exp);
       savs.push(inc - exp);
@@ -1365,12 +1420,12 @@ function renderDashboardAllCharts() {
   const cv5 = document.getElementById('chartDashVariance');
   if (cv5) {
     if (dashChartInstances.variance) dashChartInstances.variance.destroy();
-    const planExp = AppState.planExpense.reduce((s, x) => s + x.plan, 0);
+    const planExp = (AppState.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0);
     const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
     const actuals = [], cumDiff = [];
     let runningDiff = 0;
     for (let m = 1; m <= 12; m++) {
-      const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + x.val, 0);
+      const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
       actuals.push(act);
       runningDiff += (act - planExp);
       cumDiff.push(runningDiff);
@@ -1402,12 +1457,16 @@ function renderDashboardAllCharts() {
     if (dashChartInstances.learningStack) dashChartInstances.learningStack.destroy();
     const months = Array.from({ length: 12 }, (_, i) => `T${i + 1}`);
     const colors = ['#6258F5', '#31C8DB', '#31CDB1', '#BD7B23', '#7960F8'];
-    const datasets = AppState.planList.map((cat, idx) => {
+    const lrnCats = getUniqueNonEmptyList([
+      AppState.planList,
+      getAllMonthlyCats('learningDetails')
+    ]);
+    const datasets = lrnCats.map((cat, idx) => {
       const data = [];
       for (let m = 1; m <= 12; m++) {
         const val = (AppState.monthlyDetails[m]?.learningDetails || [])
           .filter(x => x.cat === cat)
-          .reduce((s, x) => s + x.val, 0);
+          .reduce((s, x) => s + (Number(x.val) || 0), 0);
         data.push(val);
       }
       return {
@@ -1442,7 +1501,7 @@ function renderSetupTables() {
     tbExp.innerHTML = AppState.expenses.map((item, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateExpenseItem(${idx}, this.innerText)">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateExpenseItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteExpenseItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1453,7 +1512,7 @@ function renderSetupTables() {
     tbInc.innerHTML = AppState.incomeList.map((item, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateIncomeItem(${idx}, this.innerText)">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateIncomeItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteIncomeItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1464,7 +1523,7 @@ function renderSetupTables() {
     tbLrn.innerHTML = AppState.planList.map((item, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanListItem(${idx}, this.innerText)">${item}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanListItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanListItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1475,9 +1534,9 @@ function renderSetupTables() {
     tbInv.innerHTML = AppState.investProducts.map((p, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'name', this.innerText)">${p.name}</td>
-        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText)||0)">${p.returnRate.toFixed(1)}%</td>
-        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText)||0)">${p.risk.toFixed(1)}%</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'name', this.innerText)">${escapeHtml(p.name)}</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.returnRate || 0).toFixed(1)}%</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.risk || 0).toFixed(1)}%</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteInvestItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1497,7 +1556,29 @@ window.deleteExpenseItem = function(idx) {
 };
 
 window.updateExpenseItem = function(idx, val) {
-  AppState.expenses[idx] = val.trim();
+  const oldName = AppState.expenses[idx];
+  const newName = (val || '').trim();
+  if (!newName) {
+    renderSetupTables();
+    return;
+  }
+  AppState.expenses[idx] = newName;
+  if (oldName && oldName !== newName) {
+    (AppState.planExpense || []).forEach(p => {
+      if (p.name === oldName) p.name = newName;
+    });
+    for (let m = 1; m <= 12; m++) {
+      const md = AppState.monthlyDetails?.[m];
+      if (!md) continue;
+      (md.expenses || []).forEach(x => {
+        if (x.cat === oldName) x.cat = newName;
+      });
+      if (md.reconExpenseNotes && md.reconExpenseNotes[oldName]) {
+        md.reconExpenseNotes[newName] = md.reconExpenseNotes[oldName];
+        delete md.reconExpenseNotes[oldName];
+      }
+    }
+  }
   syncKeywordChangesToDependentSheets();
 };
 
@@ -1514,41 +1595,131 @@ window.deleteIncomeItem = function(idx) {
 };
 
 window.updateIncomeItem = function(idx, val) {
-  AppState.incomeList[idx] = val.trim();
+  const oldName = AppState.incomeList[idx];
+  const newName = (val || '').trim();
+  if (!newName) {
+    renderSetupTables();
+    return;
+  }
+  AppState.incomeList[idx] = newName;
+  if (oldName && oldName !== newName) {
+    (AppState.planIncome || []).forEach(p => {
+      if (p.name === oldName) p.name = newName;
+    });
+    for (let m = 1; m <= 12; m++) {
+      const md = AppState.monthlyDetails?.[m];
+      if (!md) continue;
+      (md.incomes || []).forEach(x => {
+        if (x.cat === oldName) x.cat = newName;
+      });
+      if (md.reconIncomeNotes && md.reconIncomeNotes[oldName]) {
+        md.reconIncomeNotes[newName] = md.reconIncomeNotes[oldName];
+        delete md.reconIncomeNotes[oldName];
+      }
+    }
+  }
   syncKeywordChangesToDependentSheets();
 };
 
 window.addPlanRow = function() {
   AppState.planList.push(`Kế hoạch đào tạo ${AppState.planList.length + 1}`);
   renderSetupTables();
+  syncKeywordChangesToDependentSheets();
 };
 
 window.deletePlanListItem = function(idx) {
   AppState.planList.splice(idx, 1);
   renderSetupTables();
+  syncKeywordChangesToDependentSheets();
 };
 
 window.updatePlanListItem = function(idx, val) {
-  AppState.planList[idx] = val.trim();
+  const oldName = AppState.planList[idx];
+  const newName = (val || '').trim();
+  if (!newName) {
+    renderSetupTables();
+    return;
+  }
+  AppState.planList[idx] = newName;
+  if (oldName && oldName !== newName) {
+    for (let m = 1; m <= 12; m++) {
+      const md = AppState.monthlyDetails?.[m];
+      if (!md) continue;
+      (md.learningDetails || []).forEach(x => {
+        if (x.cat === oldName) x.cat = newName;
+      });
+    }
+  }
+  syncKeywordChangesToDependentSheets();
 };
 
+function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
+  (AppState.tcGoals || []).forEach(g => {
+    if (g.type !== 'invest') return;
+    if (!Array.isArray(g.allocProducts) || g.allocProducts.length === 0) {
+      g.allocProducts = AppState.investProducts.slice(0, 3).map((p, idx) => ({
+        prodName: p.name,
+        weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
+        returnRate: p.returnRate,
+        risk: p.risk
+      }));
+    }
+    let avgRate = 0;
+    let totalWeight = 0;
+    g.allocProducts.forEach(ap => {
+      if (oldProdName && newProdName && ap.prodName === oldProdName) {
+        ap.prodName = newProdName;
+      }
+      const matched = AppState.investProducts.find(ip => ip.name === ap.prodName);
+      if (matched) {
+        ap.returnRate = matched.returnRate;
+        ap.risk = matched.risk;
+      }
+      const w = Number(ap.weight) || 0;
+      totalWeight += w;
+      avgRate += (w / 100) * (Number(ap.returnRate) || 0);
+    });
+    if (totalWeight > 0 && avgRate > 0) {
+      g.rate = parseFloat(avgRate.toFixed(2));
+    }
+    g.monthly = calculateMonthlyNeed(g);
+  });
+}
+
 window.addInvestRow = function() {
-  AppState.investProducts.push({ name: "Sản phẩm mới", returnRate: 10.0, risk: 8.0 });
+  AppState.investProducts.push({ name: `Sản phẩm mới ${AppState.investProducts.length + 1}`, returnRate: 10.0, risk: 8.0 });
+  syncInvestProductsToGoals();
   renderSetupTables();
+  renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
 window.deleteInvestItem = function(idx) {
   AppState.investProducts.splice(idx, 1);
+  syncInvestProductsToGoals();
   renderSetupTables();
+  renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
 window.updateInvestField = function(idx, field, val) {
-  AppState.investProducts[idx][field] = val;
+  if (!AppState.investProducts[idx]) return;
+  const oldName = field === 'name' ? AppState.investProducts[idx].name : null;
+  const cleanVal = field === 'name' ? (val || '').trim() : val;
+  if (field === 'name' && !cleanVal) {
+    renderSetupTables();
+    return;
+  }
+  AppState.investProducts[idx][field] = cleanVal;
+  syncInvestProductsToGoals(oldName, field === 'name' ? cleanVal : null);
+  renderSetupTables();
+  renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
@@ -1562,17 +1733,21 @@ function syncKeywordChangesToDependentSheets() {
 function renderPlanTables() {
   const tbInc = document.getElementById('tbody-plan-inc');
   if (tbInc) {
+    const incOptions = getUniqueNonEmptyList([
+      AppState.incomeList,
+      (AppState.planIncome || []).map(p => p.name)
+    ]);
     tbInc.innerHTML = AppState.planIncome.map((p, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td>
           <select class="select-inline-cell" onchange="updatePlanIncCat(${idx}, this.value)">
-            ${AppState.incomeList.map(opt => `<option value="${opt}" ${opt === p.name ? 'selected' : ''}>${opt}</option>`).join('')}
+            ${incOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === p.name ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
           </select>
         </td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updatePlanIncVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'note', this.innerText)">${p.note || ''}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'analysis', this.innerText)">${p.analysis || ''}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanIncValLive(${idx}, this.innerText)" onblur="updatePlanIncVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanIncRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1580,17 +1755,21 @@ function renderPlanTables() {
 
   const tbExp = document.getElementById('tbody-plan-exp');
   if (tbExp) {
+    const expOptions = getUniqueNonEmptyList([
+      AppState.expenses,
+      (AppState.planExpense || []).map(p => p.name)
+    ]);
     tbExp.innerHTML = AppState.planExpense.map((p, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td>
           <select class="select-inline-cell" onchange="updatePlanExpCat(${idx}, this.value)">
-            ${AppState.expenses.map(opt => `<option value="${opt}" ${opt === p.name ? 'selected' : ''}>${opt}</option>`).join('')}
+            ${expOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === p.name ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
           </select>
         </td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updatePlanExpVal(${idx}, this.innerText)">${p.plan.toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'note', this.innerText)">${p.note || ''}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'analysis', this.innerText)">${p.analysis || ''}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanExpValLive(${idx}, this.innerText)" onblur="updatePlanExpVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deletePlanExpRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -1600,41 +1779,89 @@ function renderPlanTables() {
 }
 
 window.addPlanIncomeDirect = function() {
-  const firstCat = AppState.incomeList[0] || "Lương từ công ty";
-  AppState.planIncome.push({ name: firstCat, plan: 10.0, note: "", analysis: "" });
+  if (AppState.incomeList.length === 0) {
+    AppState.incomeList.push("Nguồn thu mới 1");
+    renderSetupTables();
+  }
+  const firstCat = AppState.incomeList[0];
+  AppState.planIncome.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
   recalculateAll();
 };
 
 window.deletePlanIncRow = function(idx) {
   AppState.planIncome.splice(idx, 1);
   renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
   recalculateAll();
 };
 
 window.addPlanExpenseDirect = function() {
-  const firstCat = AppState.expenses[0] || "Mua thực phẩm";
-  AppState.planExpense.push({ name: firstCat, plan: 2.0, note: "", analysis: "" });
+  if (AppState.expenses.length === 0) {
+    AppState.expenses.push("Chi tiêu mới 1");
+    renderSetupTables();
+  }
+  const firstCat = AppState.expenses[0];
+  AppState.planExpense.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
   recalculateAll();
 };
 
 window.deletePlanExpRow = function(idx) {
   AppState.planExpense.splice(idx, 1);
   renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
   recalculateAll();
 };
 
-window.updatePlanIncCat = function(idx, val) { AppState.planIncome[idx].name = val; recalculateAll(); };
-window.updatePlanExpCat = function(idx, val) { AppState.planExpense[idx].name = val; recalculateAll(); };
-window.updatePlanIncVal = function(idx, txt) { AppState.planIncome[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0; updatePlanTotals(); recalculateAll(); };
-window.updatePlanExpVal = function(idx, txt) { AppState.planExpense[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0; updatePlanTotals(); recalculateAll(); };
-window.updatePlanIncField = function(idx, fld, txt) { AppState.planIncome[idx][fld] = txt.trim(); };
-window.updatePlanExpField = function(idx, fld, txt) { AppState.planExpense[idx][fld] = txt.trim(); };
+window.updatePlanIncCat = function(idx, val) {
+  if (!AppState.planIncome[idx]) return;
+  AppState.planIncome[idx].name = val;
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanExpCat = function(idx, val) {
+  if (!AppState.planExpense[idx]) return;
+  AppState.planExpense[idx].name = val;
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanIncValLive = function(idx, txt) {
+  if (!AppState.planIncome[idx]) return;
+  AppState.planIncome[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0;
+  updatePlanTotals();
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanExpValLive = function(idx, txt) {
+  if (!AppState.planExpense[idx]) return;
+  AppState.planExpense[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0;
+  updatePlanTotals();
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanIncVal = function(idx, txt) {
+  if (!AppState.planIncome[idx]) return;
+  AppState.planIncome[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0;
+  renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanExpVal = function(idx, txt) {
+  if (!AppState.planExpense[idx]) return;
+  AppState.planExpense[idx].plan = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0;
+  renderPlanTables();
+  renderReconciliationTable(AppState.currentMonth);
+  recalculateAll();
+};
+window.updatePlanIncField = function(idx, fld, txt) { if (AppState.planIncome[idx]) AppState.planIncome[idx][fld] = txt.trim(); };
+window.updatePlanExpField = function(idx, fld, txt) { if (AppState.planExpense[idx]) AppState.planExpense[idx][fld] = txt.trim(); };
 
 function updatePlanTotals() {
-  const sumInc = AppState.planIncome.reduce((s, p) => s + p.plan, 0);
-  const sumExp = AppState.planExpense.reduce((s, p) => s + p.plan, 0);
+  const sumInc = (AppState.planIncome || []).reduce((s, p) => s + (Number(p.plan) || 0), 0);
+  const sumExp = (AppState.planExpense || []).reduce((s, p) => s + (Number(p.plan) || 0), 0);
   const incEl = document.getElementById('plan-sum-inc-val');
   const expEl = document.getElementById('plan-sum-exp-val');
   if (incEl) incEl.textContent = `${sumInc.toFixed(2)} tr`;
@@ -2047,8 +2274,56 @@ const FinDatePicker = {
 window.FinDatePicker = FinDatePicker;
 
 // ==================== THEO DÕI THU CHI 12 THÁNG ====================
+function syncMonthLearningExpense(m) {
+  if (!AppState.monthlyDetails[m]) {
+    AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
+  }
+  const items = AppState.monthlyDetails[m].learningDetails || [];
+  let totalLearningCost = 0;
+  items.forEach(x => {
+    totalLearningCost += (parseFloat(x.val) || 0);
+  });
+
+  const expList = AppState.monthlyDetails[m].expenses;
+  const lrnCatName = "Chi tiền phát triển bản thân";
+  const lrnIdx = expList.findIndex(x => x.autoSyncedLearning === true);
+  let lrnExpense = lrnIdx !== -1 ? expList[lrnIdx] : null;
+
+  const y = AppState.currentYear || 2026;
+  const mStr = String(m).padStart(2, '0');
+  if (totalLearningCost > 0) {
+    if (!AppState.expenses.includes(lrnCatName)) {
+      AppState.expenses.push(lrnCatName);
+      renderSetupTables();
+    }
+    if (lrnExpense) {
+      if (!lrnExpense.userEdited) {
+        lrnExpense.val = totalLearningCost;
+      }
+    } else {
+      expList.push({
+        date: `${y}-${mStr}-20`,
+        cat: lrnCatName,
+        desc: "Đầu tư phát triển bản thân",
+        val: totalLearningCost,
+        autoSyncedLearning: true
+      });
+    }
+  } else if (lrnExpense && lrnExpense.autoSyncedLearning && !lrnExpense.userEdited) {
+    const idxToRemove = expList.indexOf(lrnExpense);
+    if (idxToRemove !== -1) expList.splice(idxToRemove, 1);
+  }
+}
+
 function renderMonthView(m) {
+  syncMonthLearningExpense(m);
   const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [], learningDetails: [] };
+
+  const incOptions = getUniqueNonEmptyList([
+    AppState.incomeList,
+    (AppState.planIncome || []).map(p => p.name),
+    (mData.incomes || []).map(x => x.cat)
+  ]);
 
   const tbInc = document.getElementById('tbody-m-detail-income');
   if (tbInc) {
@@ -2056,21 +2331,32 @@ function renderMonthView(m) {
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="income" data-index="${i}" data-iso-date="${inc.date || ''}" value="${formatDisplayDate(inc.date)}" placeholder="DD/MM/YYYY" autocomplete="off" readonly onchange="updateMonthIncomeDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="income" data-index="${i}" data-iso-date="${inc.date || ''}" value="${formatDisplayDate(inc.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthIncomeDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthIncomeDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
         <td>
           <select class="select-inline-cell" onchange="updateMonthIncCat(${m}, ${i}, this.value)">
-            ${AppState.incomeList.map(opt => `<option value="${opt}" ${opt === inc.cat ? 'selected' : ''}>${opt}</option>`).join('')}
+            ${incOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === inc.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+            <option value="__ADD_NEW_CAT__">+ Thêm nguồn thu mới...</option>
           </select>
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="inc.desc=this.innerText.trim();">${escapeHtml(inc.desc || '')}</td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthIncVal(${m}, ${i}, this.innerText)">${Number(inc.val || 0).toFixed(1)}</td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(inc.desc || '')}" placeholder="Chi tiết nguồn thu..." oninput="updateMonthIncDesc(${m}, ${i}, this.value)" onchange="updateMonthIncDesc(${m}, ${i}, this.value)">
+        </td>
+        <td>
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${inc.val !== undefined && inc.val !== null ? inc.val : ''}" placeholder="0.0" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
+        </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})" aria-label="Xoá dòng thu nhập"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
+
+  const expOptions = getUniqueNonEmptyList([
+    AppState.expenses,
+    (AppState.planExpense || []).map(p => p.name),
+    (mData.expenses || []).map(x => x.cat)
+  ]);
 
   const tbExp = document.getElementById('tbody-m-detail-expense');
   if (tbExp) {
@@ -2078,50 +2364,73 @@ function renderMonthView(m) {
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="expense" data-index="${i}" data-iso-date="${exp.date || ''}" value="${formatDisplayDate(exp.date)}" placeholder="DD/MM/YYYY" autocomplete="off" readonly onchange="updateMonthExpenseDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="expense" data-index="${i}" data-iso-date="${exp.date || ''}" value="${formatDisplayDate(exp.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthExpenseDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthExpenseDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
         <td>
           <select class="select-inline-cell" onchange="updateMonthExpCat(${m}, ${i}, this.value)">
-            ${AppState.expenses.map(opt => `<option value="${opt}" ${opt === exp.cat ? 'selected' : ''}>${opt}</option>`).join('')}
+            ${expOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === exp.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+            <option value="__ADD_NEW_CAT__">+ Thêm danh mục mới...</option>
           </select>
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="exp.desc=this.innerText.trim();">${escapeHtml(exp.desc || '')}</td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthExpVal(${m}, ${i}, this.innerText)">${Number(exp.val || 0).toFixed(1)}</td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(exp.desc || '')}" placeholder="Chi tiết giao dịch..." oninput="updateMonthExpDesc(${m}, ${i}, this.value)" onchange="updateMonthExpDesc(${m}, ${i}, this.value)">
+        </td>
+        <td>
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${exp.val !== undefined && exp.val !== null ? exp.val : ''}" placeholder="0.0" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
+        </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})" aria-label="Xoá dòng chi tiêu"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 
-  renderReconciliationTable(m);
   renderMonthLearningSection(m);
+  renderReconciliationTable(m);
   renderMonthHorizontalBarChart();
 }
 
 function renderReconciliationTable(m) {
-  const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [] };
+  const mData = AppState.monthlyDetails[m] || { incomes: [], expenses: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
+  if (!mData.reconIncomeNotes) mData.reconIncomeNotes = {};
+  if (!mData.reconExpenseNotes) mData.reconExpenseNotes = {};
+
   const actIncMap = {};
-  mData.incomes.forEach(x => { actIncMap[x.cat] = (actIncMap[x.cat] || 0) + x.val; });
+  let totalActInc = 0;
+  (mData.incomes || []).forEach(x => {
+    const v = Number(x.val) || 0;
+    actIncMap[x.cat] = (actIncMap[x.cat] || 0) + v;
+    totalActInc += v;
+  });
 
-  const actExpMap = {};
-  mData.expenses.forEach(x => { actExpMap[x.cat] = (actExpMap[x.cat] || 0) + x.val; });
+  const planIncMap = {};
+  (AppState.planIncome || []).forEach(p => {
+    const v = Number(p.plan) || 0;
+    planIncMap[p.name] = (planIncMap[p.name] || 0) + v;
+  });
 
-  let sumPlanInc = 0, sumActInc = 0;
-  let incRows = AppState.planIncome.map(p => {
-    const act = actIncMap[p.name] || 0;
-    const diff = act - p.plan;
-    sumPlanInc += p.plan;
-    sumActInc += act;
-    const note = mData.reconIncomeNotes[p.name] || { reason: '', action: '' };
+  const incCategories = getUniqueNonEmptyList([
+    (AppState.planIncome || []).map(p => p.name),
+    AppState.incomeList,
+    (mData.incomes || []).map(x => x.cat)
+  ]);
+
+  let sumPlanInc = 0;
+  const incRows = incCategories.map(catName => {
+    const plan = planIncMap[catName] || 0;
+    const act = actIncMap[catName] || 0;
+    const diff = act - plan;
+    sumPlanInc += plan;
+    const note = mData.reconIncomeNotes[catName] || { reason: '', action: '' };
+    const safeCatJs = catName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     return `
       <tr>
-        <td class="font-medium">${p.name}</td>
-        <td class="text-right font-mono">${p.plan.toFixed(1)}</td>
+        <td class="font-medium">${escapeHtml(catName)}</td>
+        <td class="text-right font-mono">${plan.toFixed(1)}</td>
         <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
         <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${p.name}', 'reason', this.innerText)">${note.reason || ''}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${p.name}', 'action', this.innerText)">${note.action || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${safeCatJs}', 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${safeCatJs}', 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
       </tr>
     `;
   }).join('');
@@ -2133,30 +2442,54 @@ function renderReconciliationTable(m) {
   if (footReconIncPlan) footReconIncPlan.textContent = sumPlanInc.toFixed(1);
 
   const footReconIncAct = document.getElementById('tfoot-recon-inc-act');
-  if (footReconIncAct) footReconIncAct.textContent = sumActInc.toFixed(1);
+  if (footReconIncAct) footReconIncAct.textContent = totalActInc.toFixed(1);
 
-  const incDiffTot = sumActInc - sumPlanInc;
+  const incDiffTot = totalActInc - sumPlanInc;
   const footReconIncDiff = document.getElementById('tfoot-recon-inc-diff');
-  if (footReconIncDiff) footReconIncDiff.textContent = incDiffTot >= 0 ? incDiffTot.toFixed(1) : `(${Math.abs(incDiffTot).toFixed(1)})`;
+  if (footReconIncDiff) {
+    footReconIncDiff.className = `text-right font-bold font-mono ${incDiffTot >= 0 ? 'text-success' : 'text-danger'}`;
+    footReconIncDiff.textContent = incDiffTot >= 0 ? incDiffTot.toFixed(1) : `(${Math.abs(incDiffTot).toFixed(1)})`;
+  }
 
   const footMIncTotal = document.getElementById('tfoot-m-inc-total');
-  if (footMIncTotal) footMIncTotal.textContent = sumActInc.toFixed(1);
+  if (footMIncTotal) footMIncTotal.textContent = totalActInc.toFixed(1);
 
-  let sumPlanExp = 0, sumActExp = 0;
-  let expRows = AppState.planExpense.map(p => {
-    const act = actExpMap[p.name] || 0;
-    const diff = p.plan - act;
-    sumPlanExp += p.plan;
-    sumActExp += act;
-    const note = mData.reconExpenseNotes[p.name] || { reason: '', action: '' };
+  const actExpMap = {};
+  let totalActExp = 0;
+  (mData.expenses || []).forEach(x => {
+    const v = Number(x.val) || 0;
+    actExpMap[x.cat] = (actExpMap[x.cat] || 0) + v;
+    totalActExp += v;
+  });
+
+  const planExpMap = {};
+  (AppState.planExpense || []).forEach(p => {
+    const v = Number(p.plan) || 0;
+    planExpMap[p.name] = (planExpMap[p.name] || 0) + v;
+  });
+
+  const expCategories = getUniqueNonEmptyList([
+    (AppState.planExpense || []).map(p => p.name),
+    AppState.expenses,
+    (mData.expenses || []).map(x => x.cat)
+  ]);
+
+  let sumPlanExp = 0;
+  const expRows = expCategories.map(catName => {
+    const plan = planExpMap[catName] || 0;
+    const act = actExpMap[catName] || 0;
+    const diff = plan - act;
+    sumPlanExp += plan;
+    const note = mData.reconExpenseNotes[catName] || { reason: '', action: '' };
+    const safeCatJs = catName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     return `
       <tr>
-        <td class="font-medium">${p.name}</td>
-        <td class="text-right font-mono">${p.plan.toFixed(1)}</td>
+        <td class="font-medium">${escapeHtml(catName)}</td>
+        <td class="text-right font-mono">${plan.toFixed(1)}</td>
         <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
         <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${p.name}', 'reason', this.innerText)">${note.reason || ''}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${p.name}', 'action', this.innerText)">${note.action || ''}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${safeCatJs}', 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${safeCatJs}', 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
       </tr>
     `;
   }).join('');
@@ -2168,39 +2501,50 @@ function renderReconciliationTable(m) {
   if (footReconExpPlan) footReconExpPlan.textContent = sumPlanExp.toFixed(1);
 
   const footReconExpAct = document.getElementById('tfoot-recon-exp-act');
-  if (footReconExpAct) footReconExpAct.textContent = sumActExp.toFixed(1);
+  if (footReconExpAct) footReconExpAct.textContent = totalActExp.toFixed(1);
 
-  const expDiffTot = sumPlanExp - sumActExp;
+  const expDiffTot = sumPlanExp - totalActExp;
   const footReconExpDiff = document.getElementById('tfoot-recon-exp-diff');
-  if (footReconExpDiff) footReconExpDiff.textContent = expDiffTot >= 0 ? expDiffTot.toFixed(1) : `(${Math.abs(expDiffTot).toFixed(1)})`;
+  if (footReconExpDiff) {
+    footReconExpDiff.className = `text-right font-bold font-mono ${expDiffTot >= 0 ? 'text-success' : 'text-danger'}`;
+    footReconExpDiff.textContent = expDiffTot >= 0 ? expDiffTot.toFixed(1) : `(${Math.abs(expDiffTot).toFixed(1)})`;
+  }
 
   const footMExpTotal = document.getElementById('tfoot-m-exp-total');
-  if (footMExpTotal) footMExpTotal.textContent = sumActExp.toFixed(1);
+  if (footMExpTotal) footMExpTotal.textContent = totalActExp.toFixed(1);
 
-  const savings = sumActInc - sumActExp;
+  const savings = totalActInc - totalActExp;
+  const fmtSummaryVal = (v) => {
+    const num = Number(v) || 0;
+    return Number.isInteger(num) ? String(num) : num.toFixed(1).replace(/\.0$/, '');
+  };
   const mSumInc = document.getElementById('m-summary-income');
-  if (mSumInc) mSumInc.textContent = Math.round(sumActInc);
+  if (mSumInc) mSumInc.textContent = fmtSummaryVal(totalActInc);
 
   const mSumExp = document.getElementById('m-summary-expense');
-  if (mSumExp) mSumExp.textContent = Math.round(sumActExp);
+  if (mSumExp) mSumExp.textContent = fmtSummaryVal(totalActExp);
 
   const mSumSav = document.getElementById('m-summary-savings');
-  if (mSumSav) mSumSav.textContent = Math.round(savings);
+  if (mSumSav) mSumSav.textContent = fmtSummaryVal(savings);
 }
 
 window.addMonthDetailIncomeRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  const firstCat = AppState.incomeList[0] || "Lương từ công ty";
+  if (AppState.incomeList.length === 0) {
+    AppState.incomeList.push("Nguồn thu mới 1");
+    renderSetupTables();
+  }
+  const firstCat = AppState.incomeList[0];
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
   AppState.monthlyDetails[m].incomes.push({
     date: `${y}-${mStr}-15`,
     cat: firstCat,
-    desc: "Khoản thu mới",
-    val: 5.0
+    desc: "",
+    val: 0.0
   });
   sortMonthTransactions(m, 'incomes');
   renderMonthView(m);
@@ -2219,15 +2563,19 @@ window.addMonthDetailExpenseRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  const firstCat = AppState.expenses[0] || "Mua thực phẩm";
+  if (AppState.expenses.length === 0) {
+    AppState.expenses.push("Chi tiêu mới 1");
+    renderSetupTables();
+  }
+  const firstCat = AppState.expenses[0];
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
   AppState.monthlyDetails[m].expenses.push({
     date: `${y}-${mStr}-10`,
     cat: firstCat,
-    desc: "Khoản chi mới",
-    val: 1.0
+    desc: "",
+    val: 0.0
   });
   sortMonthTransactions(m, 'expenses');
   renderMonthView(m);
@@ -2288,10 +2636,79 @@ window.updateMonthExpenseDate = function(m, i, val) {
   recalculateAll();
 };
 
-window.updateMonthIncCat = function(m, i, val) { AppState.monthlyDetails[m].incomes[i].cat = val; renderMonthView(m); recalculateAll(); };
-window.updateMonthExpCat = function(m, i, val) { AppState.monthlyDetails[m].expenses[i].cat = val; renderMonthView(m); recalculateAll(); };
-window.updateMonthIncVal = function(m, i, txt) { AppState.monthlyDetails[m].incomes[i].val = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0; renderMonthView(m); recalculateAll(); };
-window.updateMonthExpVal = function(m, i, txt) { AppState.monthlyDetails[m].expenses[i].val = parseFloat(txt.replace(/[^0-9.-]/g, '')) || 0; renderMonthView(m); recalculateAll(); };
+window.updateMonthIncDesc = function(m, i, txt) {
+  if (AppState.monthlyDetails[m]?.incomes?.[i]) {
+    AppState.monthlyDetails[m].incomes[i].desc = (txt || '').trim();
+  }
+};
+window.updateMonthExpDesc = function(m, i, txt) {
+  if (AppState.monthlyDetails[m]?.expenses?.[i]) {
+    AppState.monthlyDetails[m].expenses[i].desc = (txt || '').trim();
+  }
+};
+window.updateMonthIncCat = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.incomes?.[i]) return;
+  if (val === '__ADD_NEW_CAT__') {
+    const newCat = (prompt("Nhập tên nguồn thu mới:") || "").trim();
+    if (newCat) {
+      if (!AppState.incomeList.includes(newCat)) {
+        AppState.incomeList.push(newCat);
+        renderSetupTables();
+      }
+      AppState.monthlyDetails[m].incomes[i].cat = newCat;
+      showToast(`Đã thêm nguồn thu mới: ${newCat}`, "success");
+    }
+  } else {
+    AppState.monthlyDetails[m].incomes[i].cat = val;
+  }
+  renderMonthView(m);
+  recalculateAll();
+};
+
+window.updateMonthExpCat = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.expenses?.[i]) return;
+  if (val === '__ADD_NEW_CAT__') {
+    const newCat = (prompt("Nhập tên danh mục chi tiêu mới:") || "").trim();
+    if (newCat) {
+      if (!AppState.expenses.includes(newCat)) {
+        AppState.expenses.push(newCat);
+        renderSetupTables();
+      }
+      AppState.monthlyDetails[m].expenses[i].cat = newCat;
+      showToast(`Đã thêm danh mục mới: ${newCat}`, "success");
+    }
+  } else {
+    AppState.monthlyDetails[m].expenses[i].cat = val;
+  }
+  renderMonthView(m);
+  recalculateAll();
+};
+
+window.updateMonthIncValLive = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.incomes?.[i]) return;
+  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  AppState.monthlyDetails[m].incomes[i].val = num;
+  renderReconciliationTable(m);
+  recalculateAll();
+};
+
+window.updateMonthExpValLive = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.expenses?.[i]) return;
+  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  AppState.monthlyDetails[m].expenses[i].val = num;
+  AppState.monthlyDetails[m].expenses[i].userEdited = true;
+  renderReconciliationTable(m);
+  renderMonthHorizontalBarChart();
+  recalculateAll();
+};
+
+window.updateMonthIncVal = function(m, i, val) {
+  window.updateMonthIncValLive(m, i, val);
+};
+
+window.updateMonthExpVal = function(m, i, val) {
+  window.updateMonthExpValLive(m, i, val);
+};
 
 window.updateReconNote = function(m, type, cat, field, txt) {
   const dict = type === 'inc' ? AppState.monthlyDetails[m].reconIncomeNotes : AppState.monthlyDetails[m].reconExpenseNotes;
@@ -2307,30 +2724,48 @@ function renderMonthLearningSection(m) {
   
   const items = AppState.monthlyDetails[m].learningDetails || [];
   const tb = document.getElementById('tbody-m-learning-detail');
+  const lrnOptions = getUniqueNonEmptyList([
+    AppState.planList,
+    items.map(x => x.cat)
+  ]);
   
   if (tb) {
     tb.innerHTML = items.map((it, i) => `
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="learning" data-index="${i}" data-iso-date="${it.date || ''}" value="${formatDisplayDate(it.date)}" placeholder="DD/MM/YYYY" autocomplete="off" readonly onchange="updateMonthLearningField(${m}, ${i}, 'date', this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="learning" data-index="${i}" data-iso-date="${it.date || ''}" value="${formatDisplayDate(it.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthLearningField(${m}, ${i}, 'date', this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthLearningField(${m}, ${i}, 'date', this.getAttribute('data-iso-date') || this.value)">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
         <td>
-          <select class="select-inline-cell" onchange="updateMonthLearningField(${m}, ${i}, 'cat', this.value)">
-            ${AppState.planList.map(opt => `<option value="${opt}" ${opt === it.cat ? 'selected' : ''}>${opt}</option>`).join('')}
+          <select class="select-inline-cell" onchange="updateMonthLearningCat(${m}, ${i}, this.value)">
+            ${lrnOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === it.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+            <option value="__ADD_NEW_CAT__">+ Thêm kế hoạch mới...</option>
           </select>
         </td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'desc', this.innerText.trim())">${escapeHtml(it.desc || '')}</td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'val', parseFloat(this.innerText.replace(/[^0-9.-]/g, '')) || 0)">${Number(it.val || 0).toFixed(2)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'expRes', this.innerText.trim())">${escapeHtml(it.expRes || '')}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateMonthLearningField(${m}, ${i}, 'actRes', this.innerText.trim())">${escapeHtml(it.actRes || '')}</td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(it.desc || '')}" placeholder="Nội dung khóa học / sách..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)">
+        </td>
+        <td>
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-info" value="${it.val !== undefined && it.val !== null ? it.val : ''}" placeholder="0.0" oninput="updateMonthLearningValLive(${m}, ${i}, this.value)" onchange="updateMonthLearningVal(${m}, ${i}, this.value)">
+        </td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(it.expRes || '')}" placeholder="Kết quả kỳ vọng..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)">
+        </td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(it.actRes || '')}" placeholder="Kết quả thực tế..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'actRes', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'actRes', this.value)">
+        </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthLearningRow(${m}, ${i})" aria-label="Xoá dòng đào tạo"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 
+  updateMonthLearningStats(m);
+}
+
+function updateMonthLearningStats(m) {
+  const items = AppState.monthlyDetails[m]?.learningDetails || [];
   const catSums = {};
   let totalLearningCost = 0;
   items.forEach(x => {
@@ -2339,11 +2774,16 @@ function renderMonthLearningSection(m) {
     totalLearningCost += val;
   });
 
+  const statCats = getUniqueNonEmptyList([
+    AppState.planList,
+    items.map(x => x.cat)
+  ]);
+
   const tbStat = document.getElementById('tbody-m-learning-stat');
   if (tbStat) {
-    tbStat.innerHTML = AppState.planList.map(name => {
+    tbStat.innerHTML = statCats.map(name => {
       const val = catSums[name] || 0;
-      return `<tr><td>${name}</td><td class="text-right font-bold text-info font-mono">${val.toFixed(2)}</td></tr>`;
+      return `<tr><td>${escapeHtml(name)}</td><td class="text-right font-bold text-info font-mono">${val.toFixed(2)}</td></tr>`;
     }).join('');
   }
 
@@ -2353,7 +2793,7 @@ function renderMonthLearningSection(m) {
   if (footStatTotal) footStatTotal.textContent = totalLearningCost.toFixed(2);
 
   // Cập nhật dải thẻ KPI tổng quan chi phí học tập & đào tạo
-  let topCat = '--';
+  let topCat = 'Chưa có';
   let maxCatVal = 0;
   for (const [cat, val] of Object.entries(catSums)) {
     if (val > maxCatVal) {
@@ -2365,25 +2805,50 @@ function renderMonthLearningSection(m) {
   const kpiTotal = document.getElementById('m-learn-kpi-total');
   const kpiCount = document.getElementById('m-learn-kpi-count');
   const kpiTop = document.getElementById('m-learn-kpi-top');
-  if (kpiTotal) kpiTotal.textContent = `${Number(totalLearningCost).toLocaleString('vi-VN')} ₫`;
+  if (kpiTotal) kpiTotal.textContent = totalLearningCost.toFixed(2);
   if (kpiCount) kpiCount.textContent = items.length;
-  if (kpiTop) kpiTop.textContent = maxCatVal > 0 ? `${topCat} (${Number(maxCatVal).toLocaleString('vi-VN')} ₫)` : '--';
+  if (kpiTop) kpiTop.textContent = maxCatVal > 0 ? `${topCat} (${maxCatVal.toFixed(2)} tr)` : 'Chưa có';
 
-  const expList = AppState.monthlyDetails[m].expenses;
-  let lrnExpense = expList.find(x => x.cat === "Chi tiền phát triển bản thân");
-  const y = AppState.currentYear || 2026;
-  const mStr = String(m).padStart(2, '0');
-  if (lrnExpense) {
-    lrnExpense.val = totalLearningCost;
-  } else if (totalLearningCost > 0) {
-    expList.push({
-      date: `${y}-${mStr}-20`,
-      cat: "Chi tiền phát triển bản thân",
-      desc: "Đầu tư phát triển bản thân",
-      val: totalLearningCost
-    });
-  }
+  syncMonthLearningExpense(m);
 }
+
+window.updateMonthLearningFieldLive = function(m, i, field, val) {
+  if (AppState.monthlyDetails[m]?.learningDetails?.[i]) {
+    AppState.monthlyDetails[m].learningDetails[i][field] = (val || '').trim();
+  }
+};
+
+window.updateMonthLearningValLive = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.learningDetails?.[i]) return;
+  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  AppState.monthlyDetails[m].learningDetails[i].val = num;
+  updateMonthLearningStats(m);
+  syncLearningToDashboard();
+};
+
+window.updateMonthLearningVal = function(m, i, val) {
+  window.updateMonthLearningValLive(m, i, val);
+};
+
+window.updateMonthLearningCat = function(m, i, val) {
+  if (!AppState.monthlyDetails[m]?.learningDetails?.[i]) return;
+  if (val === '__ADD_NEW_CAT__') {
+    const newCat = (prompt("Nhập tên mục kế hoạch đào tạo mới:") || "").trim();
+    if (newCat) {
+      if (!AppState.planList.includes(newCat)) {
+        AppState.planList.push(newCat);
+        renderSetupTables();
+      }
+      AppState.monthlyDetails[m].learningDetails[i].cat = newCat;
+      showToast(`Đã thêm kế hoạch mới: ${newCat}`, "success");
+    }
+  } else {
+    AppState.monthlyDetails[m].learningDetails[i].cat = val;
+  }
+  updateMonthLearningStats(m);
+  renderMonthView(m);
+  recalculateAll();
+};
 
 window.updateMonthLearningField = function(m, i, field, value) {
   if (!AppState.monthlyDetails[m] || !AppState.monthlyDetails[m].learningDetails[i]) return;
@@ -2399,48 +2864,60 @@ window.updateMonthLearningField = function(m, i, field, value) {
       AppState.monthlyDetails[m].learningDetails.splice(i, 1);
       AppState.monthlyDetails[targetMonth].learningDetails.push(item);
       sortMonthTransactions(targetMonth, 'learningDetails');
+      syncMonthLearningExpense(targetMonth);
       showToast(`Đã tự động chuyển mục phát triển bản thân sang Tháng ${String(targetMonth).padStart(2, '0')}`, "info");
+      renderMonthView(AppState.currentMonth);
+      recalculateAll();
     } else {
       sortMonthTransactions(m, 'learningDetails');
+      renderMonthView(m);
+      recalculateAll();
     }
+  } else if (field === 'val') {
+    window.updateMonthLearningVal(m, i, value);
   } else {
     AppState.monthlyDetails[m].learningDetails[i][field] = value;
+    updateMonthLearningStats(m);
+    recalculateAll();
   }
-  renderMonthLearningSection(AppState.currentMonth);
-  syncLearningToDashboard();
 };
 
 window.addMonthLearningRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  const defaultCat = AppState.planList[0] || "Khóa học ngắn hạn";
+  if (AppState.planList.length === 0) {
+    AppState.planList.push("Kế hoạch đào tạo 1");
+    renderSetupTables();
+  }
+  const defaultCat = AppState.planList[0];
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
   AppState.monthlyDetails[m].learningDetails.push({
     date: `${y}-${mStr}-10`,
     cat: defaultCat,
-    desc: "Khóa đào tạo mới",
-    val: 1.0,
-    expRes: "Nâng cao kỹ năng",
-    actRes: "Đang học"
+    desc: "",
+    val: 0.0,
+    expRes: "",
+    actRes: ""
   });
   sortMonthTransactions(m, 'learningDetails');
-  renderMonthLearningSection(m);
-  syncLearningToDashboard();
+  renderMonthView(m);
+  recalculateAll();
 };
 
 window.deleteMonthLearningRow = function(m, i) {
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].learningDetails) {
     AppState.monthlyDetails[m].learningDetails.splice(i, 1);
-    renderMonthLearningSection(m);
-    syncLearningToDashboard();
+    renderMonthView(m);
+    recalculateAll();
   }
 };
 
 function syncLearningToDashboard() {
   renderReconciliationTable(AppState.currentMonth);
+  renderMonthHorizontalBarChart();
   recalculateAll();
 }
 
@@ -2455,9 +2932,16 @@ function renderMonthHorizontalBarChart() {
 
   const mData = AppState.monthlyDetails[AppState.currentMonth] || { expenses: [] };
   const catSums = {};
-  mData.expenses.forEach(x => { catSums[x.cat] = (catSums[x.cat] || 0) + x.val; });
+  (mData.expenses || []).forEach(x => {
+    const v = Number(x.val) || 0;
+    catSums[x.cat] = (catSums[x.cat] || 0) + v;
+  });
 
-  const labels = AppState.planExpense.map(p => p.name).reverse();
+  const labels = getUniqueNonEmptyList([
+    (AppState.planExpense || []).map(p => p.name),
+    AppState.expenses,
+    (mData.expenses || []).map(x => x.cat)
+  ]).reverse();
   const data = labels.map(name => catSums[name] || 0);
 
   if (window.monthBarChartInstance) window.monthBarChartInstance.destroy();
@@ -2499,7 +2983,7 @@ function renderCareerTables() {
         <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
         <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
         <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="AppState.skillsStore[${idx}]=this.innerText.trim();">${item.skills}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="AppState.skillsStore[${idx}]=this.innerText.trim();">${escapeHtml(item.skills || '')}</td>
       </tr>
     `).join('');
   }
@@ -2544,6 +3028,8 @@ function renderCareerTables() {
 window.updateCareerDetailField = function(idx, field, val) {
   if (AppState.careerDetailList[idx]) {
     AppState.careerDetailList[idx][field] = val;
+    if (field === 'actual') AppState.careerDetailList[idx].manualActual = true;
+    if (field === 'route') AppState.careerDetailList[idx].manualRoute = true;
     renderCareerTables();
     renderCareerChart();
   }
@@ -2966,17 +3452,22 @@ function renderSurveyQuestionCharts() {
 
 function evaluateSurveys() {
   let s1 = 0;
+  let count1 = 0;
   surveyQuestionsPart1.forEach((q, idx) => {
     const qNum = idx + 1;
     const choiceIdx = AppState.surveyP1Choices[qNum];
     if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
       s1 += q.weights[choiceIdx];
+      count1++;
     }
   });
 
   let rTxt = "";
-  let riskTitle = "Thận trọng (Ngại rủi ro)";
-  if (s1 < 18) {
+  let riskTitle = "Chưa đánh giá";
+  if (count1 === 0) {
+    rTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 1 để xác định khả năng chịu đựng rủi ro.";
+    riskTitle = "Chưa đánh giá";
+  } else if (s1 < 18) {
     rTxt = "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp.";
     riskTitle = "Thận trọng (Ngại rủi ro)";
   } else if (s1 < 28) {
@@ -2990,20 +3481,25 @@ function evaluateSurveys() {
   const p1ResEl = document.getElementById('survey-result-p1-text');
   const risk1 = document.getElementById('survey-result-risk');
   if (p1ResEl) p1ResEl.innerHTML = `<strong>Khả năng chịu đựng rủi ro:</strong> ${rTxt}`;
-  if (risk1) risk1.textContent = `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
+  if (risk1) risk1.textContent = count1 === 0 ? rTxt : `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
 
   let s2 = 0;
+  let count2 = 0;
   surveyQuestionsPart2.forEach((q, idx) => {
     const qNum = idx + 1;
     const choiceIdx = AppState.surveyP2Choices[qNum];
     if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
       s2 += q.weights[choiceIdx];
+      count2++;
     }
   });
 
   let cTxt = "";
-  let circumstanceTitle = "Bình thường";
-  if (s2 <= 20) {
+  let circumstanceTitle = "Chưa đánh giá";
+  if (count2 === 0) {
+    cTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 2 để đánh giá hoàn cảnh tài chính.";
+    circumstanceTitle = "Chưa đánh giá";
+  } else if (s2 <= 20) {
     cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn.";
     circumstanceTitle = "Không thuận lợi";
   } else if (s2 <= 29) {
@@ -3023,7 +3519,7 @@ function evaluateSurveys() {
   const p2ResEl = document.getElementById('survey-result-p2-text');
   const ctx2 = document.getElementById('survey-result-context');
   if (p2ResEl) p2ResEl.innerHTML = `<strong>Hoàn cảnh & Môi trường:</strong> ${cTxt}`;
-  if (ctx2) ctx2.textContent = `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
+  if (ctx2) ctx2.textContent = count2 === 0 ? cTxt : `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 
   // Cập nhật thẻ tổng hợp khuyến nghị Step 3
   const sumRiskTitle = document.getElementById('survey-summary-risk-title');
@@ -3039,8 +3535,8 @@ function evaluateSurveys() {
   // Cập nhật thanh kết quả trực quan
   const bar1 = document.getElementById('survey-result-bar-1');
   const bar2 = document.getElementById('survey-result-bar-2');
-  if (bar1) bar1.style.width = `${Math.min(100, Math.round((s1 / 35) * 100))}%`;
-  if (bar2) bar2.style.width = `${Math.min(100, Math.round((s2 / 45) * 100))}%`;
+  if (bar1) bar1.style.width = count1 === 0 ? '0%' : `${Math.min(100, Math.round((s1 / 35) * 100))}%`;
+  if (bar2) bar2.style.width = count2 === 0 ? '0%' : `${Math.min(100, Math.round((s2 / 45) * 100))}%`;
 }
 
 // ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN ====================
@@ -3055,6 +3551,7 @@ function renderTcGoalsFormTable() {
         <td>
           <input type="text" class="cell-blue font-bold" value="${g.name}" 
                  placeholder="VD: Mua nhà, Cho con học..."
+                 oninput="onGoalFieldInput(${idx}, 'name', this.value)"
                  onchange="onGoalFieldChange(${idx}, 'name', this.value)">
         </td>
         <td>
@@ -3066,31 +3563,37 @@ function renderTcGoalsFormTable() {
         <td>
           <input type="number" step="any" class="text-right font-mono" value="${g.val}" 
                  placeholder="0"
+                 oninput="onGoalFieldInput(${idx}, 'val', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
         <td>
           <input type="number" step="any" class="text-right font-mono" value="${g.paid || 0}" 
                  placeholder="0"
+                 oninput="onGoalFieldInput(${idx}, 'paid', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
         </td>
         <td>
           <input type="number" class="text-center font-mono" value="${g.start}" 
-                 onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||2026)">
+                 oninput="onGoalFieldInput(${idx}, 'start', parseInt(this.value, 10)||${AppState.currentYear || 2026})"
+                 onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||${AppState.currentYear || 2026})">
         </td>
         <td>
           <input type="number" class="text-center font-mono" value="${g.end}" 
-                 onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||2030)">
+                 oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||${(AppState.currentYear || 2026) + 4})"
+                 onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||${(AppState.currentYear || 2026) + 4})">
         </td>
         <td>
           <input type="number" step="any" class="text-right font-mono" value="${g.inflation || 0}" 
                  ${g.type === 'debt' ? 'disabled style="background:#f8fafc; cursor:not-allowed;"' : ''} 
+                 oninput="onGoalFieldInput(${idx}, 'inflation', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${g.rate || 8}" 
+          <input type="number" step="any" class="text-right font-mono" value="${g.rate || 0}" 
+                 oninput="onGoalFieldInput(${idx}, 'rate', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'rate', parseFloat(this.value)||0)">
         </td>
-        <td class="text-right font-bold text-success font-mono">${g.monthly.toFixed(2)} tr</td>
+        <td class="text-right font-bold text-success font-mono" id="tc-goal-monthly-${idx}">${g.monthly.toFixed(2)} tr</td>
         <td class="text-center">
           <button type="button" class="btn-table-del" title="Xóa mục tiêu" onclick="deleteTcGoalRow(${idx})">
             <i class="fa-solid fa-trash-can"></i>
@@ -3101,6 +3604,20 @@ function renderTcGoalsFormTable() {
   }).join('');
 }
 
+window.onGoalFieldInput = function(idx, field, val) {
+  if (!AppState.tcGoals[idx]) return;
+  AppState.tcGoals[idx][field] = val;
+  AppState.tcGoals[idx].monthly = calculateMonthlyNeed(AppState.tcGoals[idx]);
+  
+  const mCell = document.getElementById(`tc-goal-monthly-${idx}`);
+  if (mCell) mCell.textContent = `${AppState.tcGoals[idx].monthly.toFixed(2)} tr`;
+
+  syncDebtGoalToOverallData();
+  syncGoalsToCards();
+  renderTcMatrixTable();
+  recalculateAll();
+};
+
 window.onGoalFieldChange = function(idx, field, val) {
   if (!AppState.tcGoals[idx]) return;
   AppState.tcGoals[idx][field] = val;
@@ -3109,36 +3626,44 @@ window.onGoalFieldChange = function(idx, field, val) {
   syncDebtGoalToOverallData();
   renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
 window.addNewTcGoalRow = function() {
-  const defaultProds = AppState.investProducts.slice(0, 3).map((p, idx) => ({
-    prodName: p.name,
-    weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
-    returnRate: p.returnRate,
-    risk: p.risk
-  }));
+  const defaultAvgRate = (typeof getAvgInvestReturnRate === 'function' ? getAvgInvestReturnRate() : 8.0) || 8.0;
+  const defaultProds = (AppState.investProducts && AppState.investProducts.length > 0)
+    ? AppState.investProducts.slice(0, 3).map((p, idx) => ({
+        prodName: p.name,
+        weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
+        returnRate: p.returnRate,
+        risk: p.risk
+      }))
+    : [];
 
-  AppState.tcGoals.push({ 
+  const newGoal = { 
     id: `g_${Date.now()}`, 
-    name: `Mục tiêu mới ${AppState.tcGoals.length + 1}`, 
+    name: "Mục tiêu mới", 
     type: "invest", 
-    val: 100.0, 
+    val: 0.0, 
     paid: 0.0, 
-    start: AppState.currentYear, 
-    end: AppState.currentYear + 4, 
+    start: AppState.currentYear || 2026, 
+    end: (AppState.currentYear || 2026) + 4, 
     inflation: 4.0, 
-    rate: 8.0, 
+    rate: defaultAvgRate, 
     monthly: 0,
     yearsRetire: 0, 
     monthlyRetire: 0, 
     deathFund: 0,
     allocProducts: defaultProds
-  });
+  };
+  newGoal.monthly = calculateMonthlyNeed(newGoal);
+
+  AppState.tcGoals.push(newGoal);
 
   renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
@@ -3147,19 +3672,31 @@ window.deleteTcGoalRow = function(idx) {
   syncDebtGoalToOverallData();
   renderTcGoalsFormTable();
   syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
 function syncDebtGoalToOverallData() {
-  const debtGoals = AppState.tcGoals.filter(g => g.type === 'debt');
+  const debtGoals = (AppState.tcGoals || []).filter(g => g.type === 'debt');
   const totalMonthlyDebtNeed = debtGoals.reduce((sum, g) => sum + (g.monthly || calculateMonthlyNeed(g)), 0);
 
+  let debtPlanItem = AppState.planExpense.find(p => p.name === "Chi tiền trả nợ");
   if (totalMonthlyDebtNeed > 0) {
-    const debtPlanItem = AppState.planExpense.find(p => p.name === "Chi tiền trả nợ");
-    if (debtPlanItem) {
+    if (!debtPlanItem) {
+      if (!AppState.expenses.includes("Chi tiền trả nợ")) {
+        AppState.expenses.push("Chi tiền trả nợ");
+        renderSetupTables();
+      }
+      debtPlanItem = { name: "Chi tiền trả nợ", plan: parseFloat(totalMonthlyDebtNeed.toFixed(2)), note: "Tự động đồng bộ từ Mục tiêu trả nợ" };
+      AppState.planExpense.push(debtPlanItem);
+    } else {
       debtPlanItem.plan = parseFloat(totalMonthlyDebtNeed.toFixed(2));
-      renderPlanTables();
+      debtPlanItem.note = "Tự động đồng bộ từ Mục tiêu trả nợ";
     }
+    renderPlanTables();
+  } else if (debtPlanItem && debtPlanItem.note === "Tự động đồng bộ từ Mục tiêu trả nợ") {
+    debtPlanItem.plan = 0;
+    renderPlanTables();
   }
 }
 
@@ -3230,7 +3767,7 @@ function createCardHtmlDebt(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Khoản nợ ${num}: <strong>${g.name}</strong></span>
+        <span>Khoản nợ ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${g.name || 'Khoản nợ'}</strong></span>
         <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
@@ -3238,19 +3775,19 @@ function createCardHtmlDebt(g, num) {
           <tbody>
             <tr>
               <td style="width: 32%;">Năm bắt đầu</td>
-              <td class="cell-green-val font-mono" style="width: 18%;">${g.start}</td>
+              <td class="cell-green-val font-mono" style="width: 18%;" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${g.start}</td>
               <td class="bg-col-head" style="width: 32%;">Thời gian trả nợ</td>
               <td class="text-right font-bold font-mono" style="width: 18%;">${nYears.toFixed(0)} năm</td>
             </tr>
             <tr>
               <td>Năm tất toán</td>
-              <td class="cell-green-val font-mono">${g.end}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${g.end}</td>
               <td class="bg-col-head">Khoản nợ còn lại</td>
-              <td class="text-right font-bold text-danger font-mono">${targetNeed.toFixed(1)} tr</td>
+              <td class="text-right font-bold text-danger font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(1)} tr</td>
             </tr>
             <tr>
               <td>Lãi suất vay</td>
-              <td class="cell-green-val font-mono">${g.rate.toFixed(1)}%/năm</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'rate', this.innerText)">${g.rate.toFixed(1)}%/năm</td>
               <td class="bg-col-head">Cần trả mỗi tháng</td>
               <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
             </tr>
@@ -3299,7 +3836,7 @@ function createCardHtmlInvest(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong>${g.name}</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${g.name || 'Mục tiêu'}</strong></span>
         <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
@@ -3319,9 +3856,9 @@ function createCardHtmlInvest(g, num) {
           <tbody>
             <tr>
               <td>Năm bắt đầu</td>
-              <td class="cell-green-val font-mono">${g.start}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${g.start}</td>
               <td>Cần gom</td>
-              <td class="cell-orange-val font-mono">${targetNeed.toFixed(0)} tr</td>
+              <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(0)} tr</td>
               <td>${renderProductSelect(0)}</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(prods[0]?.weight || 0).toFixed(1)}%</td>
               <td class="text-right font-mono">${(prods[0]?.returnRate || 0).toFixed(1)}%</td>
@@ -3329,7 +3866,7 @@ function createCardHtmlInvest(g, num) {
             </tr>
             <tr>
               <td>Năm kết thúc</td>
-              <td class="cell-green-val font-mono">${g.end}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${g.end}</td>
               <td class="font-bold">Số năm gom</td>
               <td class="text-right font-bold font-mono">${nYears.toFixed(0)} năm</td>
               <td>${renderProductSelect(1)}</td>
@@ -3339,7 +3876,7 @@ function createCardHtmlInvest(g, num) {
             </tr>
             <tr>
               <td>Năm sau hưu</td>
-              <td class="cell-green-val font-mono">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'yearsRetire', this.innerText)">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
               <td class="font-bold">Cần / tháng</td>
               <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
               <td>${renderProductSelect(2)}</td>
@@ -3349,7 +3886,7 @@ function createCardHtmlInvest(g, num) {
             </tr>
             <tr>
               <td>Tiêu sau hưu</td>
-              <td class="cell-green-val font-mono">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyRetire', this.innerText)">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
               <td class="font-bold">Cần / năm</td>
               <td class="cell-orange-val font-mono">${yVal.toFixed(1)} tr</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
@@ -3357,11 +3894,11 @@ function createCardHtmlInvest(g, num) {
             </tr>
             <tr class="bg-neutral-gray font-semibold">
               <td>Để lại cho con:</td>
-              <td class="font-bold text-right text-danger font-mono">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
+              <td class="font-bold text-right text-danger font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'deathFund', this.innerText)">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
               <td style="text-align: right;">Trượt giá:</td>
-              <td class="cell-green-val font-mono">${(g.inflation || 0).toFixed(1)}%/năm</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(g.inflation || 0).toFixed(1)}%/năm</td>
               <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
-              <td colspan="2" class="cell-green-val text-center font-bold font-mono">${g.paid || 0} tr</td>
+              <td colspan="2" class="cell-green-val text-center font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${g.paid || 0} tr</td>
             </tr>
           </tbody>
         </table>
@@ -3390,6 +3927,7 @@ window.updateGoalInvestProduct = function(goalId, prodIndex, prodName) {
 
   syncGoalsToCards();
   renderTcGoalsFormTable();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
@@ -3407,6 +3945,28 @@ window.updateGoalProdWeight = function(goalId, prodIndex, textVal) {
 
   syncGoalsToCards();
   renderTcGoalsFormTable();
+  renderTcMatrixTable();
+  recalculateAll();
+};
+
+window.updateGoalCardField = function(goalId, field, rawText) {
+  const g = AppState.tcGoals.find(x => x.id === goalId);
+  if (!g) return;
+
+  const clean = (typeof rawText === 'string') ? rawText.trim().replace(/[^0-9.-]/g, '') : rawText;
+  if (field === 'name') {
+    g.name = (typeof rawText === 'string' ? rawText.trim() : '') || 'Mục tiêu';
+  } else if (field === 'start' || field === 'end') {
+    g[field] = parseInt(clean, 10) || AppState.currentYear;
+  } else {
+    g[field] = parseFloat(clean) || 0;
+  }
+  g.monthly = calculateMonthlyNeed(g);
+
+  syncDebtGoalToOverallData();
+  renderTcGoalsFormTable();
+  syncGoalsToCards();
+  renderTcMatrixTable();
   recalculateAll();
 };
 
@@ -3440,7 +4000,7 @@ function renderTcMatrixTable() {
 
   const startY = AppState.currentYear;
   const startA = AppState.currentAge;
-  const rate = 0.40;
+  const rate = (typeof getEffectiveSavingsRateRatio === 'function') ? getEffectiveSavingsRateRatio() : 0.40;
 
   let rows = '';
   for (let y = 0; y <= 32; y++) {
@@ -3492,7 +4052,8 @@ window.onMatrixCellChange = function(td, rIdx) {
     }
   });
 
-  const inc = rSum > 0 ? (rSum / 0.40) : 0;
+  const rate = (typeof getEffectiveSavingsRateRatio === 'function') ? getEffectiveSavingsRateRatio() : 0.40;
+  const inc = rSum > 0 ? (rSum / rate) : 0;
   document.getElementById(`mtr-sav-${rIdx}`).textContent = rSum > 0 ? rSum.toFixed(1) : '-';
   document.getElementById(`mtr-inc-${rIdx}`).textContent = inc > 0 ? inc.toFixed(1) : '-';
   updateMatrixChartData();
@@ -3685,6 +4246,8 @@ window.saveAppStateToCloud = async function() {
   }
 
   if (result.success) {
+    window.hasUnsavedChanges = false;
+    window.hasSavedInSession = true;
     updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
     const bkName = result.newBackup?.name || 'Bản sao lưu mới';
     showToast(`Đã lưu thành công [${bkName}] của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
@@ -3697,16 +4260,17 @@ window.saveAppStateToCloud = async function() {
         window.filterAndSortBackups();
       }
     }
+    return true;
   } else {
     updateCloudStatus('error', 'Lỗi khi lưu!');
     showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
+    return false;
   }
 };
 
 /**
  * ĐỌC DỮ LIỆU: Nạp dữ liệu từ Document ID của người dùng hiện tại
  * Khi người dùng bấm nút: Mở modal Quản lý bản sao lưu (Nhập dữ liệu)
- * Khi khởi động trang: Tự động nạp bản mới nhất trong nền
  */
 window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   if (!window.CloudDB || !UserSession.currentUser) return;
@@ -3742,12 +4306,22 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
       }
     });
 
+    window.hasUnsavedChanges = false;
+    window.hasSavedInSession = true;
+
     // Đồng bộ lại UI Năm và Tuổi
     const yEl = document.getElementById('input-year');
     const aEl = document.getElementById('input-age');
     if (yEl) yEl.innerText = AppState.currentYear;
     if (aEl) aEl.innerText = AppState.currentAge;
     document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+    const sRateEl = document.getElementById('target-savings-rate-val');
+    if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+    const vAgeEl = document.getElementById('vision-age-cell');
+    if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
+    const vDescEl = document.getElementById('vision-desc-cell');
+    if (vDescEl) vDescEl.innerText = AppState.visionDesc || '';
 
     // Vẽ lại tất cả các bảng và biểu đồ
     renderSetupTables();
@@ -3756,6 +4330,10 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     renderSkillsFamilyJob();
     renderGoogleFormSurvey();
     evaluateSurveys();
+    if (window.updateSurveyProgress) {
+      window.updateSurveyProgress();
+    }
+    renderTcMatrixTable();
     renderCareerTables();
     renderMonthView(AppState.currentMonth);
     syncGoalsToCards();
@@ -4194,6 +4772,13 @@ window.executeConfirmedAction = async function() {
       if (aEl) aEl.innerText = AppState.currentAge;
       document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
+      const sRateEl = document.getElementById('target-savings-rate-val');
+      if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+      const vAgeEl = document.getElementById('vision-age-cell');
+      if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
+      const vDescEl = document.getElementById('vision-desc-cell');
+      if (vDescEl) vDescEl.innerText = AppState.visionDesc || '';
+
       // 4. Vẽ lại toàn bộ các bảng, khảo sát, và tính toán
       renderSetupTables();
       renderPlanTables();
@@ -4201,6 +4786,7 @@ window.executeConfirmedAction = async function() {
       renderSkillsFamilyJob();
       renderGoogleFormSurvey();
       evaluateSurveys();
+      renderTcMatrixTable();
       renderCareerTables();
       renderMonthView(AppState.currentMonth);
       syncGoalsToCards();
@@ -4215,6 +4801,10 @@ window.executeConfirmedAction = async function() {
       } catch (saveErr) {
         console.warn("Lỗi đồng bộ Cloud sau khi khôi phục:", saveErr);
       }
+
+      window.hasUnsavedChanges = false;
+      window.hasSavedInSession = true;
+      updateCloudStatus('ready', 'Khôi phục lúc ' + new Date().toLocaleTimeString('vi-VN'));
 
       isConfirmProcessing = false;
       window.closeConfirmModal();
@@ -4460,11 +5050,166 @@ function applyUserProfile(rawName, normalizedName, docId, loadExistingData = fal
   closeUserModal();
   showToast(`Chào mừng [${rawName}], hệ sinh thái đã sẵn sàng!`, "success");
 
-  // Nạp dữ liệu từ Cloud tương ứng với hồ sơ
-  if (window.CloudDB) {
+  // Chỉ nạp dữ liệu cũ nếu người dùng chủ động chọn "Tải & dùng tiếp hồ sơ này"
+  if (loadExistingData && window.CloudDB) {
     window.loadAppStateFromCloud(true);
+  } else {
+    window.resetAppStateToEmpty();
+    updateCloudStatus('ready', 'Đám mây sẵn sàng');
   }
 }
+
+// ==================== HỎI LƯU DỮ LIỆU TRƯỚC KHI TẮT TRANG WEB ====================
+window.hasUnsavedChanges = false;
+window.hasSavedInSession = false;
+window.allowExitWithoutSave = false;
+let pendingExitCallback = null;
+let isExitSaving = false;
+
+window.hasAppStateData = function() {
+  if (
+    (AppState.expenses && AppState.expenses.length > 0) ||
+    (AppState.incomeList && AppState.incomeList.length > 0) ||
+    (AppState.planList && AppState.planList.length > 0) ||
+    (AppState.investProducts && AppState.investProducts.length > 0) ||
+    (AppState.tcGoals && AppState.tcGoals.length > 0) ||
+    (AppState.skillsList && AppState.skillsList.length > 0) ||
+    (AppState.familyList && AppState.familyList.length > 0) ||
+    (AppState.jobList && AppState.jobList.length > 0) ||
+    (AppState.planIncome && AppState.planIncome.length > 0) ||
+    (AppState.planExpense && AppState.planExpense.length > 0) ||
+    (AppState.surveyP1Choices && Object.keys(AppState.surveyP1Choices).length > 0) ||
+    (AppState.surveyP2Choices && Object.keys(AppState.surveyP2Choices).length > 0) ||
+    (AppState.skillsStore && Object.keys(AppState.skillsStore).length > 0)
+  ) {
+    return true;
+  }
+  for (let m = 1; m <= 12; m++) {
+    const md = AppState.monthlyDetails?.[m];
+    if (md && ((md.incomes && md.incomes.length > 0) || (md.expenses && md.expenses.length > 0) || (md.learningDetails && md.learningDetails.length > 0))) {
+      return true;
+    }
+  }
+  return false;
+};
+
+window.markUnsavedChanges = function() {
+  window.hasUnsavedChanges = true;
+  window.allowExitWithoutSave = false;
+  updateCloudStatus('ready', 'Chưa lưu dữ liệu');
+};
+
+window.openExitSaveModal = function(onProceedCallback = null) {
+  pendingExitCallback = typeof onProceedCallback === 'function' ? onProceedCallback : null;
+  const overlay = document.getElementById('exit-save-modal-overlay');
+  const statusAlert = document.getElementById('exit-save-status-alert');
+  const btnStay = document.getElementById('btn-exit-stay');
+  const btnDiscard = document.getElementById('btn-exit-discard');
+  const btnSave = document.getElementById('btn-exit-save-now');
+  const btnSaveText = document.getElementById('btn-exit-save-text');
+
+  if (!overlay) return;
+  isExitSaving = false;
+  if (statusAlert) statusAlert.style.display = 'none';
+  if (btnStay) btnStay.disabled = false;
+  if (btnDiscard) btnDiscard.disabled = false;
+  if (btnSave) btnSave.disabled = false;
+  if (btnSaveText) btnSaveText.textContent = 'Lưu dữ liệu ngay';
+
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+  if (btnSave) setTimeout(() => btnSave.focus(), 60);
+};
+
+window.closeExitSaveModal = function() {
+  if (isExitSaving) return;
+  const overlay = document.getElementById('exit-save-modal-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+    overlay.style.display = 'none';
+  }
+  pendingExitCallback = null;
+};
+
+window.confirmExitWithoutSaving = function() {
+  if (isExitSaving) return;
+  window.hasUnsavedChanges = false;
+  window.allowExitWithoutSave = true;
+  const cb = pendingExitCallback;
+  window.closeExitSaveModal();
+  if (typeof cb === 'function') {
+    cb();
+  } else {
+    showToast("Đã bỏ qua lưu dữ liệu. Bạn có thể đóng trang web ngay bây giờ.", "info");
+  }
+};
+
+window.confirmSaveBeforeExit = async function() {
+  if (isExitSaving) return;
+  const statusAlert = document.getElementById('exit-save-status-alert');
+  const statusIcon = document.getElementById('exit-save-status-icon');
+  const statusMsg = document.getElementById('exit-save-status-msg');
+  const btnStay = document.getElementById('btn-exit-stay');
+  const btnDiscard = document.getElementById('btn-exit-discard');
+  const btnSave = document.getElementById('btn-exit-save-now');
+  const btnSaveText = document.getElementById('btn-exit-save-text');
+
+  isExitSaving = true;
+  if (btnStay) btnStay.disabled = true;
+  if (btnDiscard) btnDiscard.disabled = true;
+  if (btnSave) btnSave.disabled = true;
+  if (btnSaveText) btnSaveText.textContent = 'Đang lưu...';
+
+  if (statusAlert) {
+    statusAlert.className = 'confirm-status-alert is-processing';
+    statusAlert.style.display = 'flex';
+  }
+  if (statusIcon) statusIcon.className = 'fa-solid fa-spinner fa-spin';
+  if (statusMsg) statusMsg.textContent = 'Đang lưu dữ liệu lên Cloud Firestore...';
+
+  const savedOk = await window.saveAppStateToCloud();
+  isExitSaving = false;
+
+  if (savedOk) {
+    window.hasUnsavedChanges = false;
+    window.allowExitWithoutSave = true;
+    const cb = pendingExitCallback;
+    window.closeExitSaveModal();
+    if (typeof cb === 'function') {
+      cb();
+    } else {
+      showToast("Đã lưu dữ liệu thành công! Bạn có thể đóng trang web an toàn.", "success");
+    }
+  } else {
+    if (statusAlert) {
+      statusAlert.className = 'confirm-status-alert is-error';
+      statusAlert.style.display = 'flex';
+    }
+    if (statusIcon) statusIcon.className = 'fa-solid fa-circle-exclamation';
+    if (statusMsg) statusMsg.textContent = 'Chưa thể lưu dữ liệu. Vui lòng kiểm tra hồ sơ hoặc kết nối mạng và thử lại.';
+    if (btnStay) btnStay.disabled = false;
+    if (btnDiscard) btnDiscard.disabled = false;
+    if (btnSave) btnSave.disabled = false;
+    if (btnSaveText) btnSaveText.textContent = 'Thử lưu lại';
+  }
+};
+
+// Sự kiện trình duyệt hỏi người dùng trước khi tắt / đóng tab hoặc tải lại trang
+window.addEventListener('beforeunload', (e) => {
+  if (window.allowExitWithoutSave) return;
+  if (window.hasUnsavedChanges || !window.hasSavedInSession || window.hasAppStateData()) {
+    const msg = 'Bạn có muốn lưu dữ liệu trước khi tắt trang web không?';
+    e.preventDefault();
+    e.returnValue = msg;
+    // Nếu người dùng chọn "Ở lại trang" trên hộp thoại trình duyệt để lưu dữ liệu, mở ngay hộp thoại Lưu trong trang
+    setTimeout(() => {
+      if (!document.hidden && !window.allowExitWithoutSave) {
+        window.openExitSaveModal();
+      }
+    }, 250);
+    return msg;
+  }
+});
 
 // ==================== KHỞI TẠO VÀ LẮNG NGHE SỰ KIỆN ====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -4557,7 +5302,14 @@ document.addEventListener('DOMContentLoaded', () => {
     Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
   }
 
-  // Khởi tạo các bảng dữ liệu ban đầu
+  // Khởi tạo các bảng dữ liệu ban đầu (trạng thái trống hoàn toàn khi mở trang)
+  const sRateEl = document.getElementById('target-savings-rate-val');
+  if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+  const vAgeEl = document.getElementById('vision-age-cell');
+  if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
+  const vDescEl = document.getElementById('vision-desc-cell');
+  if (vDescEl) vDescEl.innerText = AppState.visionDesc || '';
+
   renderSetupTables();
   renderPlanTables();
   renderTcGoalsFormTable();
@@ -4567,10 +5319,27 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.updateSurveyProgress) {
     window.updateSurveyProgress();
   }
+  renderTcMatrixTable();
   renderCareerTables();
   renderMonthView(AppState.currentMonth);
   syncGoalsToCards();
   recalculateAll();
+
+  // Theo dõi mọi thao tác nhập liệu / chỉnh sửa trên trang để đánh dấu dữ liệu chưa lưu
+  const contentBody = document.querySelector('.content-body');
+  if (contentBody) {
+    contentBody.addEventListener('input', () => {
+      window.markUnsavedChanges();
+    });
+    contentBody.addEventListener('change', () => {
+      window.markUnsavedChanges();
+    });
+    contentBody.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-table-add, .btn-table-add-prominent, .btn-table-del, .gform-opt-row')) {
+        window.markUnsavedChanges();
+      }
+    });
+  }
 
   // Khôi phục phiên người dùng hoặc mở Modal bắt buộc
   const storedUser = UserSession.getStored();
@@ -4611,6 +5380,34 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (sRateEl) {
+    const handleSavingsRateUpdate = () => {
+      const parsed = parseFloat(sRateEl.innerText.replace(/[^0-9.-]/g, ''));
+      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+        AppState.targetSavingsRate = parsed;
+      }
+      renderTcMatrixTable();
+      renderCareerTables();
+      renderCareerChart();
+    };
+    sRateEl.addEventListener('input', handleSavingsRateUpdate);
+    sRateEl.addEventListener('blur', () => {
+      sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+      handleSavingsRateUpdate();
+    });
+  }
+
+  if (vAgeEl) {
+    vAgeEl.addEventListener('input', () => {
+      AppState.visionAge = vAgeEl.innerText.trim();
+    });
+  }
+  if (vDescEl) {
+    vDescEl.addEventListener('input', () => {
+      AppState.visionDesc = vDescEl.innerText.trim();
+    });
+  }
+
   // Lắng nghe sự kiện bàn phím cho Day–night sky switch (Prompt #021)
   const u021Switch = document.getElementById('u021-theme-switch');
   if (u021Switch) {
@@ -4622,12 +5419,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Đóng modal backup khi click bên ngoài vùng hộp thoại hoặc nhấn phím Escape
+  // Đóng modal backup hoặc modal hỏi lưu khi click bên ngoài vùng hộp thoại hoặc nhấn phím Escape
   const backupOverlay = document.getElementById('backup-modal-overlay');
   if (backupOverlay) {
     backupOverlay.addEventListener('click', (e) => {
       if (e.target === backupOverlay) {
         window.closeBackupManagerModal();
+      }
+    });
+  }
+  const exitSaveOverlay = document.getElementById('exit-save-modal-overlay');
+  if (exitSaveOverlay) {
+    exitSaveOverlay.addEventListener('click', (e) => {
+      if (e.target === exitSaveOverlay && !isExitSaving) {
+        window.closeExitSaveModal();
       }
     });
   }
@@ -4637,13 +5442,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (backupModal && backupModal.classList.contains('active')) {
         window.closeBackupManagerModal();
       }
+      const exitModal = document.getElementById('exit-save-modal-overlay');
+      if (exitModal && exitModal.classList.contains('active') && !isExitSaving) {
+        window.closeExitSaveModal();
+      }
     }
   });
 });
 
-// Khi Firebase sẵn sàng
+// Khi Firebase sẵn sàng: giữ nguyên dữ liệu ban đầu trống hoàn toàn (người dùng có thể bấm "Nhập dữ liệu" bất cứ lúc nào để khôi phục bản lưu)
 window.addEventListener('firebase-ready', () => {
-  if (UserSession.currentUser) {
-    window.loadAppStateFromCloud(true);
-  }
+  updateCloudStatus('ready', 'Đám mây sẵn sàng');
 });
