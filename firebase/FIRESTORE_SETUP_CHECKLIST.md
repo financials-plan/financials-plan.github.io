@@ -2,8 +2,6 @@
 
 Tài liệu này tóm tắt cấu trúc thư mục và trạng thái cấu hình thực tế của dự án **Quản lý Tài chính Cá nhân 360°** (`financials-plan.github.io`), kèm theo danh sách kiểm tra (Checklist) từng bước để tái lập toàn bộ hệ thống Cloud Firestore từ con số 0.
 
-> **Tài liệu kỹ thuật chi tiết bằng LaTeX:** Xem toàn bộ kiến trúc, đặc tả Schema 22 trường dữ liệu, Security Rules, Indexes và hướng dẫn xử lý sự cố trong file [`FIRESTORE_SETUP_GUIDE.tex`](./FIRESTORE_SETUP_GUIDE.tex).
-
 ---
 
 ## 1. Cấu trúc tổ chức thư mục chuẩn hóa
