@@ -495,6 +495,7 @@ function createEmptyAppState() {
     planExpense: [],
     skillsStore: {},
     careerDetailList: [],
+    matrixOverrides: {},
     monthlyDetails: emptyMonthly,
     surveyP1Choices: {},
     surveyP2Choices: {}
@@ -627,20 +628,24 @@ function getEffectiveSavingsRateRatio() {
 function getMatrixIncomeNeed(yearOffset) {
   let sSum = 0;
   const yr = AppState.currentYear + yearOffset;
-  AppState.tcGoals.forEach(g => {
-    if (yr >= g.start && yr <= g.end) {
-      const mNeed = calculateMonthlyNeed(g);
-      g.monthly = mNeed;
-      sSum += mNeed;
-    }
-  });
+  if (AppState.matrixOverrides && AppState.matrixOverrides[yearOffset] !== undefined) {
+    sSum = Number(AppState.matrixOverrides[yearOffset]) || 0;
+  } else {
+    AppState.tcGoals.forEach(g => {
+      if (yr >= g.start && yr <= g.end) {
+        const mNeed = calculateMonthlyNeed(g);
+        g.monthly = mNeed;
+        sSum += mNeed;
+      }
+    });
+  }
   const rate = getEffectiveSavingsRateRatio();
   return sSum > 0 ? (sSum / rate) : 0;
 }
 
 function calculateAgeMilestones() {
   const baseAge = AppState.currentAge;
-  const offsets = [0, 5, 9, 14, 19, 29];
+  const offsets = [0, 5, 10, 15, 20, 30];
 
   // Tính điểm khẩu vị rủi ro từ khảo sát Phần 1 (nếu người dùng đã chọn)
   let s1 = 0, count1 = 0;
@@ -653,8 +658,8 @@ function calculateAgeMilestones() {
   });
   let riskStockShift = 0;
   if (count1 > 0) {
-    if (s1 < 18) riskStockShift = -10;
-    else if (s1 >= 28) riskStockShift = 10;
+    if (s1 <= 20) riskStockShift = -10;
+    else if (s1 >= 30) riskStockShift = 10;
   }
 
   // Lấy lãi suất kỳ vọng từ Danh mục sản phẩm đầu tư nếu có
@@ -670,10 +675,11 @@ function calculateAgeMilestones() {
     const yrIndex = Math.min(32, off);
     const incNeedFromMatrix = getMatrixIncomeNeed(yrIndex);
 
-    const stocks = Math.max(10, Math.min(80, 100 - age + 5 + riskStockShift));
-    const bonds = Math.min(65, Math.max(10, age * 0.9 - (riskStockShift * 0.5)));
+    // Công thức phân bổ tài sản chuẩn tài chính cá nhân (Tổng tỷ trọng luôn bằng đúng 100.0%)
+    const stocks = Math.max(15, Math.min(75, 100 - age + riskStockShift));
     const ins = age >= 35 ? 10.0 : 7.0;
-    const cash = Math.max(5, 100 - (stocks + bonds + ins));
+    const cash = 5.0;
+    const bonds = Math.max(10, 100.0 - (stocks + ins + cash));
     const returnNeed = ((stocks * stockRate + bonds * bondRate + ins * insRate + cash * cashRate) / 100);
 
     return {
@@ -696,7 +702,8 @@ function calculateCareerDetails() {
     baseAge,
     baseAge + 1, baseAge + 2, baseAge + 3, baseAge + 4,
     baseAge + 5, baseAge + 6, baseAge + 7, baseAge + 8, baseAge + 9,
-    baseAge + 14, baseAge + 19, baseAge + 24, baseAge + 29
+    baseAge + 10,
+    baseAge + 15, baseAge + 20, baseAge + 25, baseAge + 30
   ];
 
   const existingMap = {};
@@ -2286,7 +2293,28 @@ function syncMonthLearningExpense(m) {
 
   const expList = AppState.monthlyDetails[m].expenses;
   const lrnCatName = "Chi tiền phát triển bản thân";
-  const lrnIdx = expList.findIndex(x => x.autoSyncedLearning === true);
+
+  // 1. Dọn dẹp triệt để các dòng đồng bộ trùng lặp (nếu có từ lịch sử dữ liệu cũ)
+  const syncedIndices = [];
+  expList.forEach((x, idx) => {
+    if (x && x.autoSyncedLearning === true) {
+      syncedIndices.push(idx);
+    }
+  });
+  while (syncedIndices.length > 1) {
+    const removeIdx = syncedIndices.pop();
+    expList.splice(removeIdx, 1);
+  }
+
+  // 2. Tìm bản ghi đồng bộ duy nhất hoặc nhận diện bản ghi kế thừa chuẩn
+  let lrnIdx = expList.findIndex(x => x.autoSyncedLearning === true);
+  if (lrnIdx === -1) {
+    const legacyIdx = expList.findIndex(x => x.cat === lrnCatName && x.desc === "Đầu tư phát triển bản thân");
+    if (legacyIdx !== -1) {
+      expList[legacyIdx].autoSyncedLearning = true;
+      lrnIdx = legacyIdx;
+    }
+  }
   let lrnExpense = lrnIdx !== -1 ? expList[lrnIdx] : null;
 
   const y = AppState.currentYear || 2026;
@@ -2297,9 +2325,7 @@ function syncMonthLearningExpense(m) {
       renderSetupTables();
     }
     if (lrnExpense) {
-      if (!lrnExpense.userEdited) {
-        lrnExpense.val = totalLearningCost;
-      }
+      lrnExpense.val = totalLearningCost;
     } else {
       expList.push({
         date: `${y}-${mStr}-20`,
@@ -2309,7 +2335,7 @@ function syncMonthLearningExpense(m) {
         autoSyncedLearning: true
       });
     }
-  } else if (lrnExpense && lrnExpense.autoSyncedLearning && !lrnExpense.userEdited) {
+  } else if (lrnExpense && lrnExpense.autoSyncedLearning) {
     const idxToRemove = expList.indexOf(lrnExpense);
     if (idxToRemove !== -1) expList.splice(idxToRemove, 1);
   }
@@ -3467,10 +3493,10 @@ function evaluateSurveys() {
   if (count1 === 0) {
     rTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 1 để xác định khả năng chịu đựng rủi ro.";
     riskTitle = "Chưa đánh giá";
-  } else if (s1 < 18) {
+  } else if (s1 <= 20) {
     rTxt = "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp.";
     riskTitle = "Thận trọng (Ngại rủi ro)";
-  } else if (s1 < 28) {
+  } else if (s1 <= 29) {
     rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.";
     riskTitle = "Cân bằng (Trung lập rủi ro)";
   } else {
@@ -3499,16 +3525,16 @@ function evaluateSurveys() {
   if (count2 === 0) {
     cTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 2 để đánh giá hoàn cảnh tài chính.";
     circumstanceTitle = "Chưa đánh giá";
-  } else if (s2 <= 20) {
+  } else if (s2 <= 21) {
     cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn.";
     circumstanceTitle = "Không thuận lợi";
-  } else if (s2 <= 29) {
+  } else if (s2 <= 30) {
     cTxt = "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn.";
     circumstanceTitle = "Ít thuận lợi";
-  } else if (s2 <= 38) {
+  } else if (s2 <= 39) {
     cTxt = "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.";
     circumstanceTitle = "Bình thường";
-  } else if (s2 <= 41) {
+  } else if (s2 <= 48) {
     cTxt = "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn.";
     circumstanceTitle = "Thuận lợi";
   } else {
@@ -3532,11 +3558,11 @@ function evaluateSurveys() {
   if (sumCircTitle) sumCircTitle.textContent = circumstanceTitle;
   if (sumCircDesc) sumCircDesc.textContent = cTxt;
 
-  // Cập nhật thanh kết quả trực quan
+  // Cập nhật thanh kết quả trực quan chuẩn theo thang điểm tối đa (P1: 43 điểm, P2: 54 điểm)
   const bar1 = document.getElementById('survey-result-bar-1');
   const bar2 = document.getElementById('survey-result-bar-2');
-  if (bar1) bar1.style.width = count1 === 0 ? '0%' : `${Math.min(100, Math.round((s1 / 35) * 100))}%`;
-  if (bar2) bar2.style.width = count2 === 0 ? '0%' : `${Math.min(100, Math.round((s2 / 45) * 100))}%`;
+  if (bar1) bar1.style.width = count1 === 0 ? '0%' : `${Math.min(100, Math.round((s1 / 43) * 100))}%`;
+  if (bar2) bar2.style.width = count2 === 0 ? '0%' : `${Math.min(100, Math.round((s2 / 54) * 100))}%`;
 }
 
 // ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN ====================
@@ -3826,9 +3852,16 @@ function createCardHtmlInvest(g, num) {
 
   const renderProductSelect = (pIndex) => {
     const curP = prods[pIndex] || { prodName: '', weight: 0, returnRate: 0, risk: 0 };
+    const availableProducts = (AppState.investProducts && AppState.investProducts.length > 0)
+      ? AppState.investProducts
+      : [
+          { name: curP.prodName || "ETF - ETFVFM" },
+          { name: "DCBC" },
+          { name: "Tiền gửi ngân hàng" }
+        ];
     return `
       <select class="select-inline-cell" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
-        ${AppState.investProducts.map(ip => `<option value="${ip.name}" ${ip.name === curP.prodName ? 'selected' : ''}>${ip.name}</option>`).join('')}
+        ${availableProducts.map(ip => `<option value="${escapeHtml(ip.name)}" ${ip.name === curP.prodName ? 'selected' : ''}>${escapeHtml(ip.name)}</option>`).join('')}
       </select>
     `;
   };
@@ -4022,6 +4055,10 @@ function renderTcMatrixTable() {
       `;
     }).join('');
 
+    if (AppState.matrixOverrides && AppState.matrixOverrides[y] !== undefined) {
+      sSum = Number(AppState.matrixOverrides[y]) || 0;
+    }
+
     const incNeed = sSum > 0 ? (sSum / rate) : 0;
     rows += `
       <tr id="mtr-row-${y}">
@@ -4052,10 +4089,15 @@ window.onMatrixCellChange = function(td, rIdx) {
     }
   });
 
+  if (!AppState.matrixOverrides) AppState.matrixOverrides = {};
+  AppState.matrixOverrides[rIdx] = rSum;
+
   const rate = (typeof getEffectiveSavingsRateRatio === 'function') ? getEffectiveSavingsRateRatio() : 0.40;
   const inc = rSum > 0 ? (rSum / rate) : 0;
-  document.getElementById(`mtr-sav-${rIdx}`).textContent = rSum > 0 ? rSum.toFixed(1) : '-';
-  document.getElementById(`mtr-inc-${rIdx}`).textContent = inc > 0 ? inc.toFixed(1) : '-';
+  const savCell = document.getElementById(`mtr-sav-${rIdx}`);
+  const incCell = document.getElementById(`mtr-inc-${rIdx}`);
+  if (savCell) savCell.textContent = rSum > 0 ? rSum.toFixed(1) : '-';
+  if (incCell) incCell.textContent = inc > 0 ? inc.toFixed(1) : '-';
   updateMatrixChartData();
   
   renderCareerTables();
@@ -4167,8 +4209,8 @@ window.addJobRow = function() { AppState.jobList.push("Môi trường làm việ
 function recalculateAll() {
   let totalIncYear = 0, totalExpYear = 0;
   for (let m = 1; m <= 12; m++) {
-    totalIncYear += AppState.monthlyDetails[m]?.incomes.reduce((s, x) => s + x.val, 0) || 0;
-    totalExpYear += AppState.monthlyDetails[m]?.expenses.reduce((s, x) => s + x.val, 0) || 0;
+    totalIncYear += (AppState.monthlyDetails[m]?.incomes || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
+    totalExpYear += (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
   }
   const yearSav = totalIncYear - totalExpYear;
 
@@ -4176,9 +4218,11 @@ function recalculateAll() {
   const kpiExp = document.getElementById('kpi-dash-expense');
   const kpiSav = document.getElementById('kpi-dash-savings');
 
-  if (kpiInc) kpiInc.textContent = Math.round(totalIncYear);
-  if (kpiExp) kpiExp.textContent = Math.round(totalExpYear);
-  if (kpiSav) kpiSav.textContent = Math.round(yearSav);
+  const fmtKpi = (v) => Number.isInteger(v) ? String(v) : v.toFixed(1);
+
+  if (kpiInc) kpiInc.textContent = fmtKpi(totalIncYear);
+  if (kpiExp) kpiExp.textContent = fmtKpi(totalExpYear);
+  if (kpiSav) kpiSav.textContent = fmtKpi(yearSav);
 
   renderCareerTables();
   renderCareerChart();
