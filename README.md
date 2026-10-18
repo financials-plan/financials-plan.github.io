@@ -40,7 +40,6 @@ financials-plan.github.io-main/
     ├── firestore.indexes.json           # Cấu hình miễn trừ chỉ mục (fieldOverrides)
     ├── firebase.json                    # Cấu hình Firebase CLI
     ├── .firebaserc                      # Khai báo Project ID mặc định (financials-plan)
-    ├── FIRESTORE_SETUP_GUIDE.tex        # Tài liệu LaTeX hướng dẫn cài đặt Firebase chi tiết từng bước
     └── FIRESTORE_SETUP_CHECKLIST.md     # Bảng kiểm tra nhanh quy trình cài đặt
 ```
 
