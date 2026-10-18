@@ -1,314 +1,1035 @@
-/**
- * ============================================================================
- * FIREBASE FIRESTORE CORE SERVICE (Modular SDK v10.12.0)
- * ============================================================================
- * Mô-đun xử lý kết nối và thao tác dữ liệu đám mây Cloud Firestore.
- * Tự động nạp thông số cấu hình từ file ../firebase-config.js ở thư mục gốc.
- */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
   doc,
   setDoc,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+import {
+  getAuth,
+  signInWithCustomToken,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { firebaseConfig, firestoreSettings } from "../firebase-config.js";
 
-// Khởi tạo Firebase App và Cloud Firestore
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let db = null;
+let auth = null;
+let functionsInstance = null;
+let isFirebaseReady = false;
 
-const COLLECTION_NAME = firestoreSettings?.collectionName || "financial_data";
-const LEGACY_DOC_ID = firestoreSettings?.legacyDocId || "main_financial_record";
-const MAX_BACKUPS = firestoreSettings?.maxBackups || 20;
-const MAX_SAFE_BYTES = firestoreSettings?.maxSafeBytes || 900000;
+let activeAuthContext = null;
+const loginRateTracker = new Map();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
-// Đóng gói các hàm thao tác đám mây vào window.CloudDB
-window.CloudDB = {
-  /**
-   * Kiểm tra một Document ID đã tồn tại trên Firestore hay chưa
-   * @param {string} docId - ID tài liệu cần kiểm tra
-   */
-  checkDocExists: async (docId) => {
+try {
+  localStorage.removeItem("FIN_APP_AUTH_ACCOUNTS_V1");
+} catch (e) {}
+
+try {
+  const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyA1B2C3D4E5F6G7H8I9J0_THAY_BANG_KEY_CUA_BAN";
+  if (isConfigured) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
     try {
-      if (!docId) return { success: false, exists: false };
-      const docRef = doc(db, COLLECTION_NAME, docId);
-      const snapshot = await getDoc(docRef);
+      auth = getAuth(app);
+    } catch (authErr) {
+      auth = null;
+    }
+    try {
+      functionsInstance = getFunctions(app, firestoreSettings.functionsRegion || "asia-southeast1");
+    } catch (fnErr) {
+      functionsInstance = null;
+    }
+    isFirebaseReady = true;
+  }
+} catch (error) {
+  console.error("Firebase init error:", error);
+}
+
+export function normalizeUsername(raw) {
+  if (!raw || typeof raw !== "string") return "";
+  return raw
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_.]/g, "")
+    .replace(/([_.])\1+/g, "$1")
+    .replace(/^[_.]+|[_.]+$/g, "");
+}
+
+export function isEmailAddress(str) {
+  if (!str || typeof str !== "string") return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str.trim());
+}
+
+export function maskEmailAddress(email) {
+  if (!email || !isEmailAddress(email)) return "";
+  const clean = email.trim().toLowerCase();
+  const parts = clean.split("@");
+  const local = parts[0] || "";
+  const domainParts = (parts[1] || "").split(".");
+  const domainName = domainParts[0] || "";
+  const domainExt = domainParts.slice(1).join(".") || "com";
+
+  const maskedLocal = local.length <= 2
+    ? (local.charAt(0) + "***")
+    : (local.charAt(0) + "***" + local.charAt(local.length - 1));
+  const maskedDomain = domainName.length <= 2
+    ? (domainName.charAt(0) + "***")
+    : (domainName.charAt(0) + "***" + domainName.charAt(domainName.length - 1));
+
+  return `${maskedLocal}@${maskedDomain}.${domainExt}`;
+}
+
+function checkClientRateLimit(normalizedUsername) {
+  const key = normalizedUsername || "__global__";
+  const now = Date.now();
+  const entry = loginRateTracker.get(key);
+  if (!entry) return { allowed: true };
+
+  if (entry.lockedUntil && entry.lockedUntil > now) {
+    const remainingSec = Math.ceil((entry.lockedUntil - now) / 1000);
+    return {
+      allowed: false,
+      retryAfterSeconds: remainingSec,
+      error: `Tài khoản tạm thời bị khóa đăng nhập do thử sai quá ${MAX_LOGIN_ATTEMPTS} lần. Vui lòng thử lại sau ${remainingSec} giây.`
+    };
+  }
+
+  if (now - entry.firstAttemptAt > LOCKOUT_DURATION_MS) {
+    loginRateTracker.delete(key);
+  }
+  return { allowed: true };
+}
+
+function recordClientLoginFailure(normalizedUsername) {
+  const key = normalizedUsername || "__global__";
+  const now = Date.now();
+  const prev = loginRateTracker.get(key);
+  if (!prev || (now - prev.firstAttemptAt > LOCKOUT_DURATION_MS)) {
+    loginRateTracker.set(key, {
+      attempts: 1,
+      firstAttemptAt: now,
+      lockedUntil: 0
+    });
+    return;
+  }
+  const attempts = prev.attempts + 1;
+  const lockedUntil = attempts >= MAX_LOGIN_ATTEMPTS ? (now + LOCKOUT_DURATION_MS) : 0;
+  loginRateTracker.set(key, {
+    attempts,
+    firstAttemptAt: prev.firstAttemptAt,
+    lockedUntil
+  });
+}
+
+function clearClientLoginFailures(normalizedUsername) {
+  if (!normalizedUsername) return;
+  loginRateTracker.delete(normalizedUsername);
+}
+
+function setActiveSessionFromUser(user, sessionToken = "") {
+  if (!user || !user.uid) {
+    activeAuthContext = null;
+    return null;
+  }
+  const normUser = user.normalizedUsername || user.normalizedName || normalizeUsername(user.username || user.displayUsername || user.rawName);
+  const displayUser = user.displayUsername || user.username || user.rawName || user.ho_ten || normUser;
+  const docId = user.docId || `user_${normUser}`;
+
+  activeAuthContext = Object.freeze({
+    uid: String(user.uid),
+    username: displayUser,
+    displayUsername: displayUser,
+    rawName: displayUser,
+    ho_ten: displayUser,
+    normalizedUsername: normUser,
+    normalizedName: normUser,
+    docId,
+    maskedEmail: user.maskedEmail || "",
+    hasRecoveryEmail: Boolean(user.hasRecoveryEmail),
+    sessionToken: sessionToken || user.sessionToken || ""
+  });
+  return activeAuthContext;
+}
+
+function verifyDataAccessPermission(requestedDocId) {
+  const storedSessionRaw = (() => {
+    try {
+      const s = localStorage.getItem("FIN_APP_USER_SESSION");
+      return s ? JSON.parse(s) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  if (activeAuthContext) {
+    const targetDoc = requestedDocId || activeAuthContext.docId;
+    if (targetDoc !== activeAuthContext.docId) {
+      return {
+        allowed: false,
+        code: "PERMISSION_DENIED",
+        error: "Từ chối truy cập: Bạn không được phép truy cập dữ liệu của tài khoản khác."
+      };
+    }
+    if (storedSessionRaw) {
+      const storedNorm = storedSessionRaw.normalizedUsername || storedSessionRaw.normalizedName || normalizeUsername(storedSessionRaw.username || storedSessionRaw.rawName);
+      if (
+        (storedSessionRaw.docId && storedSessionRaw.docId !== activeAuthContext.docId) ||
+        (storedSessionRaw.uid && storedSessionRaw.uid !== activeAuthContext.uid) ||
+        (storedNorm && storedNorm !== activeAuthContext.normalizedUsername)
+      ) {
+        return {
+          allowed: false,
+          code: "PERMISSION_DENIED",
+          error: "Phát hiện thay đổi trái phép thông tin định danh ở phía client. Truy cập bị từ chối."
+        };
+      }
+    }
+    return {
+      allowed: true,
+      targetDocId: activeAuthContext.docId,
+      uid: activeAuthContext.uid,
+      normalizedUsername: activeAuthContext.normalizedUsername
+    };
+  }
+
+  if (storedSessionRaw && storedSessionRaw.docId && !storedSessionRaw.uid) {
+    const legacyNorm = storedSessionRaw.normalizedUsername || storedSessionRaw.normalizedName || normalizeUsername(storedSessionRaw.username || storedSessionRaw.rawName);
+    const expectedLegacyDocId = `user_${legacyNorm}`;
+    const targetDoc = requestedDocId || storedSessionRaw.docId;
+    if (targetDoc !== storedSessionRaw.docId || (legacyNorm && !targetDoc.startsWith(expectedLegacyDocId))) {
+      return {
+        allowed: false,
+        code: "PERMISSION_DENIED",
+        error: "Từ chối truy cập: Không thể truy cập hồ sơ của người dùng khác."
+      };
+    }
+    return {
+      allowed: true,
+      targetDocId: storedSessionRaw.docId,
+      uid: "",
+      normalizedUsername: legacyNorm,
+      isLegacyUnbound: true
+    };
+  }
+
+  if (!requestedDocId || requestedDocId === firestoreSettings.defaultDocumentId) {
+    return {
+      allowed: true,
+      targetDocId: firestoreSettings.defaultDocumentId,
+      uid: "",
+      normalizedUsername: ""
+    };
+  }
+
+  return {
+    allowed: false,
+    code: "UNAUTHENTICATED",
+    error: "Vui lòng đăng nhập hợp lệ để truy cập dữ liệu của tài khoản này."
+  };
+}
+
+async function callBackendEndpoint(action, payload) {
+  const backendUrl = firestoreSettings.authBackendUrl || "";
+  if (backendUrl) {
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (activeAuthContext && activeAuthContext.sessionToken) {
+        headers["Authorization"] = `Bearer ${activeAuthContext.sessionToken}`;
+      }
+      const response = await fetch(`${backendUrl.replace(/\/+$/, "")}/${action}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload || {})
+      });
+      const data = await response.json();
+      return { reachable: true, status: response.status, data };
+    } catch (netErr) {}
+  }
+
+  if (functionsInstance) {
+    const callableMap = {
+      "register": "authRegisterWithUsername",
+      "login": "authLoginWithUsername",
+      "recover": "authRequestPasswordRecovery",
+      "change-password": "authChangePassword",
+      "update-recovery-email": "authUpdateRecoveryEmail"
+    };
+    const fnName = callableMap[action];
+    if (fnName) {
+      try {
+        const callable = httpsCallable(functionsInstance, fnName);
+        const res = await callable(payload || {});
+        return { reachable: true, status: 200, data: res.data };
+      } catch (fnErr) {
+        const code = String(fnErr?.code || "");
+        const msg = fnErr?.message || "";
+        if (
+          code &&
+          !code.includes("unavailable") &&
+          !code.includes("not-found") &&
+          !code.includes("internal") &&
+          !msg.includes("Failed to fetch") &&
+          !msg.includes("CORS")
+        ) {
+          return {
+            reachable: true,
+            status: 400,
+            data: {
+              success: false,
+              code,
+              error: msg
+            }
+          };
+        }
+      }
+    }
+  }
+
+  return {
+    reachable: false,
+    status: 503,
+    data: {
+      success: false,
+      code: "BACKEND_UNAVAILABLE",
+      error: "Không thể kết nối tới dịch vụ xác thực phía máy chủ (Cloud Functions / Auth Backend)."
+    }
+  };
+}
+
+const FirestoreService = {
+  isReady() {
+    return isFirebaseReady && db !== null;
+  },
+
+  normalizeUsername,
+  isEmailAddress,
+  maskEmailAddress,
+
+  getActiveAuthenticatedUser() {
+    return activeAuthContext ? { ...activeAuthContext } : null;
+  },
+
+  restoreSessionContext(storedUser) {
+    if (!storedUser || typeof storedUser !== "object") return null;
+    if (storedUser.uid && storedUser.sessionToken) {
+      return setActiveSessionFromUser(storedUser, storedUser.sessionToken);
+    }
+    return null;
+  },
+
+  async registerAccount(username, password, recoveryEmail = "") {
+    const rawUsername = String(username || "").trim();
+    const cleanPass = String(password || "");
+    const cleanEmail = String(recoveryEmail || "").trim().toLowerCase();
+
+    if (!rawUsername) {
+      return { success: false, code: "INVALID_USERNAME", error: "Vui lòng nhập Username." };
+    }
+    if (rawUsername.includes("@") || isEmailAddress(rawUsername)) {
+      return {
+        success: false,
+        code: "EMAIL_NOT_ALLOWED_AS_USERNAME",
+        error: "Không được sử dụng địa chỉ Email làm Username. Vui lòng nhập Username hợp lệ."
+      };
+    }
+
+    const normalizedUsername = normalizeUsername(rawUsername);
+    if (!normalizedUsername || normalizedUsername.length < 3 || normalizedUsername.length > 32) {
+      return {
+        success: false,
+        code: "INVALID_USERNAME_FORMAT",
+        error: "Username sau chuẩn hóa phải có từ 3 đến 32 ký tự chữ hoặc số."
+      };
+    }
+
+    if (cleanEmail && !isEmailAddress(cleanEmail)) {
+      return {
+        success: false,
+        code: "INVALID_RECOVERY_EMAIL",
+        error: "Địa chỉ Email khôi phục không đúng định dạng."
+      };
+    }
+
+    if (cleanPass.length < 6) {
+      return {
+        success: false,
+        code: "WEAK_PASSWORD",
+        error: "Mật khẩu phải có tối thiểu 6 ký tự."
+      };
+    }
+
+    const backendRes = await callBackendEndpoint("register", {
+      username: rawUsername,
+      recoveryEmail: cleanEmail,
+      password: cleanPass
+    });
+
+    if (!backendRes.reachable || !backendRes.data) {
+      return {
+        success: false,
+        code: "BACKEND_UNAVAILABLE",
+        error: backendRes.data?.error || "Dịch vụ xác thực máy chủ chưa sẵn sàng."
+      };
+    }
+
+    if (!backendRes.data.success || !backendRes.data.user) {
+      return {
+        success: false,
+        code: backendRes.data.code || "REGISTER_FAILED",
+        error: backendRes.data.error || "Không thể đăng ký tài khoản."
+      };
+    }
+
+    if (auth && backendRes.data.customToken) {
+      try {
+        await signInWithCustomToken(auth, backendRes.data.customToken);
+      } catch (e) {}
+    }
+
+    const sessionCtx = setActiveSessionFromUser(
+      backendRes.data.user,
+      backendRes.data.sessionToken || backendRes.data.customToken || ""
+    );
+
+    try {
+      const legacyKey = "FIN_APP_LAST_STATE_" + sessionCtx.docId;
+      const legacyRaw = localStorage.getItem(legacyKey);
+      if (legacyRaw) {
+        const legacyParsed = JSON.parse(legacyRaw);
+        if (legacyParsed && !legacyParsed.owner_uid) {
+          legacyParsed.owner_uid = sessionCtx.uid;
+          legacyParsed.username = sessionCtx.normalizedUsername;
+          legacyParsed.ho_ten = sessionCtx.displayUsername;
+          localStorage.setItem(legacyKey, JSON.stringify(legacyParsed));
+        }
+      }
+    } catch (e) {}
+
+    return {
+      success: true,
+      user: { ...sessionCtx }
+    };
+  },
+
+  async loginAccount(username, password) {
+    const rawUsername = String(username || "").trim();
+    const cleanPass = String(password || "");
+
+    if (!rawUsername || !cleanPass) {
+      return {
+        success: false,
+        code: "MISSING_CREDENTIALS",
+        error: "Vui lòng nhập đầy đủ Username và Mật khẩu."
+      };
+    }
+
+    if (rawUsername.includes("@") || isEmailAddress(rawUsername)) {
+      return {
+        success: false,
+        code: "EMAIL_NOT_ALLOWED_FOR_LOGIN",
+        error: "Email chỉ dùng để khôi phục mật khẩu. Vui lòng đăng nhập bằng Username."
+      };
+    }
+
+    const normalizedUsername = normalizeUsername(rawUsername);
+    if (!normalizedUsername) {
+      return {
+        success: false,
+        code: "INVALID_USERNAME",
+        error: "Username không hợp lệ."
+      };
+    }
+
+    const rateCheck = checkClientRateLimit(normalizedUsername);
+    if (!rateCheck.allowed) {
+      return {
+        success: false,
+        code: "TOO_MANY_ATTEMPTS",
+        retryAfterSeconds: rateCheck.retryAfterSeconds,
+        error: rateCheck.error
+      };
+    }
+
+    const backendRes = await callBackendEndpoint("login", {
+      username: rawUsername,
+      password: cleanPass
+    });
+
+    if (!backendRes.reachable || !backendRes.data) {
+      return {
+        success: false,
+        code: "BACKEND_UNAVAILABLE",
+        error: backendRes.data?.error || "Không thể kết nối tới máy chủ xác thực."
+      };
+    }
+
+    if (!backendRes.data.success || !backendRes.data.user) {
+      if (backendRes.data.code !== "TOO_MANY_ATTEMPTS") {
+        recordClientLoginFailure(normalizedUsername);
+      }
+      return {
+        success: false,
+        code: backendRes.data.code || "INVALID_CREDENTIALS",
+        error: backendRes.data.error || "Username hoặc mật khẩu không chính xác."
+      };
+    }
+
+    clearClientLoginFailures(normalizedUsername);
+
+    if (auth && backendRes.data.customToken) {
+      try {
+        await signInWithCustomToken(auth, backendRes.data.customToken);
+      } catch (e) {}
+    }
+
+    const sessionCtx = setActiveSessionFromUser(
+      backendRes.data.user,
+      backendRes.data.sessionToken || backendRes.data.customToken || ""
+    );
+
+    return {
+      success: true,
+      user: { ...sessionCtx }
+    };
+  },
+
+  async logoutAccount() {
+    if (activeAuthContext && activeAuthContext.sessionToken) {
+      try {
+        await callBackendEndpoint("logout", { sessionToken: activeAuthContext.sessionToken });
+      } catch (e) {}
+    }
+    activeAuthContext = null;
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+    }
+    return { success: true };
+  },
+
+  async requestPasswordRecovery(identifier) {
+    const cleanId = String(identifier || "").trim();
+    if (!cleanId) {
+      return {
+        success: false,
+        code: "MISSING_IDENTIFIER",
+        error: "Vui lòng nhập Username hoặc Email khôi phục đã liên kết."
+      };
+    }
+
+    if (cleanId.includes("@") && !isEmailAddress(cleanId)) {
+      return {
+        success: false,
+        code: "INVALID_EMAIL",
+        error: "Địa chỉ Email khôi phục không đúng định dạng."
+      };
+    }
+
+    const backendRes = await callBackendEndpoint("recover", {
+      identifier: cleanId
+    });
+
+    if (!backendRes.reachable || !backendRes.data) {
+      return {
+        success: false,
+        code: "BACKEND_UNAVAILABLE",
+        error: backendRes.data?.error || "Không thể kết nối tới máy chủ khôi phục mật khẩu."
+      };
+    }
+
+    return backendRes.data;
+  },
+
+  async resetPassword(identifier) {
+    return this.requestPasswordRecovery(identifier);
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    if (!activeAuthContext || !activeAuthContext.uid) {
+      return {
+        success: false,
+        code: "UNAUTHENTICATED",
+        error: "Vui lòng đăng nhập hợp lệ trước khi đổi mật khẩu."
+      };
+    }
+    const curPass = String(currentPassword || "");
+    const nxtPass = String(newPassword || "");
+
+    if (!curPass || !nxtPass) {
+      return {
+        success: false,
+        code: "MISSING_PASSWORD",
+        error: "Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới."
+      };
+    }
+    if (nxtPass.length < 6) {
+      return {
+        success: false,
+        code: "WEAK_PASSWORD",
+        error: "Mật khẩu mới phải có tối thiểu 6 ký tự."
+      };
+    }
+    if (curPass === nxtPass) {
+      return {
+        success: false,
+        code: "SAME_PASSWORD",
+        error: "Mật khẩu mới phải khác mật khẩu hiện tại."
+      };
+    }
+
+    const backendRes = await callBackendEndpoint("change-password", {
+      uid: activeAuthContext.uid,
+      currentPassword: curPass,
+      newPassword: nxtPass
+    });
+
+    if (!backendRes.reachable || !backendRes.data) {
+      return {
+        success: false,
+        code: "BACKEND_UNAVAILABLE",
+        error: "Không thể kết nối tới máy chủ để đổi mật khẩu."
+      };
+    }
+
+    if (backendRes.data.success && backendRes.data.sessionToken) {
+      setActiveSessionFromUser(activeAuthContext, backendRes.data.sessionToken);
+    }
+
+    return backendRes.data;
+  },
+
+  async updateRecoveryEmail(newRecoveryEmail, currentPassword) {
+    if (!activeAuthContext || !activeAuthContext.uid) {
+      return {
+        success: false,
+        code: "UNAUTHENTICATED",
+        error: "Vui lòng đăng nhập hợp lệ trước khi cập nhật email khôi phục."
+      };
+    }
+
+    const cleanEmail = String(newRecoveryEmail || "").trim().toLowerCase();
+    const curPass = String(currentPassword || "");
+
+    if (!cleanEmail || !isEmailAddress(cleanEmail)) {
+      return {
+        success: false,
+        code: "INVALID_EMAIL",
+        error: "Vui lòng nhập địa chỉ Email khôi phục hợp lệ."
+      };
+    }
+    if (!curPass) {
+      return {
+        success: false,
+        code: "MISSING_PASSWORD",
+        error: "Vui lòng nhập mật khẩu hiện tại để xác minh quyền sở hữu tài khoản."
+      };
+    }
+
+    const backendRes = await callBackendEndpoint("update-recovery-email", {
+      uid: activeAuthContext.uid,
+      recoveryEmail: cleanEmail,
+      currentPassword: curPass
+    });
+
+    if (!backendRes.reachable || !backendRes.data) {
+      return {
+        success: false,
+        code: "BACKEND_UNAVAILABLE",
+        error: "Không thể kết nối tới máy chủ để cập nhật email khôi phục."
+      };
+    }
+
+    if (backendRes.data.success) {
+      const updatedUser = {
+        ...activeAuthContext,
+        maskedEmail: backendRes.data.maskedEmail || maskEmailAddress(cleanEmail),
+        hasRecoveryEmail: true
+      };
+      setActiveSessionFromUser(updatedUser, activeAuthContext.sessionToken);
+    }
+
+    return backendRes.data;
+  },
+
+  subscribeAuthState(callback) {
+    if (!auth || typeof callback !== "function") return () => {};
+    try {
+      return onAuthStateChanged(auth, (fbUser) => {
+        if (!fbUser) {
+          callback(null);
+          return;
+        }
+        if (activeAuthContext && activeAuthContext.uid === fbUser.uid) {
+          callback({ ...activeAuthContext });
+        }
+      });
+    } catch (e) {
+      return () => {};
+    }
+  },
+
+  async checkDocExists(docId) {
+    const access = verifyDataAccessPermission(docId);
+    if (!access.allowed) {
+      return { success: false, exists: false, code: access.code, error: access.error };
+    }
+    if (!this.isReady() || !docId) {
+      return { success: false, exists: false };
+    }
+    try {
+      const docRef = doc(db, firestoreSettings.collectionName, docId);
+      const docSnap = await getDoc(docRef);
       return {
         success: true,
-        exists: snapshot.exists(),
-        data: snapshot.exists() ? snapshot.data() : null
+        exists: docSnap.exists(),
+        data: docSnap.exists() ? docSnap.data() : null
       };
     } catch (error) {
-      console.error("Lỗi khi kiểm tra document trên Firestore:", error);
-      return { success: false, exists: false, error };
+      return { success: false, exists: false, error: error.message };
     }
   },
 
-  /**
-   * Lưu toàn bộ trạng thái AppState lên Cloud Firestore theo Document ID chỉ định
-   * Đồng thời lưu bản sao lưu tuần tự (Backup 1, Backup 2,...) kèm timestamp thực tế
-   * @param {Object} data - Dữ liệu AppState cần lưu
-   * @param {string} docId - Định danh tài liệu Firestore của người dùng
-   * @param {Object} userMeta - Thông tin nhận diện người dùng đính kèm
-   */
-  saveData: async (data, docId, userMeta = null) => {
-    try {
-      const targetDocId = docId || LEGACY_DOC_ID;
-      const docRef = doc(db, COLLECTION_NAME, targetDocId);
-      const cleanData = JSON.parse(JSON.stringify(data));
+  async saveData(appStateData, customDocId = null, userMeta = null) {
+    const access = verifyDataAccessPermission(customDocId);
+    if (!access.allowed) {
+      return {
+        success: false,
+        code: access.code,
+        error: access.error,
+        message: access.error
+      };
+    }
 
-      // Đọc bản ghi hiện tại để bảo toàn và nối tiếp danh sách _backups
-      let existingBackups = [];
+    const targetDocId = access.targetDocId;
+    const cleanData = JSON.parse(JSON.stringify(appStateData || {}));
+    delete cleanData.password;
+    delete cleanData.passwordHash;
+    delete cleanData.sessionToken;
+    delete cleanData.customToken;
+
+    if (access.uid) {
       try {
-        const currentSnap = await getDoc(docRef);
-        if (currentSnap.exists()) {
-          const currentDoc = currentSnap.data();
-          if (Array.isArray(currentDoc._backups)) {
-            existingBackups = currentDoc._backups;
-          } else if (currentDoc._lastUpdated) {
-            existingBackups = [{
-              id: "bk_initial_" + targetDocId,
-              name: "Backup 1",
-              timestamp: currentDoc._lastUpdated,
-              summary: {
-                year: currentDoc.currentYear || new Date().getFullYear(),
-                age: currentDoc.currentAge || 25,
-                goalsCount: (currentDoc.tcGoals || []).length,
-                planIncomeTotal: (currentDoc.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
-                planExpenseTotal: (currentDoc.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
-              },
-              data: (() => {
-                const d = JSON.parse(JSON.stringify(currentDoc));
-                delete d._backups;
-                delete d._userMeta;
-                return d;
-              })()
-            }];
+        const existingLocalRaw = localStorage.getItem("FIN_APP_LAST_STATE_" + targetDocId);
+        if (existingLocalRaw) {
+          const existingLocal = JSON.parse(existingLocalRaw);
+          if (existingLocal && existingLocal.owner_uid && existingLocal.owner_uid !== access.uid) {
+            return {
+              success: false,
+              code: "PERMISSION_DENIED",
+              error: "Từ chối ghi dữ liệu: Hồ sơ này thuộc quyền sở hữu của UID khác."
+            };
           }
         }
-      } catch (e) {
-        console.warn("Không thể đọc snapshot hiện tại từ Cloud, đọc từ bộ nhớ cục bộ:", e);
-      }
-
-      // Fallback từ localStorage nếu Cloud chưa có
-      if (existingBackups.length === 0) {
-        try {
-          const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
-          if (Array.isArray(localBk) && localBk.length > 0) existingBackups = localBk;
-        } catch (e) {}
-      }
-
-      // Tính số thứ tự bản sao lưu mới tăng dần, không trùng tên khi đã xóa bản cũ
-      const maxExistingNum = existingBackups.reduce((max, b) => {
-        const match = typeof b.name === "string" ? b.name.match(/^Backup\s+(\d+)$/i) : null;
-        return match ? Math.max(max, parseInt(match[1], 10)) : max;
-      }, existingBackups.length);
-      const nextIndex = maxExistingNum + 1;
-      const nowIso = new Date().toISOString();
-
-      const dataSnapshot = JSON.parse(JSON.stringify(data));
-      delete dataSnapshot._backups;
-      delete dataSnapshot._userMeta;
-      delete dataSnapshot._lastUpdated;
-
-      const newBackupEntry = {
-        id: `bk_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        name: `Backup ${nextIndex}`,
-        timestamp: nowIso,
-        summary: {
-          year: dataSnapshot.currentYear || new Date().getFullYear(),
-          age: dataSnapshot.currentAge || 25,
-          goalsCount: (dataSnapshot.tcGoals || []).length,
-          planIncomeTotal: (dataSnapshot.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
-          planExpenseTotal: (dataSnapshot.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
-        },
-        data: dataSnapshot
-      };
-
-      // Giữ tối đa MAX_BACKUPS bản sao lưu gần nhất (mới nhất lên đầu)
-      let updatedBackups = [newBackupEntry, ...existingBackups.filter(b => b.id !== newBackupEntry.id)].slice(0, MAX_BACKUPS);
-
-      cleanData._backups = updatedBackups;
-      cleanData._lastUpdated = nowIso;
-      cleanData._userMeta = {
-        rawName: userMeta?.rawName || cleanData._userMeta?.rawName || targetDocId,
-        normalizedName: userMeta?.normalizedName || cleanData._userMeta?.normalizedName || targetDocId.replace(/^user_/, ""),
-        userDocId: targetDocId,
-        lastSavedAt: nowIso
-      };
-
-      // Bảo vệ giới hạn 1 MiB (1,048,576 bytes) của Cloud Firestore document
-      while (cleanData._backups.length > 1 && JSON.stringify(cleanData).length > MAX_SAFE_BYTES) {
-        cleanData._backups.pop();
-      }
-      updatedBackups = cleanData._backups;
-
-      try {
-        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(updatedBackups));
       } catch (e) {}
-
-      await setDoc(docRef, cleanData);
-      return { success: true, docId: targetDocId, newBackup: newBackupEntry, backups: updatedBackups };
-    } catch (error) {
-      console.error("Lỗi khi lưu lên Firestore:", error);
-      return { success: false, error };
+      cleanData.owner_uid = access.uid;
+      cleanData.username = access.normalizedUsername;
+      if (activeAuthContext && activeAuthContext.displayUsername) {
+        cleanData.ho_ten = activeAuthContext.displayUsername;
+      }
     }
-  },
 
-  /**
-   * Lấy danh sách các bản sao lưu của người dùng
-   * @param {string} docId - Định danh tài liệu người dùng
-   */
-  getBackups: async (docId) => {
-    const targetDocId = docId || LEGACY_DOC_ID;
+    const backupEntry = {
+      id: "bk_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+      name: "Bản lưu ngày " + new Date().toLocaleDateString("vi-VN"),
+      timestamp: new Date().toISOString(),
+      summary: {
+        year: cleanData.currentYear || 2026,
+        age: cleanData.currentAge || 21,
+        goalsCount: (cleanData.tcGoals || []).length,
+        planIncomeTotal: (cleanData.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
+        planExpenseTotal: (cleanData.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
+      },
+      data: cleanData
+    };
+
     try {
-      let backups = [];
-      const docRef = doc(db, COLLECTION_NAME, targetDocId);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        if (Array.isArray(data._backups)) {
-          backups = data._backups;
-        } else if (data._lastUpdated) {
-          backups = [{
-            id: "bk_initial_" + targetDocId,
-            name: "Backup 1",
-            timestamp: data._lastUpdated,
-            summary: {
-              year: data.currentYear || new Date().getFullYear(),
-              age: data.currentAge || 25,
-              goalsCount: (data.tcGoals || []).length,
-              planIncomeTotal: (data.planIncome || []).reduce((s, x) => s + (Number(x.plan) || 0), 0),
-              planExpenseTotal: (data.planExpense || []).reduce((s, x) => s + (Number(x.plan) || 0), 0)
-            },
-            data: (() => {
-              const d = JSON.parse(JSON.stringify(data));
-              delete d._backups;
-              delete d._userMeta;
-              return d;
-            })()
-          }];
-        }
-      }
-      if (backups.length === 0 && !snap.exists()) {
-        try {
-          const local = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
-          if (Array.isArray(local) && local.length > 0) backups = local;
-        } catch (e) {}
-      }
-      return { success: true, backups };
-    } catch (error) {
-      console.error("Lỗi khi đọc danh sách sao lưu từ Cloud:", error);
+      const localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+      localBackups.unshift(backupEntry);
+      if (localBackups.length > 25) localBackups.length = 25;
+      localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(localBackups));
+      localStorage.setItem("FIN_APP_LAST_STATE_" + targetDocId, JSON.stringify(cleanData));
+    } catch (e) {}
+
+    if (activeAuthContext && activeAuthContext.sessionToken && firestoreSettings.authBackendUrl) {
       try {
-        const local = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
-        if (Array.isArray(local) && local.length > 0) {
-          return { success: true, backups: local, fromCache: true };
+        await callBackendEndpoint("save-data", {
+          docId: targetDocId,
+          data: cleanData,
+          backupEntry
+        });
+      } catch (e) {}
+    }
+
+    if (!this.isReady()) {
+      return {
+        success: true,
+        localOnly: true,
+        backupEntry,
+        message: "Đã lưu dữ liệu thành công!"
+      };
+    }
+
+    try {
+      const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
+      let existingBackups = [];
+      let existingOwnerUid = null;
+      try {
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const snapData = snap.data();
+          if (Array.isArray(snapData._backups)) {
+            existingBackups = snapData._backups;
+          }
+          if (snapData.owner_uid) {
+            existingOwnerUid = snapData.owner_uid;
+          }
         }
       } catch (e) {}
-      return { success: false, error };
+
+      if (existingOwnerUid && access.uid && existingOwnerUid !== access.uid) {
+        return {
+          success: false,
+          code: "PERMISSION_DENIED",
+          error: "Từ chối truy cập: Tài liệu Cloud thuộc quyền sở hữu của tài khoản khác."
+        };
+      }
+
+      existingBackups.unshift(backupEntry);
+      if (existingBackups.length > 20) existingBackups.length = 20;
+
+      const payload = {
+        ...cleanData,
+        _backups: existingBackups,
+        _lastUpdated: new Date().toISOString(),
+        _appVersion: "2.3-Username-Auth"
+      };
+
+      if (activeAuthContext) {
+        payload.owner_uid = activeAuthContext.uid;
+        payload.username = activeAuthContext.normalizedUsername;
+        payload.ho_ten = activeAuthContext.displayUsername;
+        payload._userMeta = {
+          username: activeAuthContext.displayUsername,
+          normalizedUsername: activeAuthContext.normalizedUsername,
+          rawName: activeAuthContext.displayUsername,
+          normalizedName: activeAuthContext.normalizedUsername,
+          docId: targetDocId,
+          uid: activeAuthContext.uid,
+          updatedAt: new Date().toISOString()
+        };
+      } else if (userMeta && (userMeta.rawName || userMeta.ho_ten)) {
+        payload.ho_ten = userMeta.rawName || userMeta.ho_ten;
+        if (existingOwnerUid) payload.owner_uid = existingOwnerUid;
+      }
+
+      await setDoc(docRef, payload, { merge: true });
+      return {
+        success: true,
+        backupEntry,
+        message: "Đã lưu dữ liệu lên Cloud Firestore thành công!"
+      };
+    } catch (error) {
+      return {
+        success: true,
+        localOnly: true,
+        backupEntry,
+        error: error.message,
+        message: "Đã lưu bản sao lưu dữ liệu"
+      };
     }
   },
 
-  /**
-   * Xóa một bản sao lưu cụ thể thực sự trên Cloud Firestore
-   * @param {string} docId - Định danh tài liệu người dùng
-   * @param {string} backupId - ID của bản sao lưu cần xóa
-   */
-  deleteBackup: async (docId, backupId) => {
-    try {
-      const targetDocId = docId || LEGACY_DOC_ID;
-      const docRef = doc(db, COLLECTION_NAME, targetDocId);
-      const snap = await getDoc(docRef);
-      if (!snap.exists()) {
-        return { success: false, notFound: true, message: "Hồ sơ không tồn tại trên Cloud Firestore" };
-      }
+  async getBackups(customDocId = null) {
+    const access = verifyDataAccessPermission(customDocId);
+    if (!access.allowed) {
+      return { success: false, code: access.code, error: access.error, backups: [] };
+    }
+    const targetDocId = access.targetDocId;
+    let cloudBackups = [];
 
-      const docData = snap.data();
-      let backups = Array.isArray(docData._backups) ? docData._backups : [];
-      const isInitialSynthesized = !Array.isArray(docData._backups) && backupId === ("bk_initial_" + targetDocId);
-      const backupIndex = backups.findIndex(b => b.id === backupId);
-
-      if (backupIndex === -1 && !isInitialSynthesized) {
-        return { success: false, notFound: true, message: "Không tìm thấy bản sao lưu cần xóa trên Firebase" };
-      }
-
-      const updatedBackups = isInitialSynthesized ? [] : backups.filter(b => b.id !== backupId);
-
-      // 1. Cập nhật thực sự lên Cloud Firestore qua updateDoc
-      await updateDoc(docRef, {
-        _backups: updatedBackups,
-        _lastUpdated: new Date().toISOString()
-      });
-
-      // 2. CHỈ cập nhật localStorage dự phòng SAU KHI Firebase xác nhận xóa thành công!
+    if (this.isReady()) {
       try {
-        localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(updatedBackups));
+        const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.owner_uid && access.uid && data.owner_uid !== access.uid) {
+            return {
+              success: false,
+              code: "PERMISSION_DENIED",
+              error: "Không có quyền đọc bản sao lưu của tài khoản khác.",
+              backups: []
+            };
+          }
+          if (Array.isArray(data._backups) && data._backups.length > 0) {
+            cloudBackups = data._backups;
+          }
+        }
       } catch (e) {}
-
-      return { success: true, backups: updatedBackups };
-    } catch (error) {
-      console.error("Lỗi khi xóa bản sao lưu trên Cloud Firestore:", error);
-      return { success: false, error: error?.message || "Lỗi kết nối Firebase Firestore" };
     }
-  },
 
-  /**
-   * Đọc dữ liệu từ Cloud Firestore theo Document ID chỉ định
-   * @param {string} docId - Định danh tài liệu người dùng
-   */
-  loadData: async (docId) => {
+    let localBackups = [];
     try {
-      const targetDocId = docId || LEGACY_DOC_ID;
-      const docRef = doc(db, COLLECTION_NAME, targetDocId);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        return { success: true, data: snapshot.data(), docId: targetDocId };
-      } else {
-        return { success: false, notFound: true, docId: targetDocId };
-      }
-    } catch (error) {
-      console.error("Lỗi khi đọc từ Firestore:", error);
-      return { success: false, error };
-    }
-  },
+      localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+    } catch (e) {}
 
-  /**
-   * Đọc dữ liệu từ bản ghi cũ legacy (main_financial_record) để phục vụ sao chép/kế thừa nếu cần
-   */
-  loadLegacyData: async () => {
-    try {
-      const docRef = doc(db, COLLECTION_NAME, LEGACY_DOC_ID);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        return { success: true, data: snapshot.data() };
+    const mergedMap = new Map();
+    [...cloudBackups, ...localBackups].forEach(b => {
+      if (b && b.id && !mergedMap.has(b.id)) {
+        mergedMap.set(b.id, b);
       }
-      return { success: false, notFound: true };
-    } catch (error) {
-      return { success: false, error };
-    }
-  },
-
-  /**
-   * Lắng nghe cập nhật thời gian thực (Realtime Snapshot) theo Document ID
-   */
-  subscribeData: (onUpdateCallback, docId) => {
-    const targetDocId = docId || LEGACY_DOC_ID;
-    const docRef = doc(db, COLLECTION_NAME, targetDocId);
-    return onSnapshot(docRef, (snapshot) => {
-      if (snapshot.exists()) {
-        onUpdateCallback(snapshot.data());
-      }
-    }, (error) => {
-      console.error("Lỗi lắng nghe dữ liệu thời gian thực:", error);
     });
+
+    const backups = Array.from(mergedMap.values()).sort((a, b) => {
+      return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+    });
+
+    return { success: true, backups };
+  },
+
+  async deleteBackup(customDocId = null, backupId) {
+    const access = verifyDataAccessPermission(customDocId);
+    if (!access.allowed) {
+      return { success: false, code: access.code, error: access.error };
+    }
+    const targetDocId = access.targetDocId;
+
+    if (!backupId) {
+      return {
+        success: false,
+        error: "Thiếu mã định danh bản sao lưu cần xóa."
+      };
+    }
+
+    try {
+      let localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+      localBackups = localBackups.filter(b => b.id !== backupId);
+      localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(localBackups));
+      return {
+        success: true,
+        localOnly: true,
+        backups: localBackups,
+        message: "Đã xóa bản sao lưu."
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e.message || "Lỗi xóa bản sao lưu",
+        message: "Không thể xóa bản sao lưu."
+      };
+    }
+  },
+
+  async loadData(customDocId = null) {
+    const access = verifyDataAccessPermission(customDocId);
+    if (!access.allowed) {
+      return {
+        success: false,
+        code: access.code,
+        error: access.error,
+        message: access.error
+      };
+    }
+
+    const targetDocId = access.targetDocId;
+
+    if (activeAuthContext && activeAuthContext.sessionToken && firestoreSettings.authBackendUrl) {
+      try {
+        const serverDataRes = await callBackendEndpoint("load-data", { docId: targetDocId });
+        if (serverDataRes.reachable && serverDataRes.data) {
+          if (serverDataRes.data.code === "PERMISSION_DENIED") {
+            return {
+              success: false,
+              code: "PERMISSION_DENIED",
+              error: serverDataRes.data.error || "Từ chối truy cập dữ liệu của tài khoản khác."
+            };
+          }
+          if (serverDataRes.data.success && serverDataRes.data.data) {
+            return {
+              success: true,
+              data: serverDataRes.data.data,
+              message: "Đã tải dữ liệu từ máy chủ xác thực!"
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
+    try {
+      const localRaw = localStorage.getItem("FIN_APP_LAST_STATE_" + targetDocId);
+      if (localRaw) {
+        const parsed = JSON.parse(localRaw);
+        if (parsed && parsed.owner_uid && access.uid && parsed.owner_uid !== access.uid) {
+          return {
+            success: false,
+            code: "PERMISSION_DENIED",
+            error: "Từ chối truy cập: Dữ liệu này thuộc về UID của tài khoản khác."
+          };
+        }
+        return {
+          success: true,
+          localOnly: true,
+          data: parsed,
+          message: "Đã tải dữ liệu hồ sơ thành công!"
+        };
+      }
+    } catch (e) {}
+
+    if (!this.isReady()) {
+      return {
+        success: false,
+        notFound: true,
+        message: "Chưa có dữ liệu lưu trữ."
+      };
+    }
+
+    try {
+      const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const cloudData = docSnap.data();
+        if (cloudData.owner_uid && access.uid && cloudData.owner_uid !== access.uid) {
+          return {
+            success: false,
+            code: "PERMISSION_DENIED",
+            error: "Từ chối truy cập: Tài liệu Cloud thuộc quyền sở hữu của tài khoản khác."
+          };
+        }
+        return {
+          success: true,
+          data: cloudData,
+          message: "Đã tải dữ liệu từ Cloud Firestore!"
+        };
+      } else {
+        return {
+          success: false,
+          notFound: true,
+          message: "Chưa có dữ liệu trên Cloud cho hồ sơ này."
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        message: "Lỗi khi tải từ Cloud: " + error.message
+      };
+    }
   }
 };
 
-// Bắn sự kiện sẵn sàng để script.js tự động nạp dữ liệu
-window.dispatchEvent(new CustomEvent("firebase-ready"));
+window.CloudDB = FirestoreService;
+window.dispatchEvent(new CustomEvent("firebase-ready", { detail: { ready: isFirebaseReady } }));
+export default FirestoreService;

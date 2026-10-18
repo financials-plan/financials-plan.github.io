@@ -3,79 +3,92 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =========================================================================
-    // HELPER FUNCTIONS: Kiểm tra định danh tài liệu & cấu trúc dữ liệu hợp lệ
-    // =========================================================================
-
-    // Kiểm tra Document ID tuân thủ chuẩn định danh của ứng dụng:
-    // - Hồ sơ người dùng chuẩn hóa: user_<slug> (chỉ gồm chữ thường a-z, số 0-9, dấu gạch dưới _)
-    // - Bản ghi kế thừa (legacy): main_financial_record
-    function isValidDocId(docId) {
-      return docId == 'main_financial_record'
-          || docId.matches('^user_[a-z0-9_]{1,64}$');
+    function isValidUserProfileId(docId) {
+      return docId == 'khach_hang_mac_dinh'
+          || docId.matches('^user_[a-z0-9_.]{2,80}$');
     }
 
-    // Kiểm tra tính hợp lệ của payload khi tạo mới hoặc cập nhật toàn bộ (setDoc)
-    function isValidFinancialPayload(data, docId) {
-      return data.keys().hasAll(['currentYear', 'currentAge', '_lastUpdated', '_userMeta'])
-          && data.currentYear is number
-          && data.currentYear >= 1900
-          && data.currentYear <= 2100
-          && data.currentAge is number
-          && data.currentAge >= 1
-          && data.currentAge <= 120
+    function isAuthenticatedUser() {
+      return request.auth != null && request.auth.uid != null && request.auth.uid.size() > 0;
+    }
+
+    function isAuthorizedForDocId(docId) {
+      return isAuthenticatedUser()
+          && (!('docId' in request.auth.token) || request.auth.token.docId == docId);
+    }
+
+    function isDocumentOwner(resourceData) {
+      return isAuthenticatedUser()
+          && resourceData != null
+          && 'owner_uid' in resourceData
+          && resourceData.owner_uid == request.auth.uid;
+    }
+
+    function isUnclaimedLegacyDocument(resourceData) {
+      return resourceData == null
+          || !('owner_uid' in resourceData)
+          || resourceData.owner_uid == null
+          || resourceData.owner_uid == '';
+    }
+
+    function hasValidOwnerAssignment(newData, existingData) {
+      return isAuthenticatedUser()
+          && 'owner_uid' in newData
+          && newData.owner_uid == request.auth.uid
+          && (existingData == null
+              || !('owner_uid' in existingData)
+              || existingData.owner_uid == null
+              || existingData.owner_uid == ''
+              || existingData.owner_uid == request.auth.uid);
+    }
+
+    function hasValidFinancialPayload(data) {
+      return data.keys().hasAll(['_lastUpdated', 'owner_uid'])
           && data._lastUpdated is string
-          && data._lastUpdated.size() >= 10
-          && data._lastUpdated.size() <= 40
-          && data._userMeta is map
-          && data._userMeta.keys().hasAll(['rawName', 'normalizedName', 'userDocId', 'lastSavedAt'])
-          && data._userMeta.userDocId == docId
-          && (!('tcGoals' in data) || data.tcGoals is list)
-          && (!('planIncome' in data) || data.planIncome is list)
-          && (!('planExpense' in data) || data.planExpense is list)
-          && (!('investProducts' in data) || data.investProducts is list)
-          && (!('monthlyDetails' in data) || data.monthlyDetails is map)
-          && (!('surveyP1Choices' in data) || data.surveyP1Choices is map)
-          && (!('surveyP2Choices' in data) || data.surveyP2Choices is map)
-          && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 20));
+          && data._lastUpdated.size() <= 64
+          && data.owner_uid is string
+          && data.owner_uid.size() >= 1
+          && data.owner_uid.size() <= 128
+          && (!('password' in data))
+          && (!('passwordHash' in data))
+          && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() >= 1 && data.ho_ten.size() <= 120))
+          && (!('username' in data) || (data.username is string && data.username.size() >= 2 && data.username.size() <= 64))
+          && (!('currentYear' in data) || (data.currentYear is number && data.currentYear >= 1900 && data.currentYear <= 2200))
+          && (!('currentAge' in data) || (data.currentAge is number && data.currentAge >= 0 && data.currentAge <= 150))
+          && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 30))
+          && request.resource.size < 950000;
     }
 
-    // Kiểm tra thao tác cập nhật một phần (updateDoc khi xóa 1 bản sao lưu trong _backups)
-    function isValidBackupUpdate(data, prevData) {
-      let affected = data.diff(prevData).affectedKeys();
-      return affected.hasOnly(['_backups', '_lastUpdated'])
-          && data._backups is list
-          && data._backups.size() <= 20
-          && data._lastUpdated is string;
+    match /auth_usernames/{username} {
+      allow read, write: if false;
     }
 
-    // =========================================================================
-    // COLLECTION CHÍNH: financial_data/{docId}
-    // =========================================================================
-    match /financial_data/{docId} {
+    match /auth_rate_limits/{rateKey} {
+      allow read, write: if false;
+    }
 
-      // Cho phép đọc hồ sơ khi biết đúng Document ID hợp lệ
-      allow get, list: if isValidDocId(docId);
+    match /auth_uid_index/{uid} {
+      allow get: if isAuthenticatedUser() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
 
-      // Cho phép tạo mới khi Document ID hợp lệ và cấu trúc dữ liệu đạt chuẩn
-      allow create: if isValidDocId(docId)
-                    && isValidFinancialPayload(request.resource.data, docId);
-
-      // Cho phép cập nhật khi:
-      // 1. Lưu toàn bộ trạng thái mới (setDoc) hợp lệ, HOẶC
-      // 2. Xóa một bản sao lưu trong mảng _backups (updateDoc)
-      allow update: if isValidDocId(docId)
-                    && (isValidFinancialPayload(request.resource.data, docId)
-                        || isValidBackupUpdate(request.resource.data, resource.data));
-
-      // Bảo vệ an toàn dữ liệu: Không cho phép xóa toàn bộ document hồ sơ từ phía client
-      // (Việc xóa từng bản sao lưu thực hiện qua updateDoc trên mảng _backups)
+    match /financial_Authentication/{docId} {
+      allow get: if isValidUserProfileId(docId)
+                 && isAuthorizedForDocId(docId)
+                 && (isDocumentOwner(resource.data) || isUnclaimedLegacyDocument(resource.data));
+      allow list: if false;
+      allow create: if isValidUserProfileId(docId)
+                    && isAuthorizedForDocId(docId)
+                    && hasValidOwnerAssignment(request.resource.data, null)
+                    && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidUserProfileId(docId)
+                    && isAuthorizedForDocId(docId)
+                    && (isDocumentOwner(resource.data) || isUnclaimedLegacyDocument(resource.data))
+                    && hasValidOwnerAssignment(request.resource.data, resource.data)
+                    && hasValidFinancialPayload(request.resource.data);
       allow delete: if false;
     }
 
-    // =========================================================================
-    // MẶC ĐỊNH: Chặn toàn bộ các collection và subcollection khác
-    // =========================================================================
     match /{document=**} {
       allow read, write: if false;
     }

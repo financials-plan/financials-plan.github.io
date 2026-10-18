@@ -1,31 +1,8 @@
-/* =====================================================================
-   SỔ TÀI CHÍNH CÁ NHÂN — FRESH POP FINTECH DESIGN SYSTEM
-   Một giao diện sáng duy nhất (không có Light/Dark mode).
 
-   Mục lục
-   1.  Design tokens
-   2.  Base, typography, utilities, focus
-   3.  App shell: sidebar, mobile app bar, topbar, vùng nội dung
-   4.  Buttons
-   5.  Form controls: select, input, date field
-   6.  Date picker popover
-   7.  Panels & section headings
-   8.  Tables
-   9.  Nút "Thêm" chỉ hiện khi hover (thiết bị có chuột)
-   10. Dashboard
-   11. Thiết lập, mục tiêu bản thân, mục tiêu tài chính, lộ trình
-   12. Theo dõi thu chi theo tháng
-   13. Khảo sát
-   14. Cloud / user badge / toast
-   15. Modal
-   16. Responsive
-   17. Reduced motion
-   ===================================================================== */
 
-/* ==================== 1. DESIGN TOKENS (LIGHT & DARK THEMES) ==================== */
 :root {
   color-scheme: light;
-  /* Typography: font chính (Inter) + fallback hệ thống */
+
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --fs-hero: clamp(1.875rem, 1.25rem + 2.2vw, 2.5rem);
@@ -37,7 +14,7 @@
   --fs-btn: 0.8125rem;
   --fs-meta: 0.75rem;
 
-  /* Nền & bề mặt (Light Mode - Fresh Pop FinTech) */
+  
   --bg-app: #F6F5FF;
   --bg-app-2: #F8F7FF;
   --bg-card: #FFFFFF;
@@ -48,7 +25,7 @@
   --border-soft: #F0EEF9;
   --border-strong: #D6D1EE;
 
-  /* Thương hiệu */
+  
   --primary: #6258F5;
   --primary-hover: #5145DF;
   --primary-dark: #28244F;
@@ -56,7 +33,7 @@
   --violet-soft: #EEEAFF;
   --primary-ring: rgba(98, 88, 245, 0.28);
 
-  /* Màu nhấn: Lime = CTA, Cyan = chi tiết/biểu đồ phụ, Mint = tích cực */
+  
   --lime: #D8F36E;
   --lime-hover: #CBEB55;
   --lime-soft: #F4FCD3;
@@ -66,7 +43,7 @@
   --cyan-strong: #0B7D8D;
   --mint: #31CDB1;
 
-  /* Màu ngữ nghĩa (bản "-strong" dùng cho chữ để đạt tương phản AA) */
+  
   --success: #159F87;
   --success-strong: #0E7F6B;
   --success-bg: #E6FAF4;
@@ -77,26 +54,26 @@
   --danger-strong: #D13F4D;
   --danger-bg: #FFF0F1;
 
-  /* Chữ đạt chuẩn WCAG AA */
+  
   --text: #292747;
   --text-muted: #6E6B8F;
   --text-subtle: #8582A3;
 
-  /* Màu bảng dữ liệu & ô nhập số liệu */
+  
   --cell-blue-bg: #EBF3FF;
   --cell-blue-text: #1E40AF;
   --table-header-bg: #F4F2FE;
   --table-total-bg: #F8F7FF;
   --table-sub-bg: #F0EDFD;
 
-  /* Bo góc */
+  
   --radius-sm: 8px;
   --radius-input: 10px;
   --radius-btn: 12px;
   --radius-card: 18px;
   --radius-lg: 22px;
 
-  /* Đổ bóng nhẹ, ưu tiên phân lớp */
+  
   --shadow-xs: 0 1px 2px rgba(40, 36, 79, 0.05);
   --shadow-sm: 0 1px 2px rgba(40, 36, 79, 0.04), 0 4px 14px -4px rgba(40, 36, 79, 0.07);
   --shadow-md: 0 2px 4px rgba(40, 36, 79, 0.04), 0 10px 24px -8px rgba(40, 36, 79, 0.12);
@@ -109,10 +86,9 @@
   --topbar-pad-x: 24px;
 }
 
-/* ==================== DARK MODE TOKENS (WCAG AA COMPLIANT) ==================== */
 [data-theme="dark"] {
   color-scheme: dark;
-  /* Nền tối trung tính ngả xanh slate tự nhiên, phân cấp dịu mắt */
+
   --bg-app: #0B0F17;
   --bg-app-2: #101622;
   --bg-card: #161D2B;
@@ -120,12 +96,12 @@
   --bg-hover: #242E44;
   --bg-topbar: rgba(11, 15, 23, 0.94);
 
-  /* Viền tinh tế, phân tách nhẹ nhàng */
+  
   --border: #232D42;
   --border-soft: #1A2233;
   --border-strong: #33415D;
 
-  /* Thương hiệu & Accent Indigo cân bằng, không chói gắt */
+  
   --primary: #6366F1;
   --primary-hover: #7E81F5;
   --primary-dark: #F0F4FA;
@@ -133,7 +109,7 @@
   --violet-soft: rgba(99, 102, 241, 0.15);
   --primary-ring: rgba(99, 102, 241, 0.35);
 
-  /* Màu nhấn tinh tế */
+  
   --lime: #A3E635;
   --lime-hover: #BEF264;
   --lime-soft: rgba(163, 230, 53, 0.15);
@@ -143,7 +119,7 @@
   --cyan-strong: #60A5FA;
   --mint: #34D399;
 
-  /* Màu trạng thái cân bằng */
+  
   --success: #10B981;
   --success-strong: #34D399;
   --success-bg: rgba(16, 185, 129, 0.15);
@@ -154,26 +130,25 @@
   --danger-strong: #F87171;
   --danger-bg: rgba(239, 68, 68, 0.15);
 
-  /* Chữ đạt chuẩn WCAG AA: chữ chính sáng rõ ràng, không xanh tím lòe loẹt */
+  
   --text: #F0F4FA;
   --text-muted: #94A3B8;
   --text-subtle: #64748B;
 
-  /* Bảng dữ liệu */
+  
   --cell-blue-bg: rgba(99, 102, 241, 0.14);
   --cell-blue-text: #93C5FD;
   --table-header-bg: #1A2233;
   --table-total-bg: #141A27;
   --table-sub-bg: #182030;
 
-  /* Đổ bóng tự nhiên trên nền tối */
+  
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
 }
 
-/* ==================== 2. BASE, TYPOGRAPHY, UTILITIES ==================== */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -189,7 +164,6 @@ body, button, input, select, textarea {
   font-family: var(--font-sans);
 }
 
-/* Bảo vệ icon Font Awesome không bị ghi đè font chữ */
 .fa, .fas, .fa-solid, .fa-regular, .fa-brands {
   font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
 }
@@ -210,7 +184,6 @@ body {
 
 button { cursor: pointer; }
 
-/* Số liệu tài chính: chữ số đều nhau để dễ so sánh theo cột */
 table,
 .kpi-num,
 .kpi-val,
@@ -221,7 +194,6 @@ input[type="date"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* Focus rõ ràng khi dùng bàn phím */
 :focus-visible {
   outline: 3px solid var(--primary-ring);
   outline-offset: 2px;
@@ -234,7 +206,6 @@ input[type="date"] {
 ::-webkit-scrollbar-thumb { background: #D6D1EE; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
 ::-webkit-scrollbar-thumb:hover { background: #B9B2E0; background-clip: content-box; border: 2px solid transparent; }
 
-/* Tiện ích dùng trong markup và template JS */
 .text-right { text-align: right; }
 .text-center { text-align: center; }
 .text-left { text-align: left; }
@@ -260,9 +231,6 @@ input[type="date"] {
 .mt-4 { margin-top: 20px; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 12px; }
 
-/* ==================== 3. APP SHELL ==================== */
-
-/* ---- Sidebar & Expanding Side Rail (Lucian UX/UI Prompt #040) ---- */
 .sidebar {
   width: var(--sidebar-w);
   height: 100%;
@@ -340,7 +308,6 @@ input[type="date"] {
   white-space: nowrap;
 }
 
-/* Nút ghim / bỏ ghim thanh bên Side Rail (Mẫu #040) */
 .btn-rail-toggle {
   width: 32px;
   height: 32px;
@@ -370,7 +337,6 @@ input[type="date"] {
   font-size: 0.8125rem;
 }
 
-/* Chế độ Pinned: ghim đứng thẳng, màu nhấn thương hiệu */
 body.rail-pinned .btn-rail-toggle {
   background: var(--violet-soft);
   color: var(--primary);
@@ -381,7 +347,6 @@ body.rail-pinned .btn-rail-toggle i {
   transform: rotate(0deg);
 }
 
-/* Chế độ Auto: ghim nghiêng 45 độ */
 body.rail-auto .btn-rail-toggle {
   background: var(--bg-card);
   color: var(--text-muted);
@@ -394,7 +359,6 @@ body.rail-auto .btn-rail-toggle i {
 
 .btn-drawer-close { display: none; }
 
-/* ---- Menu Điều Hướng & Sliding Active Highlight (Mẫu #040) ---- */
 .nav-menu {
   flex: 1;
   padding: 8px 12px 14px;
@@ -414,7 +378,6 @@ body.rail-auto .btn-rail-toggle i {
   gap: 3px;
 }
 
-/* Vùng highlight trượt mượt mà (Sliding Active Highlight - Mẫu #040) */
 .rail-active-pill {
   position: absolute;
   left: 0;
@@ -504,7 +467,6 @@ body.rail-auto .btn-rail-toggle i {
 .nav-item.active i { color: var(--primary); }
 .nav-item.active::before { display: none; }
 
-/* Hiệu ứng xuất hiện lần lượt cho tên menu khi mở rộng (Mẫu #040) */
 body.rail-expanded .nav-item span {
   opacity: 1;
   transform: translateX(0);
@@ -518,7 +480,6 @@ body.rail-expanded .nav-item:nth-child(7) span { transition-delay: 120ms; }
 body.rail-expanded .nav-item:nth-child(8) span { transition-delay: 140ms; }
 body.rail-expanded .nav-item:nth-child(9) span { transition-delay: 160ms; }
 
-/* Lưới 12 tháng */
 .month-nav-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -546,12 +507,10 @@ body.rail-expanded .nav-item:nth-child(9) span { transition-delay: 160ms; }
 }
 .nav-item.nav-month.active::before { display: none; }
 
-/* Nút tháng rút gọn khi Side Rail thu gọn */
 .rail-month-collapsed-btn {
   display: none;
 }
 
-/* ==================== SMART SIDE RAIL: PINNED & COLLAPSED / AUTO EXPAND ==================== */
 body.rail-pinned {
   --sidebar-w: var(--sidebar-w-expanded);
 }
@@ -595,7 +554,6 @@ body.rail-auto.rail-collapsed.rail-hover-expanded .sidebar {
   background: var(--bg-hover);
 }
 
-/* Khi ở trạng thái thu gọn và KHÔNG hover */
 body.rail-collapsed:not(.rail-hover-expanded) .sidebar-header {
   padding: 16px 8px 12px;
   justify-content: center;
@@ -667,7 +625,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn.active {
   color: var(--primary);
 }
 
-/* Tooltip nổi khi hover icon ở trạng thái thu gọn và KHÔNG hover expanded */
 body.rail-collapsed:not(.rail-hover-expanded) .nav-item[data-tooltip]::after,
 body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-tooltip]::after {
   content: attr(data-tooltip);
@@ -702,7 +659,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
   transform: translateX(0);
 }
 
-/* ==================== ACCOUNT SWITCHER (LUCIAN UX/UI PROMPT #037) ==================== */
 .rail-account-area {
   position: relative;
   padding: 12px;
@@ -806,7 +762,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
   color: var(--primary);
 }
 
-/* Menu bật lên phía trên (Flyout Menu opens upward - Mẫu #037) */
 .account-switcher-menu {
   position: absolute;
   bottom: calc(100% + 10px);
@@ -974,7 +929,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
   color: var(--danger);
 }
 
-/* Collapsed side rail overrides for account switcher */
 body.rail-collapsed:not(.rail-hover-expanded) .rail-account-area {
   padding: 10px 8px;
 }
@@ -996,7 +950,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
   bottom: 10px;
 }
 
-/* ---- Date Input Wrap with Icon ---- */
 .date-input-wrap {
   position: relative;
   display: inline-flex;
@@ -1032,7 +985,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
 
 .sidebar-backdrop { display: none; }
 
-/* ---- Mobile app bar (chỉ hiện ở màn hình hẹp; mở drawer điều hướng) ---- */
 .mobile-appbar { display: none; }
 
 .btn-menu-toggle {
@@ -1053,7 +1005,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
 .btn-menu-toggle:hover { background: var(--bg-hover); }
 .btn-menu-toggle:active { transform: scale(0.95); }
 
-/* ---- Vùng nội dung ---- */
 .main-content {
   flex: 1;
   min-width: 0;
@@ -1063,9 +1014,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
   background-color: var(--bg-app);
 }
 
-/* ---- Topbar: vùng thông tin trên cùng ----
-   Chỉ tinh chỉnh typography. Thứ tự / nhóm / vị trí các nút giữ nguyên;
-   container chỉ xuống dòng khi không đủ chỗ (thay vì tràn khỏi màn hình). */
 .app-topbar {
   background-color: var(--bg-topbar);
   backdrop-filter: blur(12px);
@@ -1117,7 +1065,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
   min-width: 0;
 }
 
-/* Nút chuyển đổi giao diện Sáng / Tối */
 .btn-theme-toggle {
   width: 36px;
   height: 36px;
@@ -1153,7 +1100,6 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
   transition: transform 0.24s var(--ease), opacity 0.2s var(--ease);
 }
 
-/* Ẩn hiện icon tuỳ theo theme */
 html:not([data-theme="dark"]) .btn-theme-toggle .icon-theme-sun,
 :root:not([data-theme="dark"]) .btn-theme-toggle .icon-theme-sun {
   display: none !important;
@@ -1224,8 +1170,6 @@ html[data-theme="dark"] .btn-theme-toggle .icon-theme-sun,
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ==================== 4. BUTTONS ==================== */
-/* Nền chung cho mọi nút: cùng cỡ chữ, bo góc, trạng thái nhấn và vô hiệu hóa */
 .btn-primary,
 .btn-secondary,
 .btn-danger-outline,
@@ -1290,7 +1234,6 @@ button:disabled,
   filter: grayscale(0.4);
 }
 
-/* Primary */
 .btn-primary,
 .btn-table-add-prominent,
 .btn-modal-submit,
@@ -1316,7 +1259,6 @@ button:disabled,
   box-shadow: 0 8px 18px -6px rgba(98, 88, 245, 0.75);
 }
 
-/* Secondary (outline) */
 .btn-secondary,
 .btn-cloud-sync,
 .btn-modal-cancel,
@@ -1349,10 +1291,8 @@ button:disabled,
   font-size: 0.78rem !important;
 }
 
-/* Cloud save: giữ border cùng màu nền để không đổi kích thước so với nút còn lại */
 .btn-cloud-sync.btn-cloud-save { border-color: var(--primary); }
 
-/* Lime = CTA quan trọng nhất trên hero */
 .btn-lime {
   background: var(--lime);
   color: #1A173B;
@@ -1393,7 +1333,6 @@ button:disabled,
 
 .btn-ghost-light:hover { background: rgba(255, 255, 255, 0.24); }
 
-/* ==================== NÚT "THÊM" NHỎ (TABLE ADD BUTTON) ==================== */
 .btn-table-add {
   height: 30px;
   padding: 0 12px;
@@ -1447,7 +1386,6 @@ button:disabled,
   outline-offset: 2px;
 }
 
-/* Điều hướng phụ (tab con) */
 .btn-sub-nav {
   background: var(--bg-card);
   color: var(--text-muted);
@@ -1515,7 +1453,6 @@ button:disabled,
   border-color: var(--primary-hover);
 }
 
-/* Nút xóa: màu trung tính, chuyển sang đỏ khi tương tác để phân biệt hành động nguy hiểm */
 .btn-table-del {
   background: transparent;
   border: 0;
@@ -1534,9 +1471,6 @@ button:disabled,
 .btn-table-del:hover { color: var(--danger-strong); background-color: var(--danger-bg); }
 .btn-table-del:focus-visible { outline-color: rgba(240, 110, 120, 0.45); }
 
-/* ==================== 5. FORM CONTROLS ==================== */
-
-/* Select: một kiểu hiển thị chung, chevron bên phải, không chặn click */
 select,
 .select-inline-cell {
   width: 100%;
@@ -1590,7 +1524,6 @@ select:disabled,
 
 select option { font-weight: 500; color: var(--text); background-color: var(--bg-card); }
 
-/* Input chung trong bảng nhập liệu */
 .tc-input-table input {
   width: 100%;
   min-height: 36px;
@@ -1620,7 +1553,6 @@ select option { font-weight: 500; color: var(--text); background-color: var(--bg
 
 .tc-input-table input:invalid { border-color: var(--danger); background: var(--danger-bg); }
 
-/* Ô nội dung có thể sửa trực tiếp (contenteditable) — chữ xanh tím = nhập số liệu */
 .cell-blue, .num-blue {
   color: var(--primary);
   font-weight: 600;
@@ -1640,7 +1572,6 @@ select option { font-weight: 500; color: var(--text); background-color: var(--bg
 
 input.cell-blue { padding: 7px 10px; }
 
-/* Ô nhập liệu inline trong bảng (Table Inline Input) */
 .input-inline-cell {
   width: 100%;
   min-height: 36px;
@@ -1678,8 +1609,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--cyan-strong) !important;
 }
 
-/* Ô ngày: input type=date gốc (giữ nguyên giá trị / min / max / sự kiện change),
-   giao diện chọn ngày là popover tùy biến (xem mục 6). */
 .input-date-cell {
   width: 100%;
   min-height: 36px;
@@ -1703,7 +1632,6 @@ input.cell-blue { padding: 7px 10px; }
 .input-date-cell:disabled { background-color: var(--bg-app); color: var(--text-subtle); cursor: not-allowed; }
 .input-date-cell::-webkit-calendar-picker-indicator { display: none; }
 
-/* ==================== 6. DATE PICKER POPOVER ==================== */
 .dp-backdrop {
   position: fixed;
   inset: 0;
@@ -1811,7 +1739,6 @@ input.cell-blue { padding: 7px 10px; }
 .dp-day:hover:not(:disabled) { background: var(--violet-soft); color: var(--primary); }
 .dp-day.is-outside { color: var(--text-subtle); font-weight: 500; }
 
-/* Hôm nay: viền + chấm nhỏ để phân biệt với ngày được chọn */
 .dp-day.is-today { box-shadow: inset 0 0 0 1.5px var(--primary); color: var(--primary); }
 .dp-day.is-today::after {
   content: "";
@@ -1893,7 +1820,6 @@ input.cell-blue { padding: 7px 10px; }
 .dp-link-btn.is-muted { color: var(--text-muted); }
 .dp-link-btn:disabled { color: #C9C6DE; cursor: not-allowed; }
 
-/* ==================== 7. PANELS & SECTION HEADINGS ==================== */
 .section-heading {
   font-size: var(--fs-section);
   font-weight: 800;
@@ -1933,7 +1859,6 @@ input.cell-blue { padding: 7px 10px; }
   flex-wrap: wrap;
 }
 
-/* Khối tiêu đề + bảng dùng chung (Kế hoạch thu chi) */
 .data-panel {
   width: 100%;
   background: var(--bg-card);
@@ -1969,9 +1894,6 @@ input.cell-blue { padding: 7px 10px; }
   background: var(--bg-card);
 }
 
-/* ==================== 8. TABLES ==================== */
-
-/* Màu tiêu đề bảng theo ngữ nghĩa — một nơi duy nhất, dùng cho mọi loại bảng */
 .header-main-primary, .bg-header-primary { --hdr-bg: var(--violet-soft); --hdr-fg: var(--primary-dark); --hdr-accent: var(--primary); }
 .header-main-success, .bg-header-success { --hdr-bg: var(--success-bg); --hdr-fg: var(--success-strong); --hdr-accent: var(--success); }
 .header-main-danger,  .bg-header-danger  { --hdr-bg: var(--danger-bg); --hdr-fg: var(--danger-strong); --hdr-accent: var(--danger); }
@@ -2004,7 +1926,6 @@ input.cell-blue { padding: 7px 10px; }
 .table-header-flex { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .table-header-flex .title { font-size: 0.875rem; font-weight: 800; letter-spacing: 0.01em; text-align: left; }
 
-/* Bảng tiêu chuẩn (tab Thiết lập) */
 .excel-table {
   border-collapse: separate;
   border-spacing: 0;
@@ -2043,7 +1964,6 @@ input.cell-blue { padding: 7px 10px; }
 .excel-table-bordered tbody tr:hover td { background-color: var(--bg-surface); }
 .bg-total-row, .bg-total-row td { background-color: var(--bg-surface); border-top: 2px solid var(--border-strong); }
 
-/* Bảng ma trận dòng tiền (dashboard, ma trận mục tiêu) */
 .excel-matrix-table { min-width: 1020px; }
 
 .excel-matrix-table th, .excel-matrix-table td {
@@ -2069,14 +1989,12 @@ input.cell-blue { padding: 7px 10px; }
 .savings-highlight-row, .savings-highlight-row td { background-color: var(--violet-soft); font-weight: 700; color: var(--primary-dark); }
 .sparkline-canvas { vertical-align: middle; }
 
-/* Ô trạng thái */
 .cell-readonly { user-select: none; cursor: not-allowed; background-color: var(--bg-card); pointer-events: none; }
 .bg-neutral-gray { background-color: var(--bg-surface); user-select: none; }
 .cell-primary-light { background-color: var(--bg-surface); outline: none; }
 .cell-disabled-readonly { background-color: var(--bg-surface); color: var(--text-subtle); cursor: not-allowed; user-select: none; text-align: center; }
 .dash-null { color: #C9C6DE; }
 
-/* Huy hiệu trạng thái */
 .deficit-badge, .success-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -2089,10 +2007,6 @@ input.cell-blue { padding: 7px 10px; }
 .deficit-badge { background-color: var(--danger-bg); color: var(--danger-strong); }
 .success-badge { background-color: var(--success-bg); color: var(--success-strong); }
 
-/* ==================== 9. NÚT "THÊM" CHỈ HIỆN KHI HOVER ==================== */
-/* Chỉ áp dụng cho thiết bị có chuột + hỗ trợ hover. Thiết bị cảm ứng luôn thấy nút.
-   Dùng opacity (không dùng display/visibility) để không đổi layout và vẫn focus được bằng bàn phím;
-   pointer-events: none khi ẩn để nút vô hình không chặn click. */
 @media (hover: hover) and (pointer: fine) {
   .btn-table-add {
     opacity: 0;
@@ -2107,7 +2021,6 @@ input.cell-blue { padding: 7px 10px; }
   }
 }
 
-/* Ngăn hoàn toàn các quy tắc icon từ container cha ghi đè màu icon nút thêm */
 .target-table th .btn-table-add i,
 .table-header-bar .btn-table-add i,
 .sheet-title-banner .btn-table-add i,
@@ -2121,7 +2034,6 @@ input.cell-blue { padding: 7px 10px; }
   margin: 0 !important;
 }
 
-/* ==================== 10. DASHBOARD ==================== */
 .dash-hero {
   position: relative;
   width: 100%;
@@ -2138,7 +2050,6 @@ input.cell-blue { padding: 7px 10px; }
   margin-bottom: 16px;
 }
 
-/* Chi tiết trang trí nhẹ (Cyan + Lime) */
 .dash-hero::before,
 .dash-hero::after {
   content: "";
@@ -2193,7 +2104,6 @@ input.cell-blue { padding: 7px 10px; }
 
 .dash-hero-actions { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
 
-/* Lối tắt tới các chức năng thật của ứng dụng */
 .dash-shortcuts {
   width: 100%;
   display: grid;
@@ -2242,7 +2152,6 @@ input.cell-blue { padding: 7px 10px; }
 .shortcut-arrow { margin-left: auto; color: var(--text-subtle); font-size: 0.8125rem; transition: transform 0.16s var(--ease), color 0.16s var(--ease); }
 .shortcut:hover .shortcut-arrow { color: var(--primary); transform: translateX(3px); }
 
-/* Chỉ số tài chính: thẻ "Tiết kiệm ròng" nổi bật, thu nhập/chi tiêu phụ */
 .dash-kpi-three-strip {
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr;
@@ -2371,9 +2280,6 @@ input.cell-blue { padding: 7px 10px; }
 .dashboard-matrix-container { width: 100%; margin-top: 28px; }
 .dashboard-matrix-container > .sheet-title-banner { margin-bottom: 14px; }
 
-/* ==================== 11. THIẾT LẬP, MỤC TIÊU, LỘ TRÌNH ==================== */
-
-/* Tab Từ khóa thiết lập: hàng thông tin năm / tuổi / quy ước */
 .top-info-row {
   display: flex;
   align-items: stretch;
@@ -2453,7 +2359,6 @@ input.cell-blue { padding: 7px 10px; }
 .text-black-rule { color: var(--text-muted); font-weight: 600; }
 .text-red-rule { color: var(--danger-strong); font-weight: 600; }
 
-/* Bảng thiết lập: lưới tự chia cột */
 .sheet-tables-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
@@ -2478,7 +2383,6 @@ input.cell-blue { padding: 7px 10px; }
 .sheet-table-wrap .excel-table { width: 100%; min-width: 270px; }
 .sheet-table-wrap:has(th[colspan="5"]) .excel-table { min-width: 440px; }
 
-/* Mục tiêu bản thân */
 .target-container {
   display: flex;
   flex-direction: column;
@@ -2557,7 +2461,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--text);
 }
 
-/* Mục tiêu tài chính */
 .custom-sheet-container.full-width-sheet { max-width: 1420px; width: 100%; min-width: 0; }
 .tc-subnav-bar, .sub-nav-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 
@@ -2630,7 +2533,6 @@ input.cell-blue { padding: 7px 10px; }
 .tc-column { display: flex; flex-direction: column; gap: 14px; min-width: 0; width: 100%; }
 .tc-cards-list { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 
-/* Trạng thái trống sạch sẽ khi danh mục không có dữ liệu */
 .tc-empty-state {
   display: flex;
   flex-direction: column;
@@ -2730,7 +2632,6 @@ input.cell-blue { padding: 7px 10px; }
 .tc-card-h4-table:has(.select-inline-cell) { min-width: 630px; }
 .tc-card-h4-table .select-inline-cell { min-height: 32px; padding: 4px 24px 4px 8px; font-size: var(--fs-meta); }
 
-/* Ma trận nhu cầu tiết kiệm */
 .tc-matrix-header-box { background: var(--bg-card); padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-xs); }
 .tc-matrix-desc { font-size: var(--fs-table); color: var(--text-muted); margin-top: 4px; }
 .tc-chart-card { background: var(--bg-card); padding: 20px; border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow-sm); min-width: 0; }
@@ -2745,7 +2646,6 @@ input.cell-blue { padding: 7px 10px; }
 .cell-matrix-editable:focus { background-color: var(--violet-soft) !important; box-shadow: inset 0 0 0 2px var(--primary); }
 .tc-matrix-table td.cell-active-goal, .cell-active-goal { background-color: var(--success-bg); font-weight: 700; color: var(--success-strong); text-align: right; }
 
-/* Cột nổi bật của ma trận: tiết kiệm = primary-dark, thu nhập = primary (khớp màu biểu đồ) */
 .col-highlight-gold { background-color: #1E1B3D !important; color: #FFFFFF !important; border-top-color: #1E1B3D !important; }
 .col-highlight-orange { background-color: var(--primary) !important; color: #FFFFFF !important; border-top-color: var(--primary) !important; }
 .val-gold { color: #1E1B3D; font-weight: 800; }
@@ -2754,12 +2654,10 @@ input.cell-blue { padding: 7px 10px; }
 [data-theme="dark"] .col-highlight-gold { background-color: #1E293B !important; color: #F0F4FA !important; border-top-color: var(--primary) !important; }
 [data-theme="dark"] .val-gold { color: #A5B4FC; }
 
-/* Lộ trình nghề nghiệp */
 .career-fixed-chart-wrapper { width: 100%; }
 .fixed-size-card { height: 340px; display: flex; flex-direction: column; }
 .career-canvas-container { flex: 1; position: relative; width: 100%; min-height: 0; }
 
-/* ==================== 12. THEO DÕI THU CHI THEO THÁNG ==================== */
 .month-top-grid {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
@@ -2835,7 +2733,6 @@ input.cell-blue { padding: 7px 10px; }
 .info-bar { --hdr-accent: var(--cyan); }
 .info-bar i { color: var(--cyan-strong); }
 
-/* ==================== PHẦN 2: CHI PHÍ HỌC TẬP VÀ ĐÀO TẠO ==================== */
 .learning-kpi-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2894,7 +2791,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--primary);
 }
 
-/* Biến thể màu cho thẻ KPI */
 .kpi-card-cyan .kpi-icon-wrap {
   background: rgba(2, 132, 199, 0.12);
   color: #0284C7;
@@ -2961,7 +2857,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--primary);
 }
 
-/* Mobile Scroll Hint */
 .mobile-scroll-hint {
   display: none;
   align-items: center;
@@ -3037,7 +2932,6 @@ input.cell-blue { padding: 7px 10px; }
   min-width: 100%;
 }
 
-/* ==================== 13. KHẢO SÁT (PACED STEPPER WIZARD) ==================== */
 .gform-container {
   width: 100%;
   max-width: 900px;
@@ -3106,7 +3000,6 @@ input.cell-blue { padding: 7px 10px; }
   flex-wrap: wrap;
 }
 
-/* ==================== 3-TAB SURVEY NAVIGATION BAR ==================== */
 .survey-nav-three {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3277,7 +3170,6 @@ input.cell-blue { padding: 7px 10px; }
   }
 }
 
-/* Incomplete banner & complete badge in step 3 */
 .survey-incomplete-banner {
   display: flex;
   align-items: flex-start;
@@ -3399,7 +3291,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--text-muted);
 }
 
-/* Progress bar box */
 .survey-progress-box {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -3456,7 +3347,6 @@ input.cell-blue { padding: 7px 10px; }
   transition: width 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* Step Panes */
 .survey-step-pane {
   display: none;
   animation: fadeInPane 0.22s var(--ease);
@@ -3474,7 +3364,6 @@ input.cell-blue { padding: 7px 10px; }
   box-sizing: border-box;
 }
 
-/* Survey View Mode Toggle (Segmented control) */
 .survey-view-toggle {
   display: inline-flex;
   align-items: center;
@@ -3511,7 +3400,6 @@ input.cell-blue { padding: 7px 10px; }
   box-shadow: var(--shadow-sm);
 }
 
-/* Mode All - Show all 21 questions simultaneously */
 .gform-container.mode-all .survey-step-pane {
   display: flex !important;
   flex-direction: column;
@@ -3528,7 +3416,6 @@ input.cell-blue { padding: 7px 10px; }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Step Navigation Actions */
 .survey-step-actions {
   display: flex;
   align-items: center;
@@ -3546,7 +3433,6 @@ input.cell-blue { padding: 7px 10px; }
   justify-content: space-between;
 }
 
-/* Button sizing and spacing in survey flows */
 .btn-survey-action {
   min-height: 42px;
   padding: 10px 22px;
@@ -3576,7 +3462,6 @@ input.cell-blue { padding: 7px 10px; }
   transform: translateX(-3px);
 }
 
-/* ==================== REDESIGNED SURVEY RESULTS SECTION ==================== */
 .survey-result-summary-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -3589,7 +3474,6 @@ input.cell-blue { padding: 7px 10px; }
   transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
 }
 
-/* Header with Badge & Clear Hierarchy */
 .result-card-header {
   display: flex;
   align-items: flex-start;
@@ -3633,14 +3517,12 @@ input.cell-blue { padding: 7px 10px; }
   margin: 0;
 }
 
-/* Dual Column Grid for Results */
 .result-dual-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 20px;
 }
 
-/* Pillar Card (Khẩu vị rủi ro & Điều kiện phát triển) */
 .result-pillar-card {
   background: var(--bg-surface);
   border: 1.5px solid var(--border);
@@ -3657,7 +3539,6 @@ input.cell-blue { padding: 7px 10px; }
   box-shadow: var(--shadow-xs);
 }
 
-/* Pillar Header (Icon, Section Tag, Title) */
 .pillar-header-row {
   display: flex;
   align-items: center;
@@ -3712,7 +3593,6 @@ input.cell-blue { padding: 7px 10px; }
   line-height: 1.25;
 }
 
-/* Pillar Result Badge */
 .pillar-badge-box {
   display: flex;
   align-items: center;
@@ -3741,7 +3621,6 @@ input.cell-blue { padding: 7px 10px; }
   border: 1px solid rgba(49, 200, 219, 0.3);
 }
 
-/* Pillar Recommendation / Description Box */
 .pillar-desc-box {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -3771,7 +3650,6 @@ input.cell-blue { padding: 7px 10px; }
   margin: 0;
 }
 
-/* Synthesis Guidance Banner */
 .result-synthesis-callout {
   background: var(--violet-soft);
   border: 1px dashed rgba(98, 88, 245, 0.35);
@@ -3838,7 +3716,6 @@ input.cell-blue { padding: 7px 10px; }
   color: #94A3B8;
 }
 
-/* Actions Footer: Distinguishable Primary & Secondary Buttons */
 .result-actions-footer {
   display: flex;
   align-items: center;
@@ -3924,7 +3801,6 @@ input.cell-blue { padding: 7px 10px; }
   flex-shrink: 0;
 }
 
-/* Dark Mode Banners: Deep high-contrast dark slate with distinct vibrant left accents */
 [data-theme="dark"] .gform-section-banner.banner-primary {
   background: linear-gradient(135deg, #161C2C 0%, #1A2338 100%);
   border: 1px solid #2B3854;
@@ -4021,7 +3897,6 @@ input.cell-blue { padding: 7px 10px; }
 .sub-table-graphic th { background-color: var(--bg-surface); color: var(--text-muted); border-bottom: 1px solid var(--border); padding: 9px; font-weight: 700; }
 .sub-table-graphic td { border-bottom: 1px solid var(--border-soft); padding: 9px; text-align: center; }
 
-/* ==================== 14. CLOUD / USER BADGE / TOAST ==================== */
 .cloud-badge {
   display: inline-flex;
   align-items: center;
@@ -4110,7 +3985,6 @@ input.cell-blue { padding: 7px 10px; }
 .cloud-toast.toast-success { background: #0B5E50; border-left: 4px solid var(--mint); }
 .cloud-toast.toast-error { background: #8E2430; border-left: 4px solid var(--danger); }
 
-/* ==================== 15. MODAL ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -4127,7 +4001,6 @@ input.cell-blue { padding: 7px 10px; }
 .modal-overlay.active { display: flex; animation: overlayIn 0.2s var(--ease); }
 @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* margin:auto giúp căn giữa an toàn: nội dung cao hơn viewport (bàn phím ảo) vẫn cuộn được */
 .modal-card {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
@@ -4210,9 +4083,6 @@ input.cell-blue { padding: 7px 10px; }
 
 .modal-footer { padding: 16px 24px; background-color: var(--bg-surface); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
 
-/* ==================== 16. RESPONSIVE ==================== */
-
-/* Laptop nhỏ: thu gọn sidebar, gom lưới 2 cột về 1 cột */
 @media (max-width: 1280px) {
   :root { --sidebar-w: 232px; --topbar-pad-x: 20px; }
 }
@@ -4240,7 +4110,7 @@ input.cell-blue { padding: 7px 10px; }
 @media (max-width: 900px) {
   :root { --topbar-pad-x: 16px; }
 
-  /* Trang cuộn theo tài liệu; app bar dính trên cùng, sidebar thành drawer */
+  
   body {
     display: block;
     height: auto;
@@ -4289,7 +4159,7 @@ input.cell-blue { padding: 7px 10px; }
 
   body.nav-open .sidebar { transform: none; visibility: visible; transition: transform 0.26s var(--ease), visibility 0s; }
 
-  /* Trên mobile, drawer luôn hiển thị đầy đủ kể cả khi body có class rail-collapsed */
+  
   body.rail-collapsed .sidebar-header {
     padding: 16px 14px 12px 16px !important;
     justify-content: flex-start !important;
@@ -4361,7 +4231,7 @@ input.cell-blue { padding: 7px 10px; }
   .nav-item { padding: 12px; }
   .month-nav-grid { grid-template-columns: repeat(3, 1fr); }
 
-  /* Topbar: nội dung giữ nguyên thứ tự, xuống dòng khi hết chỗ */
+  
   .app-topbar { padding: 12px var(--topbar-pad-x); gap: 10px; }
   .topbar-right { width: 100%; justify-content: flex-start; margin-left: 0; }
 
@@ -4417,7 +4287,7 @@ input.cell-blue { padding: 7px 10px; }
 
   .cloud-toast { left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: none; }
 
-  /* Date picker: dạng bottom sheet — cùng một component, chỉ đổi cách đặt vị trí */
+  
   .dp-popover {
     left: 0 !important;
     right: 0;
@@ -4447,7 +4317,6 @@ input.cell-blue { padding: 7px 10px; }
   .btn-cloud-sync { padding: 0 10px; }
 }
 
-/* Thiết bị cảm ứng: vùng chạm tối thiểu ~44px, input >= 16px để iOS không tự phóng to khi focus */
 @media (pointer: coarse) {
   select,
   .select-inline-cell,
@@ -4464,10 +4333,6 @@ input.cell-blue { padding: 7px 10px; }
   .gform-option-item { min-height: 52px; }
 }
 
-/* ==========================================================================
-   Day–night sky switch — Lucian UX/UI Prompt #021
-   Licensed under MIT License
-   ========================================================================== */
 .account-theme-row {
   display: flex;
   align-items: center;
@@ -4502,7 +4367,6 @@ input.cell-blue { padding: 7px 10px; }
   color: var(--text-muted);
 }
 
-/* --- Sky switch pill container --- */
 .u021-switch {
   width: 70px;
   height: 34px;
@@ -4542,7 +4406,6 @@ input.cell-blue { padding: 7px 10px; }
   overflow: hidden;
 }
 
-/* Day sky gradient */
 .u021-sky {
   position: absolute;
   inset: 0;
@@ -4554,7 +4417,7 @@ input.cell-blue { padding: 7px 10px; }
   opacity: 1;
   transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* Night sky gradient */
+
 .u021-sky-night {
   background: linear-gradient(180deg, #090d16 0%, #1e1b4b 100%);
   opacity: 0;
@@ -4569,7 +4432,6 @@ input.cell-blue { padding: 7px 10px; }
   opacity: 1;
 }
 
-/* Day clouds */
 .u021-cloud {
   position: absolute;
   background: rgba(255, 255, 255, 0.92);
@@ -4601,7 +4463,6 @@ input.cell-blue { padding: 7px 10px; }
   opacity: 0;
 }
 
-/* Night stars */
 .u021-star {
   position: absolute;
   background: #ffffff;
@@ -4656,7 +4517,6 @@ input.cell-blue { padding: 7px 10px; }
   50% { opacity: 1; transform: scale(1.2); }
 }
 
-/* Knob: Sun in Day mode, Moon in Night mode */
 .u021-knob {
   position: absolute;
   top: 3px;
@@ -4677,7 +4537,6 @@ input.cell-blue { padding: 7px 10px; }
   box-shadow: 0 0 6px rgba(226, 232, 240, 0.5), inset -1px -1px 2px rgba(0, 0, 0, 0.35);
 }
 
-/* Craters on Moon */
 .u021-crater {
   position: absolute;
   border-radius: 50%;
@@ -4710,9 +4569,6 @@ input.cell-blue { padding: 7px 10px; }
   transform: scale(1);
 }
 
-/* ==========================================================================
-   MODAL QUẢN LÝ BẢN SAO LƯU & NHẬP DỮ LIỆU
-   ========================================================================== */
 .backup-modal-card {
   max-width: 620px;
   width: 100%;
@@ -4927,7 +4783,6 @@ input.cell-blue { padding: 7px 10px; }
   border-color: var(--danger);
 }
 
-/* Preview Card */
 .backup-preview-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -5001,7 +4856,6 @@ input.cell-blue { padding: 7px 10px; }
   color: #ffffff;
 }
 
-/* Confirmation Box */
 .backup-confirm-box {
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid #f59e0b;
@@ -5054,7 +4908,6 @@ input.cell-blue { padding: 7px 10px; }
   cursor: pointer;
 }
 
-/* States */
 .backup-state-box {
   padding: 32px 16px;
   text-align: center;
@@ -5080,7 +4933,6 @@ input.cell-blue { padding: 7px 10px; }
   border-radius: var(--radius-card);
 }
 
-/* ==================== CONFIRM MODAL OVERLAY (RESTORE / DELETE) ==================== */
 .confirm-modal-overlay {
   z-index: 10050;
   display: none;
@@ -5200,7 +5052,6 @@ input.cell-blue { padding: 7px 10px; }
   opacity: 0.9;
 }
 
-/* Phân nhánh kiểu dáng theo hành động: RESTORE vs DELETE */
 .confirm-type-restore #confirm-modal-icon-badge {
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
   box-shadow: 0 6px 14px -4px rgba(59, 130, 246, 0.5);
@@ -5259,7 +5110,6 @@ input.cell-blue { padding: 7px 10px; }
   background: #b91c1c;
 }
 
-/* Alert trạng thái xử lý / thông báo kết quả */
 .confirm-status-alert {
   display: flex;
   align-items: center;
@@ -5294,7 +5144,6 @@ input.cell-blue { padding: 7px 10px; }
   color: #10b981;
 }
 
-/* ==================== 17. REDUCED MOTION ==================== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -5304,3 +5153,609 @@ input.cell-blue { padding: 7px 10px; }
     scroll-behavior: auto !important;
   }
 }
+
+.auth-modal-card {
+  max-width: 520px;
+}
+
+.auth-tabs-nav,
+.io-tabs-bar {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-surface);
+  padding: 5px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+}
+
+.io-tabs-bar {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 14px;
+}
+
+.auth-tab-btn,
+.io-tab-btn {
+  flex: 1 1 0%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: calc(var(--radius-btn) - 3px);
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.16s var(--ease), color 0.16s var(--ease), box-shadow 0.16s var(--ease);
+}
+
+.auth-tab-btn:hover,
+.io-tab-btn:hover {
+  color: var(--primary-dark);
+  background: var(--bg-hover);
+}
+
+.auth-tab-btn.active,
+.io-tab-btn.active {
+  background: var(--bg-card);
+  color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+.auth-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-success-msg {
+  font-size: var(--fs-table);
+  font-weight: 600;
+  color: var(--success-strong);
+  background-color: var(--success-bg);
+  padding: 10px 14px;
+  border-radius: var(--radius-input);
+  border: 1px solid rgba(49, 205, 177, 0.4);
+  line-height: 1.5;
+}
+
+.data-io-modal-card {
+  max-width: 720px;
+}
+
+.io-summary-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.io-summary-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+  color: var(--text);
+}
+
+.io-hint-text {
+  font-size: var(--fs-table);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.io-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.io-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.io-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.io-file-input,
+.io-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: var(--fs-table);
+  font-weight: 600;
+}
+
+.io-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.io-radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+}
+
+.io-radio-item input[type="radio"] {
+  margin-top: 3px;
+}
+
+.io-radio-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.io-radio-item strong {
+  font-size: var(--fs-table);
+  color: var(--primary-dark);
+}
+
+.io-radio-item span {
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.io-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--fs-table);
+  color: var(--text);
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: var(--radius-input);
+  background: var(--warning-bg);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.io-preview-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-table);
+  color: var(--text);
+  padding: 8px 0;
+}
+
+.io-mapping-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.io-mapping-title {
+  font-size: var(--fs-table);
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.io-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.io-mapping-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.io-mapping-item label {
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.io-csv-preview-scroll {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+}
+
+.badge-fixed-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(98, 88, 245, 0.14);
+  color: var(--primary);
+  border: 1px solid rgba(98, 88, 245, 0.3);
+  white-space: nowrap;
+}
+
+.goal-weight-warning {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.brand-unit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2px 7px;
+  border-radius: 6px;
+  width: fit-content;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(98, 88, 245, 0.15);
+}
+
+.mobile-brand-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand-unit-badge-mobile {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--primary);
+  line-height: 1.1;
+}
+
+body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Lucian UX/UI Prompt #032 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#032 */
+:root {
+  --ux-page: #F4F2EE;
+  --ux-surface: #FFFFFF;
+  --ux-surface-2: #F5F3EF;
+  --ux-surface-3: #EAE7E1;
+  --ux-ink: #16151B;
+  --ux-ink-2: #57535F;
+  --ux-ink-3: #8E8A97;
+  --ux-line: rgba(22,21,27,.09);
+  --ux-line-2: rgba(22,21,27,.17);
+  --ux-accent: #6258F5;
+  --ux-accent-2: #2F8FE0;
+  --ux-accent-soft: rgba(98,88,245,.12);
+  --ux-accent-ink: #FFFFFF;
+  --ux-mint: #119C72;
+  --ux-warn: #D6731E;
+  --ux-danger: #D93A55;
+  --ux-glass: rgba(255,255,255,.58);
+  --ux-glass-line: rgba(255,255,255,.85);
+  --ux-shadow: rgba(40,30,80,.14);
+  --ux-shadow-strong: rgba(40,30,80,.3);
+  --ux-grad: linear-gradient(120deg,#7B61FF,#3D8BFF 55%,#1FB89A);
+  --ux-ease: cubic-bezier(.2,.8,.2,1);
+  --ux-spring: cubic-bezier(.34,1.45,.64,1);
+}
+
+[data-theme="dark"] {
+  --ux-page: #07080D;
+  --ux-surface: #13141C;
+  --ux-surface-2: #1A1B25;
+  --ux-surface-3: #252632;
+  --ux-ink: #F4F0E8;
+  --ux-ink-2: rgba(244,240,232,.68);
+  --ux-ink-3: rgba(244,240,232,.42);
+  --ux-line: rgba(255,255,255,.08);
+  --ux-line-2: rgba(255,255,255,.16);
+  --ux-accent: #B7A4FF;
+  --ux-accent-2: #7DB4FF;
+  --ux-accent-soft: rgba(183,164,255,.15);
+  --ux-accent-ink: #0B0C12;
+  --ux-mint: #7EE8C0;
+  --ux-warn: #FFB26B;
+  --ux-danger: #FF7D8C;
+  --ux-glass: rgba(255,255,255,.07);
+  --ux-glass-line: rgba(255,255,255,.18);
+  --ux-shadow: rgba(0,0,0,.45);
+  --ux-shadow-strong: rgba(0,0,0,.72);
+  --ux-grad: linear-gradient(120deg,#B7A4FF,#7DB4FF 55%,#A5F2D3);
+}
+
+.ux, .ux *, .ux *::before, .ux *::after { box-sizing: border-box; }
+.ux {
+  font-family: inherit;
+  color: var(--ux-ink);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -.01em;
+  -webkit-tap-highlight-color: transparent;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+:where(.ux) :is(button,input,textarea,select) { font: inherit; color: inherit; }
+:where(.ux) button { cursor: pointer; }
+.ux :focus-visible { outline: 2px solid var(--ux-accent); outline-offset: 3px; }
+.ux [hidden] { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ux, .ux *, .ux *::before, .ux *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.u032 {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 10px auto;
+}
+.u032-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 180px;
+  border: 0;
+  padding: 22px 16px;
+  border-radius: 26px;
+  background: var(--ux-surface);
+  color: var(--ux-ink);
+  cursor: pointer;
+  transition: transform .5s var(--ux-spring), background-color .3s var(--ux-ease);
+}
+.u032-zone:focus-visible {
+  outline: 2px solid var(--ux-accent);
+  outline-offset: 4px;
+}
+.u032-zone svg.u032-dash {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  overflow: visible;
+  pointer-events: none;
+}
+.u032-dash rect {
+  fill: none;
+  stroke: var(--ux-line-2);
+  stroke-width: 2;
+  stroke-dasharray: 8 7;
+  transition: stroke .3s var(--ux-ease);
+}
+.u032-zone:hover .u032-dash rect,
+.u032.is-over .u032-dash rect {
+  stroke: var(--ux-accent);
+  animation: u032-march .9s linear infinite;
+}
+@keyframes u032-march {
+  to { stroke-dashoffset: -30; }
+}
+.u032.is-over .u032-zone {
+  transform: scale(1.02);
+  background: color-mix(in srgb, var(--ux-accent) 7%, var(--ux-surface));
+}
+.u032-orb {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(140deg, #5B8CFF, #8B6CFF);
+  box-shadow: 0 16px 28px -14px rgba(91,108,255,.8);
+  transition: transform .5s var(--ux-spring);
+}
+.u032-orb svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.u032-zone:hover .u032-orb {
+  transform: translateY(-4px);
+}
+.u032.is-over .u032-orb {
+  transform: translateY(-8px) scale(1.1) rotate(-6deg);
+}
+.u032-zone b {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 720;
+  letter-spacing: -.02em;
+}
+.u032-zone b em {
+  font-style: normal;
+  color: var(--ux-accent);
+}
+.u032-zone small {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ux-ink-3);
+  text-align: center;
+}
+.u032-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.u032-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.u032-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 12px;
+  border-radius: 18px;
+  background: var(--ux-surface);
+  box-shadow: 0 0 0 1px var(--ux-line);
+  overflow: hidden;
+  animation: u032-in .5s var(--ux-spring);
+}
+@keyframes u032-in {
+  from { transform: translateY(-10px) scale(.96); opacity: 0; }
+}
+.u032-row.out {
+  transition: transform .35s var(--ux-ease), opacity .3s;
+  transform: translateX(30px);
+  opacity: 0;
+}
+.u032-ic {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #fff;
+  background: var(--c, #8E8A97);
+}
+.u032-meta {
+  flex: 1;
+  min-width: 0;
+}
+.u032-meta b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 660;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.u032-meta small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--ux-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.u032-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--ux-accent);
+  transform-origin: 0 50%;
+  transform: scaleX(var(--p, 0));
+  transition: transform .2s linear, background-color .3s, opacity .5s .4s;
+}
+.u032-row.done .u032-bar {
+  background: var(--ux-mint);
+  opacity: 0;
+}
+.u032-row.fail .u032-bar {
+  background: var(--ux-danger);
+}
+.u032-st {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.u032-st svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.u032-row.done .u032-st {
+  background: var(--ux-mint);
+  color: var(--ux-accent-ink);
+  animation: u032-pop .45s var(--ux-spring);
+}
+@keyframes u032-pop {
+  from { transform: scale(.3); }
+}
+.u032-row.done .u032-st path {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  animation: u032-draw .4s var(--ux-ease) .15s forwards;
+}
+@keyframes u032-draw {
+  to { stroke-dashoffset: 0; }
+}
+.u032-row.fail .u032-meta small {
+  color: var(--ux-danger);
+}
+.u032-retry {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ux-danger) 12%, transparent);
+  color: var(--ux-danger);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.u032-retry:focus-visible {
+  outline: 2px solid var(--ux-danger);
+  outline-offset: 2px;
+}
+.u032-spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--ux-surface-3);
+  border-top-color: var(--ux-accent);
+  animation: u032-rot .8s linear infinite;
+}
+@keyframes u032-rot {
+  to { transform: rotate(360deg); }
+}
+
+

@@ -5,26 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#6258F5">
   <title>Sổ Tài Chính Cá Nhân</title>
-  <!-- Google Font: Inter (một font chính, biến thiên 400-800, hỗ trợ tiếng Việt) -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet">
-  <!-- Font Awesome Icons -->
+
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
-  <!-- Chart.js CDN -->
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Link CSS độc lập -->
+
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
-  <!-- Thanh điều hướng cho màn hình hẹp: mở/đóng drawer menu -->
+  
   <div class="mobile-appbar">
     <button type="button" class="btn-menu-toggle" id="btn-menu-toggle" aria-label="Mở menu điều hướng" aria-controls="app-sidebar" aria-expanded="false">
       <i class="fa-solid fa-bars"></i>
     </button>
     <div class="brand-badge"><i class="fa-solid fa-wallet"></i></div>
-    <span class="brand-title">SỔ TÀI CHÍNH</span>
+    <div class="mobile-brand-wrap">
+      <span class="brand-title">SỔ TÀI CHÍNH</span>
+      <span class="brand-unit-badge-mobile">Đơn vị: Triệu đồng</span>
+    </div>
   </div>
   <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
@@ -34,8 +37,9 @@
       <div class="brand-text">
         <span class="brand-title">SỔ TÀI CHÍNH</span>
         <span class="brand-subtitle">Quản lý &amp; Tăng trưởng</span>
+        <span class="brand-unit-badge"><i class="fa-solid fa-coins"></i> Đơn vị: Triệu đồng</span>
       </div>
-      <!-- Nút điều khiển Ghim / Chế độ Tự động mở rộng (Smart Side Rail) -->
+
       <button type="button" class="btn-rail-toggle" id="btn-rail-toggle" aria-label="Ghim mở rộng hoặc tự động thu gọn Side Rail" aria-pressed="true" title="Ghim mở rộng (Nhấn để chuyển sang Tự động mở khi hover)" onclick="toggleSideRailPin()">
         <i class="fa-solid fa-thumbtack icon-rail-pin"></i>
       </button>
@@ -44,7 +48,7 @@
 
     <nav class="nav-menu" id="rail-nav-menu">
       <div class="rail-nav-wrapper" id="rail-nav-wrapper">
-        <!-- Vùng highlight trượt mượt mà (Sliding Active Highlight - Mẫu Lucian #040) -->
+
         <div class="rail-active-pill" id="rail-active-pill" aria-hidden="true">
           <span class="rail-active-indicator"></span>
         </div>
@@ -72,7 +76,7 @@
         </button>
 
         <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
-        <!-- Nút rút gọn cho chế độ Collapsed Side Rail -->
+
         <button type="button" class="rail-month-collapsed-btn" id="btn-month-collapsed" data-tooltip="Theo dõi 12 tháng" onclick="switchMonthTab(AppState.currentMonth || 1)">
           <i class="fa-solid fa-calendar-days"></i>
         </button>
@@ -98,38 +102,38 @@
       </div>
     </nav>
 
-    <!-- Khu vực Account Switcher ở chân Side Rail (Mẫu Lucian #037) -->
+    
     <div class="rail-account-area" id="rail-account-area">
-      <!-- Flyout Menu mở lên phía trên (Mẫu #037) -->
+
       <div class="account-switcher-menu" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
         <div class="account-menu-header">
           <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
           <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
         </div>
 
-        <!-- Danh sách hồ sơ thật -->
+        
         <div class="account-list" id="rail-account-list" role="group">
-          <!-- Render động từ JavaScript -->
+
         </div>
 
         <div class="account-menu-divider"></div>
 
-        <!-- Chế độ giao diện Day–night sky switch (Lucian UX/UI Prompt #021 - MIT License) -->
+        
         <div class="account-theme-row">
           <div class="account-theme-info">
             <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
             <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
           </div>
-          <!-- Day–night sky switch — Lucian UX/UI Prompt #021 -->
+
           <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
             <span class="u021-track">
-              <!-- Sky Day -->
+
               <span class="u021-sky u021-sky-day">
                 <span class="u021-cloud u021-cloud-1"></span>
                 <span class="u021-cloud u021-cloud-2"></span>
                 <span class="u021-cloud u021-cloud-3"></span>
               </span>
-              <!-- Sky Night -->
+
               <span class="u021-sky u021-sky-night">
                 <span class="u021-star u021-star-1"></span>
                 <span class="u021-star u021-star-2"></span>
@@ -137,7 +141,7 @@
                 <span class="u021-star u021-star-4"></span>
                 <span class="u021-star u021-star-5"></span>
               </span>
-              <!-- Knob: Sun / Moon with craters -->
+
               <span class="u021-knob">
                 <span class="u021-crater u021-crater-1"></span>
                 <span class="u021-crater u021-crater-2"></span>
@@ -149,21 +153,28 @@
 
         <div class="account-menu-divider"></div>
 
-        <!-- Các thao tác thực tế -->
         <div class="account-actions">
-          <button type="button" class="account-action-btn" onclick="openUserModal(true); closeAccountMenu();">
-            <i class="fa-solid fa-user-plus text-primary"></i> <span>Thêm / Đổi hồ sơ mới</span>
+          <button type="button" class="account-action-btn" id="btn-menu-account-info" onclick="openUserModal(true, 'account'); closeAccountMenu();">
+            <i class="fa-solid fa-id-card-clip text-primary"></i> <span>Thông tin tài khoản</span>
+          </button>
+          <button type="button" class="account-action-btn" id="btn-menu-change-password" onclick="openUserModal(true, 'change-password'); closeAccountMenu();">
+            <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
+          </button>
+          <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
+            <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký tài khoản</span>
+          </a>
+          <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
+            <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
           </button>
           <button type="button" class="account-action-btn" onclick="saveAppStateToCloud(); closeAccountMenu();">
             <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu</span>
           </button>
-          <button type="button" class="account-action-btn text-danger" onclick="logoutUserProfile(); closeAccountMenu();">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất hồ sơ</span>
+          <button type="button" class="account-action-btn text-danger" id="btn-account-logout" onclick="logoutUserProfile(); closeAccountMenu();">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất tài khoản</span>
           </button>
         </div>
       </div>
 
-      <!-- Account Chip ở đáy Side Rail -->
       <button type="button" class="rail-account-chip" id="btn-account-chip" aria-haspopup="menu" aria-expanded="false" aria-label="Mở menu chuyển đổi tài khoản" onclick="toggleAccountMenu(event)">
         <div class="chip-avatar-wrap">
           <div class="chip-avatar" id="chip-user-avatar">N</div>
@@ -179,34 +190,35 @@
   </aside>
 
   <main class="main-content">
-    
+
     <header class="app-topbar">
       <div class="topbar-left">
         <span class="status-indicator"></span>
         <h1 id="current-title">TỪ KHÓA THIẾT LẬP</h1>
       </div>
-      
-      <!-- Nút điều khiển lưu / tải dữ liệu đám mây & Huy hiệu nhận diện người dùng -->
+
       <div class="topbar-right">
+        <a href="./auth/index.html" class="btn-cloud-sync" id="btn-topbar-login" style="display: none;" title="Đăng nhập tài khoản" onclick="goToAuthPage('login'); return false;">
+          <i class="fa-solid fa-right-to-bracket"></i> <span>Đăng nhập</span>
+        </a>
+
         <span id="cloud-status-badge" class="cloud-badge cloud-ready">
           <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
         </span>
 
-        <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="openBackupManagerModal()" title="Quản lý và khôi phục các bản sao lưu">
+        <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="openUnifiedDataModal('import')" title="Nhập / Xuất dữ liệu &amp; Sao lưu">
           <i class="fa-solid fa-cloud-arrow-down"></i> <span>Nhập dữ liệu</span>
         </button>
 
         <button type="button" class="btn-cloud-sync btn-cloud-save" id="btn-cloud-save" onclick="saveAppStateToCloud()" title="Lưu dữ liệu hiện tại">
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
-
-        <span class="currency-tag"><i class="fa-solid fa-coins"></i> Đơn vị tính: Triệu VNĐ</span>
       </div>
     </header>
 
     <section class="content-body">
+
       
-      <!-- ==================== TAB 1: TỪ KHÓA ==================== -->
       <div id="tab-tukhoa" class="tab-pane active">
         <div class="top-info-row">
           <div class="info-block block-modern-accent">
@@ -228,7 +240,7 @@
         </div>
 
         <div class="sheet-tables-container">
-          <!-- Chi phí -->
+
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
@@ -246,7 +258,7 @@
             </table>
           </div>
 
-          <!-- Thu nhập -->
+          
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
@@ -264,7 +276,7 @@
             </table>
           </div>
 
-          <!-- Đào tạo -->
+          
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
@@ -282,7 +294,7 @@
             </table>
           </div>
 
-          <!-- Sản phẩm đầu tư -->
+          
           <div class="sheet-table-wrap">
             <table class="excel-table">
               <thead>
@@ -304,9 +316,9 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 2: DASHBOARD ==================== -->
+      
       <div id="tab-dashboard" class="tab-pane">
-        <!-- Tầng 1: Hero -->
+
         <div class="dash-hero">
           <div class="dash-hero-copy">
             <span class="dash-hero-kicker"><i class="fa-solid fa-bolt"></i> Tổng quan năm <span class="dynamic-year">2026</span></span>
@@ -319,7 +331,7 @@
           </div>
         </div>
 
-        <!-- Tầng 2: Lối tắt tới các chức năng có sẵn -->
+        
         <nav class="dash-shortcuts" aria-label="Lối tắt chức năng">
           <button type="button" class="shortcut shortcut--plan" onclick="switchTab('tab-kehoach')">
             <span class="shortcut-icon"><i class="fa-solid fa-wallet"></i></span>
@@ -343,7 +355,7 @@
           </button>
         </nav>
 
-        <!-- Tầng 3: Chỉ số tài chính (tiết kiệm ròng nổi bật) -->
+        
         <div class="dash-kpi-three-strip">
           <div class="dash-kpi-block kpi-modern-primary">
             <div class="kpi-icon-wrap"><i class="fa-solid fa-piggy-bank"></i></div>
@@ -368,7 +380,7 @@
           </div>
         </div>
 
-        <!-- Tầng 4: Biểu đồ dòng tiền -->
+        
         <section class="dash-section">
           <div class="dash-section-head">
             <h2 class="section-heading">Dòng tiền trong năm</h2>
@@ -393,7 +405,7 @@
           </div>
         </section>
 
-        <!-- Tầng 5: Mục tiêu & đầu tư -->
+        
         <section class="dash-section">
           <div class="dash-section-head">
             <h2 class="section-heading">Mục tiêu & đầu tư</h2>
@@ -417,7 +429,7 @@
 
         <div class="dashboard-matrix-container">
           <div class="sheet-title-banner mb-3"><i class="fa-solid fa-table-list"></i> DỮ LIỆU MA TRẬN DÒNG TIỀN CHI TIẾT 12 THÁNG</div>
-          
+
           <div class="table-scroll-x mb-4 compact-dash-matrix">
             <table class="excel-matrix-table" id="table-db-income">
               <thead>
@@ -491,10 +503,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 3: MỤC TIÊU BẢN THÂN ==================== -->
+      
       <div id="tab-muctieu-bt" class="tab-pane">
         <div class="target-container">
-          
+
           <div class="target-section">
             <div class="target-header-caption"><i class="fa-solid fa-flag"></i> ĐỊNH HƯỚNG TẦM NHÌN DÀI HẠN</div>
             <div class="table-scroll-x">
@@ -532,8 +544,8 @@
                     <tr>
                       <th class="th-name">Tên mục tiêu</th>
                       <th class="th-type">Phân loại</th>
-                      <th class="th-num">Giá trị mục tiêu (tr)</th>
-                      <th class="th-num">Đã tích lũy (tr)</th>
+                      <th class="th-num">Giá trị mục tiêu</th>
+                      <th class="th-num">Đã tích lũy</th>
                       <th class="th-year">Năm bắt đầu</th>
                       <th class="th-year">Năm hoàn tất</th>
                       <th class="th-num">Lạm phát (%/năm)</th>
@@ -636,10 +648,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 4: MỤC TIÊU TÀI CHÍNH ==================== -->
+      
       <div id="tab-muctieu-tc" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
-          
+
           <div class="tc-subnav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-tc-sec1" onclick="switchTcSection(1)">
               <i class="fa-solid fa-layer-group"></i> Phần 1: Bảng phân bổ chi tiết từng mục tiêu
@@ -649,7 +661,7 @@
             </button>
           </div>
 
-          <!-- PHẦN 1 -->
+          
           <div id="tc-section-1" class="tc-section-pane active">
             <div class="result-divider-header mb-3">
               <div class="d-flex-center gap-2">
@@ -672,7 +684,7 @@
               </div>
             </div>
 
-            <!-- Trạng thái trống sạch sẽ khi cả 2 danh mục đều không có dữ liệu -->
+            
             <div id="tc-empty-state" class="tc-empty-state" style="display: none;">
               <div class="tc-empty-icon"><i class="fa-solid fa-vault"></i></div>
               <div class="tc-empty-title">Chưa có mục tiêu trả nợ định kỳ hoặc tích lũy đầu tư</div>
@@ -688,7 +700,7 @@
             </div>
           </div>
 
-          <!-- PHẦN 2 -->
+          
           <div id="tc-section-2" class="tc-section-pane">
             <div class="tc-matrix-header-box mb-3">
               <div class="sheet-title-text"><i class="fa-solid fa-timeline"></i> Ma trận nhu cầu tiết kiệm và thu nhập</div>
@@ -696,7 +708,7 @@
             </div>
 
             <div class="tc-chart-card mb-4">
-              <div class="tc-chart-title">Mức tiết kiệm và Thu nhập cần đạt (triệu VNĐ/tháng)</div>
+              <div class="tc-chart-title">Mức tiết kiệm và Thu nhập cần đạt (Hàng tháng)</div>
               <div class="tc-chart-canvas-wrap"><canvas id="tcMatrixChart"></canvas></div>
             </div>
 
@@ -711,10 +723,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 5: CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP ==================== -->
+      
       <div id="tab-candoi" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
-          
+
           <div class="tc-subnav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-career-sec1" onclick="switchCareerSection(1)">
               <i class="fa-solid fa-pie-chart"></i> Phần 1: Phân bổ công cụ tài chính & Kỹ năng theo tuổi
@@ -738,7 +750,7 @@
                 <thead>
                   <tr class="bg-header-primary">
                     <th rowspan="2" style="width: 70px;">Độ tuổi</th>
-                    <th rowspan="2" style="width: 150px;">Thu nhập cần có (tr/tháng)</th>
+                    <th rowspan="2" style="width: 150px;">Thu nhập cần có / tháng</th>
                     <th colspan="4">Cơ cấu danh mục đầu tư khuyến nghị</th>
                     <th rowspan="2" style="width: 150px;">Lãi suất kỳ vọng (%/năm)</th>
                     <th rowspan="2">Kỹ năng cốt lõi cần trui rèn</th>
@@ -762,7 +774,7 @@
                 <thead>
                   <tr class="bg-header-primary">
                     <th style="width: 70px;">Số tuổi</th>
-                    <th style="width: 180px;">Thu nhập thực tế<br><small>(Năm hiện tại)</small></th>
+                    <th style="width: 180px;">Thu nhập thực tế<br><small id="career-actual-sublabel">(Đến năm hiện tại)</small></th>
                     <th style="width: 190px;">Mức cần có để đạt mục tiêu<br><small>(Hệ thống tính)</small></th>
                     <th style="width: 220px;">Lộ trình thu nhập kỳ vọng<br><small>(Bạn tự nhập vào)</small></th>
                     <th>Đánh giá khả năng về đích</th>
@@ -776,7 +788,7 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 6: KẾ HOẠCH THU NHẬP VÀ CHI TIÊU ==================== -->
+      
       <div id="tab-kehoach" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
 
@@ -791,7 +803,7 @@
                   <tr class="bg-header-success">
                     <th style="width: 45px;">#</th>
                     <th style="width: 220px;">Khoản thu</th>
-                    <th style="width: 150px;">Số tiền dự tính (tr)</th>
+                    <th style="width: 150px;">Số tiền dự tính</th>
                     <th style="width: 220px;">Ghi chú chi tiết</th>
                     <th>Mức độ ổn định</th>
                     <th style="width: 45px;">Xóa</th>
@@ -801,7 +813,7 @@
                 <tfoot>
                   <tr class="bg-total-row">
                     <td colspan="2" class="font-bold">Tổng thu nhập dự tính hàng tháng</td>
-                    <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00 tr</td>
+                    <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00</td>
                     <td colspan="3"></td>
                   </tr>
                 </tfoot>
@@ -820,7 +832,7 @@
                   <tr class="bg-header-danger">
                     <th style="width: 45px;">#</th>
                     <th style="width: 220px;">Khoản mục chi tiêu</th>
-                    <th style="width: 150px;">Mức chi tối đa (tr)</th>
+                    <th style="width: 150px;">Mức chi tối đa</th>
                     <th style="width: 220px;">Ghi chú chi tiết</th>
                     <th>Mức độ cần thiết</th>
                     <th style="width: 45px;">Xóa</th>
@@ -830,7 +842,7 @@
                 <tfoot>
                   <tr class="bg-total-row">
                     <td colspan="2" class="font-bold">Tổng chi tiêu dự tính hàng tháng</td>
-                    <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00 tr</td>
+                    <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00</td>
                     <td colspan="3"></td>
                   </tr>
                 </tfoot>
@@ -841,10 +853,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 7: THEO DÕI THU CHI 12 THÁNG ==================== -->
+      
       <div id="tab-month" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
-          
+
           <div class="sub-nav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-month-sec1" onclick="switchMonthSection(1)">
               <i class="fa-solid fa-receipt"></i> Nhật ký & Đối chiếu thu chi thực tế
@@ -871,7 +883,7 @@
                 </div>
               </div>
               <div class="month-chart-box">
-                <div class="chart-box-title"><i class="fa-solid fa-chart-bar"></i> Phân bổ các nhóm chi tiêu trong tháng (triệu VNĐ)</div>
+                <div class="chart-box-title"><i class="fa-solid fa-chart-bar"></i> Phân bổ các nhóm chi tiêu trong tháng</div>
                 <div class="month-bar-canvas-wrap"><canvas id="monthExpenseBarChart"></canvas></div>
               </div>
             </div>
@@ -889,7 +901,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Nguồn thu</th>
                         <th>Chi tiết giao dịch</th>
-                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -942,7 +954,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Khoản chi</th>
                         <th>Chi tiết giao dịch</th>
-                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền</th>
                         <th style="width: 40px;"></th>
                       </tr>
                     </thead>
@@ -985,7 +997,7 @@
           </div>
 
           <div id="month-sec-2" class="month-section-pane">
-            <!-- Thẻ thống kê KPI chi phí học tập & đào tạo phát triển bản thân -->
+
             <div class="learning-kpi-strip mb-4">
               <div class="learning-kpi-card kpi-card-cyan">
                 <div class="kpi-icon-wrap"><i class="fa-solid fa-graduation-cap"></i></div>
@@ -1024,7 +1036,7 @@
                         <th style="width: 135px; min-width: 130px;">Ngày</th>
                         <th>Hạng mục</th>
                         <th>Khóa học / Chứng chỉ / Sách</th>
-                        <th style="width: 110px; min-width: 100px;">Số tiền (tr)</th>
+                        <th style="width: 110px; min-width: 100px;">Số tiền</th>
                         <th>Kỳ vọng đầu ra</th>
                         <th>Thực tế đạt được</th>
                         <th style="width: 40px;"></th>
@@ -1047,7 +1059,7 @@
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-sub"><th>Hạng mục</th><th style="width: 105px;">Số tiền (tr)</th></tr>
+                      <tr class="bg-header-sub"><th>Hạng mục</th><th style="width: 105px;">Số tiền</th></tr>
                     </thead>
                     <tbody id="tbody-m-learning-stat"></tbody>
                     <tfoot>
@@ -1065,10 +1077,10 @@
         </div>
       </div>
 
-      <!-- ==================== TAB 8: BẢNG KHẢO SÁT ==================== -->
+      
       <div id="tab-khaosat" class="tab-pane">
         <div class="gform-container">
-          
+
           <div class="gform-header-card">
             <div class="gform-stripe"></div>
             <div class="gform-header-content">
@@ -1084,7 +1096,7 @@
             </div>
           </div>
 
-          <!-- Thanh điều hướng 3 mục khảo sát độc lập -->
+          
           <div class="survey-nav-three" id="survey-nav-three" role="tablist" aria-label="Điều hướng 3 phần khảo sát">
             <button type="button" class="survey-nav-tab active" id="survey-step-btn-1" onclick="goToSurveyStep(1)" role="tab" aria-selected="true">
               <div class="nav-tab-badge">1</div>
@@ -1114,7 +1126,7 @@
             </button>
           </div>
 
-          <!-- Thanh tiến độ hoàn thành động -->
+          
           <div class="survey-progress-box">
             <div class="survey-progress-meta">
               <span id="survey-progress-lbl">Tiến độ Phần 1: Khẩu vị rủi ro (0/10 câu đã chọn)</span>
@@ -1125,13 +1137,13 @@
             </div>
           </div>
 
-          <!-- BƯỚC 1: KHẢO SÁT PHẦN 1 (10 CÂU) -->
+          
           <div id="survey-step-pane-1" class="survey-step-pane active">
             <div class="gform-section-banner banner-primary">
               <div class="gform-section-badge">Khảo sát 1 • 10 câu</div>
               <h3>Mức độ chấp nhận rủi ro trong quản lý &amp; đầu tư (Câu 1 đến Câu 10)</h3>
             </div>
-            
+
             <div id="gform-questions-p1" class="gform-questions-flow"></div>
 
             <div class="survey-step-actions">
@@ -1141,7 +1153,7 @@
             </div>
           </div>
 
-          <!-- BƯỚC 2: KHẢO SÁT PHẦN 2 (11 CÂU) -->
+          
           <div id="survey-step-pane-2" class="survey-step-pane">
             <div class="gform-section-banner banner-indigo">
               <div class="gform-section-badge">Khảo sát 2 • 11 câu</div>
@@ -1160,9 +1172,9 @@
             </div>
           </div>
 
-          <!-- BƯỚC 3: TỔNG KẾT & ĐÁNH GIÁ KẾT QUẢ -->
+          
           <div id="survey-step-pane-3" class="survey-step-pane">
-            <!-- Banner cảnh báo thân thiện khi chưa trả lời đủ 21 câu -->
+
             <div class="survey-incomplete-banner" id="survey-incomplete-banner">
               <div class="banner-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
               <div class="banner-body">
@@ -1181,7 +1193,7 @@
               </div>
             </div>
 
-            <!-- Huy hiệu xác thực hoàn tất khi trả lời đủ 21/21 câu -->
+            
             <div class="survey-complete-badge" id="survey-complete-badge" style="display: none;">
               <div class="complete-badge-icon"><i class="fa-solid fa-circle-check"></i></div>
               <div class="complete-badge-text">
@@ -1266,116 +1278,9 @@
     </section>
   </main>
 
-  <!-- ==================== MODAL QUẢN LÝ BẢN SAO LƯU & NHẬP DỮ LIỆU ==================== -->
-  <div id="backup-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title">
-    <div class="modal-card backup-modal-card">
-      <div class="modal-header">
-        <div class="modal-icon-badge"><i class="fa-solid fa-clock-rotate-left"></i></div>
-        <div class="modal-title-group">
-          <h3 id="backup-modal-title">Nhập dữ liệu &amp; Quản lý sao lưu</h3>
-          <p>Hồ sơ: <strong id="backup-modal-user-name">Đang xác định...</strong> <code class="backup-slug-badge" id="backup-modal-user-slug">@guest</code></p>
-        </div>
-        <button type="button" class="btn-modal-close" onclick="closeBackupManagerModal()" aria-label="Đóng hộp thoại"><i class="fa-solid fa-xmark"></i></button>
-      </div>
+  
 
-      <div class="modal-body backup-modal-body">
-        <!-- Thanh công cụ tìm kiếm và sắp xếp -->
-        <div class="backup-toolbar">
-          <div class="backup-search-wrap">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="backup-search-input" placeholder="Tìm bản sao lưu theo tên hoặc ngày..." oninput="filterAndSortBackups()">
-          </div>
-          <div class="backup-sort-wrap">
-            <label for="backup-sort-select"><i class="fa-solid fa-arrow-down-short-wide"></i></label>
-            <select id="backup-sort-select" onchange="filterAndSortBackups()">
-              <option value="newest">Mới nhất</option>
-              <option value="oldest">Cũ nhất</option>
-              <option value="name">Tên A-Z</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Trạng thái đang tải -->
-        <div id="backup-loading-state" class="backup-state-box" style="display: none;">
-          <i class="fa-solid fa-spinner fa-spin backup-spin-icon"></i>
-          <span>Đang tải danh sách bản sao lưu từ hệ thống...</span>
-        </div>
-
-        <!-- Trạng thái rỗng -->
-        <div id="backup-empty-state" class="backup-state-box" style="display: none;">
-          <i class="fa-solid fa-folder-open backup-empty-icon"></i>
-          <strong>Chưa có bản sao lưu nào</strong>
-          <p>Hồ sơ này chưa lưu bản sao lưu nào. Hãy bấm "Lưu" để tạo bản sao lưu đầu tiên!</p>
-          <button type="button" class="btn-modal-submit btn-sm" onclick="saveAppStateToCloud(); closeBackupManagerModal();">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Lưu bản hiện tại ngay
-          </button>
-        </div>
-
-        <!-- Trạng thái lỗi mạng -->
-        <div id="backup-error-state" class="backup-state-box backup-error-box" style="display: none;">
-          <i class="fa-solid fa-circle-exclamation text-danger"></i>
-          <span id="backup-error-msg">Không thể tải danh sách sao lưu. Vui lòng kiểm tra kết nối mạng.</span>
-          <button type="button" class="btn-cloud-sync btn-sm" onclick="openBackupManagerModal()">
-            <i class="fa-solid fa-rotate-right"></i> Thử lại
-          </button>
-        </div>
-
-        <!-- Danh sách các bản sao lưu -->
-        <div class="backup-list-container" id="backup-items-list" role="list">
-          <!-- Render động từ JS -->
-        </div>
-
-        <!-- Khung xem trước thông tin bản sao lưu được chọn -->
-        <div id="backup-preview-card" class="backup-preview-card" style="display: none;">
-          <div class="backup-preview-head">
-            <div class="backup-preview-title">
-              <i class="fa-solid fa-file-invoice-dollar text-primary"></i>
-              <strong id="preview-bk-name">Bản sao lưu #1</strong>
-            </div>
-            <span class="backup-preview-time" id="preview-bk-time">14:30 — 15/10/2026</span>
-          </div>
-          <div class="backup-preview-grid">
-            <div class="bk-meta-item">
-              <span class="bk-meta-lbl">Năm kế hoạch:</span>
-              <strong class="bk-meta-val" id="preview-bk-year">2026</strong>
-            </div>
-            <div class="bk-meta-item">
-              <span class="bk-meta-lbl">Tuổi hiện tại:</span>
-              <strong class="bk-meta-val" id="preview-bk-age">25</strong>
-            </div>
-            <div class="bk-meta-item">
-              <span class="bk-meta-lbl">Mục tiêu tài chính:</span>
-              <strong class="bk-meta-val" id="preview-bk-goals">0 mục tiêu</strong>
-            </div>
-            <div class="bk-meta-item">
-              <span class="bk-meta-lbl">Tổng thu dự kiến:</span>
-              <strong class="bk-meta-val text-success" id="preview-bk-income">0 tr/th</strong>
-            </div>
-          </div>
-          
-          <div class="backup-preview-actions" id="backup-preview-actions">
-            <button type="button" class="btn-modal-submit btn-sm" onclick="openRestoreConfirmModal(selectedBackupId)">
-              <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục bản này
-            </button>
-            <button type="button" class="btn-danger-outline btn-sm" onclick="openDeleteConfirmModal(selectedBackupId)">
-              <i class="fa-solid fa-trash-can"></i> Xóa bản này
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer backup-modal-footer">
-        <button type="button" class="btn-modal-cancel" onclick="closeBackupManagerModal()">
-          Đóng
-        </button>
-        <button type="button" class="btn-modal-submit" onclick="saveAppStateToCloud();">
-          <i class="fa-solid fa-plus"></i> <span>Tạo bản lưu mới</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== HỘP THOẠI XÁC NHẬN THAO TÁC (RESTORE / DELETE / OVERWRITE) ==================== -->
   <div id="confirm-modal-overlay" class="modal-overlay confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" style="display: none;">
     <div class="modal-card confirm-modal-card" id="confirm-modal-card">
       <div class="modal-header confirm-modal-header" id="confirm-modal-header">
@@ -1392,7 +1297,6 @@
       </div>
 
       <div class="modal-body confirm-modal-body">
-        <!-- Thông tin nhận diện bản sao lưu được chọn -->
         <div class="confirm-backup-info-card" id="confirm-backup-info-card">
           <div class="confirm-bk-row">
             <span class="confirm-bk-label"><i class="fa-solid fa-database"></i> Bản sao lưu:</span>
@@ -1412,7 +1316,6 @@
           </div>
         </div>
 
-        <!-- Cảnh báo hệ quả thao tác (Khôi phục / Xóa) -->
         <div class="confirm-warning-banner" id="confirm-warning-banner">
           <div class="confirm-warning-icon-wrap">
             <i class="fa-solid fa-triangle-exclamation" id="confirm-warning-icon"></i>
@@ -1425,7 +1328,6 @@
           </div>
         </div>
 
-        <!-- Banner trạng thái đang thực hiện / kết quả thất bại -->
         <div id="confirm-status-alert" class="confirm-status-alert" style="display: none;">
           <i class="fa-solid fa-spinner fa-spin" id="confirm-status-icon"></i>
           <span id="confirm-status-msg">Đang kết nối Firebase và thực hiện thao tác...</span>
@@ -1443,7 +1345,6 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL HỎI LƯU DỮ LIỆU TRƯỚC KHI TẮT TRANG WEB ==================== -->
   <div id="exit-save-modal-overlay" class="modal-overlay confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="exit-save-modal-title" style="display: none;">
     <div class="modal-card confirm-modal-card confirm-type-restore">
       <div class="modal-header confirm-modal-header">
@@ -1492,64 +1393,415 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL NHẬN DIỆN NGƯỜI DÙNG ==================== -->
-  <div id="user-modal-overlay" class="modal-overlay">
-    <div class="modal-card">
+  <div id="data-io-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="data-io-modal-title" style="display: none;">
+    <div class="modal-card backup-modal-card data-io-modal-card" style="max-width: 680px;">
       <div class="modal-header">
-        <div class="modal-icon-badge"><i class="fa-solid fa-user-gear"></i></div>
+        <div class="modal-icon-badge"><i class="fa-solid fa-file-shield"></i></div>
         <div class="modal-title-group">
-          <h3>Nhận diện hồ sơ người dùng</h3>
-          <p>Nhập họ và tên để lưu trữ và quản lý sổ tài chính độc lập trên Cloud</p>
+          <h3 id="data-io-modal-title">Quản lý Dữ liệu &amp; Bản sao lưu</h3>
+          <p>Nhập file JSON/CSV bằng kéo thả, tải file xuất hoặc khôi phục bản lưu đám mây</p>
         </div>
-      </div>
-      
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="input-user-rawname">Họ và tên của bạn:</label>
-          <div class="input-with-icon">
-            <i class="fa-solid fa-signature"></i>
-            <input type="text" id="input-user-rawname" placeholder="Ví dụ: Nguyễn Văn A..." autocomplete="name">
-          </div>
-          <div class="input-hint">
-            Định danh hệ thống: <code id="preview-user-slug">chua_xac_dinh</code>
-          </div>
-          <div class="input-error-msg" id="user-input-error" style="display: none;"></div>
-        </div>
-
-        <!-- Hộp thoại giải quyết trường hợp trùng tên đã có dữ liệu trên Cloud -->
-        <div id="duplicate-warning-box" class="duplicate-warning-box" style="display: none;">
-          <div class="dup-box-header">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>Hồ sơ đã tồn tại trên Cloud Firestore</span>
-          </div>
-          <p class="dup-box-desc">
-            Định danh <strong id="dup-doc-id-text"></strong> đã có dữ liệu tài chính được lưu trước đó. Vui lòng chọn hành động mong muốn:
-          </p>
-          <div class="dup-actions-grid">
-            <button type="button" class="btn-dup-opt btn-dup-use" id="btn-dup-use-existing">
-              <i class="fa-solid fa-cloud-arrow-down"></i> Tải & dùng tiếp hồ sơ này
-            </button>
-            <button type="button" class="btn-dup-opt btn-dup-new" id="btn-dup-create-unique">
-              <i class="fa-solid fa-user-plus"></i> Tạo hồ sơ mới phân biệt
-            </button>
-          </div>
-        </div>
+        <button type="button" class="btn-modal-close" onclick="closeDataIoModal()" aria-label="Đóng hộp thoại"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-modal-cancel" id="btn-modal-cancel" onclick="closeUserModal()" style="display: none;">
+      <div class="modal-body backup-modal-body">
+        <div class="io-tabs-bar" role="tablist">
+          <button type="button" class="io-tab-btn active" id="btn-io-tab-import" onclick="switchDataIoTab('import')">
+            <i class="fa-solid fa-file-arrow-up"></i> <span>Nhập dữ liệu (JSON / CSV)</span>
+          </button>
+          <button type="button" class="io-tab-btn" id="btn-io-tab-export-json" onclick="switchDataIoTab('export-json')">
+            <i class="fa-solid fa-download"></i> <span>Xuất JSON</span>
+          </button>
+          <button type="button" class="io-tab-btn" id="btn-io-tab-backups" onclick="switchDataIoTab('backups')">
+            <i class="fa-solid fa-cloud-arrow-down"></i> <span>Bản sao lưu Cloud</span>
+          </button>
+        </div>
+
+        <div id="io-panel-import" class="io-tab-panel active">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
+            <button type="button" class="btn-cloud-sync btn-sm" onclick="downloadCsvTemplate()">
+              <i class="fa-solid fa-table"></i> <span>Tải file CSV mẫu</span>
+            </button>
+          </div>
+
+          <!-- Lucian UX/UI Prompt #032 · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev/uxui-prompt/#032 -->
+          <div class="ux u032" id="u032-upload-root">
+            <button class="u032-zone" type="button" id="u032-zone-btn" aria-label="Kéo thả file hoặc nhấn để chọn file">
+              <svg class="u032-dash" aria-hidden="true"><rect width="100%" height="100%" rx="25"/></svg>
+              <span class="u032-orb" aria-hidden="true">
+                <svg viewBox="0 0 28 28">
+                  <path d="M8.5 20.5H7a5 5 0 0 1-.6-10 7 7 0 0 1 13.4-1.6A5.5 5.5 0 0 1 21 20.5h-1.5M14 13v10M10.5 16.5L14 13l3.5 3.5"/>
+                </svg>
+              </span>
+              <b>Kéo thả file vào đây hoặc <em>chọn tệp</em></b>
+              <small>Hỗ trợ file JSON (.json) hoặc CSV (.csv) · Tối đa 50 MB</small>
+            </button>
+            <input class="u032-file" id="u032-file-input" type="file" accept=".json,.csv,application/json,text/csv" multiple tabindex="-1" aria-hidden="true">
+            <ul class="u032-list" id="u032-files-list" aria-live="polite"></ul>
+          </div>
+
+          <div id="json-import-options-box" style="display: none; margin-top: 14px;">
+            <div class="form-group">
+              <label>Chế độ xử lý dữ liệu trùng:</label>
+              <div class="io-radio-group">
+                <label class="io-radio-item">
+                  <input type="radio" name="json-import-mode" value="add" onchange="updateJsonImportPreview()">
+                  <div>
+                    <strong>Thêm dữ liệu (Add)</strong>
+                    <span>Chỉ thêm các bản ghi mới, giữ nguyên toàn bộ bản ghi đang có</span>
+                  </div>
+                </label>
+                <label class="io-radio-item">
+                  <input type="radio" name="json-import-mode" value="update" checked onchange="updateJsonImportPreview()">
+                  <div>
+                    <strong>Cập nhật dữ liệu trùng khóa (Update)</strong>
+                    <span>Cập nhật bản ghi trùng ID/tên và bổ sung bản ghi mới</span>
+                  </div>
+                </label>
+                <label class="io-radio-item">
+                  <input type="radio" name="json-import-mode" value="replace" onchange="updateJsonImportPreview()">
+                  <div>
+                    <strong>Thay thế dữ liệu hiện có (Replace)</strong>
+                    <span>Thay thế dữ liệu hiện tại bằng dữ liệu từ file JSON (vẫn bảo vệ 2 mục tiêu cố định)</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="io-checkbox-item">
+                <input type="checkbox" id="chk-json-allow-keywords" onchange="updateJsonImportPreview()">
+                <span>Cho phép cập nhật thông số trong mục <strong>"Từ khóa"</strong> từ file JSON (Mặc định tắt để bảo vệ tuyệt đối thông số Từ khóa hiện tại)</span>
+              </label>
+            </div>
+
+            <div id="json-import-error-box" class="input-error-msg" style="display: none;"></div>
+
+            <div id="json-import-preview-box" class="backup-preview-card" style="display: none;">
+              <div class="backup-preview-head">
+                <div class="backup-preview-title">
+                  <i class="fa-solid fa-clipboard-check text-success"></i>
+                  <strong id="json-preview-title">Xem trước dữ liệu JSON hợp lệ</strong>
+                </div>
+                <span class="backup-preview-time" id="json-preview-version">Schema v2.2</span>
+              </div>
+              <div id="json-preview-summary-list" class="io-preview-summary"></div>
+              <div class="backup-preview-actions">
+                <button type="button" class="btn-modal-submit btn-sm" id="btn-confirm-json-import" onclick="confirmJsonImport()">
+                  <i class="fa-solid fa-check-double"></i> <span>Xác nhận nhập JSON</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="csv-import-options-box" style="display: none; margin-top: 14px;">
+            <div class="io-row-2col">
+              <div class="form-group">
+                <label for="select-csv-target-table">1. Bảng dữ liệu đích:</label>
+                <select id="select-csv-target-table" class="io-select" onchange="onCsvTargetTableChange()">
+                  <option value="month_income">Thực thu theo tháng (Nhật ký thu)</option>
+                  <option value="month_expense">Thực chi theo tháng (Nhật ký chi)</option>
+                  <option value="month_learning">Chi phí học tập theo tháng</option>
+                  <option value="plan_income">Dự kiến thu hàng tháng (Kế hoạch năm)</option>
+                  <option value="plan_expense">Dự kiến chi hàng tháng (Kế hoạch năm)</option>
+                  <option value="tc_goals">Mục tiêu tài chính (Khoản nợ &amp; Đầu tư)</option>
+                </select>
+              </div>
+              <div class="form-group" id="csv-month-select-group">
+                <label for="select-csv-target-month">Tháng áp dụng:</label>
+                <select id="select-csv-target-month" class="io-select" onchange="revalidateCsvPreview()">
+                  <option value="1">Tháng 01</option>
+                  <option value="2">Tháng 02</option>
+                  <option value="3">Tháng 03</option>
+                  <option value="4">Tháng 04</option>
+                  <option value="5">Tháng 05</option>
+                  <option value="6">Tháng 06</option>
+                  <option value="7">Tháng 07</option>
+                  <option value="8">Tháng 08</option>
+                  <option value="9">Tháng 09</option>
+                  <option value="10">Tháng 10</option>
+                  <option value="11">Tháng 11</option>
+                  <option value="12">Tháng 12</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="io-row-2col">
+              <div class="form-group">
+                <label for="select-csv-import-mode">2. Chế độ nhập CSV:</label>
+                <select id="select-csv-import-mode" class="io-select" onchange="revalidateCsvPreview()">
+                  <option value="add">Thêm dữ liệu mới (Add)</option>
+                  <option value="update">Cập nhật dòng trùng khóa (Update)</option>
+                  <option value="replace">Thay thế bảng đích (Replace)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button type="button" class="btn-cloud-sync" onclick="downloadCsvTemplate()">
+                  <i class="fa-solid fa-table"></i> <span>Tải file CSV mẫu của bảng này</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="csv-import-error-box" class="input-error-msg" style="display: none;"></div>
+
+            <div id="csv-column-mapping-box" class="io-mapping-box" style="display: none;">
+              <div class="io-mapping-title"><i class="fa-solid fa-arrows-left-right"></i> Ánh xạ cột CSV vào trường dữ liệu hệ thống:</div>
+              <div id="csv-mapping-fields" class="io-mapping-grid"></div>
+            </div>
+
+            <div id="csv-import-preview-box" class="backup-preview-card" style="display: none;">
+              <div class="backup-preview-head">
+                <div class="backup-preview-title">
+                  <i class="fa-solid fa-table-list text-primary"></i>
+                  <strong id="csv-preview-stats-title">Kết quả kiểm tra dữ liệu CSV</strong>
+                </div>
+                <span class="backup-preview-time" id="csv-preview-counts-badge">0 hợp lệ / 0 lỗi</span>
+              </div>
+              <div id="csv-preview-table-wrap" class="io-csv-preview-scroll"></div>
+              <div class="backup-preview-actions">
+                <button type="button" class="btn-modal-submit btn-sm" id="btn-confirm-csv-import" onclick="confirmCsvImport()">
+                  <i class="fa-solid fa-file-import"></i> <span>Xác nhận nhập các dòng hợp lệ</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="io-panel-export-json" class="io-tab-panel" style="display: none;">
+          <div class="io-summary-box">
+            <div class="io-summary-head">
+              <i class="fa-solid fa-user-check text-primary"></i>
+              <span>Dữ liệu thuộc tài khoản hiện tại: <strong id="io-export-user-label">Chưa xác nhận</strong></span>
+            </div>
+            <div class="backup-preview-grid" id="io-export-stats-grid">
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Năm &amp; Tuổi:</span>
+                <strong class="bk-meta-val" id="io-export-year-age">2026 / 21T</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Mục tiêu tài chính:</span>
+                <strong class="bk-meta-val" id="io-export-goals-count">2 mục tiêu</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Kế hoạch thu/chi:</span>
+                <strong class="bk-meta-val" id="io-export-plan-count">0 dòng</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Giao dịch 12 tháng:</span>
+                <strong class="bk-meta-val" id="io-export-tx-count">0 bản ghi</strong>
+              </div>
+            </div>
+            <p class="io-hint-text">
+              File JSON xuất ra chứa đầy đủ cấu trúc dữ liệu và phiên bản định dạng của tài khoản đang đăng nhập (không chứa mật khẩu hoặc token xác thực).
+            </p>
+            <div class="io-actions-row">
+              <button type="button" class="btn-modal-submit" id="btn-trigger-export-json" onclick="exportAppStateToJson()">
+                <i class="fa-solid fa-file-arrow-down"></i> <span>Tải xuống file JSON (.json)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="io-panel-backups" class="io-tab-panel" style="display: none;">
+          <div class="backup-toolbar">
+            <div class="backup-search-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="backup-search-input" placeholder="Tìm bản sao lưu theo tên hoặc ngày..." oninput="filterAndSortBackups()">
+            </div>
+            <div class="backup-sort-wrap">
+              <label for="backup-sort-select"><i class="fa-solid fa-arrow-down-short-wide"></i></label>
+              <select id="backup-sort-select" onchange="filterAndSortBackups()">
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="name">Tên A-Z</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="backup-loading-state" class="backup-state-box" style="display: none;">
+            <i class="fa-solid fa-spinner fa-spin backup-spin-icon"></i>
+            <span>Đang tải danh sách bản sao lưu từ hệ thống...</span>
+          </div>
+
+          <div id="backup-empty-state" class="backup-state-box" style="display: none;">
+            <i class="fa-solid fa-folder-open backup-empty-icon"></i>
+            <strong>Chưa có bản sao lưu nào</strong>
+            <p>Hồ sơ này chưa lưu bản sao lưu nào. Hãy bấm "Lưu dữ liệu" để tạo bản sao lưu đầu tiên!</p>
+            <button type="button" class="btn-modal-submit btn-sm" onclick="saveAppStateToCloud()">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Lưu bản hiện tại ngay
+            </button>
+          </div>
+
+          <div id="backup-error-state" class="backup-state-box backup-error-box" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation text-danger"></i>
+            <span id="backup-error-msg">Không thể tải danh sách sao lưu. Vui lòng kiểm tra kết nối mạng.</span>
+            <button type="button" class="btn-cloud-sync btn-sm" onclick="openBackupManagerModal()">
+              <i class="fa-solid fa-rotate-right"></i> Thử lại
+            </button>
+          </div>
+
+          <div class="backup-list-container" id="backup-items-list" role="list"></div>
+
+          <div id="backup-preview-card" class="backup-preview-card" style="display: none;">
+            <div class="backup-preview-head">
+              <div class="backup-preview-title">
+                <i class="fa-solid fa-file-invoice-dollar text-primary"></i>
+                <strong id="preview-bk-name">Bản sao lưu #1</strong>
+              </div>
+              <span class="backup-preview-time" id="preview-bk-time">14:30 — 15/10/2026</span>
+            </div>
+            <div class="backup-preview-grid">
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Năm kế hoạch:</span>
+                <strong class="bk-meta-val" id="preview-bk-year">2026</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Tuổi hiện tại:</span>
+                <strong class="bk-meta-val" id="preview-bk-age">25</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Mục tiêu tài chính:</span>
+                <strong class="bk-meta-val" id="preview-bk-goals">0 mục tiêu</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Tổng thu dự kiến:</span>
+                <strong class="bk-meta-val text-success" id="preview-bk-income">0 / tháng</strong>
+              </div>
+            </div>
+
+            <div class="backup-preview-actions" id="backup-preview-actions">
+              <button type="button" class="btn-modal-submit btn-sm" onclick="openRestoreConfirmModal(selectedBackupId)">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Khôi phục bản này
+              </button>
+              <button type="button" class="btn-danger-outline btn-sm" onclick="openDeleteConfirmModal(selectedBackupId)">
+                <i class="fa-solid fa-trash-can"></i> Xóa bản này
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer backup-modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeDataIoModal()">
           Đóng
         </button>
-        <button type="button" class="btn-modal-submit" id="btn-modal-submit" onclick="submitUserProfile()">
-          <span>Xác nhận & Bắt đầu</span> <i class="fa-solid fa-arrow-right"></i>
+        <button type="button" class="btn-cloud-sync" onclick="switchDataIoTab('export-json')">
+          <i class="fa-solid fa-download"></i> <span>Xuất JSON</span>
+        </button>
+        <button type="button" class="btn-cloud-sync" onclick="switchDataIoTab('backups')">
+          <i class="fa-solid fa-clock-rotate-left"></i> <span>Sao lưu Cloud</span>
+        </button>
+        <button type="button" class="btn-modal-submit" onclick="saveAppStateToCloud();">
+          <i class="fa-solid fa-plus"></i> <span>Tạo bản lưu mới</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- 1. Nạp dịch vụ Firebase Firestore (tự động đọc cấu hình từ ./firebase-config.js) -->
+  <div id="user-modal-overlay" class="modal-overlay">
+    <div class="modal-card auth-modal-card">
+      <div class="modal-header">
+        <div class="modal-icon-badge"><i class="fa-solid fa-user-shield"></i></div>
+        <div class="modal-title-group">
+          <h3 id="auth-modal-heading">Quản lý Tài khoản</h3>
+          <p id="auth-modal-subheading">Kiểm tra thông tin định danh tài khoản, Email khôi phục hoặc đổi mật khẩu</p>
+        </div>
+        <button type="button" class="btn-modal-close" id="btn-auth-close-x" onclick="closeUserModal()" style="display: none;" aria-label="Đóng hộp thoại">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="auth-tabs-nav" id="auth-tabs-nav" role="tablist">
+          <button type="button" class="auth-tab-btn active" id="btn-auth-tab-account" onclick="switchAuthModalTab('account')">
+            <i class="fa-solid fa-id-card"></i> <span>Thông tin tài khoản</span>
+          </button>
+          <button type="button" class="auth-tab-btn" id="btn-auth-tab-change-password" onclick="switchAuthModalTab('change-password')">
+            <i class="fa-solid fa-lock"></i> <span>Đổi mật khẩu</span>
+          </button>
+        </div>
+
+        <div id="auth-panel-account" class="auth-tab-panel">
+          <div class="io-summary-box">
+            <div class="backup-preview-grid">
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Username hiển thị:</span>
+                <strong class="bk-meta-val" id="auth-acc-display-username">Chưa đăng nhập</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Username chuẩn hóa:</span>
+                <strong class="bk-meta-val" id="auth-acc-norm-username">@guest</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Email khôi phục:</span>
+                <strong class="bk-meta-val" id="auth-acc-masked-email">Chưa liên kết</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Định danh UID:</span>
+                <strong class="bk-meta-val" id="auth-acc-uid">---</strong>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-auth-acc-email">Cập nhật / Liên kết Email khôi phục mới:</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="input-auth-acc-email" placeholder="Nhập email khôi phục mới (ten@domain.com)..." autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-auth-acc-password">Xác nhận mật khẩu hiện tại:</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="input-auth-acc-password" placeholder="Nhập mật khẩu hiện tại để lưu thay đổi..." autocomplete="current-password">
+            </div>
+          </div>
+        </div>
+
+        <div id="auth-panel-change-password" class="auth-tab-panel" style="display: none;">
+          <div class="form-group">
+            <label for="input-auth-change-curpass">Mật khẩu hiện tại:</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-unlock-keyhole"></i>
+              <input type="password" id="input-auth-change-curpass" placeholder="Nhập mật khẩu hiện tại..." autocomplete="current-password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-auth-change-newpass">Mật khẩu mới (tối thiểu 6 ký tự):</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="input-auth-change-newpass" placeholder="Nhập mật khẩu mới..." autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-auth-change-confirm">Xác nhận mật khẩu mới:</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-shield-halved"></i>
+              <input type="password" id="input-auth-change-confirm" placeholder="Nhập lại mật khẩu mới..." autocomplete="new-password">
+            </div>
+          </div>
+        </div>
+
+        <div class="input-error-msg" id="user-input-error" style="display: none;"></div>
+        <div class="auth-success-msg" id="user-auth-success" style="display: none;"></div>
+      </div>
+
+      <div class="modal-footer">
+        <a href="./auth/index.html" class="btn-modal-cancel" id="link-modal-go-auth" onclick="goToAuthPage('login', '', true); return false;" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-right-to-bracket"></i> <span>Trang Đăng nhập / Đăng ký</span>
+        </a>
+        <button type="button" class="btn-modal-cancel" id="btn-modal-cancel" onclick="closeUserModal()" style="display: none;">
+          Đóng
+        </button>
+        <button type="button" class="btn-modal-submit" id="btn-modal-submit" onclick="submitUserProfile()">
+          <span id="btn-modal-submit-label">Lưu Email khôi phục</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./firebase/firestore-service.js"></script>
-  <!-- 2. Nạp script logic ứng dụng -->
   <script src="./script.js"></script>
 
 </body>

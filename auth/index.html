@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#6258F5">
+  <title>Đăng nhập &amp; Đăng ký — Sổ Tài Chính Cá Nhân</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="./auth.css">
+</head>
+<body>
+  <div class="auth-page-shell">
+    <header class="auth-topbar">
+      <a href="../index.html" class="auth-brand-link" id="link-brand-home">
+        <div class="auth-brand-badge"><i class="fa-solid fa-wallet"></i></div>
+        <div class="auth-brand-text">
+          <span class="auth-brand-title">SỔ TÀI CHÍNH CÁ NHÂN</span>
+          <span class="auth-brand-subtitle">Lộ trình Tài chính &amp; Tăng trưởng</span>
+        </div>
+      </a>
+
+      <div class="auth-topbar-actions">
+        <a href="../index.html" class="btn-auth-nav-back" id="btn-back-to-app" style="display: none;">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Quay lại Bảng điều khiển</span>
+        </a>
+        <div class="auth-theme-switch-wrap">
+          <span class="auth-theme-label" id="u021-theme-label">Giao diện sáng</span>
+          <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleAuthTheme(event)">
+            <span class="u021-track">
+              <span class="u021-sky u021-sky-day">
+                <span class="u021-cloud u021-cloud-1"></span>
+                <span class="u021-cloud u021-cloud-2"></span>
+                <span class="u021-cloud u021-cloud-3"></span>
+              </span>
+              <span class="u021-sky u021-sky-night">
+                <span class="u021-star u021-star-1"></span>
+                <span class="u021-star u021-star-2"></span>
+                <span class="u021-star u021-star-3"></span>
+                <span class="u021-star u021-star-4"></span>
+                <span class="u021-star u021-star-5"></span>
+              </span>
+              <span class="u021-knob">
+                <span class="u021-crater u021-crater-1"></span>
+                <span class="u021-crater u021-crater-2"></span>
+                <span class="u021-crater u021-crater-3"></span>
+              </span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="auth-main-container">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <div class="auth-icon-circle">
+            <i class="fa-solid fa-user-shield" id="auth-header-icon"></i>
+          </div>
+          <div class="auth-header-titles">
+            <h1 id="auth-page-heading">Đăng nhập Tài khoản</h1>
+            <p id="auth-page-subheading">Sử dụng Username &amp; Mật khẩu để truy cập lộ trình tài chính của bạn</p>
+          </div>
+        </div>
+
+        <div id="active-session-banner" class="active-session-banner" style="display: none;">
+          <div class="active-session-info">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+              <span>Đang đăng nhập: <strong id="banner-current-username"></strong></span>
+              <small id="banner-current-slug"></small>
+            </div>
+          </div>
+          <a href="../index.html" class="btn-continue-session">
+            <span>Tiếp tục vào Sổ Tài Chính</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <div class="auth-tabs-nav" id="auth-tabs-nav" role="tablist">
+          <button type="button" class="auth-tab-btn active" id="btn-auth-tab-login" role="tab" aria-selected="true" onclick="switchAuthTab('login')">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Đăng nhập</span>
+          </button>
+          <button type="button" class="auth-tab-btn" id="btn-auth-tab-register" role="tab" aria-selected="false" onclick="switchAuthTab('register')">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Đăng ký</span>
+          </button>
+          <button type="button" class="auth-tab-btn" id="btn-auth-tab-reset" role="tab" aria-selected="false" onclick="switchAuthTab('reset')">
+            <i class="fa-solid fa-key"></i>
+            <span>Quên mật khẩu</span>
+          </button>
+        </div>
+
+        <form id="auth-main-form" class="auth-form-body" onsubmit="handleAuthFormSubmit(event)" novalidate>
+          <div id="auth-panel-login" class="auth-tab-panel">
+            <div id="saved-profiles-section" class="saved-profiles-box" style="display: none;">
+              <div class="saved-profiles-label">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Chọn nhanh tài khoản đã từng đăng nhập trên thiết bị:</span>
+              </div>
+              <div id="saved-profiles-chips" class="saved-profiles-chips"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-auth-login-username">Username đăng nhập:</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="input-auth-login-username" placeholder="Nhập Username (không nhập Email)..." autocomplete="username">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-auth-login-password">Mật khẩu:</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="input-auth-login-password" placeholder="Nhập mật khẩu..." autocomplete="current-password">
+                <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('input-auth-login-password', this)" aria-label="Hiện hoặc ẩn mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-inline-links">
+              <button type="button" class="btn-link-inline" onclick="switchAuthTab('reset')">
+                Quên mật khẩu?
+              </button>
+              <button type="button" class="btn-link-inline" onclick="switchAuthTab('register')">
+                Chưa có tài khoản? Đăng ký mới
+              </button>
+            </div>
+          </div>
+
+          <div id="auth-panel-register" class="auth-tab-panel" style="display: none;">
+            <div class="form-group">
+              <label for="input-auth-reg-username">Username đăng nhập (duy nhất):</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-user-check"></i>
+                <input type="text" id="input-auth-reg-username" placeholder="Ví dụ: nguyenvanan_99..." autocomplete="username" oninput="updateAuthRegSlugPreview(this.value)">
+              </div>
+              <div class="input-hint">
+                Định danh chuẩn hóa (không phân biệt hoa/thường): <code id="preview-auth-reg-slug">@chua_xac_dinh</code>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-auth-reg-email">Email (chỉ dùng để khôi phục mật khẩu):</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-envelope"></i>
+                <input type="email" id="input-auth-reg-email" placeholder="ten@domain.com (chỉ phục vụ khôi phục mật khẩu)" autocomplete="email">
+              </div>
+              <div class="input-hint">
+                Email không dùng làm tên đăng nhập; chỉ sử dụng để nhận liên kết xác minh khi bạn quên mật khẩu.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-auth-reg-password">Mật khẩu (tối thiểu 6 ký tự):</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="input-auth-reg-password" placeholder="Tạo mật khẩu..." autocomplete="new-password">
+                <button type="button" class="btn-toggle-pass" onclick="togglePasswordVisibility('input-auth-reg-password', this)" aria-label="Hiện hoặc ẩn mật khẩu">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="input-auth-reg-confirm">Xác nhận mật khẩu:</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+                <input type="password" id="input-auth-reg-confirm" placeholder="Nhập lại mật khẩu..." autocomplete="new-password">
+              </div>
+            </div>
+          </div>
+
+          <div id="auth-panel-reset" class="auth-tab-panel" style="display: none;">
+            <div class="form-group">
+              <label for="input-auth-reset-identifier">Username hoặc Email khôi phục đã liên kết:</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+                <input type="text" id="input-auth-reset-identifier" placeholder="Nhập Username hoặc Email khôi phục..." autocomplete="off">
+              </div>
+              <div class="input-hint">
+                Hệ thống sẽ kiểm tra ở phía máy chủ và gửi hướng dẫn đặt lại mật khẩu tới email khôi phục đã che mà không tiết lộ địa chỉ email đầy đủ.
+              </div>
+            </div>
+
+            <div class="auth-inline-links">
+              <button type="button" class="btn-link-inline" onclick="switchAuthTab('login')">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại màn hình Đăng nhập
+              </button>
+            </div>
+          </div>
+
+          <div id="auth-error-box" class="auth-alert auth-alert-error" style="display: none;"></div>
+          <div id="auth-success-box" class="auth-alert auth-alert-success" style="display: none;"></div>
+
+          <div class="auth-submit-row">
+            <button type="submit" class="btn-auth-submit" id="btn-auth-submit">
+              <span id="btn-auth-submit-label">Đăng nhập</span>
+              <i class="fa-solid fa-arrow-right" id="btn-auth-submit-icon"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="../firebase/firestore-service.js"></script>
+  <script src="./auth.js"></script>
+</body>
+</html>

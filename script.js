@@ -1,10 +1,5 @@
-/**
- * HỆ THỐNG QUẢN LÝ TÀI CHÍNH CÁ NHÂN DỄ DÙNG & CHUYÊN SÂU
- * Tự động đồng bộ phản ứng (Reactive Flow), công thức dòng tiền chuẩn Excel
- * Tích hợp nhận diện đa người dùng & phân vùng Cloud Firestore
- */
 
-// ==================== THEME MANAGER (LIGHT / DARK) ====================
+
 window.initTheme = function() {
   let theme = null;
   try {
@@ -40,7 +35,6 @@ window.applyTheme = function(theme, shouldRefreshCharts = true) {
     themeBtn.setAttribute('aria-label', isDark ? 'Chuyển sang chế độ Sáng' : 'Chuyển sang chế độ Tối');
   }
 
-  // Đồng bộ trạng thái Day–night sky switch (Lucian #021)
   const u021Switch = document.getElementById('u021-theme-switch');
   const u021Label = document.getElementById('u021-theme-label');
   if (u021Switch) {
@@ -100,46 +94,22 @@ window.refreshChartsOnThemeChange = function(isDark) {
   }
 };
 
-// Khởi chạy áp dụng theme ngay lập tức để tránh chớp trắng giao diện
 try { window.initTheme(); } catch (e) {}
 
-// ==================== HÀM CHUẨN HÓA TÊN DÙNG CHUNG ====================
-/**
- * Chuẩn hóa họ tên người dùng thành định danh Firestore ổn định
- * Quy tắc:
- * 1. Chữ thường
- * 2. Bỏ dấu tiếng Việt & dấu phụ Unicode
- * 3. Thay khoảng trắng bằng gạch dưới '_'
- * 4. Loại bỏ ký tự không phù hợp
- * 5. Khử nhiều dấu gạch dưới liên tiếp và ở hai đầu
- * Ví dụ: "Nguyễn Văn An" -> "nguyen_van_an"
- */
 function normalizeUserName(rawName) {
   if (!rawName || typeof rawName !== 'string') return '';
-  let str = rawName.trim().toLowerCase();
-  
-  // Phân rã tổ hợp Unicode và xóa dấu phụ (diacritical marks)
-  str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
-  // Xử lý riêng chữ 'đ' / 'Đ' của tiếng Việt
-  str = str.replace(/[đĐ]/g, 'd');
-  
-  // Thay thế khoảng trắng (một hoặc nhiều khoảng trắng) bằng dấu gạch dưới
-  str = str.replace(/\s+/g, '_');
-  
-  // Loại bỏ các ký tự đặc biệt, chỉ giữ lại a-z, 0-9 và dấu gạch dưới
-  str = str.replace(/[^a-z0-9_]/g, '');
-  
-  // Rút gọn nhiều dấu gạch dưới liên tiếp thành một
-  str = str.replace(/_+/g, '_');
-  
-  // Loại bỏ dấu gạch dưới ở đầu và cuối chuỗi
-  str = str.replace(/^_+|_+$/g, '');
-  
-  return str;
+  return rawName
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_.]/g, '')
+    .replace(/([_.])\1+/g, '$1')
+    .replace(/^[_.]+|[_.]+$/g, '');
 }
 
-// ==================== CÁC HÀM TIỆN ÍCH DÙNG CHUNG ====================
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -150,11 +120,6 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-/**
- * FIX B: Đồng bộ ngày giao dịch - Chuyển đổi định dạng ngày an toàn tránh timezone offset
- * Storage format: YYYY-MM-DD
- * Display format: DD/MM/YYYY
- */
 function formatDisplayDate(isoStr) {
   if (!isoStr || typeof isoStr !== 'string') return '';
   const clean = isoStr.trim();
@@ -213,16 +178,29 @@ function sortMonthTransactions(m, type) {
   });
 }
 
-// ==================== QUẢN LÝ PHIÊN NGƯỜI DÙNG & TÀI KHOẢN (MẪU LUCIAN #037) ====================
 const UserSession = {
   STORAGE_KEY: "FIN_APP_USER_SESSION",
   PROFILES_KEY: "FIN_APP_PROFILES_LIST",
-  currentUser: null, // { rawName, normalizedName, docId, lastActive }
+  currentUser: null,
 
   getStored() {
     try {
       const data = localStorage.getItem(this.STORAGE_KEY);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+      const parsed = JSON.parse(data);
+      if (!parsed || typeof parsed !== 'object') return null;
+      const displayUsername = parsed.displayUsername || parsed.username || parsed.rawName || parsed.ho_ten || '';
+      const normalizedUsername = parsed.normalizedUsername || parsed.normalizedName || normalizeUserName(displayUsername);
+      parsed.username = displayUsername;
+      parsed.displayUsername = displayUsername;
+      parsed.rawName = displayUsername;
+      parsed.ho_ten = displayUsername;
+      parsed.normalizedUsername = normalizedUsername;
+      parsed.normalizedName = normalizedUsername;
+      if (!parsed.docId && normalizedUsername) {
+        parsed.docId = `user_${normalizedUsername}`;
+      }
+      return parsed;
     } catch (e) {
       console.error("Lỗi đọc session từ localStorage:", e);
       return null;
@@ -241,14 +219,23 @@ const UserSession = {
   },
 
   addProfile(user) {
-    if (!user || !user.docId || !user.rawName) return;
+    if (!user || !user.docId) return;
+    const displayUsername = user.displayUsername || user.username || user.rawName || '';
+    if (!displayUsername) return;
     try {
       let list = this.getProfilesList();
       const existingIdx = list.findIndex(p => p.docId === user.docId);
+      const norm = user.normalizedUsername || user.normalizedName || normalizeUserName(displayUsername);
       const profileData = {
-        rawName: user.rawName,
-        normalizedName: user.normalizedName || normalizeUserName(user.rawName),
+        username: displayUsername,
+        displayUsername: displayUsername,
+        rawName: displayUsername,
+        normalizedUsername: norm,
+        normalizedName: norm,
         docId: user.docId,
+        uid: user.uid || '',
+        maskedEmail: user.maskedEmail || '',
+        hasRecoveryEmail: Boolean(user.hasRecoveryEmail),
         lastActive: Date.now()
       };
       if (existingIdx >= 0) {
@@ -265,7 +252,10 @@ const UserSession = {
   setStored(user) {
     this.currentUser = user;
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+      const safeCopy = Object.assign({}, user);
+      delete safeCopy.password;
+      delete safeCopy.passwordHash;
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(safeCopy));
     } catch (e) {
       console.error("Lỗi ghi session vào localStorage:", e);
     }
@@ -290,22 +280,57 @@ const UserSession = {
     const chipSlug = document.getElementById('chip-display-slug');
     const chipAvatar = document.getElementById('chip-user-avatar');
 
-    if (this.currentUser) {
-      const raw = this.currentUser.rawName || 'Người dùng';
-      const slug = `@${this.currentUser.docId}`;
-      const initial = (raw.trim().charAt(0) || 'U').toUpperCase();
+    const accDispEl = document.getElementById('auth-acc-display-username');
+    const accNormEl = document.getElementById('auth-acc-norm-username');
+    const accMailEl = document.getElementById('auth-acc-masked-email');
+    const accUidEl = document.getElementById('auth-acc-uid');
 
-      if (rawEl) rawEl.textContent = raw;
+    const btnMenuAcc = document.getElementById('btn-menu-account-info');
+    const btnMenuPass = document.getElementById('btn-menu-change-password');
+    const btnMenuLogout = document.getElementById('btn-account-logout');
+    const btnTopbarLogin = document.getElementById('btn-topbar-login');
+
+    if (this.currentUser) {
+      const disp = this.currentUser.displayUsername || this.currentUser.username || this.currentUser.rawName || 'Người dùng';
+      const norm = this.currentUser.normalizedUsername || this.currentUser.normalizedName || normalizeUserName(disp);
+      const slug = `@${norm || this.currentUser.docId}`;
+      const initial = (disp.trim().charAt(0) || 'U').toUpperCase();
+
+      if (rawEl) rawEl.textContent = disp;
       if (slugEl) slugEl.textContent = slug;
-      if (chipName) chipName.textContent = raw;
+      if (chipName) chipName.textContent = disp;
       if (chipSlug) chipSlug.textContent = slug;
       if (chipAvatar) chipAvatar.textContent = initial;
+
+      if (accDispEl) accDispEl.textContent = disp;
+      if (accNormEl) accNormEl.textContent = `@${norm}`;
+      if (accMailEl) {
+        accMailEl.textContent = (this.currentUser.hasRecoveryEmail && this.currentUser.maskedEmail)
+          ? this.currentUser.maskedEmail
+          : 'Chưa liên kết email khôi phục';
+      }
+      if (accUidEl) accUidEl.textContent = this.currentUser.uid || 'Hồ sơ cục bộ';
+
+      if (btnMenuAcc) btnMenuAcc.style.display = '';
+      if (btnMenuPass) btnMenuPass.style.display = '';
+      if (btnMenuLogout) btnMenuLogout.style.display = '';
+      if (btnTopbarLogin) btnTopbarLogin.style.display = 'none';
     } else {
-      if (rawEl) rawEl.textContent = "Chưa xác nhận";
+      if (rawEl) rawEl.textContent = "Chưa đăng nhập";
       if (slugEl) slugEl.textContent = "@guest";
-      if (chipName) chipName.textContent = "Chưa xác nhận";
-      if (chipSlug) chipSlug.textContent = "@guest";
+      if (chipName) chipName.textContent = "Chưa đăng nhập";
+      if (chipSlug) chipSlug.textContent = "Bấm để đăng nhập";
       if (chipAvatar) chipAvatar.textContent = "?";
+
+      if (accDispEl) accDispEl.textContent = "Chưa đăng nhập";
+      if (accNormEl) accNormEl.textContent = "@guest";
+      if (accMailEl) accMailEl.textContent = "Chưa liên kết";
+      if (accUidEl) accUidEl.textContent = "---";
+
+      if (btnMenuAcc) btnMenuAcc.style.display = 'none';
+      if (btnMenuPass) btnMenuPass.style.display = 'none';
+      if (btnMenuLogout) btnMenuLogout.style.display = 'none';
+      if (btnTopbarLogin) btnTopbarLogin.style.display = '';
     }
 
     if (typeof window.renderAccountSwitcher === 'function') {
@@ -314,7 +339,6 @@ const UserSession = {
   }
 };
 
-// ==================== ACCOUNT SWITCHER CONTROLLER (MẪU LUCIAN #037) ====================
 window.renderAccountSwitcher = function() {
   const listEl = document.getElementById('rail-account-list');
   const countEl = document.getElementById('account-profiles-count');
@@ -342,18 +366,20 @@ window.renderAccountSwitcher = function() {
 
   listEl.innerHTML = profiles.map(p => {
     const isActive = current && current.docId === p.docId;
-    const initial = (p.rawName || 'U').trim().charAt(0).toUpperCase();
+    const dispName = p.displayUsername || p.username || p.rawName || 'U';
+    const normName = p.normalizedUsername || p.normalizedName || p.docId;
+    const initial = dispName.trim().charAt(0).toUpperCase();
     return `
-      <div class="account-item ${isActive ? 'active' : ''}" 
-           role="menuitem" 
-           tabindex="0" 
+      <div class="account-item ${isActive ? 'active' : ''}"
+           role="menuitem"
+           tabindex="0"
            data-doc-id="${escapeHtml(p.docId)}"
-           onclick="switchUserProfile('${escapeHtml(p.docId)}')" 
+           onclick="switchUserProfile('${escapeHtml(p.docId)}')"
            onkeydown="handleAccountItemKeyDown(event, '${escapeHtml(p.docId)}')">
         <div class="account-item-avatar">${initial}</div>
         <div class="account-item-info">
-          <div class="account-item-name">${escapeHtml(p.rawName)}</div>
-          <div class="account-item-slug">@${escapeHtml(p.docId)}</div>
+          <div class="account-item-name">${escapeHtml(dispName)}</div>
+          <div class="account-item-slug">@${escapeHtml(normName)}</div>
         </div>
         ${isActive ? '<i class="fa-solid fa-check account-item-check" aria-hidden="true"></i>' : ''}
       </div>
@@ -406,26 +432,49 @@ window.closeAccountMenu = function() {
   if (chip) chip.setAttribute('aria-expanded', 'false');
 };
 
+window.goToAuthPage = function(tab = 'login', username = '', isSwitch = false) {
+  closeAccountMenu();
+  if (typeof window.closeUserModal === 'function') {
+    window.closeUserModal();
+  }
+  const params = new URLSearchParams();
+  if (tab && tab !== 'login') params.set('tab', tab);
+  if (username) params.set('username', username);
+  if (isSwitch) params.set('switch', '1');
+  const qs = params.toString();
+  const targetUrl = './auth/index.html' + (qs ? `?${qs}` : '');
+  if (window.__DISABLE_AUTH_REDIRECT__) {
+    window.__LAST_AUTH_REDIRECT_URL__ = targetUrl;
+    return targetUrl;
+  }
+  window.allowExitWithoutSave = true;
+  window.location.href = targetUrl;
+  return targetUrl;
+};
+
 window.performSwitchUserProfile = function(docId) {
   const profiles = UserSession.getProfilesList();
   const target = profiles.find(p => p.docId === docId);
   if (!target) return;
 
-  UserSession.currentUser = target;
-  try {
-    localStorage.setItem(UserSession.STORAGE_KEY, JSON.stringify(target));
-  } catch (e) {}
-  UserSession.addProfile(target);
-  UserSession.updateUI();
-  closeAccountMenu();
+  const activeAuth = window.CloudDB && typeof window.CloudDB.getActiveAuthenticatedUser === 'function'
+    ? window.CloudDB.getActiveAuthenticatedUser()
+    : null;
 
-  window.resetAppStateToEmpty();
-  showToast(`Đã chuyển sang hồ sơ [${target.rawName}]! Nhấn "Nhập dữ liệu" nếu muốn nạp bản lưu trước đó.`, "success");
+  if (activeAuth && activeAuth.docId === docId) {
+    closeAccountMenu();
+    window.openUserModal(true, 'account');
+    return;
+  }
+
+  const targetUsername = target.displayUsername || target.username || target.rawName || '';
+  window.goToAuthPage('login', targetUsername, true);
 };
 
 window.switchUserProfile = function(docId) {
   if (UserSession.currentUser && UserSession.currentUser.docId === docId) {
     closeAccountMenu();
+    window.openUserModal(true, 'account');
     return;
   }
   if (window.hasUnsavedChanges) {
@@ -438,12 +487,17 @@ window.switchUserProfile = function(docId) {
   window.performSwitchUserProfile(docId);
 };
 
-window.performLogoutUserProfile = function() {
+window.performLogoutUserProfile = async function() {
+  if (window.CloudDB && typeof window.CloudDB.logoutAccount === 'function') {
+    try {
+      await window.CloudDB.logoutAccount();
+    } catch (e) {}
+  }
   UserSession.clear();
   closeAccountMenu();
   window.resetAppStateToEmpty();
-  showToast("Đã đăng xuất hồ sơ", "info");
-  openUserModal(true);
+  showToast("Đã đăng xuất tài khoản", "info");
+  window.goToAuthPage('login');
 };
 
 window.logoutUserProfile = function() {
@@ -463,6 +517,170 @@ window.handleAccountItemKeyDown = function(e, docId) {
     switchUserProfile(docId);
   }
 };
+
+function createEmptyAllocProducts() {
+  return [
+    { prodName: "", weight: 0, returnRate: 0, risk: 0 },
+    { prodName: "", weight: 0, returnRate: 0, risk: 0 },
+    { prodName: "", weight: 0, returnRate: 0, risk: 0 }
+  ];
+}
+
+function createFixedCollegeGoal() {
+  return {
+    id: "fixed_college",
+    fixedType: "college",
+    isFixed: true,
+    name: "Cho con đi học đại học",
+    type: "invest",
+    start: 0,
+    end: 0,
+    val: 0,
+    paid: 0,
+    inflation: 0,
+    rate: 0,
+    monthly: 0,
+    annual: 0,
+    accumulationYears: 0,
+    collegePeriods: 0,
+    monthlyTuition: 0,
+    supportFund: 0,
+    estimatedRate: 0,
+    yearsRetire: 0,
+    monthlyRetire: 0,
+    deathFund: 0,
+    allocProducts: createEmptyAllocProducts()
+  };
+}
+
+function createFixedRetirementGoal() {
+  return {
+    id: "fixed_retirement",
+    fixedType: "retirement",
+    isFixed: true,
+    name: "Hưu trí",
+    type: "invest",
+    start: 0,
+    end: 0,
+    val: 0,
+    paid: 0,
+    inflation: 0,
+    rate: 0,
+    monthly: 0,
+    annual: 0,
+    accumulationYears: 0,
+    reserveMonths: 0,
+    annualCostEstimate: 0,
+    monthlyCostEstimate: 0,
+    estimatedRate: 0,
+    yearsRetire: 0,
+    monthlyRetire: 0,
+    deathFund: 0,
+    allocProducts: createEmptyAllocProducts()
+  };
+}
+
+function isCollegeFixedGoal(g) {
+  if (!g || typeof g !== "object") return false;
+  const norm = normalizeUserName(g.name || "");
+  return g.id === "fixed_college" || g.fixedType === "college" || norm === "cho_con_di_hoc_dai_hoc";
+}
+
+function isRetirementFixedGoal(g) {
+  if (!g || typeof g !== "object") return false;
+  const norm = normalizeUserName(g.name || "");
+  return g.id === "fixed_retirement" || g.fixedType === "retirement" || norm === "huu_tri";
+}
+
+function isFixedInvestmentGoal(g) {
+  return isCollegeFixedGoal(g) || isRetirementFixedGoal(g);
+}
+
+function normalizeGoalNumericFields(goal, template) {
+  const numericKeys = [
+    "start", "end", "val", "paid", "inflation", "rate", "monthly", "annual",
+    "accumulationYears", "collegePeriods", "monthlyTuition", "supportFund",
+    "reserveMonths", "annualCostEstimate", "monthlyCostEstimate", "estimatedRate",
+    "yearsRetire", "monthlyRetire", "deathFund"
+  ];
+  numericKeys.forEach(k => {
+    if (k in template || k in goal) {
+      const n = Number(goal[k]);
+      goal[k] = (isNaN(n) || !isFinite(n)) ? 0 : n;
+    }
+  });
+  if (!Array.isArray(goal.allocProducts)) {
+    goal.allocProducts = createEmptyAllocProducts();
+  }
+  while (goal.allocProducts.length < 3) {
+    goal.allocProducts.push({ prodName: "", weight: 0, returnRate: 0, risk: 0 });
+  }
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  goal.allocProducts = goal.allocProducts.slice(0, 3).map((ap, idx) => {
+    const prodName = typeof ap?.prodName === "string" ? ap.prodName.trim() : "";
+    const matched = validProducts.find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === prodName && prodName !== "");
+    if (!matched) {
+      return { prodName: "", weight: 0, returnRate: 0, risk: 0 };
+    }
+    const w = Number(ap?.weight);
+    const weight = (isNaN(w) || !isFinite(w) || w < 0) ? 0 : w;
+    if (weight === 0 && !ap?._explicitSelected) {
+      return { prodName: "", weight: 0, returnRate: 0, risk: 0 };
+    }
+    return {
+      prodName,
+      weight,
+      returnRate: Number(matched.returnRate) || 0,
+      risk: Number(matched.risk) || 0,
+      _explicitSelected: Boolean(ap?._explicitSelected)
+    };
+  });
+  return goal;
+}
+
+function ensureFixedInvestmentGoals() {
+  if (!Array.isArray(AppState.tcGoals)) {
+    AppState.tcGoals = [];
+  }
+  let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
+  if (!collegeGoal) {
+    collegeGoal = createFixedCollegeGoal();
+    AppState.tcGoals.unshift(collegeGoal);
+  } else {
+    const tpl = createFixedCollegeGoal();
+    Object.keys(tpl).forEach(k => {
+      if (collegeGoal[k] === undefined || collegeGoal[k] === null) {
+        collegeGoal[k] = tpl[k];
+      }
+    });
+    collegeGoal.id = "fixed_college";
+    collegeGoal.fixedType = "college";
+    collegeGoal.isFixed = true;
+    collegeGoal.name = "Cho con đi học đại học";
+    collegeGoal.type = "invest";
+    normalizeGoalNumericFields(collegeGoal, tpl);
+  }
+
+  let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
+  if (!retireGoal) {
+    retireGoal = createFixedRetirementGoal();
+    const collegeIdx = AppState.tcGoals.indexOf(collegeGoal);
+    AppState.tcGoals.splice(collegeIdx + 1, 0, retireGoal);
+  } else {
+    const tpl = createFixedRetirementGoal();
+    Object.keys(tpl).forEach(k => {
+      if (retireGoal[k] === undefined || retireGoal[k] === null) {
+        retireGoal[k] = tpl[k];
+      }
+    });
+    retireGoal.id = "fixed_retirement";
+    retireGoal.fixedType = "retirement";
+    retireGoal.isFixed = true;
+    retireGoal.name = "Hưu trí";
+    retireGoal.type = "invest";
+    normalizeGoalNumericFields(retireGoal, tpl);
+  }
+}
 
 function createEmptyAppState() {
   const emptyMonthly = {};
@@ -487,7 +705,10 @@ function createEmptyAppState() {
     incomeList: [],
     planList: [],
     investProducts: [],
-    tcGoals: [],
+    tcGoals: [
+      createFixedCollegeGoal(),
+      createFixedRetirementGoal()
+    ],
     skillsList: [],
     familyList: [],
     jobList: [],
@@ -510,6 +731,8 @@ window.resetAppStateToEmpty = function() {
   Object.keys(fresh).forEach(k => {
     AppState[k] = fresh[k];
   });
+  ensureFixedInvestmentGoals();
+  syncInvestProductsToGoals();
   window.hasUnsavedChanges = false;
   window.hasSavedInSession = false;
 
@@ -569,52 +792,259 @@ const surveyQuestionsPart2 = [
   { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
 
-// ==================== CÔNG THỨC TÀI CHÍNH SPREADSHEET CHUẨN ====================
-function calculateMonthlyNeed(goal) {
-  const nYears = Math.max(1, (Number(goal.end) || AppState.currentYear) - (Number(goal.start) || AppState.currentYear) + 1);
+function computeGoalPortfolioMetrics(goal) {
+  if (!goal || typeof goal !== "object") {
+    return { totalWeight: 0, expectedAvgReturn: 0, expectedAvgRisk: 0, activeCount: 0, isWeightValid: true };
+  }
+  if (!Array.isArray(goal.allocProducts)) {
+    goal.allocProducts = createEmptyAllocProducts();
+  }
+  while (goal.allocProducts.length < 3) {
+    goal.allocProducts.push({ prodName: "", weight: 0, returnRate: 0, risk: 0 });
+  }
+
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  let totalWeight = 0;
+  let expectedAvgReturn = 0;
+  let expectedAvgRisk = 0;
+  let activeCount = 0;
+
+  goal.allocProducts.forEach((ap, idx) => {
+    const w = Number(ap.weight);
+    ap.weight = (isNaN(w) || !isFinite(w) || w < 0) ? 0 : w;
+    ap.prodName = typeof ap.prodName === "string" ? ap.prodName.trim() : "";
+
+    const matched = validProducts.find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === ap.prodName && ap.prodName !== "");
+    if (!matched) {
+      ap.prodName = "";
+      ap.weight = 0;
+      ap.returnRate = 0;
+      ap.risk = 0;
+      return;
+    }
+
+    ap.returnRate = Number(matched.returnRate) || 0;
+    ap.risk = Number(matched.risk) || 0;
+
+    if (ap.weight > 0 && ap.prodName !== "") {
+      activeCount++;
+      totalWeight += ap.weight;
+      expectedAvgReturn += (ap.weight / 100) * ap.returnRate;
+      expectedAvgRisk += (ap.weight / 100) * ap.risk;
+    }
+  });
+
+  const isWeightValid = (totalWeight === 0) || (Math.abs(totalWeight - 100) < 0.01);
+  return {
+    totalWeight,
+    expectedAvgReturn,
+    expectedAvgRisk,
+    activeCount,
+    isWeightValid
+  };
+}
+
+function calculateCollegeGoal(goal) {
+  normalizeGoalNumericFields(goal, createFixedCollegeGoal());
+  const portfolio = computeGoalPortfolioMetrics(goal);
+
+  const startYr = Number(goal.start) || 0;
+  const endYr = Number(goal.end) || 0;
+  const nYears = (startYr > 0 && endYr >= startYr)
+    ? (endYr - startYr + 1)
+    : (Number(goal.accumulationYears) > 0 ? Number(goal.accumulationYears) : 0);
   const nMonths = nYears * 12;
-  const rAnnual = (Number(goal.rate) || 8.0) / 100;
-  const rMonthly = rAnnual / 12;
+  goal.accumulationYears = nYears;
+
+  const rAnnualPct = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(goal.rate) || Number(goal.estimatedRate) || 0);
+  goal.rate = rAnnualPct;
+  const rMonthly = (rAnnualPct / 100) / 12;
+
+  const periods = Number(goal.collegePeriods || goal.yearsRetire) || 0;
+  const periodicNeed = Number(goal.monthlyTuition || goal.monthlyRetire) || 0;
+  const supportFund = Number(goal.supportFund || goal.deathFund) || 0;
+  goal.collegePeriods = periods;
+  goal.yearsRetire = periods;
+  goal.monthlyTuition = periodicNeed;
+  goal.monthlyRetire = periodicNeed;
+  goal.supportFund = supportFund;
+  goal.deathFund = supportFund;
+
+  let targetFV = 0;
+  if (periods > 0 && (periodicNeed > 0 || supportFund > 0)) {
+    const pvRateAnnual = portfolio.expectedAvgReturn > 0
+      ? portfolio.expectedAvgReturn
+      : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
+    const pvRateMonthly = (pvRateAnnual / 100) / 12;
+    if (pvRateMonthly > 0) {
+      targetFV = periodicNeed * ((1 - Math.pow(1 + pvRateMonthly, -periods)) / pvRateMonthly)
+               + supportFund * Math.pow(1 + pvRateMonthly, -periods);
+    } else {
+      targetFV = (periodicNeed * periods) + supportFund;
+    }
+    if (!goal._manualValOverride) {
+      goal.val = Number(targetFV.toFixed(2));
+    } else {
+      targetFV = Number(goal.val) || 0;
+    }
+  } else {
+    const infRate = (Number(goal.inflation) || 0) / 100;
+    const baseVal = Number(goal.val) || 0;
+    targetFV = baseVal * (nYears > 0 ? Math.pow(1 + infRate, nYears) : 1);
+  }
+
+  goal.calculatedTargetFV = targetFV;
+  if (nMonths <= 0 || targetFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - paidFV);
+  if (deficitFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const pmt = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  goal.annual = goal.monthly * 12;
+  return goal.monthly;
+}
+
+function calculateRetirementGoal(goal) {
+  normalizeGoalNumericFields(goal, createFixedRetirementGoal());
+  const portfolio = computeGoalPortfolioMetrics(goal);
+
+  const startYr = Number(goal.start) || 0;
+  const endYr = Number(goal.end) || 0;
+  const nYears = (startYr > 0 && endYr >= startYr)
+    ? (endYr - startYr + 1)
+    : (Number(goal.accumulationYears) > 0 ? Number(goal.accumulationYears) : 0);
+  const nMonths = nYears * 12;
+  goal.accumulationYears = nYears;
+
+  const rAnnualPct = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
+  goal.rate = rAnnualPct;
+  const rMonthly = (rAnnualPct / 100) / 12;
+
+  const reserveMonths = Number(goal.reserveMonths) || 0;
+  let annualCost = Number(goal.annualCostEstimate) || 0;
+  let monthlyCost = Number(goal.monthlyCostEstimate) || 0;
+
+  if (reserveMonths > 0 && annualCost > 0) {
+    monthlyCost = annualCost / reserveMonths;
+    goal.monthlyCostEstimate = Number(monthlyCost.toFixed(2));
+  } else if (reserveMonths > 0 && monthlyCost > 0 && annualCost === 0) {
+    annualCost = monthlyCost * reserveMonths;
+    goal.annualCostEstimate = Number(annualCost.toFixed(2));
+  }
+
+  let baseTarget = Number(goal.val) || 0;
+  if (baseTarget === 0 && annualCost > 0) {
+    baseTarget = annualCost;
+    goal.val = annualCost;
+  } else if (baseTarget > 0 && annualCost === 0 && reserveMonths > 0) {
+    goal.annualCostEstimate = baseTarget;
+    goal.monthlyCostEstimate = Number((baseTarget / reserveMonths).toFixed(2));
+  }
+
+  const infRate = (Number(goal.inflation) || 0) / 100;
+  const targetFV = baseTarget * (nYears > 0 ? Math.pow(1 + infRate, nYears) : 1);
+  goal.calculatedTargetFV = targetFV;
+
+  if (nMonths <= 0 || targetFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - paidFV);
+  if (deficitFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const pmt = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  goal.annual = goal.monthly * 12;
+  return goal.monthly;
+}
+
+function calculateMonthlyNeed(goal) {
+  if (!goal || typeof goal !== 'object') return 0;
+
+  if (isCollegeFixedGoal(goal)) {
+    return calculateCollegeGoal(goal);
+  }
+  if (isRetirementFixedGoal(goal)) {
+    return calculateRetirementGoal(goal);
+  }
+
+  const startYr = Number(goal.start) || 0;
+  const endYr = Number(goal.end) || 0;
+  const nYears = (startYr > 0 && endYr >= startYr) ? (endYr - startYr + 1) : 0;
+  const nMonths = nYears * 12;
+  if (nMonths <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
 
   if (goal.type === 'debt') {
+    const rAnnual = (Number(goal.rate) || 0) / 100;
+    const rMonthly = rAnnual / 12;
     const loanBalance = Math.max(0, (Number(goal.val) || 0) - (Number(goal.paid) || 0));
-    if (loanBalance <= 0) return 0;
-    if (rMonthly === 0) return loanBalance / nMonths;
-    const pmt = (loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1);
-    return isNaN(pmt) || !isFinite(pmt) ? (loanBalance / nMonths) : pmt;
-  }
-
-  // Đầu tư & hưu trí
-  const infRate = (Number(goal.inflation) || 0) / 100;
-  let targetFV = 0;
-
-  if (goal.yearsRetire && goal.yearsRetire > 0) {
-    const mRetire = Number(goal.monthlyRetire) || 15.0;
-    const deathFund = Number(goal.deathFund) || 0;
-    const nRetireMonths = goal.yearsRetire * 12;
-
-    let pvRetire = 0;
-    if (rMonthly > 0) {
-      pvRetire = mRetire * (1 - Math.pow(1 + rMonthly, -nRetireMonths)) / rMonthly;
-      pvRetire += deathFund / Math.pow(1 + rMonthly, nRetireMonths);
-    } else {
-      pvRetire = (mRetire * nRetireMonths) + deathFund;
+    if (loanBalance <= 0) {
+      goal.monthly = 0;
+      goal.annual = 0;
+      return 0;
     }
-    targetFV = pvRetire;
-  } else {
-    // Điều chỉnh lạm phát trượt giá: FV = Giá trị hiện tại * (1 + lạm phát)^n
-    targetFV = (Number(goal.val) || 0) * Math.pow(1 + infRate, nYears);
+    const pmt = rMonthly === 0
+      ? (loanBalance / nMonths)
+      : ((loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1));
+    goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+    goal.annual = goal.monthly * 12;
+    return goal.monthly;
   }
 
+  const portfolio = computeGoalPortfolioMetrics(goal);
+  const rAnnualPct = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
+  goal.rate = rAnnualPct;
+  const rMonthly = (rAnnualPct / 100) / 12;
+  const infRate = (Number(goal.inflation) || 0) / 100;
+  const targetFV = (Number(goal.val) || 0) * Math.pow(1 + infRate, nYears);
   const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
   const deficitFV = Math.max(0, targetFV - currentPaidFV);
 
-  if (deficitFV <= 0) return 0;
-  if (rMonthly === 0) return deficitFV / nMonths;
+  if (deficitFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
 
-  // Công thức PMT tích lũy tương lai
-  const pmtInvest = (deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1);
-  return isNaN(pmtInvest) || !isFinite(pmtInvest) ? (deficitFV / nMonths) : pmtInvest;
+  const pmtInvest = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest)) ? 0 : pmtInvest;
+  goal.annual = goal.monthly * 12;
+  return goal.monthly;
 }
 
 function getEffectiveSavingsRateRatio() {
@@ -647,7 +1077,6 @@ function calculateAgeMilestones() {
   const baseAge = AppState.currentAge;
   const offsets = [0, 5, 10, 15, 20, 30];
 
-  // Tính điểm khẩu vị rủi ro từ khảo sát Phần 1 (nếu người dùng đã chọn)
   let s1 = 0, count1 = 0;
   surveyQuestionsPart1.forEach((q, idx) => {
     const c = AppState.surveyP1Choices?.[idx + 1];
@@ -662,7 +1091,6 @@ function calculateAgeMilestones() {
     else if (s1 >= 30) riskStockShift = 10;
   }
 
-  // Lấy lãi suất kỳ vọng từ Danh mục sản phẩm đầu tư nếu có
   const prodRates = (AppState.investProducts || []).map(p => Number(p.returnRate) || 0).filter(r => r > 0);
   const stockRate = prodRates.length > 0 ? Math.max(...prodRates, 13.5) : 13.5;
   const bondRate = prodRates.length > 1 ? prodRates[1] : 9.5;
@@ -672,10 +1100,8 @@ function calculateAgeMilestones() {
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = AppState.currentYear + off;
-    const yrIndex = Math.min(32, off);
-    const incNeedFromMatrix = getMatrixIncomeNeed(yrIndex);
+    const incNeedFromMatrix = getMatrixIncomeNeed(off);
 
-    // Công thức phân bổ tài sản chuẩn tài chính cá nhân (Tổng tỷ trọng luôn bằng đúng 100.0%)
     const stocks = Math.max(15, Math.min(75, 100 - age + riskStockShift));
     const ins = age >= 35 ? 10.0 : 7.0;
     const cash = 5.0;
@@ -698,13 +1124,11 @@ function calculateAgeMilestones() {
 
 function calculateCareerDetails() {
   const baseAge = AppState.currentAge;
-  const ages = [
-    baseAge,
-    baseAge + 1, baseAge + 2, baseAge + 3, baseAge + 4,
-    baseAge + 5, baseAge + 6, baseAge + 7, baseAge + 8, baseAge + 9,
-    baseAge + 10,
-    baseAge + 15, baseAge + 20, baseAge + 25, baseAge + 30
-  ];
+  const totalCareerYears = Math.min(50, Math.max(38, 70 - baseAge + 1));
+  const ages = [];
+  for (let a = 0; a < totalCareerYears; a++) {
+    ages.push(baseAge + a);
+  }
 
   const existingMap = {};
   if (Array.isArray(AppState.careerDetailList)) {
@@ -726,15 +1150,22 @@ function calculateCareerDetails() {
   const autoCurrentIncome = activeIncomeMonths > 0
     ? (actualCurrentYear / activeIncomeMonths)
     : planMonthlyInc;
+  const calendarYear = new Date().getFullYear();
+  const startTrackingYear = Number(AppState.currentYear) || calendarYear;
 
   return ages.map((age) => {
     const yearOffset = age - baseAge;
-    const targetVal = getMatrixIncomeNeed(Math.min(32, yearOffset)) || 0;
+    const year = startTrackingYear + yearOffset;
+    const targetVal = getMatrixIncomeNeed(yearOffset) || 0;
+
+    const canEditActual = (startTrackingYear < calendarYear)
+      ? (year <= calendarYear)
+      : (year === startTrackingYear);
 
     const exist = existingMap[age];
     const hasManualActual = exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null;
-    const actualVal = (yearOffset === 0)
-      ? (hasManualActual ? exist.actual : autoCurrentIncome)
+    const actualVal = canEditActual
+      ? (hasManualActual ? exist.actual : (year === calendarYear || yearOffset === 0 ? autoCurrentIncome : (exist && exist.actual !== undefined ? exist.actual : null)))
       : null;
 
     const hasManualRoute = exist && exist.manualRoute === true && exist.route !== undefined;
@@ -742,9 +1173,10 @@ function calculateCareerDetails() {
 
     return {
       age,
-      year: AppState.currentYear + yearOffset,
+      year,
       actual: actualVal,
       manualActual: hasManualActual,
+      canEditActual,
       target: targetVal,
       route: hasManualRoute ? exist.route : (exist && exist.route ? exist.route : defaultRoute),
       manualRoute: hasManualRoute || Boolean(exist && exist.route)
@@ -752,7 +1184,6 @@ function calculateCareerDetails() {
   });
 }
 
-// ==================== ĐIỀU HƯỚNG TABS & EXPANDING SIDE RAIL (MẪU LUCIAN #040) ====================
 window.switchTab = function(tabId) {
   document.body.classList.remove('nav-open');
   if (window.FinDatePicker && FinDatePicker.isOpen && FinDatePicker.isOpen()) {
@@ -884,7 +1315,6 @@ window.initSideRailHover = function() {
     if (!document.body.classList.contains('rail-auto')) return;
     if (window.innerWidth <= 768) return;
 
-    // Không thu gọn nếu menu account switcher hoặc popover đang mở bên trong rail
     const accountMenu = document.getElementById('account-switcher-menu');
     if (accountMenu && !accountMenu.hidden && accountMenu.style.display !== 'none') {
       return;
@@ -962,7 +1392,7 @@ function initSideRail() {
   try {
     savedPinned = localStorage.getItem('FIN_APP_RAIL_PINNED');
     if (savedPinned === null) {
-      // Tương thích với khoá cũ FIN_APP_RAIL_COLLAPSED nếu có
+
       const legacyCollapsed = localStorage.getItem('FIN_APP_RAIL_COLLAPSED');
       if (legacyCollapsed !== null) {
         savedPinned = (legacyCollapsed === 'true') ? 'false' : 'true';
@@ -1027,7 +1457,6 @@ window.switchCareerSection = function(secNum) {
   renderCareerChart();
 };
 
-// ==================== SPARKLINE CHART ====================
 function drawSparkline(canvasId, values, color = '#159F87') {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -1060,7 +1489,6 @@ function drawSparkline(canvasId, values, color = '#159F87') {
   ctx.fill();
 }
 
-// ==================== DASHBOARD MATRICES ====================
 function getUniqueNonEmptyList(arrays) {
   const seen = new Set();
   const result = [];
@@ -1126,10 +1554,10 @@ function renderDashboardMatrices() {
       </tr>
     `;
   }).join('');
-  
+
   const tbInc = document.getElementById('tbody-db-income');
   if (tbInc) tbInc.innerHTML = incRows;
-  
+
   const tfInc = document.getElementById('tfoot-db-income-total');
   if (tfInc) {
     let tfHtml = `<td class="font-bold">Tổng cộng thu nhập</td>`;
@@ -1344,7 +1772,7 @@ function renderDashboardAllCharts() {
       data: {
         labels: labels,
         datasets: [{
-          label: 'Giá trị tích lũy (tr)',
+          label: 'Giá trị tích lũy',
           data: cumData,
           borderColor: '#6258F5',
           backgroundColor: 'rgba(98, 88, 245, 0.12)',
@@ -1501,7 +1929,6 @@ function renderDashboardAllCharts() {
   }
 }
 
-// ==================== TỪ KHÓA ====================
 function renderSetupTables() {
   const tbExp = document.getElementById('tbody-expenses');
   if (tbExp) {
@@ -1661,33 +2088,41 @@ window.updatePlanListItem = function(idx, val) {
 };
 
 function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
   (AppState.tcGoals || []).forEach(g => {
     if (g.type !== 'invest') return;
-    if (!Array.isArray(g.allocProducts) || g.allocProducts.length === 0) {
-      g.allocProducts = AppState.investProducts.slice(0, 3).map((p, idx) => ({
-        prodName: p.name,
-        weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
-        returnRate: p.returnRate,
-        risk: p.risk
-      }));
+    if (!Array.isArray(g.allocProducts)) {
+      g.allocProducts = createEmptyAllocProducts();
     }
+    while (g.allocProducts.length < 3) {
+      g.allocProducts.push({ prodName: "", weight: 0, returnRate: 0, risk: 0 });
+    }
+
     let avgRate = 0;
     let totalWeight = 0;
     g.allocProducts.forEach(ap => {
       if (oldProdName && newProdName && ap.prodName === oldProdName) {
         ap.prodName = newProdName;
       }
-      const matched = AppState.investProducts.find(ip => ip.name === ap.prodName);
+      const matched = validProducts.find(ip => ip && ip.name === ap.prodName && ap.prodName !== "");
       if (matched) {
-        ap.returnRate = matched.returnRate;
-        ap.risk = matched.risk;
+        ap.returnRate = Number(matched.returnRate) || 0;
+        ap.risk = Number(matched.risk) || 0;
+        const w = Number(ap.weight) || 0;
+        totalWeight += w;
+        avgRate += (w / 100) * (Number(ap.returnRate) || 0);
+      } else {
+        ap.prodName = "";
+        ap.weight = 0;
+        ap.returnRate = 0;
+        ap.risk = 0;
       }
-      const w = Number(ap.weight) || 0;
-      totalWeight += w;
-      avgRate += (w / 100) * (Number(ap.returnRate) || 0);
     });
+
     if (totalWeight > 0 && avgRate > 0) {
       g.rate = parseFloat(avgRate.toFixed(2));
+    } else if (validProducts.length === 0) {
+      g.rate = 0;
     }
     g.monthly = calculateMonthlyNeed(g);
   });
@@ -1736,7 +2171,6 @@ function syncKeywordChangesToDependentSheets() {
   recalculateAll();
 }
 
-// ==================== KẾ HOẠCH THU NHẬP & CHI TIÊU ====================
 function renderPlanTables() {
   const tbInc = document.getElementById('tbody-plan-inc');
   if (tbInc) {
@@ -1786,11 +2220,7 @@ function renderPlanTables() {
 }
 
 window.addPlanIncomeDirect = function() {
-  if (AppState.incomeList.length === 0) {
-    AppState.incomeList.push("Nguồn thu mới 1");
-    renderSetupTables();
-  }
-  const firstCat = AppState.incomeList[0];
+  const firstCat = (AppState.incomeList && AppState.incomeList.length > 0) ? AppState.incomeList[0] : "Nguồn thu 1";
   AppState.planIncome.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
   renderReconciliationTable(AppState.currentMonth);
@@ -1805,11 +2235,7 @@ window.deletePlanIncRow = function(idx) {
 };
 
 window.addPlanExpenseDirect = function() {
-  if (AppState.expenses.length === 0) {
-    AppState.expenses.push("Chi tiêu mới 1");
-    renderSetupTables();
-  }
-  const firstCat = AppState.expenses[0];
+  const firstCat = (AppState.expenses && AppState.expenses.length > 0) ? AppState.expenses[0] : "Chi tiêu 1";
   AppState.planExpense.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
   renderReconciliationTable(AppState.currentMonth);
@@ -1871,18 +2297,17 @@ function updatePlanTotals() {
   const sumExp = (AppState.planExpense || []).reduce((s, p) => s + (Number(p.plan) || 0), 0);
   const incEl = document.getElementById('plan-sum-inc-val');
   const expEl = document.getElementById('plan-sum-exp-val');
-  if (incEl) incEl.textContent = `${sumInc.toFixed(2)} tr`;
-  if (expEl) expEl.textContent = `${sumExp.toFixed(2)} tr`;
+  if (incEl) incEl.textContent = `${sumInc.toFixed(2)}`;
+  if (expEl) expEl.textContent = `${sumExp.toFixed(2)}`;
 }
 
-// ==================== BỘ CHỌN NGÀY THÁNG NĂM CHUYÊN NGHIỆP (FRESH POP FINTECH DATE PICKER) ====================
 const FinDatePicker = {
   popoverEl: null,
   backdropEl: null,
   activeInput: null,
   viewDate: new Date(),
   selectedDate: null,
-  mode: 'days', // 'days' | 'months' | 'years'
+  mode: 'days',
   decadeStart: 2020,
 
   init() {
@@ -2280,7 +2705,6 @@ const FinDatePicker = {
 };
 window.FinDatePicker = FinDatePicker;
 
-// ==================== THEO DÕI THU CHI 12 THÁNG ====================
 function syncMonthLearningExpense(m) {
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
@@ -2294,7 +2718,6 @@ function syncMonthLearningExpense(m) {
   const expList = AppState.monthlyDetails[m].expenses;
   const lrnCatName = "Chi tiền phát triển bản thân";
 
-  // 1. Dọn dẹp triệt để các dòng đồng bộ trùng lặp (nếu có từ lịch sử dữ liệu cũ)
   const syncedIndices = [];
   expList.forEach((x, idx) => {
     if (x && x.autoSyncedLearning === true) {
@@ -2306,7 +2729,6 @@ function syncMonthLearningExpense(m) {
     expList.splice(removeIdx, 1);
   }
 
-  // 2. Tìm bản ghi đồng bộ duy nhất hoặc nhận diện bản ghi kế thừa chuẩn
   let lrnIdx = expList.findIndex(x => x.autoSyncedLearning === true);
   if (lrnIdx === -1) {
     const legacyIdx = expList.findIndex(x => x.cat === lrnCatName && x.desc === "Đầu tư phát triển bản thân");
@@ -2320,10 +2742,6 @@ function syncMonthLearningExpense(m) {
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
   if (totalLearningCost > 0) {
-    if (!AppState.expenses.includes(lrnCatName)) {
-      AppState.expenses.push(lrnCatName);
-      renderSetupTables();
-    }
     if (lrnExpense) {
       lrnExpense.val = totalLearningCost;
     } else {
@@ -2558,11 +2976,9 @@ window.addMonthDetailIncomeRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  if (AppState.incomeList.length === 0) {
-    AppState.incomeList.push("Nguồn thu mới 1");
-    renderSetupTables();
-  }
-  const firstCat = AppState.incomeList[0];
+  const firstCat = (AppState.incomeList && AppState.incomeList.length > 0)
+    ? AppState.incomeList[0]
+    : ((AppState.planIncome && AppState.planIncome.length > 0) ? AppState.planIncome[0].name : "Nguồn thu chính");
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
@@ -2589,11 +3005,9 @@ window.addMonthDetailExpenseRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  if (AppState.expenses.length === 0) {
-    AppState.expenses.push("Chi tiêu mới 1");
-    renderSetupTables();
-  }
-  const firstCat = AppState.expenses[0];
+  const firstCat = (AppState.expenses && AppState.expenses.length > 0)
+    ? AppState.expenses[0]
+    : ((AppState.planExpense && AppState.planExpense.length > 0) ? AppState.planExpense[0].name : "Chi tiêu chung");
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
@@ -2742,19 +3156,18 @@ window.updateReconNote = function(m, type, cat, field, txt) {
   dict[cat][field] = txt.trim();
 };
 
-// ==================== PHẦN 2 ĐÀO TẠO ====================
 function renderMonthLearningSection(m) {
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
-  
+
   const items = AppState.monthlyDetails[m].learningDetails || [];
   const tb = document.getElementById('tbody-m-learning-detail');
   const lrnOptions = getUniqueNonEmptyList([
     AppState.planList,
     items.map(x => x.cat)
   ]);
-  
+
   if (tb) {
     tb.innerHTML = items.map((it, i) => `
       <tr>
@@ -2818,7 +3231,6 @@ function updateMonthLearningStats(m) {
   if (footTotal) footTotal.textContent = totalLearningCost.toFixed(2);
   if (footStatTotal) footStatTotal.textContent = totalLearningCost.toFixed(2);
 
-  // Cập nhật dải thẻ KPI tổng quan chi phí học tập & đào tạo
   let topCat = 'Chưa có';
   let maxCatVal = 0;
   for (const [cat, val] of Object.entries(catSums)) {
@@ -2833,7 +3245,7 @@ function updateMonthLearningStats(m) {
   const kpiTop = document.getElementById('m-learn-kpi-top');
   if (kpiTotal) kpiTotal.textContent = totalLearningCost.toFixed(2);
   if (kpiCount) kpiCount.textContent = items.length;
-  if (kpiTop) kpiTop.textContent = maxCatVal > 0 ? `${topCat} (${maxCatVal.toFixed(2)} tr)` : 'Chưa có';
+  if (kpiTop) kpiTop.textContent = maxCatVal > 0 ? `${topCat} (${maxCatVal.toFixed(2)})` : 'Chưa có';
 
   syncMonthLearningExpense(m);
 }
@@ -2912,11 +3324,7 @@ window.addMonthLearningRow = function() {
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
-  if (AppState.planList.length === 0) {
-    AppState.planList.push("Kế hoạch đào tạo 1");
-    renderSetupTables();
-  }
-  const defaultCat = AppState.planList[0];
+  const defaultCat = (AppState.planList && AppState.planList.length > 0) ? AppState.planList[0] : "Kế hoạch đào tạo 1";
   if (!AppState.monthlyDetails[m]) {
     AppState.monthlyDetails[m] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
   }
@@ -2983,7 +3391,7 @@ function renderMonthHorizontalBarChart() {
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)} tr` } }
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(1)}` } }
       },
       scales: {
         x: { beginAtZero: true, grid: { color: themeTokens.grid }, ticks: { font: { family: 'Inter', size: 10 }, color: themeTokens.textMuted } },
@@ -2993,7 +3401,6 @@ function renderMonthHorizontalBarChart() {
   });
 }
 
-// ==================== CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP ====================
 window.careerChartInstance = null;
 
 function renderCareerTables() {
@@ -3017,31 +3424,32 @@ function renderCareerTables() {
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
+    const calendarYear = new Date().getFullYear();
     tb2.innerHTML = AppState.careerDetailList.map((item, idx) => {
       const isDeficit = item.route < item.target;
       const diffVal = Math.abs(item.target - item.route).toFixed(1);
-      const isCurrentYear = item.year === AppState.currentYear;
+      const canEditActual = Boolean(item.canEditActual);
 
       return `
         <tr>
           <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
-          
-          <td class="text-right font-bold font-mono ${isCurrentYear ? 'cell-blue' : 'cell-disabled-readonly'}" 
-              ${isCurrentYear ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)"` : ''}>
-            ${item.actual !== null ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
+
+          <td class="text-right font-bold font-mono ${canEditActual ? 'cell-blue' : 'cell-disabled-readonly'}"
+              ${canEditActual ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)" title="Nhấn để nhập thu nhập thực tế năm ${item.year}"` : `title="Năm ${item.year} là năm tương lai (chỉ ghi nhận thực tế đến năm hiện tại ${calendarYear})"`}>
+            ${(canEditActual && item.actual !== null && item.actual !== undefined) ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
           </td>
-          
+
           <td class="text-right font-bold text-primary font-mono">${item.target.toFixed(1)}</td>
-          
-          <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}" 
-              contenteditable="true" spellcheck="false" 
+
+          <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}"
+              contenteditable="true" spellcheck="false"
               onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
             ${item.route.toFixed(1)}
           </td>
-          
+
           <td class="text-center">
-            ${isDeficit 
-              ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal} tr)</span>` 
+            ${isDeficit
+              ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal})</span>`
               : `<span class="success-badge">✅ Vững tâm (Đạt)</span>`
             }
           </td>
@@ -3052,13 +3460,29 @@ function renderCareerTables() {
 }
 
 window.updateCareerDetailField = function(idx, field, val) {
-  if (AppState.careerDetailList[idx]) {
-    AppState.careerDetailList[idx][field] = val;
-    if (field === 'actual') AppState.careerDetailList[idx].manualActual = true;
-    if (field === 'route') AppState.careerDetailList[idx].manualRoute = true;
-    renderCareerTables();
-    renderCareerChart();
+  const item = AppState.careerDetailList[idx];
+  if (!item) return;
+
+  if (field === 'actual') {
+    const calendarYear = new Date().getFullYear();
+    const startTrackingYear = Number(AppState.currentYear) || calendarYear;
+    const canEdit = (startTrackingYear < calendarYear)
+      ? (item.year <= calendarYear)
+      : (item.year === startTrackingYear);
+
+    if (!canEdit) {
+      showToast(`Năm ${item.year} là năm tương lai, không thể nhập thu nhập thực tế!`, "warning");
+      renderCareerTables();
+      return;
+    }
+    item.actual = val;
+    item.manualActual = true;
+  } else if (field === 'route') {
+    item.route = val;
+    item.manualRoute = true;
   }
+  renderCareerTables();
+  renderCareerChart();
 };
 
 function renderCareerChart() {
@@ -3152,10 +3576,10 @@ function renderCareerChart() {
               if (ctx.datasetIndex === 1) {
                 const targetVal = targets[ctx.dataIndex];
                 const diff = (ctx.raw - targetVal).toFixed(1);
-                const status = ctx.raw >= targetVal ? `[Đạt (+${diff} tr)]` : `[Cần thêm (${diff} tr)]`;
-                return ` ${ctx.dataset.label}: ${val} tr ${status}`;
+                const status = ctx.raw >= targetVal ? `[Đạt (+${diff})]` : `[Cần thêm (${diff})]`;
+                return ` ${ctx.dataset.label}: ${val} ${status}`;
               }
-              return ` ${ctx.dataset.label}: ${val} tr`;
+              return ` ${ctx.dataset.label}: ${val}`;
             }
           }
         }
@@ -3174,7 +3598,6 @@ function renderCareerChart() {
   });
 }
 
-// ==================== BẢNG KHẢO SÁT ====================
 function renderGoogleFormSurvey() {
   const p1Container = document.getElementById('gform-questions-p1');
   if (p1Container) {
@@ -3331,7 +3754,7 @@ window.goToSurveyStep = function(stepNum) {
 };
 
 window.toggleSurveyViewMode = function(mode) {
-  // Mode 3-bước là chuẩn mực bắt buộc, không hiển thị đồng thời 3 phần
+
   window.goToSurveyStep(window.currentSurveyStep || 1);
 };
 
@@ -3345,7 +3768,6 @@ window.updateSurveyProgress = function() {
   const p1Remaining = Math.max(0, 10 - p1Count);
   const p2Remaining = Math.max(0, 11 - p2Count);
 
-  // Cập nhật tab status pills trên thanh điều hướng 3 mục
   const tabStat1 = document.getElementById('survey-tab-stat-1');
   const tabStat2 = document.getElementById('survey-tab-stat-2');
   const tabStat3 = document.getElementById('survey-tab-stat-3');
@@ -3379,7 +3801,7 @@ window.updateSurveyProgress = function() {
     } else if (currStep === 2) {
       lblEl.textContent = `Tiến độ Phần 2: Hoàn cảnh & Trách nhiệm (${p2Count}/11 câu đã chọn)`;
     } else {
-      lblEl.textContent = total >= 21 
+      lblEl.textContent = total >= 21
         ? `Đã hoàn thành toàn bộ 21/21 câu hỏi trắc nghiệm`
         : `Tiến độ tổng hợp: ${total}/21 câu hỏi (Kết quả ước tính sơ bộ)`;
     }
@@ -3395,7 +3817,6 @@ window.updateSurveyProgress = function() {
   if (btn2) btn2.classList.toggle('completed', p2Count >= 11);
   if (btn3) btn3.classList.toggle('completed', total >= 21);
 
-  // Cập nhật Banner cảnh báo chưa hoàn thành vs Huy hiệu hoàn thành đầy đủ tại Step 3
   const bannerInc = document.getElementById('survey-incomplete-banner');
   const badgeComp = document.getElementById('survey-complete-badge');
   const missingCountEl = document.getElementById('survey-missing-count');
@@ -3547,7 +3968,6 @@ function evaluateSurveys() {
   if (p2ResEl) p2ResEl.innerHTML = `<strong>Hoàn cảnh & Môi trường:</strong> ${cTxt}`;
   if (ctx2) ctx2.textContent = count2 === 0 ? cTxt : `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 
-  // Cập nhật thẻ tổng hợp khuyến nghị Step 3
   const sumRiskTitle = document.getElementById('survey-summary-risk-title');
   const sumRiskDesc = document.getElementById('survey-summary-risk-desc');
   const sumCircTitle = document.getElementById('survey-summary-circumstance-title');
@@ -3558,72 +3978,84 @@ function evaluateSurveys() {
   if (sumCircTitle) sumCircTitle.textContent = circumstanceTitle;
   if (sumCircDesc) sumCircDesc.textContent = cTxt;
 
-  // Cập nhật thanh kết quả trực quan chuẩn theo thang điểm tối đa (P1: 43 điểm, P2: 54 điểm)
   const bar1 = document.getElementById('survey-result-bar-1');
   const bar2 = document.getElementById('survey-result-bar-2');
   if (bar1) bar1.style.width = count1 === 0 ? '0%' : `${Math.min(100, Math.round((s1 / 43) * 100))}%`;
   if (bar2) bar2.style.width = count2 === 0 ? '0%' : `${Math.min(100, Math.round((s2 / 54) * 100))}%`;
 }
 
-// ==================== BẢNG NHẬP LIỆU MỤC TIÊU BẢN THÂN ====================
 function renderTcGoalsFormTable() {
+  ensureFixedInvestmentGoals();
   const tb = document.getElementById('tbody-tc-form-goals');
   if (!tb) return;
 
   tb.innerHTML = AppState.tcGoals.map((g, idx) => {
+    const isFixed = isFixedInvestmentGoal(g);
     g.monthly = calculateMonthlyNeed(g);
     return `
       <tr>
         <td>
-          <input type="text" class="cell-blue font-bold" value="${g.name}" 
-                 placeholder="VD: Mua nhà, Cho con học..."
+          ${isFixed
+            ? `<div class="font-bold" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 8px;">
+                 <span>${escapeHtml(g.name)}</span>
+                 <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
+               </div>`
+            : `<input type="text" class="cell-blue font-bold" value="${escapeHtml(g.name)}"
+                 placeholder="VD: Mua nhà, Mua xe..."
                  oninput="onGoalFieldInput(${idx}, 'name', this.value)"
-                 onchange="onGoalFieldChange(${idx}, 'name', this.value)">
+                 onchange="onGoalFieldChange(${idx}, 'name', this.value)">`
+          }
         </td>
         <td>
-          <select class="select-inline-cell" onchange="onGoalFieldChange(${idx}, 'type', this.value)">
-            <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Khoản nợ phải trả</option>
-            <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Tích lũy & Đầu tư</option>
-          </select>
+          ${isFixed
+            ? `<span class="font-bold text-primary" style="padding:0 8px;">Tích lũy &amp; Đầu tư</span>`
+            : `<select class="select-inline-cell" onchange="onGoalFieldChange(${idx}, 'type', this.value)">
+                 <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Khoản nợ phải trả</option>
+                 <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Tích lũy &amp; Đầu tư</option>
+               </select>`
+          }
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${g.val}" 
+          <input type="number" step="any" class="text-right font-mono" value="${Number(g.val) || 0}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'val', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${g.paid || 0}" 
+          <input type="number" step="any" class="text-right font-mono" value="${Number(g.paid) || 0}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'paid', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" class="text-center font-mono" value="${g.start}" 
-                 oninput="onGoalFieldInput(${idx}, 'start', parseInt(this.value, 10)||${AppState.currentYear || 2026})"
-                 onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||${AppState.currentYear || 2026})">
+          <input type="number" class="text-center font-mono" value="${Number(g.start) || 0}"
+                 oninput="onGoalFieldInput(${idx}, 'start', parseInt(this.value, 10)||0)"
+                 onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||0)">
         </td>
         <td>
-          <input type="number" class="text-center font-mono" value="${g.end}" 
-                 oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||${(AppState.currentYear || 2026) + 4})"
-                 onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||${(AppState.currentYear || 2026) + 4})">
+          <input type="number" class="text-center font-mono" value="${Number(g.end) || 0}"
+                 oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
+                 onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${g.inflation || 0}" 
-                 ${g.type === 'debt' ? 'disabled style="background:#f8fafc; cursor:not-allowed;"' : ''} 
+          <input type="number" step="any" class="text-right font-mono" value="${Number(g.inflation) || 0}"
+                 ${g.type === 'debt' ? 'disabled style="background:#f8fafc; cursor:not-allowed;"' : ''}
                  oninput="onGoalFieldInput(${idx}, 'inflation', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${g.rate || 0}" 
+          <input type="number" step="any" class="text-right font-mono" value="${Number((Number(g.rate) || 0).toFixed(2))}"
                  oninput="onGoalFieldInput(${idx}, 'rate', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'rate', parseFloat(this.value)||0)">
         </td>
-        <td class="text-right font-bold text-success font-mono" id="tc-goal-monthly-${idx}">${g.monthly.toFixed(2)} tr</td>
+        <td class="text-right font-bold text-success font-mono" id="tc-goal-monthly-${idx}">${(Number(g.monthly) || 0).toFixed(2)}</td>
         <td class="text-center">
-          <button type="button" class="btn-table-del" title="Xóa mục tiêu" onclick="deleteTcGoalRow(${idx})">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
+          ${isFixed
+            ? `<span class="badge-fixed-goal" title="Mục tiêu cố định không được xóa"><i class="fa-solid fa-shield-halved"></i></span>`
+            : `<button type="button" class="btn-table-del" title="Xóa mục tiêu" onclick="deleteTcGoalRow(${idx})">
+                 <i class="fa-solid fa-trash-can"></i>
+               </button>`
+          }
         </td>
       </tr>
     `;
@@ -3631,12 +4063,27 @@ function renderTcGoalsFormTable() {
 }
 
 window.onGoalFieldInput = function(idx, field, val) {
-  if (!AppState.tcGoals[idx]) return;
-  AppState.tcGoals[idx][field] = val;
-  AppState.tcGoals[idx].monthly = calculateMonthlyNeed(AppState.tcGoals[idx]);
-  
+  const g = AppState.tcGoals[idx];
+  if (!g) return;
+  if (isFixedInvestmentGoal(g) && (field === 'name' || field === 'type')) {
+    return;
+  }
+  if (field === 'val') {
+    if (isCollegeFixedGoal(g)) {
+      g._manualValOverride = (Number(val) > 0);
+    } else if (isRetirementFixedGoal(g)) {
+      g.annualCostEstimate = Number(val) || 0;
+      const rMonths = Number(g.reserveMonths) || 0;
+      if (rMonths > 0) {
+        g.monthlyCostEstimate = Number(((Number(val) || 0) / rMonths).toFixed(2));
+      }
+    }
+  }
+  g[field] = val;
+  g.monthly = calculateMonthlyNeed(g);
+
   const mCell = document.getElementById(`tc-goal-monthly-${idx}`);
-  if (mCell) mCell.textContent = `${AppState.tcGoals[idx].monthly.toFixed(2)} tr`;
+  if (mCell) mCell.textContent = `${(Number(g.monthly) || 0).toFixed(2)}`;
 
   syncDebtGoalToOverallData();
   syncGoalsToCards();
@@ -3645,10 +4092,26 @@ window.onGoalFieldInput = function(idx, field, val) {
 };
 
 window.onGoalFieldChange = function(idx, field, val) {
-  if (!AppState.tcGoals[idx]) return;
-  AppState.tcGoals[idx][field] = val;
-  AppState.tcGoals[idx].monthly = calculateMonthlyNeed(AppState.tcGoals[idx]);
-  
+  const g = AppState.tcGoals[idx];
+  if (!g) return;
+  if (isFixedInvestmentGoal(g) && (field === 'name' || field === 'type')) {
+    renderTcGoalsFormTable();
+    return;
+  }
+  if (field === 'val') {
+    if (isCollegeFixedGoal(g)) {
+      g._manualValOverride = (Number(val) > 0);
+    } else if (isRetirementFixedGoal(g)) {
+      g.annualCostEstimate = Number(val) || 0;
+      const rMonths = Number(g.reserveMonths) || 0;
+      if (rMonths > 0) {
+        g.monthlyCostEstimate = Number(((Number(val) || 0) / rMonths).toFixed(2));
+      }
+    }
+  }
+  g[field] = val;
+  g.monthly = calculateMonthlyNeed(g);
+
   syncDebtGoalToOverallData();
   renderTcGoalsFormTable();
   syncGoalsToCards();
@@ -3657,31 +4120,23 @@ window.onGoalFieldChange = function(idx, field, val) {
 };
 
 window.addNewTcGoalRow = function() {
-  const defaultAvgRate = (typeof getAvgInvestReturnRate === 'function' ? getAvgInvestReturnRate() : 8.0) || 8.0;
-  const defaultProds = (AppState.investProducts && AppState.investProducts.length > 0)
-    ? AppState.investProducts.slice(0, 3).map((p, idx) => ({
-        prodName: p.name,
-        weight: idx === 0 ? 50.0 : (idx === 1 ? 50.0 : 0.0),
-        returnRate: p.returnRate,
-        risk: p.risk
-      }))
-    : [];
-
-  const newGoal = { 
-    id: `g_${Date.now()}`, 
-    name: "Mục tiêu mới", 
-    type: "invest", 
-    val: 0.0, 
-    paid: 0.0, 
-    start: AppState.currentYear || 2026, 
-    end: (AppState.currentYear || 2026) + 4, 
-    inflation: 4.0, 
-    rate: defaultAvgRate, 
+  ensureFixedInvestmentGoals();
+  const newGoal = {
+    id: `g_${Date.now()}`,
+    name: "Mục tiêu mới",
+    type: "invest",
+    val: 0,
+    paid: 0,
+    start: 0,
+    end: 0,
+    inflation: 0,
+    rate: 0,
     monthly: 0,
-    yearsRetire: 0, 
-    monthlyRetire: 0, 
+    annual: 0,
+    yearsRetire: 0,
+    monthlyRetire: 0,
     deathFund: 0,
-    allocProducts: defaultProds
+    allocProducts: createEmptyAllocProducts()
   };
   newGoal.monthly = calculateMonthlyNeed(newGoal);
 
@@ -3694,7 +4149,14 @@ window.addNewTcGoalRow = function() {
 };
 
 window.deleteTcGoalRow = function(idx) {
+  const target = AppState.tcGoals[idx];
+  if (!target) return;
+  if (isFixedInvestmentGoal(target)) {
+    showToast(`Mục tiêu cố định "${target.name}" không được phép xóa!`, "error");
+    return;
+  }
   AppState.tcGoals.splice(idx, 1);
+  ensureFixedInvestmentGoals();
   syncDebtGoalToOverallData();
   renderTcGoalsFormTable();
   syncGoalsToCards();
@@ -3709,10 +4171,6 @@ function syncDebtGoalToOverallData() {
   let debtPlanItem = AppState.planExpense.find(p => p.name === "Chi tiền trả nợ");
   if (totalMonthlyDebtNeed > 0) {
     if (!debtPlanItem) {
-      if (!AppState.expenses.includes("Chi tiền trả nợ")) {
-        AppState.expenses.push("Chi tiền trả nợ");
-        renderSetupTables();
-      }
       debtPlanItem = { name: "Chi tiền trả nợ", plan: parseFloat(totalMonthlyDebtNeed.toFixed(2)), note: "Tự động đồng bộ từ Mục tiêu trả nợ" };
       AppState.planExpense.push(debtPlanItem);
     } else {
@@ -3726,8 +4184,233 @@ function syncDebtGoalToOverallData() {
   }
 }
 
-// ==================== ĐỒNG BỘ SANG THẺ MỤC TIÊU TÀI CHÍNH ====================
+function renderGoalProductSelectHtml(g, pIndex) {
+  const prods = Array.isArray(g.allocProducts) ? g.allocProducts : createEmptyAllocProducts();
+  const curP = prods[pIndex] || { prodName: '', weight: 0, returnRate: 0, risk: 0 };
+  const curName = typeof curP.prodName === 'string' ? curP.prodName.trim() : '';
+
+  const validProducts = (Array.isArray(AppState.investProducts) ? AppState.investProducts : [])
+    .filter(ip => ip && typeof ip.name === 'string' && ip.name.trim() !== '');
+
+  if (validProducts.length === 0) {
+    return `
+      <select class="select-inline-cell" disabled style="opacity:0.75; cursor:not-allowed;" title="Chưa có sản phẩm đầu tư trong mục Từ khóa">
+        <option value="" selected>-- Chưa có sản phẩm (Thêm ở Từ khóa) --</option>
+      </select>
+    `;
+  }
+
+  const isSelectedValid = validProducts.some(ip => ip.name.trim() === curName);
+
+  return `
+    <select class="select-inline-cell" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
+      <option value="" ${(!curName || !isSelectedValid) ? 'selected' : ''}>-- Chưa chọn (0%) --</option>
+      ${validProducts.map(p => {
+        const pName = p.name.trim();
+        const isSel = (pName === curName);
+        return `<option value="${escapeHtml(pName)}" ${isSel ? 'selected' : ''}>${escapeHtml(pName)}</option>`;
+      }).join('')}
+    </select>
+  `;
+}
+
+function createCardHtmlCollege(g, num) {
+  calculateCollegeGoal(g);
+  const portfolio = computeGoalPortfolioMetrics(g);
+  const prods = g.allocProducts;
+  const nYears = Number(g.accumulationYears) || 0;
+  const targetVal = Number(g.val) || 0;
+  const mVal = Number(g.monthly) || 0;
+  const yVal = Number(g.annual) || (mVal * 12);
+  const periods = Number(g.collegePeriods || g.yearsRetire) || 0;
+  const periodicNeed = Number(g.monthlyTuition || g.monthlyRetire) || 0;
+  const supportFund = Number(g.supportFund || g.deathFund) || 0;
+  const estRate = Number(g.estimatedRate) || 0;
+  const effectiveReturn = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(g.estimatedRate) || Number(g.rate) || 0);
+
+  return `
+    <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="college">
+      <div class="tc-card-h4-title">
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college">Cho con đi học đại học</strong></span>
+        <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
+      </div>
+      <div class="tc-card-table-scroll">
+        <table class="tc-card-h4-table">
+          <thead>
+            <tr class="bg-header-sub">
+              <th colspan="2" style="width: 31%;">Thông số thời gian &amp; Định mức</th>
+              <th colspan="2" style="width: 29%;">Mục tiêu tích lũy</th>
+              <th colspan="4" style="width: 40%;">Phân bổ sản phẩm đầu tư</th>
+            </tr>
+            <tr class="bg-col-head">
+              <th>Chỉ tiêu</th><th style="width: 55px;">Giá trị</th>
+              <th>Chỉ tiêu</th><th style="width: 65px;">Số tiền</th>
+              <th>Sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi DK</th><th style="width: 45px;">Rủi ro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Năm bắt đầu</td>
+              <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
+              <td>Mục tiêu tiết kiệm cần đạt</td>
+              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td>${renderGoalProductSelectHtml(g, 0)}</td>
+              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Năm kết thúc</td>
+              <td class="cell-green-val font-mono" id="college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
+              <td class="font-bold">Tổng số năm tích lũy</td>
+              <td class="cell-green-val font-bold font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
+              <td>${renderGoalProductSelectHtml(g, 1)}</td>
+              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Số kỳ / năm chi trả dự kiến</td>
+              <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
+              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(1)}</td>
+              <td>${renderGoalProductSelectHtml(g, 2)}</td>
+              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Chi phí định kỳ cần mỗi tháng</td>
+              <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
+              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
+              <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
+            </tr>
+            <tr class="bg-neutral-gray font-semibold">
+              <td>Quỹ hỗ trợ / để lại sau tốt nghiệp:</td>
+              <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
+              <td style="text-align: right;">LS ước tính:</td>
+              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
+              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
+              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+            </tr>
+            ${!portfolio.isWeightValid ? `
+            <tr>
+              <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
+              </td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function createCardHtmlRetirement(g, num) {
+  calculateRetirementGoal(g);
+  const portfolio = computeGoalPortfolioMetrics(g);
+  const prods = g.allocProducts;
+  const nYears = Number(g.accumulationYears) || 0;
+  const targetVal = Number(g.val) || 0;
+  const mVal = Number(g.monthly) || 0;
+  const yVal = Number(g.annual) || (mVal * 12);
+  const reserveMonths = Number(g.reserveMonths) || 0;
+  const annualCost = Number(g.annualCostEstimate) || 0;
+  const monthlyCost = Number(g.monthlyCostEstimate) || 0;
+  const estRate = Number(g.estimatedRate) || 0;
+  const effectiveReturn = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(g.estimatedRate) || Number(g.rate) || 0);
+
+  return `
+    <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="retirement">
+      <div class="tc-card-h4-title">
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-retirement">Hưu trí</strong></span>
+        <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
+      </div>
+      <div class="tc-card-table-scroll">
+        <table class="tc-card-h4-table">
+          <thead>
+            <tr class="bg-header-sub">
+              <th colspan="2" style="width: 31%;">Thông số thời gian &amp; Dự phòng</th>
+              <th colspan="2" style="width: 29%;">Mục tiêu tích lũy hưu trí</th>
+              <th colspan="4" style="width: 40%;">Phân bổ sản phẩm đầu tư</th>
+            </tr>
+            <tr class="bg-col-head">
+              <th>Chỉ tiêu</th><th style="width: 55px;">Giá trị</th>
+              <th>Chỉ tiêu</th><th style="width: 65px;">Số tiền</th>
+              <th>Sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi DK</th><th style="width: 45px;">Rủi ro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Năm bắt đầu</td>
+              <td class="cell-green-val font-mono" id="retire-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
+              <td>Mục tiêu tiết kiệm cần đạt</td>
+              <td class="cell-orange-val font-mono" id="retire-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td>${renderGoalProductSelectHtml(g, 0)}</td>
+              <td class="cell-green-val font-mono" id="retire-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Năm kết thúc</td>
+              <td class="cell-green-val font-mono" id="retire-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
+              <td class="font-bold">Tổng số năm tích lũy</td>
+              <td class="cell-green-val font-bold font-mono" id="retire-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
+              <td>${renderGoalProductSelectHtml(g, 1)}</td>
+              <td class="cell-green-val font-mono" id="retire-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Số tháng dự phòng</td>
+              <td class="cell-green-val font-mono" id="retire-reserve-months" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'reserveMonths', this.innerText)">${reserveMonths}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
+              <td class="cell-orange-val font-mono" id="retire-monthly-need">${mVal.toFixed(1)}</td>
+              <td>${renderGoalProductSelectHtml(g, 2)}</td>
+              <td class="cell-green-val font-mono" id="retire-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="retire-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Tổng ước tính chi phí (năm)</td>
+              <td class="cell-green-val font-mono" id="retire-annual-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'annualCostEstimate', this.innerText)">${annualCost}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
+              <td class="cell-orange-val font-mono" id="retire-annual-need">${yVal.toFixed(1)}</td>
+              <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="retire-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
+            </tr>
+            <tr class="bg-neutral-gray font-semibold">
+              <td>Chi phí chi tiêu / tháng:</td>
+              <td class="font-bold text-right text-danger font-mono" id="retire-monthly-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyCostEstimate', this.innerText)">${monthlyCost}</td>
+              <td style="text-align: right;">LS ước tính:</td>
+              <td class="cell-green-val font-mono" id="retire-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
+              <td style="text-align: right;">Trượt giá:</td>
+              <td class="cell-green-val font-mono" id="retire-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
+              <td style="text-align: right;">Tiền sẵn có:</td>
+              <td class="cell-green-val text-center font-bold font-mono" id="retire-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+            </tr>
+            ${!portfolio.isWeightValid ? `
+            <tr>
+              <td colspan="8" class="goal-weight-warning" id="retire-weight-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
+              </td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function syncGoalsToCards() {
+  ensureFixedInvestmentGoals();
+  syncInvestProductsToGoals();
   const dWrap = document.getElementById('tc-debt-cards-container');
   const iWrap = document.getElementById('tc-invest-cards-container');
   const colDebt = document.querySelector('.tc-col-debt');
@@ -3735,8 +4418,7 @@ function syncGoalsToCards() {
   const grid = document.getElementById('tc-two-columns-grid') || document.querySelector('.tc-two-columns-grid');
   const emptyState = document.getElementById('tc-empty-state');
 
-  // Kiểm tra tính hợp lệ của mục tiêu (phải có tên hoặc có giá trị/khoản tích lũy)
-  const isValidGoal = (g) => g && typeof g === 'object' && ((g.name && g.name.trim() !== '') || Number(g.val) > 0 || Number(g.monthly) > 0);
+  const isValidGoal = (g) => g && typeof g === 'object' && (isFixedInvestmentGoal(g) || (g.name && g.name.trim() !== '') || Number(g.val) > 0 || Number(g.monthly) > 0);
 
   const allGoals = Array.isArray(AppState.tcGoals) ? AppState.tcGoals : [];
   const debts = allGoals.filter(g => g.type === 'debt' && isValidGoal(g));
@@ -3745,7 +4427,6 @@ function syncGoalsToCards() {
   const hasDebts = debts.length > 0;
   const hasInvests = invests.length > 0;
 
-  // 1. Tự động ẩn/hiện cột Trả nợ định kỳ
   if (colDebt) {
     if (hasDebts) {
       colDebt.style.display = '';
@@ -3756,18 +4437,22 @@ function syncGoalsToCards() {
     }
   }
 
-  // 2. Tự động ẩn/hiện cột Tích lũy & Đầu tư
   if (colInvest) {
     if (hasInvests) {
       colInvest.style.display = '';
-      if (iWrap) iWrap.innerHTML = invests.map((g, i) => createCardHtmlInvest(g, i + 1)).join('');
+      if (iWrap) {
+        iWrap.innerHTML = invests.map((g, i) => {
+          if (isCollegeFixedGoal(g)) return createCardHtmlCollege(g, i + 1);
+          if (isRetirementFixedGoal(g)) return createCardHtmlRetirement(g, i + 1);
+          return createCardHtmlInvest(g, i + 1);
+        }).join('');
+      }
     } else {
       colInvest.style.display = 'none';
       if (iWrap) iWrap.innerHTML = '';
     }
   }
 
-  // 3. Tự động co giãn bố cục: nếu 1 cột ẩn thì cột còn lại chiếm trọn chiều rộng (1fr); nếu cả 2 trống thì hiện empty state
   if (grid) {
     if (hasDebts && hasInvests) {
       grid.style.display = 'grid';
@@ -3778,7 +4463,6 @@ function syncGoalsToCards() {
       grid.classList.add('tc-single-col');
       if (emptyState) emptyState.style.display = 'none';
     } else {
-      // Cả 2 danh mục đều không có dữ liệu: ẩn grid và hiển thị thông báo trạng thái trống
       grid.style.display = 'none';
       if (emptyState) emptyState.style.display = 'flex';
     }
@@ -3786,14 +4470,16 @@ function syncGoalsToCards() {
 }
 
 function createCardHtmlDebt(g, num) {
-  const nYears = Math.max(1, g.end - g.start + 1);
-  const targetNeed = Math.max(0, g.val - (g.paid || 0));
+  const startYr = Number(g.start) || 0;
+  const endYr = Number(g.end) || 0;
+  const nYears = (startYr > 0 && endYr >= startYr) ? (endYr - startYr + 1) : 0;
+  const targetNeed = Math.max(0, (Number(g.val) || 0) - (Number(g.paid) || 0));
   const mVal = g.monthly || calculateMonthlyNeed(g);
 
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Khoản nợ ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${g.name || 'Khoản nợ'}</strong></span>
+        <span>Khoản nợ ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Khoản nợ')}</strong></span>
         <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
@@ -3801,21 +4487,21 @@ function createCardHtmlDebt(g, num) {
           <tbody>
             <tr>
               <td style="width: 32%;">Năm bắt đầu</td>
-              <td class="cell-green-val font-mono" style="width: 18%;" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${g.start}</td>
+              <td class="cell-green-val font-mono" style="width: 18%;" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${startYr}</td>
               <td class="bg-col-head" style="width: 32%;">Thời gian trả nợ</td>
               <td class="text-right font-bold font-mono" style="width: 18%;">${nYears.toFixed(0)} năm</td>
             </tr>
             <tr>
               <td>Năm tất toán</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${g.end}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${endYr}</td>
               <td class="bg-col-head">Khoản nợ còn lại</td>
-              <td class="text-right font-bold text-danger font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(1)} tr</td>
+              <td class="text-right font-bold text-danger font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(1)}</td>
             </tr>
             <tr>
               <td>Lãi suất vay</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'rate', this.innerText)">${g.rate.toFixed(1)}%/năm</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'rate', this.innerText)">${(Number(g.rate) || 0).toFixed(1)}%/năm</td>
               <td class="bg-col-head">Cần trả mỗi tháng</td>
-              <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
+              <td class="cell-orange-val font-mono">${mVal.toFixed(1)}</td>
             </tr>
           </tbody>
         </table>
@@ -3825,51 +4511,22 @@ function createCardHtmlDebt(g, num) {
 }
 
 function createCardHtmlInvest(g, num) {
-  const nYears = Math.max(1, g.end - g.start + 1);
-  const targetNeed = Math.max(0, g.val - (g.paid || 0));
-  const mVal = g.monthly || calculateMonthlyNeed(g);
+  if (isCollegeFixedGoal(g)) return createCardHtmlCollege(g, num);
+  if (isRetirementFixedGoal(g)) return createCardHtmlRetirement(g, num);
+
+  const startYr = Number(g.start) || 0;
+  const endYr = Number(g.end) || 0;
+  const nYears = (startYr > 0 && endYr >= startYr) ? (endYr - startYr + 1) : 0;
+  const targetNeed = Math.max(0, (Number(g.val) || 0) - (Number(g.paid) || 0));
+  const portfolio = computeGoalPortfolioMetrics(g);
+  const mVal = calculateMonthlyNeed(g);
   const yVal = mVal * 12;
-
-  if (!g.allocProducts || g.allocProducts.length === 0) {
-    g.allocProducts = [
-      { prodName: AppState.investProducts[0]?.name || "ETF - ETFVFM", weight: 50.0, returnRate: AppState.investProducts[0]?.returnRate || 13.0, risk: AppState.investProducts[0]?.risk || 18.0 },
-      { prodName: AppState.investProducts[1]?.name || "DCBC", weight: 50.0, returnRate: AppState.investProducts[1]?.returnRate || 16.0, risk: AppState.investProducts[1]?.risk || 20.0 },
-      { prodName: AppState.investProducts[2]?.name || "Tiền gửi ngân hàng", weight: 0.0, returnRate: AppState.investProducts[2]?.returnRate || 5.0, risk: AppState.investProducts[2]?.risk || 2.0 }
-    ];
-  }
-
-  g.allocProducts.forEach(ap => {
-    const matched = AppState.investProducts.find(ip => ip.name === ap.prodName);
-    if (matched) {
-      ap.returnRate = matched.returnRate;
-      ap.risk = matched.risk;
-    }
-  });
-
   const prods = g.allocProducts;
-  let expectedAvgReturn = 0;
-  prods.forEach(p => { expectedAvgReturn += ((p.weight || 0) / 100) * (p.returnRate || 0); });
-
-  const renderProductSelect = (pIndex) => {
-    const curP = prods[pIndex] || { prodName: '', weight: 0, returnRate: 0, risk: 0 };
-    const availableProducts = (AppState.investProducts && AppState.investProducts.length > 0)
-      ? AppState.investProducts
-      : [
-          { name: curP.prodName || "ETF - ETFVFM" },
-          { name: "DCBC" },
-          { name: "Tiền gửi ngân hàng" }
-        ];
-    return `
-      <select class="select-inline-cell" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
-        ${availableProducts.map(ip => `<option value="${escapeHtml(ip.name)}" ${ip.name === curP.prodName ? 'selected' : ''}>${escapeHtml(ip.name)}</option>`).join('')}
-      </select>
-    `;
-  };
 
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${g.name || 'Mục tiêu'}</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Mục tiêu')}</strong></span>
         <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
@@ -3889,50 +4546,48 @@ function createCardHtmlInvest(g, num) {
           <tbody>
             <tr>
               <td>Năm bắt đầu</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${g.start}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${startYr}</td>
               <td>Cần gom</td>
-              <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(0)} tr</td>
-              <td>${renderProductSelect(0)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(prods[0]?.weight || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[0]?.returnRate || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[0]?.risk || 0).toFixed(1)}%</td>
+              <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(0)}</td>
+              <td>${renderGoalProductSelectHtml(g, 0)}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${g.end}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${endYr}</td>
               <td class="font-bold">Số năm gom</td>
               <td class="text-right font-bold font-mono">${nYears.toFixed(0)} năm</td>
-              <td>${renderProductSelect(1)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(prods[1]?.weight || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[1]?.returnRate || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[1]?.risk || 0).toFixed(1)}%</td>
+              <td>${renderGoalProductSelectHtml(g, 1)}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Năm sau hưu</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'yearsRetire', this.innerText)">${g.yearsRetire ? `${g.yearsRetire} năm` : '-'}</td>
+              <td>Trượt giá</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
               <td class="font-bold">Cần / tháng</td>
-              <td class="cell-orange-val font-mono">${mVal.toFixed(1)} tr</td>
-              <td>${renderProductSelect(2)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(prods[2]?.weight || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[2]?.returnRate || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(prods[2]?.risk || 0).toFixed(1)}%</td>
+              <td class="cell-orange-val font-mono">${mVal.toFixed(1)}</td>
+              <td>${renderGoalProductSelectHtml(g, 2)}</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Tiêu sau hưu</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyRetire', this.innerText)">${g.monthlyRetire ? `${g.monthlyRetire} tr/th` : '-'}</td>
+              <td>Tiền sẵn có</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
               <td class="font-bold">Cần / năm</td>
-              <td class="cell-orange-val font-mono">${yVal.toFixed(1)} tr</td>
+              <td class="cell-orange-val font-mono">${yVal.toFixed(1)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
-              <td colspan="2" class="cell-gold-val text-center font-mono">${expectedAvgReturn.toFixed(2)}%/năm</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono">${portfolio.expectedAvgReturn.toFixed(2)}%/năm</td>
             </tr>
-            <tr class="bg-neutral-gray font-semibold">
-              <td>Để lại cho con:</td>
-              <td class="font-bold text-right text-danger font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'deathFund', this.innerText)">${g.deathFund ? `${g.deathFund} tr` : '0 tr'}</td>
-              <td style="text-align: right;">Trượt giá:</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(g.inflation || 0).toFixed(1)}%/năm</td>
-              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
-              <td colspan="2" class="cell-green-val text-center font-bold font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${g.paid || 0} tr</td>
-            </tr>
+            ${!portfolio.isWeightValid ? `
+            <tr>
+              <td colspan="8" class="goal-weight-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
+              </td>
+            </tr>` : ''}
           </tbody>
         </table>
       </div>
@@ -3943,19 +4598,30 @@ function createCardHtmlInvest(g, num) {
 window.updateGoalInvestProduct = function(goalId, prodIndex, prodName) {
   const goal = AppState.tcGoals.find(g => g.id === goalId);
   if (!goal) return;
+  if (!Array.isArray(goal.allocProducts)) {
+    goal.allocProducts = createEmptyAllocProducts();
+  }
+  while (goal.allocProducts.length < 3) {
+    goal.allocProducts.push({ prodName: "", weight: 0, returnRate: 0, risk: 0 });
+  }
 
-  const matched = AppState.investProducts.find(p => p.name === prodName);
+  const cleanName = typeof prodName === 'string' ? prodName.trim() : '';
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const matched = cleanName ? validProducts.find(p => p && p.name === cleanName) : null;
+
   if (goal.allocProducts[prodIndex]) {
-    goal.allocProducts[prodIndex].prodName = prodName;
-    if (matched) {
-      goal.allocProducts[prodIndex].returnRate = matched.returnRate;
-      goal.allocProducts[prodIndex].risk = matched.risk;
+    goal.allocProducts[prodIndex].prodName = matched ? cleanName : '';
+    goal.allocProducts[prodIndex]._explicitSelected = Boolean(matched);
+    if (!matched) {
+      goal.allocProducts[prodIndex].weight = 0;
+      goal.allocProducts[prodIndex].returnRate = 0;
+      goal.allocProducts[prodIndex].risk = 0;
+    } else {
+      goal.allocProducts[prodIndex].returnRate = Number(matched.returnRate) || 0;
+      goal.allocProducts[prodIndex].risk = Number(matched.risk) || 0;
     }
   }
 
-  let avgRate = 0;
-  goal.allocProducts.forEach(p => { avgRate += ((p.weight || 0) / 100) * (p.returnRate || 0); });
-  goal.rate = avgRate;
   goal.monthly = calculateMonthlyNeed(goal);
 
   syncGoalsToCards();
@@ -3966,16 +4632,48 @@ window.updateGoalInvestProduct = function(goalId, prodIndex, prodName) {
 
 window.updateGoalProdWeight = function(goalId, prodIndex, textVal) {
   const goal = AppState.tcGoals.find(g => g.id === goalId);
-  if (!goal || !goal.allocProducts[prodIndex]) return;
+  if (!goal || !goal.allocProducts || !goal.allocProducts[prodIndex]) return;
 
-  const w = parseFloat(textVal.replace(/[^0-9.-]/g, '')) || 0;
-  goal.allocProducts[prodIndex].weight = w;
+  const prodName = (goal.allocProducts[prodIndex].prodName || '').trim();
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const hasValidProduct = prodName !== '' && validProducts.some(p => p && p.name === prodName);
 
-  let avgRate = 0;
-  goal.allocProducts.forEach(p => { avgRate += ((p.weight || 0) / 100) * (p.returnRate || 0); });
-  goal.rate = avgRate;
+  if (!hasValidProduct) {
+    goal.allocProducts[prodIndex].weight = 0;
+    goal.allocProducts[prodIndex].prodName = '';
+    goal.allocProducts[prodIndex].returnRate = 0;
+    goal.allocProducts[prodIndex].risk = 0;
+  } else {
+    const w = parseFloat(String(textVal || '').replace(/[^0-9.-]/g, ''));
+    goal.allocProducts[prodIndex].weight = (isNaN(w) || !isFinite(w) || w < 0) ? 0 : w;
+  }
+
   goal.monthly = calculateMonthlyNeed(goal);
 
+  syncGoalsToCards();
+  renderTcGoalsFormTable();
+  renderTcMatrixTable();
+  recalculateAll();
+};
+
+window.updateGoalProdRate = function(goalId, prodIndex, textVal) {
+  const goal = AppState.tcGoals.find(g => g.id === goalId);
+  if (!goal || !goal.allocProducts || !goal.allocProducts[prodIndex]) return;
+  const r = parseFloat(String(textVal || '').replace(/[^0-9.-]/g, ''));
+  goal.allocProducts[prodIndex].returnRate = (isNaN(r) || !isFinite(r) || r < 0) ? 0 : r;
+  goal.monthly = calculateMonthlyNeed(goal);
+  syncGoalsToCards();
+  renderTcGoalsFormTable();
+  renderTcMatrixTable();
+  recalculateAll();
+};
+
+window.updateGoalProdRisk = function(goalId, prodIndex, textVal) {
+  const goal = AppState.tcGoals.find(g => g.id === goalId);
+  if (!goal || !goal.allocProducts || !goal.allocProducts[prodIndex]) return;
+  const k = parseFloat(String(textVal || '').replace(/[^0-9.-]/g, ''));
+  goal.allocProducts[prodIndex].risk = (isNaN(k) || !isFinite(k) || k < 0) ? 0 : k;
+  goal.monthly = calculateMonthlyNeed(goal);
   syncGoalsToCards();
   renderTcGoalsFormTable();
   renderTcMatrixTable();
@@ -3986,14 +4684,83 @@ window.updateGoalCardField = function(goalId, field, rawText) {
   const g = AppState.tcGoals.find(x => x.id === goalId);
   if (!g) return;
 
-  const clean = (typeof rawText === 'string') ? rawText.trim().replace(/[^0-9.-]/g, '') : rawText;
   if (field === 'name') {
+    if (isFixedInvestmentGoal(g)) {
+      showToast(`Mục tiêu cố định "${g.name}" không được phép đổi tên!`, "error");
+      syncGoalsToCards();
+      return;
+    }
     g.name = (typeof rawText === 'string' ? rawText.trim() : '') || 'Mục tiêu';
-  } else if (field === 'start' || field === 'end') {
-    g[field] = parseInt(clean, 10) || AppState.currentYear;
   } else {
-    g[field] = parseFloat(clean) || 0;
+    const clean = (typeof rawText === 'string') ? rawText.trim().replace(/,/g, '.').replace(/[^0-9.-]/g, '') : rawText;
+    const numVal = parseFloat(clean);
+    const safeVal = (isNaN(numVal) || !isFinite(numVal)) ? 0 : numVal;
+
+    if (field === 'start' || field === 'end') {
+      g[field] = Math.max(0, Math.round(safeVal));
+      if (g.start > 0 && g.end >= g.start) {
+        g.accumulationYears = g.end - g.start + 1;
+      }
+    } else if (field === 'accumulationYears') {
+      g.accumulationYears = Math.max(0, Math.round(safeVal));
+      if (g.start > 0 && safeVal > 0) {
+        g.end = g.start + safeVal - 1;
+      }
+    } else if (field === 'val') {
+      g.val = safeVal;
+      if (isCollegeFixedGoal(g)) {
+        g._manualValOverride = (safeVal > 0 && (Number(g.collegePeriods || g.yearsRetire) === 0));
+      } else if (isRetirementFixedGoal(g)) {
+        g.annualCostEstimate = safeVal;
+        const rMonths = Number(g.reserveMonths) || 0;
+        if (rMonths > 0) {
+          g.monthlyCostEstimate = Number((safeVal / rMonths).toFixed(2));
+        }
+      }
+    } else if (field === 'collegePeriods' || field === 'yearsRetire') {
+      g.collegePeriods = safeVal;
+      g.yearsRetire = safeVal;
+      if (safeVal > 0) g._manualValOverride = false;
+    } else if (field === 'monthlyTuition' || field === 'monthlyRetire') {
+      g.monthlyTuition = safeVal;
+      g.monthlyRetire = safeVal;
+      if (safeVal > 0) g._manualValOverride = false;
+    } else if (field === 'supportFund' || field === 'deathFund') {
+      g.supportFund = safeVal;
+      g.deathFund = safeVal;
+      if (safeVal > 0) g._manualValOverride = false;
+    } else if (field === 'annualCostEstimate') {
+      g.annualCostEstimate = safeVal;
+      g.val = safeVal;
+      const rMonths = Number(g.reserveMonths) || 0;
+      if (rMonths > 0) {
+        g.monthlyCostEstimate = Number((safeVal / rMonths).toFixed(2));
+      }
+    } else if (field === 'monthlyCostEstimate') {
+      g.monthlyCostEstimate = safeVal;
+      const rMonths = Number(g.reserveMonths) || 0;
+      if (rMonths > 0) {
+        g.annualCostEstimate = Number((safeVal * rMonths).toFixed(2));
+        g.val = g.annualCostEstimate;
+      }
+    } else if (field === 'reserveMonths') {
+      g.reserveMonths = safeVal;
+      const aCost = Number(g.annualCostEstimate) || 0;
+      const mCost = Number(g.monthlyCostEstimate) || 0;
+      if (safeVal > 0 && aCost > 0) {
+        g.monthlyCostEstimate = Number((aCost / safeVal).toFixed(2));
+      } else if (safeVal > 0 && mCost > 0) {
+        g.annualCostEstimate = Number((mCost * safeVal).toFixed(2));
+        g.val = g.annualCostEstimate;
+      }
+    } else if (field === 'estimatedRate') {
+      g.estimatedRate = safeVal;
+      g.rate = safeVal;
+    } else {
+      g[field] = safeVal;
+    }
   }
+
   g.monthly = calculateMonthlyNeed(g);
 
   syncDebtGoalToOverallData();
@@ -4004,7 +4771,13 @@ window.updateGoalCardField = function(goalId, field, rawText) {
 };
 
 window.removeGoalFromCard = function(id) {
+  const target = AppState.tcGoals.find(x => x.id === id);
+  if (target && isFixedInvestmentGoal(target)) {
+    showToast(`Mục tiêu cố định "${target.name}" không được phép xóa!`, "error");
+    return;
+  }
   AppState.tcGoals = AppState.tcGoals.filter(x => x.id !== id);
+  ensureFixedInvestmentGoals();
   syncDebtGoalToOverallData();
   syncGoalsToCards();
   renderTcGoalsFormTable();
@@ -4012,7 +4785,13 @@ window.removeGoalFromCard = function(id) {
   recalculateAll();
 };
 
-// ==================== MA TRẬN NHU CẦU TIẾT KIỆM VÀ THU NHẬP ====================
+function getMatrixTotalYears() {
+  const startY = Number(AppState.currentYear) || 2026;
+  const allEndYears = (AppState.tcGoals || []).map(g => Number(g.end) || 0).filter(y => y >= startY);
+  const maxEnd = allEndYears.length > 0 ? Math.max(...allEndYears) : (startY + 38);
+  return Math.min(60, Math.max(38, maxEnd - startY + 1));
+}
+
 function renderTcMatrixTable() {
   const thead = document.getElementById('tr-tc-matrix-head');
   const tbody = document.getElementById('tbody-tc-matrix');
@@ -4034,9 +4813,10 @@ function renderTcMatrixTable() {
   const startY = AppState.currentYear;
   const startA = AppState.currentAge;
   const rate = (typeof getEffectiveSavingsRateRatio === 'function') ? getEffectiveSavingsRateRatio() : 0.40;
+  const totalYears = getMatrixTotalYears();
 
   let rows = '';
-  for (let y = 0; y <= 32; y++) {
+  for (let y = 0; y < totalYears; y++) {
     const yr = startY + y;
     const age = startA + y;
     let sSum = 0;
@@ -4046,9 +4826,9 @@ function renderTcMatrixTable() {
       const val = active ? (g.monthly !== undefined ? g.monthly : calculateMonthlyNeed(g)) : 0;
       if (val > 0) sSum += val;
       return `
-        <td class="cell-matrix-editable ${val > 0 ? 'cell-active-goal' : ''}" 
-            contenteditable="true" spellcheck="false" 
-            oninput="onMatrixCellChange(this, ${y})" 
+        <td class="cell-matrix-editable ${val > 0 ? 'cell-active-goal' : ''}"
+            contenteditable="true" spellcheck="false"
+            oninput="onMatrixCellChange(this, ${y})"
             onblur="formatMatrixCell(this, ${y})">
           ${val > 0 ? val.toFixed(1) : ''}
         </td>
@@ -4099,7 +4879,7 @@ window.onMatrixCellChange = function(td, rIdx) {
   if (savCell) savCell.textContent = rSum > 0 ? rSum.toFixed(1) : '-';
   if (incCell) incCell.textContent = inc > 0 ? inc.toFixed(1) : '-';
   updateMatrixChartData();
-  
+
   renderCareerTables();
   renderCareerChart();
 };
@@ -4122,8 +4902,9 @@ function renderTcMatrixChart() {
   const labels = [];
   const savData = [];
   const incData = [];
+  const totalYears = getMatrixTotalYears();
 
-  for (let y = 0; y <= 32; y++) {
+  for (let y = 0; y < totalYears; y++) {
     const yr = AppState.currentYear + y;
     const age = AppState.currentAge + y;
     labels.push(`${age}T (${yr})`);
@@ -4140,8 +4921,8 @@ function renderTcMatrixChart() {
     data: {
       labels: labels,
       datasets: [
-        { label: "Thu nhập cần có (tr/tháng)", data: incData, borderColor: "#6258F5", backgroundColor: "rgba(98, 88, 245, 0.1)", borderWidth: 2.5, fill: true, tension: 0.25 },
-        { label: "Tiết kiệm cần có (tr/tháng)", data: savData, borderColor: "#31CDB1", backgroundColor: "rgba(49, 205, 177, 0.12)", borderWidth: 2.5, fill: true, tension: 0.25 }
+        { label: "Thu nhập cần có / tháng", data: incData, borderColor: "#6258F5", backgroundColor: "rgba(98, 88, 245, 0.1)", borderWidth: 2.5, fill: true, tension: 0.25 },
+        { label: "Tiết kiệm cần có / tháng", data: savData, borderColor: "#31CDB1", backgroundColor: "rgba(49, 205, 177, 0.12)", borderWidth: 2.5, fill: true, tension: 0.25 }
       ]
     },
     options: {
@@ -4159,7 +4940,8 @@ function renderTcMatrixChart() {
 function updateMatrixChartData() {
   if (!tcMatrixChartInstance) return;
   const sData = [], iData = [];
-  for (let y = 0; y <= 32; y++) {
+  const totalYears = getMatrixTotalYears();
+  for (let y = 0; y < totalYears; y++) {
     sData.push(parseFloat(document.getElementById(`mtr-sav-${y}`)?.innerText.replace(/[^0-9.-]/g, '')) || 0);
     iData.push(parseFloat(document.getElementById(`mtr-inc-${y}`)?.innerText.replace(/[^0-9.-]/g, '')) || 0);
   }
@@ -4168,7 +4950,6 @@ function updateMatrixChartData() {
   tcMatrixChartInstance.update();
 }
 
-// ==================== PHẦN KỸ NĂNG & HOÀN CẢNH ====================
 function renderSkillsFamilyJob() {
   const tbS = document.getElementById('tbody-skills');
   if (tbS) {
@@ -4205,7 +4986,6 @@ window.addSkillRow = function() { AppState.skillsList.push("Kỹ năng mới"); 
 window.addFamilyRow = function() { AppState.familyList.push("Nguồn hỗ trợ mới"); renderSkillsFamilyJob(); };
 window.addJobRow = function() { AppState.jobList.push("Môi trường làm việc mới"); renderSkillsFamilyJob(); };
 
-// ==================== KHỞI CHẠY HỆ THỐNG ====================
 function recalculateAll() {
   let totalIncYear = 0, totalExpYear = 0;
   for (let m = 1; m <= 12; m++) {
@@ -4230,8 +5010,6 @@ function recalculateAll() {
   renderDashboardAllCharts();
   updatePlanTotals();
 }
-
-// ==================== TÍCH HỢP FIREBASE DATA FLOW ĐA NGƯỜI DÙNG ====================
 
 function updateCloudStatus(status, text) {
   const badge = document.getElementById('cloud-status-badge');
@@ -4259,9 +5037,6 @@ function showToast(message, type = 'success') {
   }, 3200);
 }
 
-/**
- * GHI DỮ LIỆU: Lưu AppState vào Document ID riêng biệt của người dùng
- */
 window.saveAppStateToCloud = async function() {
   if (!window.CloudDB) {
     showToast("Dịch vụ lưu trữ chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!", "error");
@@ -4295,8 +5070,7 @@ window.saveAppStateToCloud = async function() {
     updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
     const bkName = result.newBackup?.name || 'Bản sao lưu mới';
     showToast(`Đã lưu thành công [${bkName}] của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
-    
-    // Nếu modal Quản lý sao lưu đang mở, làm mới danh sách ngay lập tức
+
     const backupModal = document.getElementById('backup-modal-overlay');
     if (backupModal && backupModal.classList.contains('active')) {
       if (Array.isArray(result.backups)) {
@@ -4307,19 +5081,15 @@ window.saveAppStateToCloud = async function() {
     return true;
   } else {
     updateCloudStatus('error', 'Lỗi khi lưu!');
-    showToast("Lỗi: " + (result.error?.message || "Không thể lưu dữ liệu"), "error");
+    const errMsg = typeof result.error === 'string' ? result.error : (result.error?.message || "Không thể lưu dữ liệu");
+    showToast("Lỗi: " + errMsg, "error");
     return false;
   }
 };
 
-/**
- * ĐỌC DỮ LIỆU: Nạp dữ liệu từ Document ID của người dùng hiện tại
- * Khi người dùng bấm nút: Mở modal Quản lý bản sao lưu (Nhập dữ liệu)
- */
 window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   if (!window.CloudDB || !UserSession.currentUser) return;
 
-  // Người dùng chủ động bấm "Nhập dữ liệu" -> Mở hộp thoại chọn bản sao lưu
   if (!isInitialLoad) {
     window.openBackupManagerModal();
     return;
@@ -4343,17 +5113,17 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   if (result.success && result.data) {
     const cloudData = result.data;
 
-    // Gán dữ liệu đám mây vào AppState (bỏ qua các thuộc tính metadata hệ thống)
     Object.keys(cloudData).forEach(key => {
       if (!key.startsWith('_')) {
         AppState[key] = cloudData[key];
       }
     });
+    ensureFixedInvestmentGoals();
+    syncInvestProductsToGoals();
 
     window.hasUnsavedChanges = false;
     window.hasSavedInSession = true;
 
-    // Đồng bộ lại UI Năm và Tuổi
     const yEl = document.getElementById('input-year');
     const aEl = document.getElementById('input-age');
     if (yEl) yEl.innerText = AppState.currentYear;
@@ -4367,7 +5137,6 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     const vDescEl = document.getElementById('vision-desc-cell');
     if (vDescEl) vDescEl.innerText = AppState.visionDesc || '';
 
-    // Vẽ lại tất cả các bảng và biểu đồ
     renderSetupTables();
     renderPlanTables();
     renderTcGoalsFormTable();
@@ -4384,14 +5153,18 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     recalculateAll();
 
     updateCloudStatus('ready', 'Đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
+    return result;
   } else if (result.notFound) {
     updateCloudStatus('ready', 'Hồ sơ mới');
+    return result;
   } else {
     updateCloudStatus('error', 'Lỗi tải dữ liệu');
+    if (result.error) {
+      showToast(typeof result.error === 'string' ? result.error : 'Không thể tải dữ liệu.', 'error');
+    }
+    return result;
   }
 };
-
-// ==================== QUẢN LÝ CÁC BẢN SAO LƯU & NHẬP DỮ LIỆU ====================
 
 function formatBackupTimestamp(isoString) {
   if (!isoString) return 'Không có thời gian';
@@ -4408,16 +5181,7 @@ function formatBackupTimestamp(isoString) {
 let currentLoadedBackups = [];
 let selectedBackupId = null;
 
-window.openBackupManagerModal = async function() {
-  if (!UserSession.currentUser) {
-    showToast("Vui lòng xác nhận danh tính người dùng trước!", "error");
-    openUserModal(false);
-    return;
-  }
-
-  const modal = document.getElementById('backup-modal-overlay');
-  const nameEl = document.getElementById('backup-modal-user-name');
-  const slugEl = document.getElementById('backup-modal-user-slug');
+window.loadBackupsList = async function() {
   const loadingEl = document.getElementById('backup-loading-state');
   const emptyEl = document.getElementById('backup-empty-state');
   const errorEl = document.getElementById('backup-error-state');
@@ -4425,14 +5189,22 @@ window.openBackupManagerModal = async function() {
   const previewEl = document.getElementById('backup-preview-card');
   const searchInput = document.getElementById('backup-search-input');
 
-  if (!modal) return;
-  modal.classList.add('active');
-
-  if (nameEl) nameEl.textContent = UserSession.currentUser.rawName || 'Người dùng';
-  if (slugEl) slugEl.textContent = '@' + (UserSession.currentUser.docId || 'guest');
   if (searchInput) searchInput.value = '';
   if (previewEl) previewEl.style.display = 'none';
   window.cancelRestoreConfirm();
+
+  if (!UserSession.currentUser) {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (listEl) listEl.innerHTML = '';
+    if (emptyEl) {
+      emptyEl.style.display = 'flex';
+      const strong = emptyEl.querySelector('strong');
+      const p = emptyEl.querySelector('p');
+      if (strong) strong.textContent = 'Chưa đăng nhập tài khoản';
+      if (p) p.textContent = 'Vui lòng đăng nhập để đồng bộ và khôi phục các bản sao lưu từ đám mây.';
+    }
+    return;
+  }
 
   if (loadingEl) loadingEl.style.display = 'flex';
   if (emptyEl) emptyEl.style.display = 'none';
@@ -4455,17 +5227,18 @@ window.openBackupManagerModal = async function() {
       }
     }
   } catch (err) {
-    console.error("Lỗi khi mở modal backup:", err);
+    console.error("Lỗi khi mở danh sách backup:", err);
     if (loadingEl) loadingEl.style.display = 'none';
     if (errorEl) errorEl.style.display = 'flex';
   }
 };
 
+window.openBackupManagerModal = function() {
+  window.openUnifiedDataModal('backups');
+};
+
 window.closeBackupManagerModal = function() {
-  const modal = document.getElementById('backup-modal-overlay');
-  if (modal) modal.classList.remove('active');
-  selectedBackupId = null;
-  window.cancelRestoreConfirm();
+  window.closeDataIoModal();
 };
 
 window.filterAndSortBackups = function() {
@@ -4575,17 +5348,16 @@ window.selectBackupForPreview = function(backupId) {
   if (pYear) pYear.textContent = backup.summary?.year || backup.data?.currentYear || 2026;
   if (pAge) pAge.textContent = backup.summary?.age || backup.data?.currentAge || 25;
   if (pGoals) pGoals.textContent = `${backup.summary?.goalsCount ?? (backup.data?.tcGoals?.length || 0)} mục tiêu`;
-  
+
   const inc = Number(backup.summary?.planIncomeTotal || 0);
-  if (pIncome) pIncome.textContent = `${inc.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr/th`;
+  if (pIncome) pIncome.textContent = `${inc.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} / tháng`;
   if (cTargetName) cTargetName.textContent = `${backup.name} (${formatBackupTimestamp(backup.timestamp)})`;
 
   previewEl.style.display = 'flex';
   window.cancelRestoreConfirm();
 };
 
-// ==================== ĐIỀU KHIỂN HỘP THOẠI XÁC NHẬN (RESTORE & DELETE) ====================
-let pendingConfirmAction = null; // { type: 'restore' | 'delete', backupId: string, backup: object }
+let pendingConfirmAction = null;
 let isConfirmProcessing = false;
 
 window.openRestoreConfirmModal = function(backupId) {
@@ -4617,7 +5389,6 @@ window.openRestoreConfirmModal = function(backupId) {
 
   if (!modalOverlay) return;
 
-  // Cấu hình giao diện loại RESTORE
   if (modalCard) {
     modalCard.classList.remove('confirm-type-delete');
     modalCard.classList.add('confirm-type-restore');
@@ -4626,7 +5397,6 @@ window.openRestoreConfirmModal = function(backupId) {
   if (titleEl) titleEl.textContent = 'Khôi phục bản sao lưu';
   if (subtitleEl) subtitleEl.textContent = 'Dữ liệu hiện tại trên ứng dụng sẽ được thay thế theo bản sao lưu này';
 
-  // Thông tin nhận diện bản sao lưu
   if (bkNameEl) bkNameEl.textContent = backup.name || 'Bản sao lưu';
   if (bkTimeEl) bkTimeEl.textContent = formatBackupTimestamp(backup.timestamp);
   if (bkUserEl) {
@@ -4638,16 +5408,14 @@ window.openRestoreConfirmModal = function(backupId) {
     const yr = backup.summary?.year || backup.data?.currentYear || AppState.currentYear || 2026;
     const goalsCount = backup.summary?.goalsCount ?? (backup.data?.tcGoals?.length || 0);
     const inc = Number(backup.summary?.planIncomeTotal || 0);
-    bkSummaryEl.textContent = `Năm ${yr} • ${goalsCount} mục tiêu • ${inc > 0 ? inc.toLocaleString('vi-VN') + ' tr/th' : 'Chưa có thu'}`;
+    bkSummaryEl.textContent = `Năm ${yr} • ${goalsCount} mục tiêu • ${inc > 0 ? inc.toLocaleString('vi-VN') + ' / tháng' : 'Chưa có thu'}`;
   }
 
-  // Cảnh báo ghi đè
   if (warningHeading) warningHeading.textContent = 'Cảnh báo thay thế dữ liệu';
   if (warningText) {
     warningText.textContent = `Toàn bộ dữ liệu tài chính hiện tại trên màn hình sẽ được cập nhật lại theo bản ghi [${backup.name || 'Bản sao lưu'}]. Hệ thống sẽ tự động tạo một bản sao lưu an toàn ngay trước khi khôi phục để bảo vệ phiên làm việc của bạn.`;
   }
 
-  // Trạng thái nút bấm & Banner
   if (statusAlert) statusAlert.style.display = 'none';
   if (btnAction) {
     btnAction.disabled = false;
@@ -4691,7 +5459,6 @@ window.openDeleteConfirmModal = function(backupId) {
 
   if (!modalOverlay) return;
 
-  // Cấu hình giao diện loại DELETE
   if (modalCard) {
     modalCard.classList.remove('confirm-type-restore');
     modalCard.classList.add('confirm-type-delete');
@@ -4700,7 +5467,6 @@ window.openDeleteConfirmModal = function(backupId) {
   if (titleEl) titleEl.textContent = 'Xóa vĩnh viễn bản sao lưu';
   if (subtitleEl) subtitleEl.textContent = 'Bản sao lưu sẽ bị xóa khỏi đám mây Cloud Firestore';
 
-  // Thông tin nhận diện bản sao lưu
   if (bkNameEl) bkNameEl.textContent = backup.name || 'Bản sao lưu';
   if (bkTimeEl) bkTimeEl.textContent = formatBackupTimestamp(backup.timestamp);
   if (bkUserEl) {
@@ -4714,13 +5480,11 @@ window.openDeleteConfirmModal = function(backupId) {
     bkSummaryEl.textContent = `Năm ${yr} • ${goalsCount} mục tiêu tài chính`;
   }
 
-  // Cảnh báo không thể hoàn tác
   if (warningHeading) warningHeading.textContent = 'Hành động không thể hoàn tác';
   if (warningText) {
     warningText.textContent = `Bản sao lưu [${backup.name || 'này'}] (${formatBackupTimestamp(backup.timestamp)}) sẽ bị xóa vĩnh viễn khỏi Cloud Firestore. Bạn sẽ không thể khôi phục lại dữ liệu từ bản lưu này sau khi đã xác nhận xóa.`;
   }
 
-  // Trạng thái nút bấm & Banner
   if (statusAlert) statusAlert.style.display = 'none';
   if (btnAction) {
     btnAction.disabled = false;
@@ -4736,7 +5500,7 @@ window.openDeleteConfirmModal = function(backupId) {
 };
 
 window.closeConfirmModal = function() {
-  if (isConfirmProcessing) return; // Khóa thao tác đóng khi đang xử lý mạng Firestore
+  if (isConfirmProcessing) return;
   const modalOverlay = document.getElementById('confirm-modal-overlay');
   if (modalOverlay) {
     modalOverlay.classList.remove('active');
@@ -4757,7 +5521,6 @@ window.executeConfirmedAction = async function() {
   const btnCancel = document.getElementById('btn-confirm-cancel');
   const btnClose = document.getElementById('btn-confirm-close');
 
-  // Khóa tương tác UI trong suốt quá trình xử lý
   isConfirmProcessing = true;
   if (btnAction) btnAction.disabled = true;
   if (btnCancel) btnCancel.disabled = true;
@@ -4779,7 +5542,6 @@ window.executeConfirmedAction = async function() {
         throw new Error('Dữ liệu bản sao lưu không hợp lệ!');
       }
 
-      // 1. Tự động tạo bản lưu an toàn (safety snapshot) của phiên hiện tại trước khi khôi phục
       try {
         const safetySnapshot = JSON.parse(JSON.stringify(AppState));
         const safetyEntry = {
@@ -4801,15 +5563,15 @@ window.executeConfirmedAction = async function() {
         console.warn("Không thể tạo safety backup:", safeErr);
       }
 
-      // 2. Khôi phục dữ liệu vào AppState
       const restoreData = backup.data;
       Object.keys(restoreData).forEach(key => {
         if (!key.startsWith('_')) {
           AppState[key] = restoreData[key];
         }
       });
+      ensureFixedInvestmentGoals();
+      syncInvestProductsToGoals();
 
-      // 3. Đồng bộ lại UI Năm và Tuổi
       const yEl = document.getElementById('input-year');
       const aEl = document.getElementById('input-age');
       if (yEl) yEl.innerText = AppState.currentYear;
@@ -4823,7 +5585,6 @@ window.executeConfirmedAction = async function() {
       const vDescEl = document.getElementById('vision-desc-cell');
       if (vDescEl) vDescEl.innerText = AppState.visionDesc || '';
 
-      // 4. Vẽ lại toàn bộ các bảng, khảo sát, và tính toán
       renderSetupTables();
       renderPlanTables();
       renderTcGoalsFormTable();
@@ -4836,7 +5597,6 @@ window.executeConfirmedAction = async function() {
       syncGoalsToCards();
       recalculateAll();
 
-      // 5. Lưu trạng thái vừa khôi phục lên Cloud Firestore
       try {
         if (window.CloudDB && UserSession.currentUser) {
           const userDocId = UserSession.currentUser.docId;
@@ -4878,7 +5638,7 @@ window.executeConfirmedAction = async function() {
       const res = await window.CloudDB.deleteBackup(userDocId, action.backupId);
 
       if (res.success) {
-        // Chỉ cập nhật UI danh sách sau khi Firebase xác nhận xóa thành công!
+
         currentLoadedBackups = res.backups || [];
         if (selectedBackupId === action.backupId) {
           selectedBackupId = (currentLoadedBackups.length > 0) ? currentLoadedBackups[0].id : null;
@@ -4889,7 +5649,7 @@ window.executeConfirmedAction = async function() {
         window.closeConfirmModal();
         showToast(`Đã xóa vĩnh viễn bản sao lưu [${action.backup.name || 'được chọn'}] trên Cloud!`, "success");
       } else {
-        // Nếu Firebase xóa thất bại: GIỮ NGUYÊN danh sách bản ghi và hiển thị lỗi trên UI
+
         isConfirmProcessing = false;
         if (statusAlert) {
           statusAlert.className = 'confirm-status-alert is-error';
@@ -4921,7 +5681,6 @@ window.executeConfirmedAction = async function() {
   }
 };
 
-// Khôi phục các hàm tương thích cũ để tránh lỗi gọi hàm
 window.showRestoreConfirm = function() {
   if (selectedBackupId) window.openRestoreConfirmModal(selectedBackupId);
 };
@@ -4942,7 +5701,6 @@ window.deleteBackupItem = function(backupId) {
   window.openDeleteConfirmModal(backupId);
 };
 
-// Thiết lập lắng nghe sự kiện đóng hộp thoại xác nhận qua Escape và click backdrop
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const confirmModal = document.getElementById('confirm-modal-overlay');
@@ -4963,33 +5721,77 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ==================== ĐIỀU KHIỂN MODAL NHẬN DIỆN NGƯỜI DÙNG ====================
+let currentAuthTab = 'account';
 
-let pendingUserCandidate = null;
+window.switchAuthModalTab = function(tabName) {
+  if (tabName === 'login' || tabName === 'register' || tabName === 'reset' || !UserSession.currentUser) {
+    window.goToAuthPage(tabName || 'login', '', Boolean(UserSession.currentUser));
+    return;
+  }
 
-window.openUserModal = function(allowCancel = true) {
+  currentAuthTab = (tabName === 'change-password') ? 'change-password' : 'account';
+  const accountTabs = ['account', 'change-password'];
+
+  accountTabs.forEach(t => {
+    const btn = document.getElementById(`btn-auth-tab-${t}`);
+    const panel = document.getElementById(`auth-panel-${t}`);
+    if (btn) {
+      btn.style.display = '';
+      btn.classList.toggle('active', t === currentAuthTab);
+    }
+    if (panel) {
+      panel.style.display = (t === currentAuthTab) ? 'flex' : 'none';
+    }
+  });
+
+  const headingEl = document.getElementById('auth-modal-heading');
+  const subheadingEl = document.getElementById('auth-modal-subheading');
+  if (UserSession.currentUser) {
+    const disp = UserSession.currentUser.displayUsername || UserSession.currentUser.username || UserSession.currentUser.rawName || 'Người dùng';
+    if (headingEl) headingEl.textContent = `Tài khoản: ${disp}`;
+    if (subheadingEl) subheadingEl.textContent = 'Kiểm tra thông tin định danh tài khoản, Email khôi phục hoặc đổi mật khẩu';
+  }
+
+  const errEl = document.getElementById('user-input-error');
+  const okEl = document.getElementById('user-auth-success');
+  const submitLbl = document.getElementById('btn-modal-submit-label');
+  if (errEl) errEl.style.display = 'none';
+  if (okEl) okEl.style.display = 'none';
+
+  if (currentAuthTab === 'account') {
+    UserSession.updateUI();
+  }
+
+  if (submitLbl) {
+    if (currentAuthTab === 'change-password') submitLbl.textContent = 'Cập nhật mật khẩu';
+    else submitLbl.textContent = 'Lưu Email khôi phục';
+  }
+};
+
+window.openUserModal = function(allowCancel = true, defaultTab = null) {
+  if (!UserSession.currentUser || defaultTab === 'login' || defaultTab === 'register' || defaultTab === 'reset') {
+    window.goToAuthPage(defaultTab || 'login', '', Boolean(UserSession.currentUser));
+    return;
+  }
+
   const modal = document.getElementById('user-modal-overlay');
   const cancelBtn = document.getElementById('btn-modal-cancel');
-  const input = document.getElementById('input-user-rawname');
+  const closeX = document.getElementById('btn-auth-close-x');
   const errorEl = document.getElementById('user-input-error');
-  const dupBox = document.getElementById('duplicate-warning-box');
+  const okEl = document.getElementById('user-auth-success');
 
   if (!modal) return;
 
   if (errorEl) errorEl.style.display = 'none';
-  if (dupBox) dupBox.style.display = 'none';
+  if (okEl) okEl.style.display = 'none';
   if (cancelBtn) cancelBtn.style.display = allowCancel ? 'inline-block' : 'none';
+  if (closeX) closeX.style.display = allowCancel ? 'inline-flex' : 'none';
 
-  if (UserSession.currentUser && input) {
-    input.value = UserSession.currentUser.rawName;
-    updateSlugPreview(UserSession.currentUser.rawName);
-  } else if (input) {
-    input.value = '';
-    updateSlugPreview('');
-  }
+  const resolvedTab = (defaultTab === 'change-password') ? 'change-password' : 'account';
+  window.switchAuthModalTab(resolvedTab);
 
+  UserSession.updateUI();
   modal.classList.add('active');
-  if (input) setTimeout(() => input.focus(), 80);
 };
 
 window.closeUserModal = function() {
@@ -4997,105 +5799,139 @@ window.closeUserModal = function() {
   if (modal) modal.classList.remove('active');
 };
 
-function updateSlugPreview(val) {
-  const slugEl = document.getElementById('preview-user-slug');
-  const normalized = normalizeUserName(val);
-  if (slugEl) {
-    slugEl.textContent = normalized ? `user_${normalized}` : 'chua_xac_dinh';
+function showAuthModalError(msg) {
+  const errorEl = document.getElementById('user-input-error');
+  const okEl = document.getElementById('user-auth-success');
+  if (okEl) okEl.style.display = 'none';
+  if (errorEl) {
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+}
+
+function showAuthModalSuccess(msg) {
+  const errorEl = document.getElementById('user-input-error');
+  const okEl = document.getElementById('user-auth-success');
+  if (errorEl) errorEl.style.display = 'none';
+  if (okEl) {
+    okEl.textContent = msg;
+    okEl.style.display = 'block';
   }
 }
 
 window.submitUserProfile = async function() {
-  const input = document.getElementById('input-user-rawname');
-  const errorEl = document.getElementById('user-input-error');
-  const dupBox = document.getElementById('duplicate-warning-box');
   const btnSubmit = document.getElementById('btn-modal-submit');
 
-  if (!input) return;
-  const rawVal = input.value.trim();
+  if (currentAuthTab === 'change-password') {
+    const curPass = document.getElementById('input-auth-change-curpass')?.value || '';
+    const newPass = document.getElementById('input-auth-change-newpass')?.value || '';
+    const confirmPass = document.getElementById('input-auth-change-confirm')?.value || '';
 
-  // Kiểm tra tính hợp lệ của họ tên
-  if (!rawVal || rawVal.length < 2) {
-    if (errorEl) {
-      errorEl.textContent = "Vui lòng nhập họ và tên hợp lệ (tối thiểu 2 ký tự, không chỉ chứa khoảng trắng).";
-      errorEl.style.display = 'block';
-    }
-    input.focus();
-    return;
-  }
-
-  const normalized = normalizeUserName(rawVal);
-  if (!normalized) {
-    if (errorEl) {
-      errorEl.textContent = "Tên không chứa ký tự chữ cái hợp lệ để tạo định danh.";
-      errorEl.style.display = 'block';
-    }
-    return;
-  }
-
-  if (errorEl) errorEl.style.display = 'none';
-  const defaultDocId = `user_${normalized}`;
-
-  // Kiểm tra trùng lặp trên Cloud nếu Firestore đã sẵn sàng
-  if (window.CloudDB && (!UserSession.currentUser || UserSession.currentUser.docId !== defaultDocId)) {
-    if (btnSubmit) {
-      btnSubmit.disabled = true;
-      btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Đang kiểm tra...</span>`;
-    }
-
-    const check = await window.CloudDB.checkDocExists(defaultDocId);
-
-    if (btnSubmit) {
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = `<span>Xác nhận & Bắt đầu</span> <i class="fa-solid fa-arrow-right"></i>`;
-    }
-
-    if (check.success && check.exists) {
-      // Đã có dữ liệu của người có tên chuẩn hóa tương đương -> Hiển thị hộp thoại xử lý trùng lặp
-      pendingUserCandidate = {
-        rawName: rawVal,
-        normalizedName: normalized,
-        defaultDocId: defaultDocId
-      };
-
-      const dupDocText = document.getElementById('dup-doc-id-text');
-      if (dupDocText) dupDocText.textContent = defaultDocId;
-      if (dupBox) dupBox.style.display = 'flex';
-
-      // Gắn sự kiện cho 2 nút giải quyết
-      document.getElementById('btn-dup-use-existing').onclick = () => {
-        applyUserProfile(rawVal, normalized, defaultDocId, true);
-      };
-
-      document.getElementById('btn-dup-create-unique').onclick = () => {
-        // Tạo hậu tố phân biệt theo thời gian thực ngắn
-        const uniqueSuffix = Date.now().toString().slice(-4);
-        const uniqueDocId = `user_${normalized}_${uniqueSuffix}`;
-        applyUserProfile(rawVal, normalized, uniqueDocId, false);
-      };
-
+    if (!curPass || !newPass) {
+      showAuthModalError("Vui lòng nhập mật khẩu hiện tại và mật khẩu mới.");
       return;
     }
+    if (newPass.length < 6) {
+      showAuthModalError("Mật khẩu mới phải có tối thiểu 6 ký tự.");
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showAuthModalError("Xác nhận mật khẩu mới không khớp.");
+      return;
+    }
+    if (curPass === newPass) {
+      showAuthModalError("Mật khẩu mới phải khác mật khẩu hiện tại.");
+      return;
+    }
+    if (!window.CloudDB || typeof window.CloudDB.changePassword !== 'function') {
+      showAuthModalError("Dịch vụ xác thực đang khởi tạo.");
+      return;
+    }
+
+    if (btnSubmit) btnSubmit.disabled = true;
+    const res = await window.CloudDB.changePassword(curPass, newPass);
+    if (btnSubmit) btnSubmit.disabled = false;
+
+    if (!res.success) {
+      showAuthModalError(res.error || "Không thể đổi mật khẩu.");
+      return;
+    }
+
+    const cEl = document.getElementById('input-auth-change-curpass');
+    const nEl = document.getElementById('input-auth-change-newpass');
+    const cfEl = document.getElementById('input-auth-change-confirm');
+    if (cEl) cEl.value = '';
+    if (nEl) nEl.value = '';
+    if (cfEl) cfEl.value = '';
+    showAuthModalSuccess(res.message || "Đã cập nhật mật khẩu mới thành công.");
+    return;
   }
 
-  // Tên mới hoàn toàn hoặc là người dùng hiện tại đang cập nhật
-  applyUserProfile(rawVal, normalized, defaultDocId, false);
+  if (currentAuthTab === 'account') {
+    const newEmail = document.getElementById('input-auth-acc-email')?.value.trim() || '';
+    const curPass = document.getElementById('input-auth-acc-password')?.value || '';
+
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      showAuthModalError("Vui lòng nhập địa chỉ Email khôi phục hợp lệ.");
+      return;
+    }
+    if (!curPass) {
+      showAuthModalError("Vui lòng nhập mật khẩu hiện tại để xác nhận.");
+      return;
+    }
+    if (!window.CloudDB || typeof window.CloudDB.updateRecoveryEmail !== 'function') {
+      showAuthModalError("Dịch vụ xác thực đang khởi tạo.");
+      return;
+    }
+
+    if (btnSubmit) btnSubmit.disabled = true;
+    const res = await window.CloudDB.updateRecoveryEmail(newEmail, curPass);
+    if (btnSubmit) btnSubmit.disabled = false;
+
+    if (!res.success) {
+      showAuthModalError(res.error || "Không thể cập nhật email khôi phục.");
+      return;
+    }
+
+    if (UserSession.currentUser) {
+      UserSession.currentUser.maskedEmail = res.maskedEmail || '';
+      UserSession.currentUser.hasRecoveryEmail = true;
+      UserSession.setStored(UserSession.currentUser);
+    }
+    const pwdEl = document.getElementById('input-auth-acc-password');
+    const mailEl = document.getElementById('input-auth-acc-email');
+    if (pwdEl) pwdEl.value = '';
+    if (mailEl) mailEl.value = '';
+    showAuthModalSuccess(res.message || "Đã cập nhật email khôi phục thành công.");
+    return;
+  }
 };
 
-function applyUserProfile(rawName, normalizedName, docId, loadExistingData = false) {
-  const user = {
-    rawName: rawName,
-    normalizedName: normalizedName,
+function applyAuthenticatedUser(authUser, loadExistingData = true) {
+  const displayUsername = authUser.displayUsername || authUser.username || authUser.rawName || authUser.ho_ten || 'Người dùng';
+  const normalizedUsername = authUser.normalizedUsername || authUser.normalizedName || normalizeUserName(displayUsername);
+  const docId = authUser.docId || `user_${normalizedUsername}`;
+  const userObj = {
+    uid: authUser.uid || '',
+    username: displayUsername,
+    displayUsername: displayUsername,
+    rawName: displayUsername,
+    ho_ten: displayUsername,
+    normalizedUsername: normalizedUsername,
+    normalizedName: normalizedUsername,
+    maskedEmail: authUser.maskedEmail || '',
+    hasRecoveryEmail: Boolean(authUser.hasRecoveryEmail),
     docId: docId,
+    sessionToken: authUser.sessionToken || '',
     confirmedAt: new Date().toISOString()
   };
 
-  UserSession.setStored(user);
+  UserSession.setStored(userObj);
   closeUserModal();
-  showToast(`Chào mừng [${rawName}], hệ sinh thái đã sẵn sàng!`, "success");
+  showToast(`Xin chào [${displayUsername}], đã đăng nhập thành công!`, "success");
 
-  // Chỉ nạp dữ liệu cũ nếu người dùng chủ động chọn "Tải & dùng tiếp hồ sơ này"
   if (loadExistingData && window.CloudDB) {
+    window.resetAppStateToEmpty();
     window.loadAppStateFromCloud(true);
   } else {
     window.resetAppStateToEmpty();
@@ -5103,7 +5939,1182 @@ function applyUserProfile(rawName, normalizedName, docId, loadExistingData = fal
   }
 }
 
-// ==================== HỎI LƯU DỮ LIỆU TRƯỚC KHI TẮT TRANG WEB ====================
+let pendingJsonImportPayload = null;
+let pendingCsvParsedState = null;
+
+const CSV_TABLE_SCHEMAS = {
+  month_income: {
+    label: "Thực thu theo tháng",
+    requireMonth: true,
+    fields: [
+      { key: "date", label: "Ngày (YYYY-MM-DD / DD/MM/YYYY)", required: false },
+      { key: "cat", label: "Khoản mục thu", required: true },
+      { key: "val", label: "Số tiền", required: true, type: "number" }
+    ],
+    sampleRows: [
+      ["2026-01-05", "Lương chính", "25.5"],
+      ["2026-01-15", "Thưởng dự án, hoa hồng", "8.0"]
+    ]
+  },
+  month_expense: {
+    label: "Thực chi theo tháng",
+    requireMonth: true,
+    fields: [
+      { key: "date", label: "Ngày (YYYY-MM-DD / DD/MM/YYYY)", required: false },
+      { key: "cat", label: "Khoản mục chi", required: true },
+      { key: "val", label: "Số tiền", required: true, type: "number" }
+    ],
+    sampleRows: [
+      ["2026-01-06", "Tiền ăn uống, sinh hoạt", "6.5"],
+      ["2026-01-10", "Tiền thuê nhà", "4.5"]
+    ]
+  },
+  month_learning: {
+    label: "Chi phí học tập theo tháng",
+    requireMonth: true,
+    fields: [
+      { key: "name", label: "Nội dung đào tạo", required: true },
+      { key: "cost", label: "Chi phí", required: true, type: "number" },
+      { key: "note", label: "Ghi chú", required: false }
+    ],
+    sampleRows: [
+      ["Khóa học Phân tích Tài chính", "2.5", "Học trực tuyến"],
+      ["Sách chuyên ngành", "0.4", "Mua sách"]
+    ]
+  },
+  plan_income: {
+    label: "Dự kiến thu hàng tháng (Kế hoạch năm)",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Nguồn thu dự kiến", required: true },
+      { key: "plan", label: "Dự kiến mỗi tháng", required: true, type: "number" },
+      { key: "note", label: "Ghi chú", required: false }
+    ],
+    sampleRows: [
+      ["Lương công ty", "25.0", "Thu nhập cố định"],
+      ["Làm thêm tự do", "5.0", "Dự án ngoài giờ"]
+    ]
+  },
+  plan_expense: {
+    label: "Dự kiến chi hàng tháng (Kế hoạch năm)",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Khoản chi dự kiến", required: true },
+      { key: "plan", label: "Ngân sách mỗi tháng", required: true, type: "number" },
+      { key: "note", label: "Ghi chú", required: false }
+    ],
+    sampleRows: [
+      ["Sinh hoạt phí gia đình", "10.0", "Chi tiêu thiết yếu"],
+      ["Quỹ dự phòng y tế", "2.0", "Tiết kiệm y tế"]
+    ]
+  },
+  tc_goals: {
+    label: "Mục tiêu tài chính",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Tên mục tiêu", required: true },
+      { key: "type", label: "Loại (invest / debt)", required: false },
+      { key: "val", label: "Giá trị mục tiêu", required: true, type: "number" },
+      { key: "paid", label: "Đã có / Đã trả", required: false, type: "number" },
+      { key: "start", label: "Năm bắt đầu", required: true, type: "number" },
+      { key: "end", label: "Năm kết thúc", required: true, type: "number" },
+      { key: "rate", label: "Lãi suất (%/năm)", required: false, type: "number" },
+      { key: "inflation", label: "Trượt giá (%/năm)", required: false, type: "number" }
+    ],
+    sampleRows: [
+      ["Mua nhà chung cư", "invest", "2000", "200", "2026", "2035", "12", "4"],
+      ["Trả góp xe", "debt", "300", "50", "2026", "2029", "9", "0"]
+    ]
+  }
+};
+
+window.openUnifiedDataModal = function(initialTab = 'import') {
+  const modal = document.getElementById('data-io-modal-overlay');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+  window.initU032Upload();
+  window.switchDataIoTab(initialTab);
+};
+
+window.openDataIoModal = function(initialTab = 'import') {
+  window.openUnifiedDataModal(initialTab);
+};
+
+window.closeDataIoModal = function() {
+  const modal = document.getElementById('data-io-modal-overlay');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+  selectedBackupId = null;
+  window.cancelRestoreConfirm();
+};
+
+window.switchDataIoTab = function(tabId) {
+  let activeTab = tabId;
+  if (tabId === 'import-json' || tabId === 'import-csv') {
+    activeTab = 'import';
+  }
+  const tabs = ['import', 'export-json', 'backups'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`btn-io-tab-${t}`);
+    const panel = document.getElementById(`io-panel-${t}`);
+    if (btn) btn.classList.toggle('active', t === activeTab);
+    if (panel) panel.style.display = (t === activeTab) ? 'block' : 'none';
+  });
+
+  if (activeTab === 'export-json') {
+    refreshExportJsonSummary();
+  } else if (activeTab === 'backups') {
+    window.loadBackupsList();
+  } else if (activeTab === 'import') {
+    window.initU032Upload();
+    if (tabId === 'import-csv') {
+      window.displayCsvImportOptions();
+      window.onCsvTargetTableChange();
+    } else if (tabId === 'import-json') {
+      window.displayJsonImportOptions();
+    }
+  }
+};
+
+function refreshExportJsonSummary() {
+  const userLbl = document.getElementById('io-export-user-label');
+  const yrAgeLbl = document.getElementById('io-export-year-age');
+  const goalsLbl = document.getElementById('io-export-goals-count');
+  const planLbl = document.getElementById('io-export-plan-count');
+  const txLbl = document.getElementById('io-export-tx-count');
+
+  if (userLbl) {
+    userLbl.textContent = UserSession.currentUser
+      ? `${UserSession.currentUser.rawName} (@${UserSession.currentUser.docId})`
+      : 'Khách (@guest)';
+  }
+  if (yrAgeLbl) {
+    yrAgeLbl.textContent = `${AppState.currentYear || 2026} / ${AppState.currentAge || 21} tuổi`;
+  }
+  if (goalsLbl) {
+    goalsLbl.textContent = `${(AppState.tcGoals || []).length} mục tiêu`;
+  }
+  if (planLbl) {
+    const pCount = (AppState.planIncome || []).length + (AppState.planExpense || []).length;
+    planLbl.textContent = `${pCount} dòng`;
+  }
+  if (txLbl) {
+    let txTotal = 0;
+    for (let m = 1; m <= 12; m++) {
+      const md = AppState.monthlyDetails?.[m];
+      if (md) {
+        txTotal += (md.incomes?.length || 0) + (md.expenses?.length || 0) + (md.learningDetails?.length || 0);
+      }
+    }
+    txLbl.textContent = `${txTotal} bản ghi`;
+  }
+}
+
+window.buildExportJsonPayload = function() {
+  ensureFixedInvestmentGoals();
+  const cleanState = JSON.parse(JSON.stringify(AppState));
+  Object.keys(cleanState).forEach(k => {
+    if (k.startsWith('_') || k === 'passwordHash' || k === 'token' || k === 'secret') {
+      delete cleanState[k];
+    }
+  });
+  return {
+    schemaVersion: "2.2.0",
+    exportedAt: new Date().toISOString(),
+    accountMeta: {
+      ho_ten: UserSession.currentUser?.rawName || "Khách",
+      docId: UserSession.currentUser?.docId || "khach_hang_mac_dinh"
+    },
+    data: cleanState
+  };
+};
+
+window.exportAppStateToJson = function() {
+  try {
+    const payload = window.buildExportJsonPayload();
+    const jsonString = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const slug = UserSession.currentUser?.docId || "ho_so";
+    const datePart = new Date().toISOString().slice(0, 10);
+    const fileName = `so_tai_chinh_${slug}_${datePart}.json`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    showToast(`Đã xuất file JSON [${fileName}] thành công!`, "success");
+    return payload;
+  } catch (err) {
+    showToast("Lỗi khi xuất file JSON: " + (err.message || "Không xác định"), "error");
+    return null;
+  }
+};
+
+window.validateAndPrepareJsonImport = function(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    return { valid: false, error: "Nội dung file JSON trống hoặc không hợp lệ." };
+  }
+  let parsed = null;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch (e) {
+    return { valid: false, error: "File không đúng định dạng JSON chuẩn: " + e.message };
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { valid: false, error: "Cấu trúc gốc của file JSON phải là một đối tượng (Object)." };
+  }
+
+  const candidateData = (parsed.data && typeof parsed.data === 'object' && !Array.isArray(parsed.data))
+    ? parsed.data
+    : parsed;
+
+  const knownKeys = [
+    "currentYear", "currentAge", "birthYear", "expenses", "incomeList", "planList",
+    "investProducts", "tcGoals", "planIncome", "planExpense", "monthlyDetails",
+    "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices"
+  ];
+  const hasAnyKnownKey = knownKeys.some(k => k in candidateData);
+  if (!hasAnyKnownKey) {
+    return { valid: false, error: "File JSON không chứa các trường dữ liệu hợp lệ của Sổ Tài Chính." };
+  }
+
+  if (candidateData.currentYear !== undefined && (typeof candidateData.currentYear !== 'number' || candidateData.currentYear < 1900 || candidateData.currentYear > 2200)) {
+    return { valid: false, error: "Trường currentYear trong JSON không hợp lệ (phải là số năm từ 1900–2200)." };
+  }
+
+  const arrayFields = ["expenses", "incomeList", "planList", "investProducts", "tcGoals", "planIncome", "planExpense", "skillsList", "familyList", "jobList"];
+  for (const f of arrayFields) {
+    if (candidateData[f] !== undefined && !Array.isArray(candidateData[f])) {
+      return { valid: false, error: `Trường "${f}" không đúng kiểu mảng (Array).` };
+    }
+  }
+
+  let duplicateGoalIds = 0;
+  if (Array.isArray(candidateData.tcGoals)) {
+    const seenIds = new Set();
+    candidateData.tcGoals.forEach(g => {
+      if (g && g.id) {
+        if (seenIds.has(g.id)) duplicateGoalIds++;
+        seenIds.add(g.id);
+      }
+    });
+  }
+
+  return {
+    valid: true,
+    schemaVersion: parsed.schemaVersion || "1.0-legacy",
+    accountMeta: parsed.accountMeta || null,
+    duplicateGoalIds,
+    data: candidateData
+  };
+};
+
+window.initU032Upload = function() {
+  const root = document.getElementById('u032-upload-root');
+  const zone = document.getElementById('u032-zone-btn');
+  const pick = document.getElementById('u032-file-input');
+  if (!root || !zone || !pick || root.dataset.u032Bound === 'true') return;
+
+  root.dataset.u032Bound = 'true';
+
+  zone.addEventListener('click', () => {
+    pick.click();
+  });
+
+  pick.addEventListener('change', () => {
+    const files = Array.from(pick.files || []);
+    files.forEach(f => window.processU032File(f));
+    pick.value = '';
+  });
+
+  let depth = 0;
+  zone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    depth++;
+    root.classList.add('is-over');
+  });
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+  zone.addEventListener('dragleave', () => {
+    if (--depth <= 0) {
+      depth = 0;
+      root.classList.remove('is-over');
+    }
+  });
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    depth = 0;
+    root.classList.remove('is-over');
+    const files = Array.from(e.dataTransfer?.files || []);
+    files.forEach(f => window.processU032File(f));
+  });
+};
+
+window.processU032File = function(file) {
+  const root = document.getElementById('u032-upload-root');
+  const list = document.getElementById('u032-files-list');
+  if (!root || !list || !file) return;
+
+  const name = file.name || 'file';
+  const bytes = file.size || 0;
+  const ext = (name.split('.').pop() || '').toLowerCase();
+
+  const TYPE = { json: '#3D8BFF', csv: '#22A06B' };
+  const badgeColor = TYPE[ext] || '#8E8A97';
+  const badgeText = ext.slice(0, 4).toUpperCase();
+
+  const li = document.createElement('li');
+  li.className = 'u032-row';
+  li.innerHTML = `
+    <span class="u032-ic" style="--c:${badgeColor}" aria-hidden="true">${escapeHtml(badgeText)}</span>
+    <span class="u032-meta">
+      <b>${escapeHtml(name)}</b>
+      <small>Đang nạp file...</small>
+    </span>
+    <span class="u032-st">
+      <span class="u032-spin" aria-hidden="true"></span>
+    </span>
+    <span class="u032-bar" aria-hidden="true"></span>
+  `;
+
+  list.insertBefore(li, list.firstChild);
+  while (list.children.length > 3) {
+    list.lastElementChild.remove();
+  }
+
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = rm ? 180 : 850 + Math.random() * 450;
+  const t0 = performance.now();
+
+  const reader = new FileReader();
+  let content = null;
+  let readErr = null;
+
+  reader.onload = (e) => {
+    content = String(e.target?.result || '');
+  };
+  reader.onerror = () => {
+    readErr = "Không thể đọc dữ liệu file.";
+  };
+  reader.readAsText(file, "utf-8");
+
+  function sizeFormat(b) {
+    if (b > 1048576) return (b / 1048576).toFixed(1) + ' MB';
+    return Math.max(1, Math.round(b / 1024)) + ' KB';
+  }
+
+  function frame(now) {
+    const elapsed = now - t0;
+    const p = Math.min(1, elapsed / duration);
+    li.style.setProperty('--p', p.toFixed(3));
+
+    const sm = li.querySelector('small');
+    if (sm) {
+      sm.textContent = sizeFormat(bytes * p) + ' / ' + sizeFormat(bytes) + ' · ' + Math.round(p * 100) + '%';
+    }
+
+    if (p < 1) {
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    if (readErr) {
+      showFail(readErr);
+      return;
+    }
+
+    if (ext === 'json') {
+      const val = window.validateAndPrepareJsonImport(content);
+      if (!val.valid) {
+        showFail(val.error || "File JSON không hợp lệ");
+        return;
+      }
+      pendingJsonImportPayload = val;
+      showDone("Đã nạp file JSON thành công");
+      window.displayJsonImportOptions(val);
+    } else if (ext === 'csv') {
+      const csvRes = window.loadCsvTextForPreview(content);
+      if (!csvRes || !csvRes.valid) {
+        showFail(csvRes?.error || "File CSV không đúng định dạng");
+        return;
+      }
+      showDone("Đã nạp file CSV thành công");
+      window.displayCsvImportOptions();
+    } else {
+      showFail("Định dạng không được hỗ trợ (chỉ nhận .json hoặc .csv)");
+    }
+  }
+
+  function showDone(note) {
+    li.classList.remove('fail');
+    li.classList.add('done');
+    const sm = li.querySelector('small');
+    if (sm) sm.textContent = `${sizeFormat(bytes)} · ${note}`;
+    const st = li.querySelector('.u032-st');
+    if (st) {
+      st.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.4"/></svg>';
+    }
+  }
+
+  function showFail(errText) {
+    li.classList.remove('done');
+    li.classList.add('fail');
+    const sm = li.querySelector('small');
+    if (sm) sm.textContent = errText;
+    const st = li.querySelector('.u032-st');
+    if (st) {
+      st.innerHTML = '<button type="button" class="u032-retry">Thử lại</button>';
+      const retryBtn = st.querySelector('.u032-retry');
+      if (retryBtn) {
+        retryBtn.onclick = () => {
+          li.remove();
+          window.processU032File(file);
+        };
+      }
+    }
+  }
+
+  requestAnimationFrame(frame);
+};
+
+window.displayJsonImportOptions = function(valRes) {
+  const jsonBox = document.getElementById('json-import-options-box');
+  const csvBox = document.getElementById('csv-import-options-box');
+  const csvPrev = document.getElementById('csv-import-preview-box');
+  const csvMap = document.getElementById('csv-column-mapping-box');
+  if (csvBox) csvBox.style.display = 'none';
+  if (csvPrev) csvPrev.style.display = 'none';
+  if (csvMap) csvMap.style.display = 'none';
+  if (jsonBox) jsonBox.style.display = 'block';
+  window.updateJsonImportPreview();
+};
+
+window.displayCsvImportOptions = function() {
+  const jsonBox = document.getElementById('json-import-options-box');
+  const jsonPrev = document.getElementById('json-import-preview-box');
+  const csvBox = document.getElementById('csv-import-options-box');
+  if (jsonBox) jsonBox.style.display = 'none';
+  if (jsonPrev) jsonPrev.style.display = 'none';
+  if (csvBox) csvBox.style.display = 'block';
+};
+
+window.handleJsonFileSelected = function(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  window.processU032File(file);
+};
+
+function showJsonImportError(msg) {
+  const errBox = document.getElementById('json-import-error-box');
+  const prevBox = document.getElementById('json-import-preview-box');
+  if (prevBox) prevBox.style.display = 'none';
+  if (errBox) {
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+  }
+}
+
+window.loadJsonImportTextForPreview = function(rawText) {
+  const check = window.validateAndPrepareJsonImport(rawText);
+  if (!check.valid) {
+    pendingJsonImportPayload = null;
+    showJsonImportError(check.error);
+    return check;
+  }
+
+  pendingJsonImportPayload = check;
+  const errBox = document.getElementById('json-import-error-box');
+  if (errBox) errBox.style.display = 'none';
+  window.updateJsonImportPreview();
+  return check;
+};
+
+window.updateJsonImportPreview = function() {
+  const prevBox = document.getElementById('json-import-preview-box');
+  const verEl = document.getElementById('json-preview-version');
+  const listEl = document.getElementById('json-preview-summary-list');
+  if (!pendingJsonImportPayload || !pendingJsonImportPayload.valid) {
+    if (prevBox) prevBox.style.display = 'none';
+    return;
+  }
+
+  const d = pendingJsonImportPayload.data;
+  const modeEl = document.querySelector('input[name="json-import-mode"]:checked');
+  const mode = modeEl ? modeEl.value : 'update';
+  const allowKeywords = Boolean(document.getElementById('chk-json-allow-keywords')?.checked);
+
+  const goalsCount = (d.tcGoals || []).length;
+  const planIncCount = (d.planIncome || []).length;
+  const planExpCount = (d.planExpense || []).length;
+  let txCount = 0;
+  if (d.monthlyDetails && typeof d.monthlyDetails === 'object') {
+    for (let m = 1; m <= 12; m++) {
+      const md = d.monthlyDetails[m];
+      if (md) {
+        txCount += (md.incomes?.length || 0) + (md.expenses?.length || 0) + (md.learningDetails?.length || 0);
+      }
+    }
+  }
+
+  if (verEl) verEl.textContent = `Schema ${pendingJsonImportPayload.schemaVersion}`;
+  if (listEl) {
+    const modeLabel = mode === 'add'
+      ? 'Thêm dữ liệu mới (Add)'
+      : (mode === 'replace' ? 'Thay thế dữ liệu hiện có (Replace)' : 'Cập nhật dữ liệu trùng khóa (Update)');
+    listEl.innerHTML = `
+      <div>• <strong>Chế độ nhập đã chọn:</strong> ${modeLabel}</div>
+      <div>• <strong>Bảo vệ mục "Từ khóa":</strong> ${allowKeywords ? 'Cho phép cập nhật từ file JSON' : 'Giữ nguyên tuyệt đối thông số Từ khóa hiện tại'}</div>
+      <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
+      <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
+      <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
+      <div>• <strong>Hai mục tiêu cố định ("Cho con đi học đại học", "Hưu trí"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+    `;
+  }
+  if (prevBox) prevBox.style.display = 'flex';
+};
+
+window.applyJsonImportData = function(importData, mode = 'update', allowKeywords = false) {
+  if (!importData || typeof importData !== 'object') return false;
+  const cleanImport = JSON.parse(JSON.stringify(importData));
+
+  if (allowKeywords) {
+    if (typeof cleanImport.currentYear === 'number') AppState.currentYear = cleanImport.currentYear;
+    if (typeof cleanImport.currentAge === 'number') AppState.currentAge = cleanImport.currentAge;
+    if (typeof cleanImport.birthYear === 'number') AppState.birthYear = cleanImport.birthYear;
+    if (Array.isArray(cleanImport.expenses)) {
+      if (mode === 'replace') AppState.expenses = [...cleanImport.expenses];
+      else {
+        cleanImport.expenses.forEach(item => {
+          if (typeof item === 'string' && !AppState.expenses.includes(item)) AppState.expenses.push(item);
+        });
+      }
+    }
+    if (Array.isArray(cleanImport.incomeList)) {
+      if (mode === 'replace') AppState.incomeList = [...cleanImport.incomeList];
+      else {
+        cleanImport.incomeList.forEach(item => {
+          if (typeof item === 'string' && !AppState.incomeList.includes(item)) AppState.incomeList.push(item);
+        });
+      }
+    }
+    if (Array.isArray(cleanImport.planList)) {
+      if (mode === 'replace') AppState.planList = [...cleanImport.planList];
+      else {
+        cleanImport.planList.forEach(item => {
+          if (typeof item === 'string' && !AppState.planList.includes(item)) AppState.planList.push(item);
+        });
+      }
+    }
+    if (Array.isArray(cleanImport.investProducts)) {
+      if (mode === 'replace') AppState.investProducts = [...cleanImport.investProducts];
+      else {
+        cleanImport.investProducts.forEach(prod => {
+          if (!prod || !prod.name) return;
+          const idx = AppState.investProducts.findIndex(p => p.name === prod.name);
+          if (idx === -1) AppState.investProducts.push(prod);
+          else if (mode === 'update') AppState.investProducts[idx] = Object.assign(AppState.investProducts[idx], prod);
+        });
+      }
+    }
+  }
+
+  const mergeByKey = (targetArr, sourceArr, keyField = 'name') => {
+    if (!Array.isArray(sourceArr)) return targetArr;
+    if (mode === 'replace') {
+      return [...sourceArr];
+    }
+    const out = Array.isArray(targetArr) ? [...targetArr] : [];
+    sourceArr.forEach(item => {
+      if (!item || typeof item !== 'object') return;
+      const kVal = String(item[keyField] || '').trim();
+      const existingIdx = out.findIndex(x => x && String(x[keyField] || '').trim() === kVal && kVal !== '');
+      if (existingIdx === -1) {
+        out.push(item);
+      } else if (mode === 'update') {
+        out[existingIdx] = Object.assign({}, out[existingIdx], item);
+      }
+    });
+    return out;
+  };
+
+  if (Array.isArray(cleanImport.planIncome)) {
+    AppState.planIncome = mergeByKey(AppState.planIncome, cleanImport.planIncome, 'name');
+  }
+  if (Array.isArray(cleanImport.planExpense)) {
+    AppState.planExpense = mergeByKey(AppState.planExpense, cleanImport.planExpense, 'name');
+  }
+  if (Array.isArray(cleanImport.skillsList)) {
+    AppState.skillsList = mergeByKey(AppState.skillsList, cleanImport.skillsList, 'name');
+  }
+  if (Array.isArray(cleanImport.familyList)) {
+    AppState.familyList = mergeByKey(AppState.familyList, cleanImport.familyList, 'name');
+  }
+  if (Array.isArray(cleanImport.jobList)) {
+    AppState.jobList = mergeByKey(AppState.jobList, cleanImport.jobList, 'name');
+  }
+
+  if (Array.isArray(cleanImport.tcGoals)) {
+    ensureFixedInvestmentGoals();
+    const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
+    const currentRetire = AppState.tcGoals.find(isRetirementFixedGoal);
+
+    if (mode === 'replace') {
+      AppState.tcGoals = cleanImport.tcGoals.filter(g => g && typeof g === 'object');
+      if (!AppState.tcGoals.find(isCollegeFixedGoal) && currentCollege) {
+        AppState.tcGoals.unshift(currentCollege);
+      }
+      if (!AppState.tcGoals.find(isRetirementFixedGoal) && currentRetire) {
+        AppState.tcGoals.push(currentRetire);
+      }
+    } else {
+      cleanImport.tcGoals.forEach(g => {
+        if (!g || typeof g !== 'object') return;
+        if (isCollegeFixedGoal(g)) {
+          if (mode === 'update' && currentCollege) {
+            Object.assign(currentCollege, g, { id: 'fixed_college', name: 'Cho con đi học đại học', type: 'invest', isFixed: true, fixedType: 'college' });
+          }
+          return;
+        }
+        if (isRetirementFixedGoal(g)) {
+          if (mode === 'update' && currentRetire) {
+            Object.assign(currentRetire, g, { id: 'fixed_retirement', name: 'Hưu trí', type: 'invest', isFixed: true, fixedType: 'retirement' });
+          }
+          return;
+        }
+        const matchIdx = AppState.tcGoals.findIndex(x => (g.id && x.id === g.id) || (g.name && x.name === g.name));
+        if (matchIdx === -1) {
+          AppState.tcGoals.push(Object.assign({}, g, { id: g.id || `g_${Date.now()}_${Math.random().toString(36).slice(2, 5)}` }));
+        } else if (mode === 'update') {
+          AppState.tcGoals[matchIdx] = Object.assign({}, AppState.tcGoals[matchIdx], g);
+        }
+      });
+    }
+    ensureFixedInvestmentGoals();
+  }
+
+  if (cleanImport.monthlyDetails && typeof cleanImport.monthlyDetails === 'object') {
+    for (let m = 1; m <= 12; m++) {
+      const srcM = cleanImport.monthlyDetails[m];
+      if (!srcM || typeof srcM !== 'object') continue;
+      if (!AppState.monthlyDetails[m]) {
+        AppState.monthlyDetails[m] = { incomes: [], expenses: [], reconIncomeNotes: {}, reconExpenseNotes: {}, learningDetails: [] };
+      }
+      const dstM = AppState.monthlyDetails[m];
+
+      if (mode === 'replace') {
+        if (Array.isArray(srcM.incomes)) dstM.incomes = [...srcM.incomes];
+        if (Array.isArray(srcM.expenses)) dstM.expenses = [...srcM.expenses];
+        if (Array.isArray(srcM.learningDetails)) dstM.learningDetails = [...srcM.learningDetails];
+      } else {
+        if (Array.isArray(srcM.incomes)) {
+          srcM.incomes.forEach(tx => {
+            if (!tx || typeof tx !== 'object') return;
+            const dupIdx = dstM.incomes.findIndex(x => x.date === tx.date && x.cat === tx.cat);
+            if (dupIdx === -1) dstM.incomes.push(tx);
+            else if (mode === 'update') dstM.incomes[dupIdx] = Object.assign({}, dstM.incomes[dupIdx], tx);
+            else dstM.incomes.push(tx);
+          });
+        }
+        if (Array.isArray(srcM.expenses)) {
+          srcM.expenses.forEach(tx => {
+            if (!tx || typeof tx !== 'object') return;
+            const dupIdx = dstM.expenses.findIndex(x => x.date === tx.date && x.cat === tx.cat);
+            if (dupIdx === -1) dstM.expenses.push(tx);
+            else if (mode === 'update') dstM.expenses[dupIdx] = Object.assign({}, dstM.expenses[dupIdx], tx);
+            else dstM.expenses.push(tx);
+          });
+        }
+        if (Array.isArray(srcM.learningDetails)) {
+          dstM.learningDetails = mergeByKey(dstM.learningDetails, srcM.learningDetails, 'name');
+        }
+      }
+    }
+  }
+
+  if (cleanImport.surveyP1Choices && typeof cleanImport.surveyP1Choices === 'object') {
+    if (mode === 'replace') AppState.surveyP1Choices = { ...cleanImport.surveyP1Choices };
+    else if (mode === 'update') Object.assign(AppState.surveyP1Choices, cleanImport.surveyP1Choices);
+  }
+  if (cleanImport.surveyP2Choices && typeof cleanImport.surveyP2Choices === 'object') {
+    if (mode === 'replace') AppState.surveyP2Choices = { ...cleanImport.surveyP2Choices };
+    else if (mode === 'update') Object.assign(AppState.surveyP2Choices, cleanImport.surveyP2Choices);
+  }
+
+  ensureFixedInvestmentGoals();
+  syncInvestProductsToGoals();
+  const yEl = document.getElementById('input-year');
+  const aEl = document.getElementById('input-age');
+  if (yEl) yEl.innerText = AppState.currentYear;
+  if (aEl) aEl.innerText = AppState.currentAge;
+  document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
+
+  renderSetupTables();
+  renderPlanTables();
+  renderTcGoalsFormTable();
+  renderSkillsFamilyJob();
+  renderGoogleFormSurvey();
+  evaluateSurveys();
+  renderTcMatrixTable();
+  renderCareerTables();
+  renderMonthView(AppState.currentMonth);
+  syncGoalsToCards();
+  recalculateAll();
+  window.markUnsavedChanges();
+  return true;
+};
+
+window.confirmJsonImport = function() {
+  if (!pendingJsonImportPayload || !pendingJsonImportPayload.valid) {
+    showToast("Vui lòng chọn file JSON hợp lệ trước khi xác nhận.", "error");
+    return false;
+  }
+  const modeEl = document.querySelector('input[name="json-import-mode"]:checked');
+  const mode = modeEl ? modeEl.value : 'update';
+  const allowKeywords = Boolean(document.getElementById('chk-json-allow-keywords')?.checked);
+
+  const ok = window.applyJsonImportData(pendingJsonImportPayload.data, mode, allowKeywords);
+  if (ok) {
+    showToast("Đã nhập dữ liệu JSON thành công!", "success");
+    closeDataIoModal();
+  }
+  return ok;
+};
+
+window.parseRFC4180CSV = function(csvText) {
+  if (typeof csvText !== 'string') return [];
+  const cleanText = csvText.replace(/^\uFEFF/, '');
+  const rows = [];
+  let currentRow = [];
+  let currentField = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const ch = cleanText[i];
+    const nextCh = cleanText[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && nextCh === '"') {
+        currentField += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        currentField += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if (ch === '\r' && nextCh === '\n') {
+        currentRow.push(currentField.trim());
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+        i++;
+      } else if (ch === '\n' || ch === '\r') {
+        currentRow.push(currentField.trim());
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += ch;
+      }
+    }
+  }
+
+  if (currentField.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    rows.push(currentRow);
+  }
+
+  return rows.filter(r => r.some(cell => cell !== ''));
+};
+
+window.onCsvTargetTableChange = function() {
+  const tableKey = document.getElementById('select-csv-target-table')?.value || 'month_income';
+  const schema = CSV_TABLE_SCHEMAS[tableKey];
+  const monthGroup = document.getElementById('csv-month-select-group');
+  if (monthGroup) {
+    monthGroup.style.display = (schema && schema.requireMonth) ? 'flex' : 'none';
+  }
+  if (pendingCsvParsedState && pendingCsvParsedState.rawRows) {
+    buildCsvColumnMappingUI(pendingCsvParsedState.headers, tableKey);
+    window.revalidateCsvPreview();
+  }
+};
+
+window.downloadCsvTemplate = function() {
+  const tableKey = document.getElementById('select-csv-target-table')?.value || 'month_income';
+  const schema = CSV_TABLE_SCHEMAS[tableKey];
+  if (!schema) return;
+  const headerLine = schema.fields.map(f => `"${f.key}"`).join(',');
+  const bodyLines = (schema.sampleRows || []).map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','));
+  const csvContent = "\uFEFF" + [headerLine, ...bodyLines].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `mau_${tableKey}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+window.handleCsvFileSelected = function(event) {
+  const file = event?.target?.files?.[0];
+  if (!file) return;
+  if (typeof window.processU032File === 'function') {
+    window.processU032File(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = String(e.target?.result || '');
+      window.loadCsvTextForPreview(text);
+    };
+    reader.readAsText(file, "utf-8");
+  }
+};
+
+function buildCsvColumnMappingUI(headers, tableKey) {
+  const schema = CSV_TABLE_SCHEMAS[tableKey];
+  const mapBox = document.getElementById('csv-column-mapping-box');
+  const fieldsContainer = document.getElementById('csv-mapping-fields');
+  if (!schema || !mapBox || !fieldsContainer) return;
+
+  fieldsContainer.innerHTML = schema.fields.map(f => {
+    let defaultIdx = headers.findIndex(h => {
+      const nh = normalizeUserName(h);
+      const nk = normalizeUserName(f.key);
+      const nl = normalizeUserName(f.label);
+      return nh === nk || (nh && nl.includes(nh)) || (nh && nk.includes(nh));
+    });
+    if (defaultIdx === -1 && schema.fields.indexOf(f) < headers.length) {
+      defaultIdx = schema.fields.indexOf(f);
+    }
+
+    return `
+      <div class="io-mapping-item">
+        <label>${escapeHtml(f.label)} ${f.required ? '*' : ''}</label>
+        <select class="io-select csv-col-map-select" data-field-key="${f.key}" onchange="revalidateCsvPreview()">
+          <option value="-1">-- Bỏ qua --</option>
+          ${headers.map((h, i) => `<option value="${i}" ${i === defaultIdx ? 'selected' : ''}>Cột ${i + 1}: ${escapeHtml(h || `(Cột ${i + 1})`)}</option>`).join('')}
+        </select>
+      </div>
+    `;
+  }).join('');
+
+  mapBox.style.display = 'flex';
+}
+
+window.loadCsvTextForPreview = function(csvText, explicitTableKey = null) {
+  const errBox = document.getElementById('csv-import-error-box');
+  const prevBox = document.getElementById('csv-import-preview-box');
+  const mapBox = document.getElementById('csv-column-mapping-box');
+
+  if (explicitTableKey) {
+    const sel = document.getElementById('select-csv-target-table');
+    if (sel) sel.value = explicitTableKey;
+  }
+
+  const rows = window.parseRFC4180CSV(csvText);
+  if (!rows || rows.length < 2) {
+    if (prevBox) prevBox.style.display = 'none';
+    if (mapBox) mapBox.style.display = 'none';
+    if (errBox) {
+      errBox.textContent = "File CSV phải có ít nhất 1 dòng tiêu đề (header) và 1 dòng dữ liệu.";
+      errBox.style.display = 'block';
+    }
+    pendingCsvParsedState = null;
+    return { valid: false, error: "Thiếu dữ liệu CSV" };
+  }
+
+  if (errBox) errBox.style.display = 'none';
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+  const tableKey = document.getElementById('select-csv-target-table')?.value || 'month_income';
+
+  pendingCsvParsedState = {
+    headers,
+    rawRows: dataRows,
+    validRecords: [],
+    invalidRows: [],
+    duplicateCount: 0
+  };
+
+  buildCsvColumnMappingUI(headers, tableKey);
+  return window.revalidateCsvPreview();
+};
+
+window.revalidateCsvPreview = function() {
+  if (!pendingCsvParsedState) return null;
+  const tableKey = document.getElementById('select-csv-target-table')?.value || 'month_income';
+  const schema = CSV_TABLE_SCHEMAS[tableKey];
+  if (!schema) return null;
+
+  const mapping = {};
+  document.querySelectorAll('.csv-col-map-select').forEach(sel => {
+    const k = sel.getAttribute('data-field-key');
+    mapping[k] = parseInt(sel.value, 10);
+  });
+
+  schema.fields.forEach((f, idx) => {
+    if (mapping[f.key] === undefined) {
+      mapping[f.key] = idx < pendingCsvParsedState.headers.length ? idx : -1;
+    }
+  });
+
+  const validRecords = [];
+  const invalidRows = [];
+  let duplicateCount = 0;
+  const seenKeys = new Set();
+
+  pendingCsvParsedState.rawRows.forEach((rowCells, rIdx) => {
+    const record = {};
+    const rowErrors = [];
+
+    schema.fields.forEach(f => {
+      const colIdx = mapping[f.key];
+      const rawVal = (colIdx >= 0 && colIdx < rowCells.length) ? String(rowCells[colIdx] ?? '').trim() : '';
+
+      if (f.required && rawVal === '') {
+        rowErrors.push(`Thiếu "${f.label}"`);
+        return;
+      }
+
+      if (f.type === 'number') {
+        if (rawVal === '') {
+          record[f.key] = 0;
+        } else {
+          const normalizedNum = rawVal.replace(/\s/g, '').replace(/,/g, '.');
+          const parsedNum = Number(normalizedNum);
+          if (isNaN(parsedNum) || !isFinite(parsedNum)) {
+            rowErrors.push(`Giá trị số không hợp lệ ở "${f.label}" ("${rawVal}")`);
+          } else {
+            record[f.key] = parsedNum;
+          }
+        }
+      } else if (f.key === 'date') {
+        record.date = rawVal ? parseToIsoDate(rawVal) : `${AppState.currentYear || 2026}-01-01`;
+      } else {
+        record[f.key] = rawVal;
+      }
+    });
+
+    const dedupSignature = JSON.stringify(record);
+    if (seenKeys.has(dedupSignature)) {
+      duplicateCount++;
+    }
+    seenKeys.add(dedupSignature);
+
+    if (rowErrors.length > 0) {
+      invalidRows.push({ rowNumber: rIdx + 2, rawCells: rowCells, errors: rowErrors });
+    } else {
+      validRecords.push({ rowNumber: rIdx + 2, record });
+    }
+  });
+
+  pendingCsvParsedState.validRecords = validRecords;
+  pendingCsvParsedState.invalidRows = invalidRows;
+  pendingCsvParsedState.duplicateCount = duplicateCount;
+  pendingCsvParsedState.tableKey = tableKey;
+
+  const prevBox = document.getElementById('csv-import-preview-box');
+  const badgeEl = document.getElementById('csv-preview-counts-badge');
+  const wrapEl = document.getElementById('csv-preview-table-wrap');
+
+  if (badgeEl) {
+    badgeEl.textContent = `${validRecords.length} hợp lệ • ${invalidRows.length} lỗi • ${duplicateCount} trùng`;
+  }
+
+  if (wrapEl) {
+    const previewSlice = validRecords.slice(0, 8);
+    const errSlice = invalidRows.slice(0, 5);
+    wrapEl.innerHTML = `
+      <table class="excel-table" style="font-size: 0.78rem;">
+        <thead>
+          <tr class="header-sub">
+            <th>Dòng</th>
+            ${schema.fields.map(f => `<th>${escapeHtml(f.label)}</th>`).join('')}
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${previewSlice.map(item => `
+            <tr>
+              <td class="text-center font-mono">#${item.rowNumber}</td>
+              ${schema.fields.map(f => `<td>${escapeHtml(item.record[f.key])}</td>`).join('')}
+              <td class="text-success font-bold">Hợp lệ</td>
+            </tr>
+          `).join('')}
+          ${errSlice.map(err => `
+            <tr>
+              <td class="text-center font-mono text-danger">#${err.rowNumber}</td>
+              <td colspan="${schema.fields.length}" class="text-danger">${escapeHtml(err.errors.join('; '))}</td>
+              <td class="text-danger font-bold">Lỗi</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  if (prevBox) prevBox.style.display = 'flex';
+  return {
+    valid: validRecords.length > 0,
+    validCount: validRecords.length,
+    errorCount: invalidRows.length,
+    duplicateCount
+  };
+};
+
+window.confirmCsvImport = function() {
+  if (!pendingCsvParsedState || !Array.isArray(pendingCsvParsedState.validRecords) || pendingCsvParsedState.validRecords.length === 0) {
+    showToast("Không có dòng dữ liệu CSV hợp lệ nào để nhập!", "error");
+    return false;
+  }
+
+  const tableKey = pendingCsvParsedState.tableKey || document.getElementById('select-csv-target-table')?.value || 'month_income';
+  const mode = document.getElementById('select-csv-import-mode')?.value || 'add';
+  const month = parseInt(document.getElementById('select-csv-target-month')?.value || String(AppState.currentMonth || 1), 10) || 1;
+  const records = pendingCsvParsedState.validRecords.map(x => x.record);
+
+  if (tableKey === 'month_income' || tableKey === 'month_expense' || tableKey === 'month_learning') {
+    if (!AppState.monthlyDetails[month]) {
+      AppState.monthlyDetails[month] = { incomes: [], expenses: [], reconIncomeNotes: {}, reconExpenseNotes: {}, learningDetails: [] };
+    }
+    const md = AppState.monthlyDetails[month];
+
+    if (tableKey === 'month_income') {
+      if (mode === 'replace') md.incomes = [];
+      records.forEach(r => {
+        const idx = md.incomes.findIndex(x => x.cat === r.cat && x.date === r.date);
+        if (idx >= 0 && mode === 'update') md.incomes[idx].val = Number(r.val) || 0;
+        else md.incomes.push({ date: r.date, cat: r.cat, val: Number(r.val) || 0 });
+      });
+      sortMonthTransactions(month, 'incomes');
+    } else if (tableKey === 'month_expense') {
+      if (mode === 'replace') md.expenses = md.expenses.filter(x => x.autoSyncedLearning);
+      records.forEach(r => {
+        const idx = md.expenses.findIndex(x => x.cat === r.cat && x.date === r.date && !x.autoSyncedLearning);
+        if (idx >= 0 && mode === 'update') md.expenses[idx].val = Number(r.val) || 0;
+        else md.expenses.push({ date: r.date, cat: r.cat, val: Number(r.val) || 0 });
+      });
+      sortMonthTransactions(month, 'expenses');
+    } else if (tableKey === 'month_learning') {
+      if (mode === 'replace') md.learningDetails = [];
+      records.forEach(r => {
+        const idx = md.learningDetails.findIndex(x => x.name === r.name);
+        if (idx >= 0 && mode === 'update') {
+          md.learningDetails[idx].cost = Number(r.cost) || 0;
+          md.learningDetails[idx].note = r.note || '';
+        } else {
+          md.learningDetails.push({ name: r.name, cost: Number(r.cost) || 0, note: r.note || '' });
+        }
+      });
+      syncMonthLearningExpense(month);
+    }
+  } else if (tableKey === 'plan_income') {
+    if (mode === 'replace') AppState.planIncome = [];
+    records.forEach(r => {
+      const idx = AppState.planIncome.findIndex(x => x.name === r.name);
+      if (idx >= 0 && mode === 'update') {
+        AppState.planIncome[idx].plan = Number(r.plan) || 0;
+        AppState.planIncome[idx].note = r.note || '';
+      } else {
+        AppState.planIncome.push({ name: r.name, plan: Number(r.plan) || 0, note: r.note || '' });
+      }
+    });
+  } else if (tableKey === 'plan_expense') {
+    if (mode === 'replace') AppState.planExpense = [];
+    records.forEach(r => {
+      const idx = AppState.planExpense.findIndex(x => x.name === r.name);
+      if (idx >= 0 && mode === 'update') {
+        AppState.planExpense[idx].plan = Number(r.plan) || 0;
+        AppState.planExpense[idx].note = r.note || '';
+      } else {
+        AppState.planExpense.push({ name: r.name, plan: Number(r.plan) || 0, note: r.note || '' });
+      }
+    });
+  } else if (tableKey === 'tc_goals') {
+    ensureFixedInvestmentGoals();
+    if (mode === 'replace') {
+      AppState.tcGoals = AppState.tcGoals.filter(isFixedInvestmentGoal);
+    }
+    records.forEach(r => {
+      const item = {
+        id: `g_csv_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+        name: r.name,
+        type: (r.type === 'debt') ? 'debt' : 'invest',
+        val: Number(r.val) || 0,
+        paid: Number(r.paid) || 0,
+        start: Number(r.start) || 0,
+        end: Number(r.end) || 0,
+        rate: Number(r.rate) || 0,
+        inflation: Number(r.inflation) || 0,
+        monthly: 0,
+        allocProducts: createEmptyAllocProducts()
+      };
+      if (isCollegeFixedGoal(item)) {
+        const col = AppState.tcGoals.find(isCollegeFixedGoal);
+        if (col && mode !== 'add') {
+          col.val = item.val;
+          col.paid = item.paid;
+          col.start = item.start;
+          col.end = item.end;
+          col.rate = item.rate;
+          col.inflation = item.inflation;
+        }
+        return;
+      }
+      if (isRetirementFixedGoal(item)) {
+        const ret = AppState.tcGoals.find(isRetirementFixedGoal);
+        if (ret && mode !== 'add') {
+          ret.val = item.val;
+          ret.paid = item.paid;
+          ret.start = item.start;
+          ret.end = item.end;
+          ret.rate = item.rate;
+          ret.inflation = item.inflation;
+        }
+        return;
+      }
+      const existingIdx = AppState.tcGoals.findIndex(x => x.name === item.name && !isFixedInvestmentGoal(x));
+      if (existingIdx >= 0 && mode === 'update') {
+        Object.assign(AppState.tcGoals[existingIdx], item, { id: AppState.tcGoals[existingIdx].id });
+      } else {
+        AppState.tcGoals.push(item);
+      }
+    });
+    ensureFixedInvestmentGoals();
+  }
+
+  renderPlanTables();
+  renderTcGoalsFormTable();
+  renderTcMatrixTable();
+  renderCareerTables();
+  renderMonthView(AppState.currentMonth);
+  syncGoalsToCards();
+  recalculateAll();
+  window.markUnsavedChanges();
+
+  showToast(`Đã nhập thành công ${records.length} dòng dữ liệu từ CSV!`, "success");
+  closeDataIoModal();
+  return true;
+};
+
 window.hasUnsavedChanges = false;
 window.hasSavedInSession = false;
 window.allowExitWithoutSave = false;
@@ -5116,7 +7127,6 @@ window.hasAppStateData = function() {
     (AppState.incomeList && AppState.incomeList.length > 0) ||
     (AppState.planList && AppState.planList.length > 0) ||
     (AppState.investProducts && AppState.investProducts.length > 0) ||
-    (AppState.tcGoals && AppState.tcGoals.length > 0) ||
     (AppState.skillsList && AppState.skillsList.length > 0) ||
     (AppState.familyList && AppState.familyList.length > 0) ||
     (AppState.jobList && AppState.jobList.length > 0) ||
@@ -5127,6 +7137,10 @@ window.hasAppStateData = function() {
     (AppState.skillsStore && Object.keys(AppState.skillsStore).length > 0)
   ) {
     return true;
+  }
+  if (Array.isArray(AppState.tcGoals)) {
+    const hasNonZeroGoal = AppState.tcGoals.some(g => !isFixedInvestmentGoal(g) || Number(g.val) > 0 || Number(g.start) > 0 || Number(g.end) > 0);
+    if (hasNonZeroGoal) return true;
   }
   for (let m = 1; m <= 12; m++) {
     const md = AppState.monthlyDetails?.[m];
@@ -5238,14 +7252,12 @@ window.confirmSaveBeforeExit = async function() {
   }
 };
 
-// Sự kiện trình duyệt hỏi người dùng trước khi tắt / đóng tab hoặc tải lại trang
 window.addEventListener('beforeunload', (e) => {
   if (window.allowExitWithoutSave) return;
   if (window.hasUnsavedChanges || !window.hasSavedInSession || window.hasAppStateData()) {
     const msg = 'Bạn có muốn lưu dữ liệu trước khi tắt trang web không?';
     e.preventDefault();
     e.returnValue = msg;
-    // Nếu người dùng chọn "Ở lại trang" trên hộp thoại trình duyệt để lưu dữ liệu, mở ngay hộp thoại Lưu trong trang
     setTimeout(() => {
       if (!document.hidden && !window.allowExitWithoutSave) {
         window.openExitSaveModal();
@@ -5255,27 +7267,22 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
-// ==================== KHỞI TẠO VÀ LẮNG NGHE SỰ KIỆN ====================
 document.addEventListener('DOMContentLoaded', () => {
-  // Gắn sự kiện gõ phím để xem trước định danh
-  const inputName = document.getElementById('input-user-rawname');
-  if (inputName) {
-    inputName.addEventListener('input', (e) => {
-      updateSlugPreview(e.target.value);
-      const errorEl = document.getElementById('user-input-error');
-      if (errorEl) errorEl.style.display = 'none';
-      const dupBox = document.getElementById('duplicate-warning-box');
-      if (dupBox) dupBox.style.display = 'none';
-    });
-    inputName.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') submitUserProfile();
-    });
-  }
+  ensureFixedInvestmentGoals();
+  syncInvestProductsToGoals();
 
-  // Khởi tạo Expanding Side Rail (Mẫu Lucian #040)
+  const authInputs = document.querySelectorAll('#user-modal-overlay input');
+  authInputs.forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitUserProfile();
+      }
+    });
+  });
+
   initSideRail();
 
-  // Khởi tạo Mobile Navigation Drawer
   const btnMenuToggle = document.getElementById('btn-menu-toggle');
   const btnDrawerClose = document.getElementById('btn-drawer-close');
   const sidebarBackdrop = document.getElementById('sidebar-backdrop');
@@ -5287,7 +7294,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnDrawerClose) btnDrawerClose.addEventListener('click', closeDrawer);
   if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeDrawer);
 
-  // Đóng drawer khi chọn tab trên mobile, hoặc thu gọn hover rail
   document.querySelectorAll('.sidebar .nav-item, #app-sidebar .nav-item').forEach(item => {
     item.addEventListener('click', () => {
       if (window.innerWidth <= 768) {
@@ -5298,7 +7304,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Đóng Account Switcher menu khi click ngoài
   document.addEventListener('click', (e) => {
     const area = document.getElementById('rail-account-area');
     if (area && !area.contains(e.target)) {
@@ -5306,7 +7311,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Điều hướng bàn phím cho Account Switcher Flyout (Mẫu Lucian #037)
   document.addEventListener('keydown', (e) => {
     const menu = document.getElementById('account-switcher-menu');
     if (!menu || menu.style.display === 'none' || !menu.classList.contains('is-open')) return;
@@ -5333,12 +7337,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Khởi tạo DatePicker
   if (window.FinDatePicker) {
     FinDatePicker.init();
   }
 
-  // Khởi tạo Theme & Chart font defaults
   if (window.initTheme) {
     window.initTheme();
   }
@@ -5346,7 +7348,6 @@ document.addEventListener('DOMContentLoaded', () => {
     Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
   }
 
-  // Khởi tạo các bảng dữ liệu ban đầu (trạng thái trống hoàn toàn khi mở trang)
   const sRateEl = document.getElementById('target-savings-rate-val');
   if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
   const vAgeEl = document.getElementById('vision-age-cell');
@@ -5369,7 +7370,6 @@ document.addEventListener('DOMContentLoaded', () => {
   syncGoalsToCards();
   recalculateAll();
 
-  // Theo dõi mọi thao tác nhập liệu / chỉnh sửa trên trang để đánh dấu dữ liệu chưa lưu
   const contentBody = document.querySelector('.content-body');
   if (contentBody) {
     contentBody.addEventListener('input', () => {
@@ -5385,14 +7385,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Khôi phục phiên người dùng hoặc mở Modal bắt buộc
   const storedUser = UserSession.getStored();
-  if (storedUser && storedUser.rawName && storedUser.docId) {
+  if (storedUser && (storedUser.username || storedUser.rawName) && storedUser.docId) {
     UserSession.currentUser = storedUser;
+    if (window.CloudDB && typeof window.CloudDB.restoreSessionContext === 'function') {
+      window.CloudDB.restoreSessionContext(storedUser);
+      window.loadAppStateFromCloud(true);
+    }
     UserSession.updateUI();
   } else {
-    // Người dùng mới truy cập: mở modal chặn các thao tác cho đến khi xác nhận họ tên
-    openUserModal(false);
+    UserSession.currentUser = null;
+    UserSession.updateUI();
   }
 
   const yEl = document.getElementById('input-year');
@@ -5452,7 +7455,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Lắng nghe sự kiện bàn phím cho Day–night sky switch (Prompt #021)
   const u021Switch = document.getElementById('u021-theme-switch');
   if (u021Switch) {
     u021Switch.addEventListener('keydown', (e) => {
@@ -5463,12 +7465,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Đóng modal backup hoặc modal hỏi lưu khi click bên ngoài vùng hộp thoại hoặc nhấn phím Escape
   const backupOverlay = document.getElementById('backup-modal-overlay');
   if (backupOverlay) {
     backupOverlay.addEventListener('click', (e) => {
       if (e.target === backupOverlay) {
         window.closeBackupManagerModal();
+      }
+    });
+  }
+  const dataIoOverlay = document.getElementById('data-io-modal-overlay');
+  if (dataIoOverlay) {
+    dataIoOverlay.addEventListener('click', (e) => {
+      if (e.target === dataIoOverlay) {
+        window.closeDataIoModal();
       }
     });
   }
@@ -5486,15 +7495,34 @@ document.addEventListener('DOMContentLoaded', () => {
       if (backupModal && backupModal.classList.contains('active')) {
         window.closeBackupManagerModal();
       }
+      const ioModal = document.getElementById('data-io-modal-overlay');
+      if (ioModal && ioModal.classList.contains('active')) {
+        window.closeDataIoModal();
+      }
       const exitModal = document.getElementById('exit-save-modal-overlay');
       if (exitModal && exitModal.classList.contains('active') && !isExitSaving) {
         window.closeExitSaveModal();
       }
     }
   });
+
+  if (typeof window.initU032Upload === 'function') {
+    window.initU032Upload();
+  }
 });
 
-// Khi Firebase sẵn sàng: giữ nguyên dữ liệu ban đầu trống hoàn toàn (người dùng có thể bấm "Nhập dữ liệu" bất cứ lúc nào để khôi phục bản lưu)
 window.addEventListener('firebase-ready', () => {
   updateCloudStatus('ready', 'Đám mây sẵn sàng');
+  if (UserSession.currentUser && window.CloudDB && typeof window.CloudDB.restoreSessionContext === 'function') {
+    window.CloudDB.restoreSessionContext(UserSession.currentUser);
+    window.loadAppStateFromCloud(true);
+  }
+  if (window.CloudDB && typeof window.CloudDB.subscribeAuthState === 'function') {
+    window.CloudDB.subscribeAuthState((fbUser) => {
+      if (fbUser && (!UserSession.currentUser || UserSession.currentUser.uid !== fbUser.uid)) {
+        UserSession.setStored(fbUser);
+      }
+    });
+  }
 });
+

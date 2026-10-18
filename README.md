@@ -34,12 +34,14 @@ financials-plan.github.io-main/
 ├── script.js                            # Logic nghiệp vụ & thuật toán tài chính (ở ngoài cùng)
 ├── firebase-config.js                   # File cấu hình duy nhất cho phép thay đổi (firebaseConfig, firestoreSettings)
 ├── README.md                            # Tài liệu tổng quan & mô hình thuật toán
+├── SECURITY.md                          # Chính sách & hướng dẫn cấu hình bảo mật toàn diện
 └── firebase/                            # Thư mục riêng chứa toàn bộ lõi cài đặt Firebase
     ├── firestore-service.js             # Mô-đun kết nối Firebase SDK v10.12.0 & định nghĩa window.CloudDB
     ├── firestore.rules                  # Quy tắc bảo mật Cloud Firestore (Rules v2)
     ├── firestore.indexes.json           # Cấu hình miễn trừ chỉ mục (fieldOverrides)
     ├── firebase.json                    # Cấu hình Firebase CLI
     ├── .firebaserc                      # Khai báo Project ID mặc định (financials-plan)
+    ├── FIRESTORE_SETUP_GUIDE.tex        # Tài liệu LaTeX hướng dẫn cài đặt Firebase chi tiết từng bước
     └── FIRESTORE_SETUP_CHECKLIST.md     # Bảng kiểm tra nhanh quy trình cài đặt
 ```
 
@@ -62,8 +64,7 @@ Toàn bộ cài đặt sâu của Firebase đã được đóng gói trong thư 
      firebase use <project-id>
      firebase deploy --only firestore
      ```
-   * *(Xem hướng dẫn cài đặt chi tiết từng bước kèm giải thích đầy đủ trong guideline dưới đây: * *
-      [`./firebase/FIRESTORE_SETUP_CHECKLIST.md`](./firebase/FIRESTORE_SETUP_CHECKLIST.md))
+   * *(Xem hướng dẫn cài đặt chi tiết từng bước kèm giải thích đầy đủ trong tài liệu LaTeX [`./firebase/FIRESTORE_SETUP_GUIDE.tex`](./firebase/FIRESTORE_SETUP_GUIDE.tex) và [`./firebase/FIRESTORE_SETUP_CHECKLIST.md`](./firebase/FIRESTORE_SETUP_CHECKLIST.md)).*
 
 #### B. Chạy ứng dụng trên máy cục bộ (Localhost) hoặc GitHub Pages
 Do ứng dụng nạp Firebase SDK theo chuẩn ES Modules (`<script type="module" src="./firebase/firestore-service.js">`), cần chạy qua giao thức `http://` hoặc `https://` để trình duyệt không chặn CORS:
@@ -525,3 +526,17 @@ stateDiagram-v2
 ```
 
 Mọi tương tác từ người dùng đều kích hoạt hàm nhạc trưởng [`recalculateAll()`](file:///d:/Code%20-%20IT/anything%20without%20cpp/financials-plan.github.io-main/script.js#L3541) tại `script.js`, đảm bảo dữ liệu luôn được tính toán lại theo chuỗi phụ thuộc và không bao giờ xảy ra tình trạng lệch số liệu giữa các tab chức năng.
+
+---
+
+## 4. Chính sách bảo mật & Hướng dẫn an toàn dữ liệu
+
+Hệ thống tuân thủ nghiêm ngặt mô hình phòng thủ ba lớp (Defense-in-Depth) kết hợp giữa kiểm tra dữ liệu tại trình duyệt, giới hạn truy cập tại Google Cloud Gateway và quy tắc xác thực cấu trúc tại Cloud Firestore:
+
+* **Tài liệu cấu hình chi tiết:** Xem file [`SECURITY.md`](./SECURITY.md) để nắm rõ:
+  1. Quy trình báo cáo lỗ hổng an ninh có điều phối (Coordinated Vulnerability Disclosure).
+  2. Hướng dẫn thiết lập HTTP Referrer & API Restrictions cho API Key trên Google Cloud Console.
+  3. Cơ chế hoạt động của Firestore Security Rules v2 ([`./firebase/firestore.rules`](./firebase/firestore.rules)).
+  4. Cấu hình Content Security Policy (CSP) và các tiêu đề bảo mật HTTP.
+  5. Bảng kiểm tra an ninh 12 điểm trước khi triển khai lên môi trường thực tế (Production).
+

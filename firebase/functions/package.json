@@ -1,0 +1,13 @@
+{
+  "name": "financials-plan-auth-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for Username Authentication and Recovery Email Management",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.0"
+  }
+}
