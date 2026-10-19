@@ -40,8 +40,8 @@
         <span class="brand-unit-badge"><i class="fa-solid fa-coins"></i> Đơn vị: Triệu đồng</span>
       </div>
 
-      <button type="button" class="btn-rail-toggle" id="btn-rail-toggle" aria-label="Ghim mở rộng hoặc tự động thu gọn Side Rail" aria-pressed="true" title="Ghim mở rộng (Nhấn để chuyển sang Tự động mở khi hover)" onclick="toggleSideRailPin()">
-        <i class="fa-solid fa-thumbtack icon-rail-pin"></i>
+      <button type="button" class="btn-rail-toggle" id="btn-rail-toggle" aria-label="Thu gọn hoặc mở rộng Side Rail" aria-pressed="true" title="Thu gọn thanh bên" onclick="toggleSideRailPin()">
+        <i class="fa-solid fa-chevron-left icon-rail-toggle-arrow"></i>
       </button>
       <button type="button" class="btn-drawer-close" id="btn-drawer-close" aria-label="Đóng menu điều hướng"><i class="fa-solid fa-xmark"></i></button>
     </div>
@@ -101,92 +101,6 @@
         </button>
       </div>
     </nav>
-
-    
-    <div class="rail-account-area" id="rail-account-area">
-
-      <div class="account-switcher-menu" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
-        <div class="account-menu-header">
-          <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
-          <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
-        </div>
-
-        
-        <div class="account-list" id="rail-account-list" role="group">
-
-        </div>
-
-        <div class="account-menu-divider"></div>
-
-        
-        <div class="account-theme-row">
-          <div class="account-theme-info">
-            <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
-            <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
-          </div>
-
-          <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
-            <span class="u021-track">
-
-              <span class="u021-sky u021-sky-day">
-                <span class="u021-cloud u021-cloud-1"></span>
-                <span class="u021-cloud u021-cloud-2"></span>
-                <span class="u021-cloud u021-cloud-3"></span>
-              </span>
-
-              <span class="u021-sky u021-sky-night">
-                <span class="u021-star u021-star-1"></span>
-                <span class="u021-star u021-star-2"></span>
-                <span class="u021-star u021-star-3"></span>
-                <span class="u021-star u021-star-4"></span>
-                <span class="u021-star u021-star-5"></span>
-              </span>
-
-              <span class="u021-knob">
-                <span class="u021-crater u021-crater-1"></span>
-                <span class="u021-crater u021-crater-2"></span>
-                <span class="u021-crater u021-crater-3"></span>
-              </span>
-            </span>
-          </button>
-        </div>
-
-        <div class="account-menu-divider"></div>
-
-        <div class="account-actions">
-          <button type="button" class="account-action-btn" id="btn-menu-account-info" onclick="openUserModal(true, 'account'); closeAccountMenu();">
-            <i class="fa-solid fa-id-card-clip text-primary"></i> <span>Thông tin tài khoản</span>
-          </button>
-          <button type="button" class="account-action-btn" id="btn-menu-change-password" onclick="openUserModal(true, 'change-password'); closeAccountMenu();">
-            <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
-          </button>
-          <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
-            <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
-          </a>
-          <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
-            <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
-          </button>
-          <button type="button" class="account-action-btn" onclick="saveAppStateToCloud(); closeAccountMenu();">
-            <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu</span>
-          </button>
-          <button type="button" class="account-action-btn text-danger" id="btn-account-logout" onclick="logoutUserProfile(); closeAccountMenu();">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất tài khoản</span>
-          </button>
-        </div>
-      </div>
-
-      <button type="button" class="rail-account-chip" id="btn-account-chip" aria-haspopup="menu" aria-expanded="false" aria-label="Mở menu chuyển đổi tài khoản" onclick="toggleAccountMenu(event)">
-        <div class="chip-avatar-wrap">
-          <div class="chip-avatar" id="chip-user-avatar">N</div>
-          <span class="chip-status-dot" title="Trạng thái: Hoạt động"></span>
-        </div>
-        <div class="chip-info">
-          <span class="chip-name" id="chip-display-name">Chưa xác nhận</span>
-          <span class="chip-slug" id="chip-display-slug">@guest</span>
-        </div>
-        <i class="fa-solid fa-chevron-up chip-chevron"></i>
-      </button>
-    </div>
   </aside>
 
   <main class="main-content">
@@ -210,6 +124,11 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
 
+        <button type="button" class="btn-theme-toggle" id="btn-topbar-theme" onclick="toggleTheme(event)" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Chuyển đổi giao diện Sáng / Tối">
+          <i class="fa-solid fa-moon icon-theme-moon"></i>
+          <i class="fa-solid fa-sun icon-theme-sun"></i>
+        </button>
+
         <div class="topbar-auth-section" id="topbar-auth-section">
           <a href="./auth/index.html" class="btn-topbar-login-prominent" id="btn-topbar-login" title="Đăng nhập tài khoản" onclick="goToAuthPage('login'); return false;">
             <i class="fa-solid fa-right-to-bracket"></i> <span>Đăng nhập</span>
@@ -219,6 +138,69 @@
             <span class="topbar-user-name" id="topbar-user-name">Người dùng</span>
             <i class="fa-solid fa-chevron-down topbar-user-chevron"></i>
           </button>
+
+          <div class="account-switcher-menu menu-from-topbar" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
+            <div class="account-menu-header">
+              <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
+              <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
+            </div>
+
+            <div class="account-list" id="rail-account-list" role="group"></div>
+
+            <div class="account-menu-divider"></div>
+
+            <div class="account-theme-row">
+              <div class="account-theme-info">
+                <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
+                <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
+              </div>
+
+              <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
+                <span class="u021-track">
+                  <span class="u021-sky u021-sky-day">
+                    <span class="u021-cloud u021-cloud-1"></span>
+                    <span class="u021-cloud u021-cloud-2"></span>
+                    <span class="u021-cloud u021-cloud-3"></span>
+                  </span>
+                  <span class="u021-sky u021-sky-night">
+                    <span class="u021-star u021-star-1"></span>
+                    <span class="u021-star u021-star-2"></span>
+                    <span class="u021-star u021-star-3"></span>
+                    <span class="u021-star u021-star-4"></span>
+                    <span class="u021-star u021-star-5"></span>
+                  </span>
+                  <span class="u021-knob">
+                    <span class="u021-crater u021-crater-1"></span>
+                    <span class="u021-crater u021-crater-2"></span>
+                    <span class="u021-crater u021-crater-3"></span>
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            <div class="account-menu-divider"></div>
+
+            <div class="account-actions">
+              <button type="button" class="account-action-btn" id="btn-menu-account-info" onclick="openUserModal(true, 'account'); closeAccountMenu();">
+                <i class="fa-solid fa-id-card-clip text-primary"></i> <span>Thông tin tài khoản</span>
+              </button>
+              <button type="button" class="account-action-btn" id="btn-menu-change-password" onclick="openUserModal(true, 'change-password'); closeAccountMenu();">
+                <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
+              </button>
+              <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
+                <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
+              </a>
+              <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
+                <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
+              </button>
+              <button type="button" class="account-action-btn" onclick="saveAppStateToCloud(); closeAccountMenu();">
+                <i class="fa-solid fa-cloud-arrow-up text-success"></i> <span>Lưu dữ liệu</span>
+              </button>
+              <button type="button" class="account-action-btn text-danger" id="btn-account-logout" onclick="logoutUserProfile(); closeAccountMenu();">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất tài khoản</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>

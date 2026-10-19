@@ -444,21 +444,15 @@ window.toggleAccountMenu = function(e, fromTopbar = false) {
 
 window.openAccountMenu = function(fromTopbar = false) {
   const menu = document.getElementById('account-switcher-menu');
-  const chip = document.getElementById('btn-account-chip');
   const topChip = document.getElementById('topbar-user-chip');
   if (!menu) return;
 
   renderAccountSwitcher();
-  if (fromTopbar) {
-    menu.classList.add('menu-from-topbar');
-  } else {
-    menu.classList.remove('menu-from-topbar');
-  }
+  menu.classList.add('menu-from-topbar');
   menu.style.display = 'block';
   requestAnimationFrame(() => {
     menu.classList.add('is-open');
   });
-  if (chip) chip.setAttribute('aria-expanded', 'true');
   if (topChip) topChip.setAttribute('aria-expanded', 'true');
 
   setTimeout(() => {
@@ -469,17 +463,10 @@ window.openAccountMenu = function(fromTopbar = false) {
 
 window.closeAccountMenu = function() {
   const menu = document.getElementById('account-switcher-menu');
-  const chip = document.getElementById('btn-account-chip');
   const topChip = document.getElementById('topbar-user-chip');
   if (!menu) return;
   menu.classList.remove('is-open');
-  setTimeout(() => {
-    if (!menu.classList.contains('is-open')) {
-      menu.style.display = 'none';
-      menu.classList.remove('menu-from-topbar');
-    }
-  }, 180);
-  if (chip) chip.setAttribute('aria-expanded', 'false');
+  menu.style.display = 'none';
   if (topChip) topChip.setAttribute('aria-expanded', 'false');
 };
 
@@ -1312,7 +1299,7 @@ window.switchMonthTab = function(m) {
 let railCollapseTimer = null;
 
 window.toggleSideRailPin = function() {
-  const isCurrentlyPinned = document.body.classList.contains('rail-pinned');
+  const isCurrentlyPinned = document.body.classList.contains('rail-pinned') && !document.body.classList.contains('rail-collapsed');
   const nextPinned = !isCurrentlyPinned;
   window.setSideRailPinState(nextPinned);
 };
@@ -1326,17 +1313,17 @@ window.setSideRailPinState = function(isPinned) {
     body.classList.add('rail-pinned', 'rail-expanded');
     if (pinBtn) {
       pinBtn.setAttribute('aria-pressed', 'true');
-      pinBtn.setAttribute('title', 'Bỏ ghim thanh bên (chuyển sang tự động thu gọn)');
-      pinBtn.setAttribute('aria-label', 'Bỏ ghim thanh bên');
+      pinBtn.setAttribute('title', 'Thu gọn thanh bên');
+      pinBtn.setAttribute('aria-label', 'Thu gọn thanh bên');
     }
     try { localStorage.setItem('FIN_APP_RAIL_PINNED', 'true'); } catch (e) {}
   } else {
-    body.classList.remove('rail-pinned', 'rail-expanded', 'rail-hover-expanded');
-    body.classList.add('rail-auto', 'rail-collapsed');
+    body.classList.remove('rail-pinned', 'rail-expanded', 'rail-hover-expanded', 'rail-auto');
+    body.classList.add('rail-collapsed');
     if (pinBtn) {
       pinBtn.setAttribute('aria-pressed', 'false');
-      pinBtn.setAttribute('title', 'Ghim thanh bên (cố định mở rộng)');
-      pinBtn.setAttribute('aria-label', 'Ghim thanh bên');
+      pinBtn.setAttribute('title', 'Mở rộng thanh bên');
+      pinBtn.setAttribute('aria-label', 'Mở rộng thanh bên');
     }
     try { localStorage.setItem('FIN_APP_RAIL_PINNED', 'false'); } catch (e) {}
   }
@@ -1346,41 +1333,10 @@ window.setSideRailPinState = function(isPinned) {
 };
 
 window.initSideRailHover = function() {
+  // Người dùng yêu cầu: Nếu đã bấm thu gọn rồi thì đừng tự động popup lên lại khi hover chuột thanh tab
   const sidebar = document.getElementById('app-sidebar');
   if (!sidebar || sidebar.dataset.hoverBound === 'true') return;
   sidebar.dataset.hoverBound = 'true';
-
-  sidebar.addEventListener('mouseenter', () => {
-    if (!document.body.classList.contains('rail-auto')) return;
-    if (window.innerWidth <= 768) return;
-
-    if (railCollapseTimer) {
-      clearTimeout(railCollapseTimer);
-      railCollapseTimer = null;
-    }
-    document.body.classList.add('rail-hover-expanded');
-    updateSlidingHighlight();
-  });
-
-  sidebar.addEventListener('mouseleave', () => {
-    if (!document.body.classList.contains('rail-auto')) return;
-    if (window.innerWidth <= 768) return;
-
-    const accountMenu = document.getElementById('account-switcher-menu');
-    if (accountMenu && !accountMenu.hidden && accountMenu.style.display !== 'none') {
-      return;
-    }
-
-    if (railCollapseTimer) clearTimeout(railCollapseTimer);
-    railCollapseTimer = setTimeout(() => {
-      const currentMenu = document.getElementById('account-switcher-menu');
-      if (currentMenu && !currentMenu.hidden && currentMenu.style.display !== 'none') {
-        return;
-      }
-      document.body.classList.remove('rail-hover-expanded');
-      updateSlidingHighlight();
-    }, 180);
-  });
 };
 
 window.toggleSideRail = function(forceState) {
@@ -7356,10 +7312,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', (e) => {
-    const area = document.getElementById('rail-account-area');
-    if (area && !area.contains(e.target)) {
-      closeAccountMenu();
+    const menu = document.getElementById('account-switcher-menu');
+    const topChip = document.getElementById('topbar-user-chip');
+    const authSec = document.getElementById('topbar-auth-section');
+    if (!menu || menu.style.display === 'none') return;
+    if (menu.contains(e.target) || (topChip && topChip.contains(e.target)) || (authSec && authSec.contains(e.target))) {
+      return;
     }
+    closeAccountMenu();
   });
 
   document.addEventListener('keydown', (e) => {
@@ -7369,7 +7329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       e.preventDefault();
       closeAccountMenu();
-      document.getElementById('btn-account-chip')?.focus();
+      document.getElementById('topbar-user-chip')?.focus();
       return;
     }
 

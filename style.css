@@ -331,30 +331,31 @@ input[type="date"] {
   transform: scale(1.05);
 }
 
+.btn-rail-toggle .icon-rail-toggle-arrow,
 .btn-rail-toggle .icon-rail-pin,
 .btn-rail-toggle i {
   transition: transform 0.24s var(--ease), color 0.16s var(--ease);
   font-size: 0.8125rem;
 }
 
-body.rail-pinned .btn-rail-toggle {
+body.rail-pinned .btn-rail-toggle,
+body:not(.rail-collapsed) .btn-rail-toggle {
   background: var(--violet-soft);
   color: var(--primary);
   border-color: rgba(98, 88, 245, 0.35);
 }
-body.rail-pinned .btn-rail-toggle .icon-rail-pin,
-body.rail-pinned .btn-rail-toggle i {
+body.rail-pinned .btn-rail-toggle i,
+body:not(.rail-collapsed) .btn-rail-toggle i {
   transform: rotate(0deg);
 }
 
-body.rail-auto .btn-rail-toggle {
+body.rail-collapsed .btn-rail-toggle {
   background: var(--bg-card);
   color: var(--text-muted);
   border-color: var(--border);
 }
-body.rail-auto .btn-rail-toggle .icon-rail-pin,
-body.rail-auto .btn-rail-toggle i {
-  transform: rotate(-45deg);
+body.rail-collapsed .btn-rail-toggle i {
+  transform: rotate(180deg);
 }
 
 .btn-drawer-close { display: none; }
@@ -515,7 +516,7 @@ body.rail-pinned {
   --sidebar-w: var(--sidebar-w-expanded);
 }
 
-body.rail-auto.rail-collapsed {
+body.rail-collapsed {
   --sidebar-w: var(--sidebar-w-collapsed);
 }
 
@@ -554,10 +555,13 @@ body.rail-auto.rail-collapsed.rail-hover-expanded .sidebar {
   background: var(--bg-hover);
 }
 
-body.rail-collapsed:not(.rail-hover-expanded) .sidebar-header {
-  padding: 16px 8px 12px;
+body.rail-collapsed .sidebar-header {
+  padding: 12px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 8px;
 }
 
 body.rail-collapsed:not(.rail-hover-expanded) .brand-text,
@@ -592,8 +596,11 @@ body.rail-collapsed:not(.rail-hover-expanded) .nav-item i {
   font-size: 1.05rem;
 }
 
-body.rail-collapsed:not(.rail-hover-expanded) .btn-rail-toggle {
-  display: none;
+body.rail-collapsed .btn-rail-toggle {
+  display: inline-flex !important;
+  margin: 0 auto;
+  width: 28px;
+  height: 28px;
 }
 
 body.rail-collapsed:not(.rail-hover-expanded) .brand-badge {
@@ -763,16 +770,19 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
 }
 
 .account-switcher-menu {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 10px;
-  right: 10px;
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  left: auto;
+  bottom: auto;
+  width: 290px;
+  max-width: 92vw;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
   padding: 12px;
-  z-index: 1000;
+  z-index: 10000;
   animation: accountMenuIn 0.18s var(--ease);
 }
 
@@ -929,26 +939,13 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
   color: var(--danger);
 }
 
-body.rail-collapsed:not(.rail-hover-expanded) .rail-account-area {
-  padding: 10px 8px;
-}
 
-body.rail-collapsed:not(.rail-hover-expanded) .rail-account-chip {
-  padding: 6px;
-  justify-content: center;
-}
 
-body.rail-collapsed:not(.rail-hover-expanded) .chip-info,
-body.rail-collapsed:not(.rail-hover-expanded) .chip-chevron {
-  display: none;
-}
 
-body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
-  left: 78px;
-  right: auto;
-  width: 250px;
-  bottom: 10px;
-}
+
+
+
+
 
 .date-input-wrap {
   position: relative;
