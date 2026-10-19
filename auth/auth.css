@@ -539,11 +539,18 @@ body {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 10px;
+}
+
+.saved-profiles-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .saved-profiles-label {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-muted);
   display: flex;
@@ -551,36 +558,75 @@ body {
   gap: 6px;
 }
 
-.saved-profiles-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+.saved-profiles-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
-.saved-profile-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 11px;
-  border-radius: 999px;
+.saved-profiles-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: calc(var(--radius-input) - 2px);
   border: 1px solid var(--border);
   background: var(--bg-card);
-  color: var(--text);
+}
+
+.saved-profiles-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.78rem;
+  text-align: left;
+}
+
+.saved-profiles-table thead {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-profiles-table th {
+  padding: 8px 10px;
   font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
-.saved-profile-chip:hover {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  color: var(--primary);
+.saved-profiles-table th.th-actions {
+  text-align: right;
+  padding-right: 12px;
 }
 
-.saved-profile-chip-avatar {
-  width: 20px;
-  height: 20px;
+.saved-profiles-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+}
+
+.saved-profiles-table tr:last-child td {
+  border-bottom: none;
+}
+
+.saved-profiles-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.profile-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.saved-profile-avatar {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--primary);
   color: #FFFFFF;
@@ -589,6 +635,85 @@ body {
   justify-content: center;
   font-size: 0.7rem;
   font-weight: 800;
+  flex-shrink: 0;
+}
+
+.saved-profile-name {
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.saved-profile-slug {
+  font-family: inherit;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.saved-profile-time {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.td-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.profile-actions-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.btn-profile-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-profile-select:hover {
+  background: var(--primary);
+  color: #FFFFFF;
+}
+
+.btn-profile-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-btn);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-profile-remove:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #EF4444;
+  color: #EF4444;
 }
 
 .form-group {

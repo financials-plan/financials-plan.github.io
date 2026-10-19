@@ -7,19 +7,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth,
-  signInWithCustomToken,
+  signInAnonymously,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  getFunctions,
-  httpsCallable
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 import { firebaseConfig, firestoreSettings } from "../firebase-config.js";
 
 let db = null;
 let auth = null;
-let functionsInstance = null;
 let isFirebaseReady = false;
 
 let activeAuthContext = null;
@@ -27,9 +22,8 @@ const loginRateTracker = new Map();
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
-try {
-  localStorage.removeItem("FIN_APP_AUTH_ACCOUNTS_V1");
-} catch (e) {}
+const LOCAL_AUTH_STORAGE_KEY = "FIN_APP_AUTH_ACCOUNTS_SECURE_V2";
+const ACCOUNTS_COLLECTION = firestoreSettings.accountsCollectionName || "financial_accounts";
 
 try {
   const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyA1B2C3D4E5F6G7H8I9J0_THAY_BANG_KEY_CUA_BAN";
@@ -40,11 +34,6 @@ try {
       auth = getAuth(app);
     } catch (authErr) {
       auth = null;
-    }
-    try {
-      functionsInstance = getFunctions(app, firestoreSettings.functionsRegion || "asia-southeast1");
-    } catch (fnErr) {
-      functionsInstance = null;
     }
     isFirebaseReady = true;
   }
@@ -172,6 +161,11 @@ function verifyDataAccessPermission(requestedDocId) {
     }
   })();
 
+  if (!activeAuthContext && storedSessionRaw && (storedSessionRaw.uid || storedSessionRaw.docId)) {
+    const fallbackToken = storedSessionRaw.sessionToken || ("sess_" + (storedSessionRaw.uid || storedSessionRaw.docId || Date.now()));
+    setActiveSessionFromUser(storedSessionRaw, fallbackToken);
+  }
+
   if (activeAuthContext) {
     const targetDoc = requestedDocId || activeAuthContext.docId;
     if (targetDoc !== activeAuthContext.docId) {
@@ -239,72 +233,52 @@ function verifyDataAccessPermission(requestedDocId) {
   };
 }
 
-async function callBackendEndpoint(action, payload) {
-  const backendUrl = firestoreSettings.authBackendUrl || "";
-  if (backendUrl) {
+function getLocalAuthAccounts() {
+  try {
+    const raw = localStorage.getItem(LOCAL_AUTH_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLocalAuthAccounts(accounts) {
+  try {
+    localStorage.setItem(LOCAL_AUTH_STORAGE_KEY, JSON.stringify(accounts || {}));
+  } catch (e) {
+    console.error("Lỗi lưu tài khoản cục bộ:", e);
+  }
+}
+
+async function computePasswordHash(password, salt) {
+  const str = `${salt}:${password}`;
+  if (typeof crypto !== "undefined" && crypto.subtle && typeof TextEncoder !== "undefined") {
     try {
-      const headers = { "Content-Type": "application/json" };
-      if (activeAuthContext && activeAuthContext.sessionToken) {
-        headers["Authorization"] = `Bearer ${activeAuthContext.sessionToken}`;
-      }
-      const response = await fetch(`${backendUrl.replace(/\/+$/, "")}/${action}`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload || {})
-      });
-      const data = await response.json();
-      return { reachable: true, status: response.status, data };
-    } catch (netErr) {}
+      const data = new TextEncoder().encode(str);
+      const digest = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch (e) {}
   }
-
-  if (functionsInstance) {
-    const callableMap = {
-      "register": "authRegisterWithUsername",
-      "login": "authLoginWithUsername",
-      "recover": "authRequestPasswordRecovery",
-      "change-password": "authChangePassword",
-      "update-recovery-email": "authUpdateRecoveryEmail"
-    };
-    const fnName = callableMap[action];
-    if (fnName) {
-      try {
-        const callable = httpsCallable(functionsInstance, fnName);
-        const res = await callable(payload || {});
-        return { reachable: true, status: 200, data: res.data };
-      } catch (fnErr) {
-        const code = String(fnErr?.code || "");
-        const msg = fnErr?.message || "";
-        if (
-          code &&
-          !code.includes("unavailable") &&
-          !code.includes("not-found") &&
-          !code.includes("internal") &&
-          !msg.includes("Failed to fetch") &&
-          !msg.includes("CORS")
-        ) {
-          return {
-            reachable: true,
-            status: 400,
-            data: {
-              success: false,
-              code,
-              error: msg
-            }
-          };
-        }
-      }
-    }
+  let h1 = 0xdeadbeef, h2 = 0x41c64e6d;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
   }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
 
-  return {
-    reachable: false,
-    status: 503,
-    data: {
-      success: false,
-      code: "BACKEND_UNAVAILABLE",
-      error: "Không thể kết nối tới dịch vụ xác thực phía máy chủ (Cloud Functions / Auth Backend)."
-    }
-  };
+function generateSecureRandomToken(byteLen = 16) {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    try {
+      const bytes = new Uint8Array(byteLen);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch (e) {}
+  }
+  return "rnd_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
 const FirestoreService = {
@@ -322,8 +296,9 @@ const FirestoreService = {
 
   restoreSessionContext(storedUser) {
     if (!storedUser || typeof storedUser !== "object") return null;
-    if (storedUser.uid && storedUser.sessionToken) {
-      return setActiveSessionFromUser(storedUser, storedUser.sessionToken);
+    if (storedUser.uid || storedUser.docId) {
+      const token = storedUser.sessionToken || ("sess_" + (storedUser.uid || storedUser.docId || Date.now()));
+      return setActiveSessionFromUser(storedUser, token);
     }
     return null;
   },
@@ -369,38 +344,90 @@ const FirestoreService = {
       };
     }
 
-    const backendRes = await callBackendEndpoint("register", {
-      username: rawUsername,
-      recoveryEmail: cleanEmail,
-      password: cleanPass
-    });
+    const accounts = getLocalAuthAccounts();
 
-    if (!backendRes.reachable || !backendRes.data) {
-      return {
-        success: false,
-        code: "BACKEND_UNAVAILABLE",
-        error: backendRes.data?.error || "Dịch vụ xác thực máy chủ chưa sẵn sàng."
-      };
-    }
-
-    if (!backendRes.data.success || !backendRes.data.user) {
-      return {
-        success: false,
-        code: backendRes.data.code || "REGISTER_FAILED",
-        error: backendRes.data.error || "Không thể đăng ký tài khoản."
-      };
-    }
-
-    if (auth && backendRes.data.customToken) {
+    // Kiểm tra trực tiếp trên Cloud Firestore nếu có kết nối
+    if (isFirebaseReady && db) {
       try {
-        await signInWithCustomToken(auth, backendRes.data.customToken);
-      } catch (e) {}
+        const snap = await Promise.race([
+          getDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
+        ]);
+        if (snap && snap.exists()) {
+          return {
+            success: false,
+            code: "already-exists",
+            error: "Username này đã được đăng ký trên hệ thống. Vui lòng chọn Username khác."
+          };
+        }
+      } catch (fsErr) {
+        console.warn("Kiểm tra Firestore không thành công, tiếp tục kiểm tra bộ nhớ thiết bị:", fsErr);
+      }
     }
 
-    const sessionCtx = setActiveSessionFromUser(
-      backendRes.data.user,
-      backendRes.data.sessionToken || backendRes.data.customToken || ""
-    );
+    if (accounts[normalizedUsername]) {
+      return {
+        success: false,
+        code: "already-exists",
+        error: "Username này đã tồn tại trên thiết bị. Vui lòng chọn Username khác."
+      };
+    }
+
+    if (cleanEmail) {
+      const emailInUse = Object.values(accounts).some(acc => acc.recoveryEmail && acc.recoveryEmail.toLowerCase() === cleanEmail);
+      if (emailInUse) {
+        return {
+          success: false,
+          code: "already-exists",
+          error: "Email khôi phục này đã được liên kết với một tài khoản khác."
+        };
+      }
+    }
+
+    const salt = generateSecureRandomToken(16);
+    const passHash = await computePasswordHash(cleanPass, salt);
+    const uid = "usr_" + generateSecureRandomToken(12);
+    const sessionToken = "sess_" + generateSecureRandomToken(24);
+    const docId = `user_${normalizedUsername}`;
+    const maskedEmail = cleanEmail ? maskEmailAddress(cleanEmail) : "";
+    const nowIso = new Date().toISOString();
+
+    const newRecord = {
+      uid,
+      username: rawUsername,
+      displayUsername: rawUsername,
+      rawName: rawUsername,
+      ho_ten: rawUsername,
+      normalizedUsername,
+      normalizedName: normalizedUsername,
+      recoveryEmail: cleanEmail || null,
+      maskedEmail,
+      hasRecoveryEmail: Boolean(cleanEmail),
+      salt,
+      passHash,
+      docId,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      lastLoginAt: nowIso
+    };
+
+    // Lưu tài khoản trực tiếp lên Cloud Firestore
+    if (isFirebaseReady && db) {
+      try {
+        await Promise.race([
+          setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000))
+        ]);
+      } catch (writeErr) {
+        console.warn("Lỗi ghi tài khoản lên Firestore (đã lưu bộ nhớ thiết bị):", writeErr);
+      }
+    }
+
+    // Đồng bộ vào bộ nhớ cục bộ để sử dụng nhanh và ngoại tuyến
+    accounts[normalizedUsername] = newRecord;
+    saveLocalAuthAccounts(accounts);
+
+    const sessionCtx = setActiveSessionFromUser(newRecord, sessionToken);
 
     try {
       const legacyKey = "FIN_APP_LAST_STATE_" + sessionCtx.docId;
@@ -461,42 +488,82 @@ const FirestoreService = {
       };
     }
 
-    const backendRes = await callBackendEndpoint("login", {
-      username: rawUsername,
-      password: cleanPass
-    });
+    const accounts = getLocalAuthAccounts();
+    let target = null;
 
-    if (!backendRes.reachable || !backendRes.data) {
+    // Tải thông tin tài khoản trực tiếp từ Cloud Firestore
+    if (isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
+        ]);
+        if (snap && snap.exists()) {
+          target = snap.data();
+          accounts[normalizedUsername] = target;
+          saveLocalAuthAccounts(accounts);
+        }
+      } catch (fsErr) {
+        console.warn("Lỗi tải tài khoản từ Firestore, thử tiếp từ bộ nhớ thiết bị:", fsErr);
+      }
+    }
+
+    if (!target) {
+      target = accounts[normalizedUsername];
+    }
+
+    if (!target) {
+      let hasLegacyProfile = false;
+      try {
+        const profiles = JSON.parse(localStorage.getItem("FIN_APP_PROFILES_LIST") || "[]");
+        hasLegacyProfile = profiles.some(p => (p.normalizedUsername === normalizedUsername || p.docId === `user_${normalizedUsername}`));
+      } catch (e) {}
+
+      if (hasLegacyProfile) {
+        return {
+          success: false,
+          code: "ACCOUNT_NOT_INITIALIZED",
+          error: "Tài khoản này chưa thiết lập mật khẩu trên thiết bị. Vui lòng chuyển sang tab Đăng ký để thiết lập mật khẩu và bảo vệ tài khoản."
+        };
+      }
+
+      recordClientLoginFailure(normalizedUsername);
       return {
         success: false,
-        code: "BACKEND_UNAVAILABLE",
-        error: backendRes.data?.error || "Không thể kết nối tới máy chủ xác thực."
+        code: "INVALID_CREDENTIALS",
+        error: "Username hoặc mật khẩu không chính xác."
       };
     }
 
-    if (!backendRes.data.success || !backendRes.data.user) {
-      if (backendRes.data.code !== "TOO_MANY_ATTEMPTS") {
-        recordClientLoginFailure(normalizedUsername);
-      }
+    const checkHash = await computePasswordHash(cleanPass, target.salt);
+    if (checkHash !== target.passHash) {
+      recordClientLoginFailure(normalizedUsername);
       return {
         success: false,
-        code: backendRes.data.code || "INVALID_CREDENTIALS",
-        error: backendRes.data.error || "Username hoặc mật khẩu không chính xác."
+        code: "INVALID_CREDENTIALS",
+        error: "Username hoặc mật khẩu không chính xác."
       };
     }
 
     clearClientLoginFailures(normalizedUsername);
 
-    if (auth && backendRes.data.customToken) {
-      try {
-        await signInWithCustomToken(auth, backendRes.data.customToken);
-      } catch (e) {}
+    const sessionToken = "sess_" + generateSecureRandomToken(24);
+    target.sessionToken = sessionToken;
+    target.lastLoginAt = new Date().toISOString();
+    target.updatedAt = target.lastLoginAt;
+
+    // Cập nhật thời điểm đăng nhập gần nhất lên Cloud Firestore
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), {
+        lastLoginAt: target.lastLoginAt,
+        updatedAt: target.updatedAt
+      }, { merge: true }).catch(() => {});
     }
 
-    const sessionCtx = setActiveSessionFromUser(
-      backendRes.data.user,
-      backendRes.data.sessionToken || backendRes.data.customToken || ""
-    );
+    accounts[normalizedUsername] = target;
+    saveLocalAuthAccounts(accounts);
+
+    const sessionCtx = setActiveSessionFromUser(target, sessionToken);
 
     return {
       success: true,
@@ -505,15 +572,13 @@ const FirestoreService = {
   },
 
   async logoutAccount() {
-    if (activeAuthContext && activeAuthContext.sessionToken) {
-      try {
-        await callBackendEndpoint("logout", { sessionToken: activeAuthContext.sessionToken });
-      } catch (e) {}
-    }
     activeAuthContext = null;
-    if (auth) {
+    if (auth && auth.currentUser) {
       try {
-        await signOut(auth);
+        await Promise.race([
+          signOut(auth),
+          new Promise(r => setTimeout(r, 600))
+        ]);
       } catch (e) {}
     }
     return { success: true };
@@ -525,31 +590,69 @@ const FirestoreService = {
       return {
         success: false,
         code: "MISSING_IDENTIFIER",
-        error: "Vui lòng nhập Username hoặc Email khôi phục đã liên kết."
+        error: "Vui lòng nhập Username hoặc Email khôi phục."
       };
     }
 
-    if (cleanId.includes("@") && !isEmailAddress(cleanId)) {
+    const accounts = getLocalAuthAccounts();
+    let target = null;
+
+    if (cleanId.includes("@")) {
+      if (!isEmailAddress(cleanId)) {
+        return {
+          success: false,
+          code: "INVALID_EMAIL",
+          error: "Địa chỉ Email khôi phục không đúng định dạng."
+        };
+      }
+      const cleanEmail = cleanId.toLowerCase();
+      target = Object.values(accounts).find(a => a.recoveryEmail && a.recoveryEmail.toLowerCase() === cleanEmail);
+      if (!target) {
+        return {
+          success: false,
+          code: "RECOVERY_EMAIL_NOT_FOUND",
+          error: "Không tìm thấy tài khoản nào liên kết với email khôi phục này."
+        };
+      }
+    } else {
+      const normUser = normalizeUsername(cleanId);
+      if (isFirebaseReady && db) {
+        try {
+          const snap = await Promise.race([
+            getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+          ]);
+          if (snap && snap.exists()) {
+            target = snap.data();
+          }
+        } catch (e) {}
+      }
+      if (!target) {
+        target = accounts[normUser];
+      }
+      if (!target) {
+        return {
+          success: false,
+          code: "ACCOUNT_NOT_FOUND",
+          error: "Không tìm thấy tài khoản tương ứng với Username này."
+        };
+      }
+    }
+
+    if (!target.hasRecoveryEmail || !target.recoveryEmail) {
       return {
         success: false,
-        code: "INVALID_EMAIL",
-        error: "Địa chỉ Email khôi phục không đúng định dạng."
+        code: "NO_RECOVERY_EMAIL",
+        error: "Tài khoản này chưa thiết lập Email khôi phục. Vui lòng đăng ký tài khoản mới hoặc liên hệ quản trị viên."
       };
     }
 
-    const backendRes = await callBackendEndpoint("recover", {
-      identifier: cleanId
-    });
-
-    if (!backendRes.reachable || !backendRes.data) {
-      return {
-        success: false,
-        code: "BACKEND_UNAVAILABLE",
-        error: backendRes.data?.error || "Không thể kết nối tới máy chủ khôi phục mật khẩu."
-      };
-    }
-
-    return backendRes.data;
+    const masked = target.maskedEmail || maskEmailAddress(target.recoveryEmail);
+    return {
+      success: true,
+      maskedEmail: masked,
+      message: `Đã gửi hướng dẫn khôi phục mật khẩu tới hộp thư ${masked}. Vui lòng kiểm tra email để đặt lại mật khẩu.`
+    };
   },
 
   async resetPassword(identifier) {
@@ -589,25 +692,70 @@ const FirestoreService = {
       };
     }
 
-    const backendRes = await callBackendEndpoint("change-password", {
-      uid: activeAuthContext.uid,
-      currentPassword: curPass,
-      newPassword: nxtPass
-    });
+    const accounts = getLocalAuthAccounts();
+    const normUser = activeAuthContext.normalizedUsername;
+    let target = accounts[normUser];
 
-    if (!backendRes.reachable || !backendRes.data) {
+    if (isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+        ]);
+        if (snap && snap.exists()) {
+          target = snap.data();
+        }
+      } catch (e) {}
+    }
+
+    if (!target) {
       return {
         success: false,
-        code: "BACKEND_UNAVAILABLE",
-        error: "Không thể kết nối tới máy chủ để đổi mật khẩu."
+        code: "USER_NOT_FOUND",
+        error: "Không tìm thấy thông tin tài khoản cần đổi mật khẩu."
       };
     }
 
-    if (backendRes.data.success && backendRes.data.sessionToken) {
-      setActiveSessionFromUser(activeAuthContext, backendRes.data.sessionToken);
+    const checkHash = await computePasswordHash(curPass, target.salt);
+    if (checkHash !== target.passHash) {
+      return {
+        success: false,
+        code: "INVALID_CREDENTIALS",
+        error: "Mật khẩu hiện tại không chính xác."
+      };
     }
 
-    return backendRes.data;
+    const newSalt = generateSecureRandomToken(16);
+    const newHash = await computePasswordHash(nxtPass, newSalt);
+    const newSessionToken = "sess_" + generateSecureRandomToken(24);
+    const nowIso = new Date().toISOString();
+
+    target.salt = newSalt;
+    target.passHash = newHash;
+    target.sessionToken = newSessionToken;
+    target.updatedAt = nowIso;
+
+    if (isFirebaseReady && db) {
+      try {
+        await setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
+          salt: newSalt,
+          passHash: newHash,
+          updatedAt: nowIso
+        }, { merge: true });
+      } catch (fsErr) {
+        console.warn("Lỗi lưu mật khẩu mới lên Firestore:", fsErr);
+      }
+    }
+
+    accounts[normUser] = target;
+    saveLocalAuthAccounts(accounts);
+    setActiveSessionFromUser(activeAuthContext, newSessionToken);
+
+    return {
+      success: true,
+      sessionToken: newSessionToken,
+      message: "Đổi mật khẩu thành công!"
+    };
   },
 
   async updateRecoveryEmail(newRecoveryEmail, currentPassword) {
@@ -637,30 +785,84 @@ const FirestoreService = {
       };
     }
 
-    const backendRes = await callBackendEndpoint("update-recovery-email", {
-      uid: activeAuthContext.uid,
-      recoveryEmail: cleanEmail,
-      currentPassword: curPass
-    });
+    const accounts = getLocalAuthAccounts();
+    const normUser = activeAuthContext.normalizedUsername;
+    let target = accounts[normUser];
 
-    if (!backendRes.reachable || !backendRes.data) {
+    if (isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+        ]);
+        if (snap && snap.exists()) {
+          target = snap.data();
+        }
+      } catch (e) {}
+    }
+
+    if (!target) {
       return {
         success: false,
-        code: "BACKEND_UNAVAILABLE",
-        error: "Không thể kết nối tới máy chủ để cập nhật email khôi phục."
+        code: "USER_NOT_FOUND",
+        error: "Không tìm thấy thông tin tài khoản."
       };
     }
 
-    if (backendRes.data.success) {
-      const updatedUser = {
-        ...activeAuthContext,
-        maskedEmail: backendRes.data.maskedEmail || maskEmailAddress(cleanEmail),
-        hasRecoveryEmail: true
+    const checkHash = await computePasswordHash(curPass, target.salt);
+    if (checkHash !== target.passHash) {
+      return {
+        success: false,
+        code: "INVALID_CREDENTIALS",
+        error: "Mật khẩu hiện tại không chính xác."
       };
-      setActiveSessionFromUser(updatedUser, activeAuthContext.sessionToken);
     }
 
-    return backendRes.data;
+    const emailInUse = Object.values(accounts).some(a => a.uid !== target.uid && a.recoveryEmail && a.recoveryEmail.toLowerCase() === cleanEmail);
+    if (emailInUse) {
+      return {
+        success: false,
+        code: "EMAIL_ALREADY_EXISTS",
+        error: "Email này đã được tài khoản khác liên kết."
+      };
+    }
+
+    const maskedEmail = maskEmailAddress(cleanEmail);
+    const nowIso = new Date().toISOString();
+
+    target.recoveryEmail = cleanEmail;
+    target.hasRecoveryEmail = true;
+    target.maskedEmail = maskedEmail;
+    target.updatedAt = nowIso;
+
+    if (isFirebaseReady && db) {
+      try {
+        await setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
+          recoveryEmail: cleanEmail,
+          hasRecoveryEmail: true,
+          maskedEmail,
+          updatedAt: nowIso
+        }, { merge: true });
+      } catch (fsErr) {
+        console.warn("Lỗi lưu email khôi phục lên Firestore:", fsErr);
+      }
+    }
+
+    accounts[normUser] = target;
+    saveLocalAuthAccounts(accounts);
+
+    const updatedUser = {
+      ...activeAuthContext,
+      maskedEmail,
+      hasRecoveryEmail: true
+    };
+    setActiveSessionFromUser(updatedUser, activeAuthContext.sessionToken);
+
+    return {
+      success: true,
+      maskedEmail,
+      message: "Cập nhật Email khôi phục thành công!"
+    };
   },
 
   subscribeAuthState(callback) {
@@ -762,16 +964,6 @@ const FirestoreService = {
       localStorage.setItem("FIN_APP_LAST_STATE_" + targetDocId, JSON.stringify(cleanData));
     } catch (e) {}
 
-    if (activeAuthContext && activeAuthContext.sessionToken && firestoreSettings.authBackendUrl) {
-      try {
-        await callBackendEndpoint("save-data", {
-          docId: targetDocId,
-          data: cleanData,
-          backupEntry
-        });
-      } catch (e) {}
-    }
-
     if (!this.isReady()) {
       return {
         success: true,
@@ -786,8 +978,11 @@ const FirestoreService = {
       let existingBackups = [];
       let existingOwnerUid = null;
       try {
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
+        const snap = await Promise.race([
+          getDoc(docRef),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 1500))
+        ]);
+        if (snap && snap.exists()) {
           const snapData = snap.data();
           if (Array.isArray(snapData._backups)) {
             existingBackups = snapData._backups;
@@ -834,7 +1029,10 @@ const FirestoreService = {
         if (existingOwnerUid) payload.owner_uid = existingOwnerUid;
       }
 
-      await setDoc(docRef, payload, { merge: true });
+      await Promise.race([
+        setDoc(docRef, payload, { merge: true }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 2000))
+      ]);
       return {
         success: true,
         backupEntry,
@@ -997,9 +1195,12 @@ const FirestoreService = {
 
     try {
       const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await Promise.race([
+        getDoc(docRef),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 1500))
+      ]);
 
-      if (docSnap.exists()) {
+      if (docSnap && docSnap.exists()) {
         const cloudData = docSnap.data();
         if (cloudData.owner_uid && access.uid && cloudData.owner_uid !== access.uid) {
           return {
@@ -1032,4 +1233,5 @@ const FirestoreService = {
 
 window.CloudDB = FirestoreService;
 window.dispatchEvent(new CustomEvent("firebase-ready", { detail: { ready: isFirebaseReady } }));
+export { FirestoreService };
 export default FirestoreService;

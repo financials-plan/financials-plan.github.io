@@ -99,11 +99,27 @@
         <form id="auth-main-form" class="auth-form-body" onsubmit="handleAuthFormSubmit(event)" novalidate>
           <div id="auth-panel-login" class="auth-tab-panel">
             <div id="saved-profiles-section" class="saved-profiles-box" style="display: none;">
-              <div class="saved-profiles-label">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <span>Chọn nhanh tài khoản đã từng đăng nhập trên thiết bị:</span>
+              <div class="saved-profiles-header">
+                <div class="saved-profiles-label">
+                  <i class="fa-solid fa-users"></i>
+                  <span>Tài khoản từng đăng nhập trên thiết bị:</span>
+                </div>
+                <span class="saved-profiles-badge" id="saved-profiles-count">0 tài khoản</span>
               </div>
-              <div id="saved-profiles-chips" class="saved-profiles-chips"></div>
+              <div class="saved-profiles-table-wrap">
+                <table class="saved-profiles-table" id="saved-profiles-table">
+                  <thead>
+                    <tr>
+                      <th>Tài khoản</th>
+                      <th>Username</th>
+                      <th>Lần cuối</th>
+                      <th class="th-actions">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="saved-profiles-tbody">
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div class="form-group">
@@ -205,6 +221,12 @@
               <span id="btn-auth-submit-label">Đăng nhập</span>
               <i class="fa-solid fa-arrow-right" id="btn-auth-submit-icon"></i>
             </button>
+          </div>
+
+          <div style="text-align: center; margin-top: 10px;">
+            <a href="../index.html" class="btn-link-inline" style="opacity: 0.85;">
+              <i class="fa-solid fa-arrow-left"></i> Quay lại Sổ Tài Chính (Dùng thử chế độ Khách)
+            </a>
           </div>
         </form>
       </div>

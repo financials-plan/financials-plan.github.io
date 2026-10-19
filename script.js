@@ -289,6 +289,9 @@ const UserSession = {
     const btnMenuPass = document.getElementById('btn-menu-change-password');
     const btnMenuLogout = document.getElementById('btn-account-logout');
     const btnTopbarLogin = document.getElementById('btn-topbar-login');
+    const topbarUserChip = document.getElementById('topbar-user-chip');
+    const topbarUserName = document.getElementById('topbar-user-name');
+    const topbarUserAvatar = document.getElementById('topbar-user-avatar');
 
     if (this.currentUser) {
       const disp = this.currentUser.displayUsername || this.currentUser.username || this.currentUser.rawName || 'Người dùng';
@@ -301,6 +304,9 @@ const UserSession = {
       if (chipName) chipName.textContent = disp;
       if (chipSlug) chipSlug.textContent = slug;
       if (chipAvatar) chipAvatar.textContent = initial;
+
+      if (topbarUserName) topbarUserName.textContent = disp;
+      if (topbarUserAvatar) topbarUserAvatar.textContent = initial;
 
       if (accDispEl) accDispEl.textContent = disp;
       if (accNormEl) accNormEl.textContent = `@${norm}`;
@@ -315,12 +321,16 @@ const UserSession = {
       if (btnMenuPass) btnMenuPass.style.display = '';
       if (btnMenuLogout) btnMenuLogout.style.display = '';
       if (btnTopbarLogin) btnTopbarLogin.style.display = 'none';
+      if (topbarUserChip) topbarUserChip.style.display = 'inline-flex';
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
       if (slugEl) slugEl.textContent = "@guest";
       if (chipName) chipName.textContent = "Chưa đăng nhập";
       if (chipSlug) chipSlug.textContent = "Bấm để đăng nhập";
       if (chipAvatar) chipAvatar.textContent = "?";
+
+      if (topbarUserName) topbarUserName.textContent = "Chưa đăng nhập";
+      if (topbarUserAvatar) topbarUserAvatar.textContent = "?";
 
       if (accDispEl) accDispEl.textContent = "Chưa đăng nhập";
       if (accNormEl) accNormEl.textContent = "@guest";
@@ -330,12 +340,40 @@ const UserSession = {
       if (btnMenuAcc) btnMenuAcc.style.display = 'none';
       if (btnMenuPass) btnMenuPass.style.display = 'none';
       if (btnMenuLogout) btnMenuLogout.style.display = 'none';
-      if (btnTopbarLogin) btnTopbarLogin.style.display = '';
+      if (btnTopbarLogin) btnTopbarLogin.style.display = 'inline-flex';
+      if (topbarUserChip) topbarUserChip.style.display = 'none';
     }
 
     if (typeof window.renderAccountSwitcher === 'function') {
       window.renderAccountSwitcher();
     }
+  }
+};
+
+window.removeProfileFromDevice = function(docId, e) {
+  if (e) e.stopPropagation();
+  if (!confirm("Bạn có chắc chắn muốn loại bỏ tài khoản này khỏi thiết bị?")) {
+    return;
+  }
+  try {
+    let list = UserSession.getProfilesList();
+    list = list.filter(p => p.docId !== docId);
+    localStorage.setItem(UserSession.PROFILES_KEY, JSON.stringify(list));
+
+    if (UserSession.currentUser && UserSession.currentUser.docId === docId) {
+      if (typeof window.logoutUserProfile === 'function') {
+        window.logoutUserProfile();
+      } else {
+        UserSession.clear();
+      }
+    } else {
+      UserSession.updateUI();
+    }
+    if (typeof showToast === 'function') {
+      showToast("Đã loại bỏ tài khoản khỏi thiết bị.");
+    }
+  } catch (err) {
+    console.error("Lỗi khi loại bỏ tài khoản:", err);
   }
 };
 
@@ -382,12 +420,15 @@ window.renderAccountSwitcher = function() {
           <div class="account-item-slug">@${escapeHtml(normName)}</div>
         </div>
         ${isActive ? '<i class="fa-solid fa-check account-item-check" aria-hidden="true"></i>' : ''}
+        <button type="button" class="btn-remove-profile-item" title="Loại bỏ tài khoản khỏi thiết bị" onclick="removeProfileFromDevice('${escapeHtml(p.docId)}', event)" aria-label="Loại bỏ tài khoản">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
       </div>
     `;
   }).join('');
 };
 
-window.toggleAccountMenu = function(e) {
+window.toggleAccountMenu = function(e, fromTopbar = false) {
   if (e) {
     e.stopPropagation();
   }
@@ -395,23 +436,30 @@ window.toggleAccountMenu = function(e) {
   if (!menu) return;
   const isHidden = menu.style.display === 'none' || !menu.classList.contains('is-open');
   if (isHidden) {
-    openAccountMenu();
+    openAccountMenu(fromTopbar);
   } else {
     closeAccountMenu();
   }
 };
 
-window.openAccountMenu = function() {
+window.openAccountMenu = function(fromTopbar = false) {
   const menu = document.getElementById('account-switcher-menu');
   const chip = document.getElementById('btn-account-chip');
+  const topChip = document.getElementById('topbar-user-chip');
   if (!menu) return;
 
   renderAccountSwitcher();
+  if (fromTopbar) {
+    menu.classList.add('menu-from-topbar');
+  } else {
+    menu.classList.remove('menu-from-topbar');
+  }
   menu.style.display = 'block';
   requestAnimationFrame(() => {
     menu.classList.add('is-open');
   });
   if (chip) chip.setAttribute('aria-expanded', 'true');
+  if (topChip) topChip.setAttribute('aria-expanded', 'true');
 
   setTimeout(() => {
     const activeItem = menu.querySelector('.account-item.active') || menu.querySelector('.account-item');
@@ -422,14 +470,17 @@ window.openAccountMenu = function() {
 window.closeAccountMenu = function() {
   const menu = document.getElementById('account-switcher-menu');
   const chip = document.getElementById('btn-account-chip');
+  const topChip = document.getElementById('topbar-user-chip');
   if (!menu) return;
   menu.classList.remove('is-open');
   setTimeout(() => {
     if (!menu.classList.contains('is-open')) {
       menu.style.display = 'none';
+      menu.classList.remove('menu-from-topbar');
     }
   }, 180);
   if (chip) chip.setAttribute('aria-expanded', 'false');
+  if (topChip) topChip.setAttribute('aria-expanded', 'false');
 };
 
 window.goToAuthPage = function(tab = 'login', username = '', isSwitch = false) {

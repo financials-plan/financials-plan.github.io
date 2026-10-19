@@ -161,7 +161,7 @@
             <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
           </button>
           <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
-            <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký tài khoản</span>
+            <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
           </a>
           <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
             <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
@@ -198,10 +198,6 @@
       </div>
 
       <div class="topbar-right">
-        <a href="./auth/index.html" class="btn-cloud-sync" id="btn-topbar-login" style="display: none;" title="Đăng nhập tài khoản" onclick="goToAuthPage('login'); return false;">
-          <i class="fa-solid fa-right-to-bracket"></i> <span>Đăng nhập</span>
-        </a>
-
         <span id="cloud-status-badge" class="cloud-badge cloud-ready">
           <i class="fa-solid fa-cloud"></i> <span id="cloud-status-text">Đám mây sẵn sàng</span>
         </span>
@@ -213,6 +209,17 @@
         <button type="button" class="btn-cloud-sync btn-cloud-save" id="btn-cloud-save" onclick="saveAppStateToCloud()" title="Lưu dữ liệu hiện tại">
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
+
+        <div class="topbar-auth-section" id="topbar-auth-section">
+          <a href="./auth/index.html" class="btn-topbar-login-prominent" id="btn-topbar-login" title="Đăng nhập tài khoản" onclick="goToAuthPage('login'); return false;">
+            <i class="fa-solid fa-right-to-bracket"></i> <span>Đăng nhập</span>
+          </a>
+          <button type="button" class="topbar-user-chip" id="topbar-user-chip" style="display: none;" title="Hồ sơ tài khoản &amp; Chuyển đổi" onclick="toggleAccountMenu(event, true)">
+            <span class="topbar-user-avatar" id="topbar-user-avatar">U</span>
+            <span class="topbar-user-name" id="topbar-user-name">Người dùng</span>
+            <i class="fa-solid fa-chevron-down topbar-user-chevron"></i>
+          </button>
+        </div>
       </div>
     </header>
 

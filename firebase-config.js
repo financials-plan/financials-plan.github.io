@@ -42,7 +42,8 @@ export const firebaseConfig = {
 
 export const firestoreSettings = {
   collectionName: "financial_Authentication",
-  defaultDocumentId: "khach_hang_mac_dinh",
-  functionsRegion: "asia-southeast1",
-  authBackendUrl: "http://127.0.0.1:8787/api/auth"
+  accountsCollectionName: "financial_accounts",
+  defaultDocumentId: "khach_hang_mac_dinh"
 };
+
+

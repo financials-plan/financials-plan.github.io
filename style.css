@@ -1065,6 +1065,123 @@ body.rail-collapsed:not(.rail-hover-expanded) .account-switcher-menu {
   min-width: 0;
 }
 
+.topbar-auth-section {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.btn-topbar-login-prominent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--radius-btn);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--violet, #7C3AED) 100%);
+  color: #FFFFFF !important;
+  font-size: var(--fs-btn);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 14px -3px rgba(98, 88, 245, 0.6);
+  transition: all 0.16s var(--ease);
+  white-space: nowrap;
+}
+
+.btn-topbar-login-prominent:hover {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+  box-shadow: 0 6px 18px -3px rgba(98, 88, 245, 0.75);
+  transform: translateY(-1px);
+}
+
+.btn-topbar-login-prominent:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.topbar-user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px 0 6px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.16s var(--ease);
+  color: var(--text);
+  box-shadow: var(--shadow-xs);
+}
+
+.topbar-user-chip:hover {
+  background: var(--violet-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.topbar-user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--violet, #7C3AED) 100%);
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-user-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-user-chevron {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
+
+.btn-remove-profile-item {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-btn);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  margin-left: auto;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-remove-profile-item:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger, #EF4444);
+}
+
+.account-switcher-menu.menu-from-topbar {
+  position: fixed !important;
+  top: 56px !important;
+  right: 16px !important;
+  left: auto !important;
+  bottom: auto !important;
+  width: 290px !important;
+  max-width: 92vw;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
 .btn-theme-toggle {
   width: 36px;
   height: 36px;
@@ -4245,6 +4362,8 @@ input.cell-blue { padding: 7px 10px; }
 
   .user-id-slug { display: none; }
   .user-raw-name { max-width: 120px; }
+  .topbar-auth-section { margin-left: auto; }
+  .btn-topbar-login-prominent { height: 34px; padding: 0 12px; font-size: 0.8125rem; }
 
   .dash-hero { padding: 22px 18px; border-radius: 20px; }
   .dash-hero-actions { width: 100%; }

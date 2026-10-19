@@ -192,10 +192,51 @@ window.selectSavedProfileForLogin = function(username) {
   clearAuthMessages();
 };
 
-function renderSavedProfilesChips() {
+function formatTimeAgo(ts) {
+  if (!ts) return "Chưa ghi nhận";
+  const diffSec = Math.floor((Date.now() - Number(ts)) / 1000);
+  if (isNaN(diffSec) || diffSec < 0) return "Vừa xong";
+  if (diffSec < 60) return "Vừa xong";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay} ngày trước`;
+  return new Date(Number(ts)).toLocaleDateString("vi-VN");
+}
+
+window.removeSavedProfileFromDevice = function(docId, event) {
+  if (event) event.stopPropagation();
+  if (!confirm("Bạn có chắc chắn muốn loại bỏ tài khoản này khỏi thiết bị?")) {
+    return;
+  }
+  try {
+    let list = getSavedProfilesList();
+    list = list.filter(p => p.docId !== docId);
+    localStorage.setItem(AUTH_PROFILES_KEY, JSON.stringify(list));
+
+    const currentSession = getStoredSession();
+    if (currentSession && currentSession.docId === docId) {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      const activeBanner = document.getElementById("active-session-banner");
+      if (activeBanner) activeBanner.style.display = "none";
+      const backBtn = document.getElementById("btn-back-to-app");
+      if (backBtn) backBtn.style.display = "none";
+    }
+
+    renderSavedProfilesTable();
+    showAuthSuccess("Đã loại bỏ tài khoản khỏi thiết bị.");
+  } catch (err) {
+    console.error("Lỗi loại bỏ hồ sơ:", err);
+  }
+};
+
+function renderSavedProfilesTable() {
   const boxEl = document.getElementById("saved-profiles-section");
-  const chipsEl = document.getElementById("saved-profiles-chips");
-  if (!boxEl || !chipsEl) return;
+  const tbodyEl = document.getElementById("saved-profiles-tbody");
+  const countEl = document.getElementById("saved-profiles-count");
+  if (!boxEl || !tbodyEl) return;
 
   const profiles = getSavedProfilesList();
   if (profiles.length === 0) {
@@ -203,16 +244,42 @@ function renderSavedProfilesChips() {
     return;
   }
 
-  boxEl.style.display = "flex";
-  chipsEl.innerHTML = profiles.map(p => {
+  boxEl.style.display = "block";
+  if (countEl) {
+    countEl.textContent = `${profiles.length} tài khoản`;
+  }
+
+  tbodyEl.innerHTML = profiles.map(p => {
     const disp = p.displayUsername || p.username || p.rawName || "User";
     const norm = p.normalizedUsername || p.normalizedName || normalizeUserName(disp);
     const initial = (disp.trim().charAt(0) || "U").toUpperCase();
+    const timeText = formatTimeAgo(p.lastActive);
     return `
-      <button type="button" class="saved-profile-chip" onclick="selectSavedProfileForLogin('${escapeHtml(disp)}')">
-        <span class="saved-profile-chip-avatar">${escapeHtml(initial)}</span>
-        <span>${escapeHtml(disp)} <small style="opacity:0.7;">@${escapeHtml(norm)}</small></span>
-      </button>
+      <tr>
+        <td>
+          <div class="profile-user-cell">
+            <span class="saved-profile-avatar">${escapeHtml(initial)}</span>
+            <span class="saved-profile-name" title="${escapeHtml(disp)}">${escapeHtml(disp)}</span>
+          </div>
+        </td>
+        <td>
+          <code class="saved-profile-slug">@${escapeHtml(norm)}</code>
+        </td>
+        <td>
+          <span class="saved-profile-time">${escapeHtml(timeText)}</span>
+        </td>
+        <td class="td-actions">
+          <div class="profile-actions-cell">
+            <button type="button" class="btn-profile-select" title="Đăng nhập tài khoản này" onclick="selectSavedProfileForLogin('${escapeHtml(disp)}')">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i>
+              <span>Chọn</span>
+            </button>
+            <button type="button" class="btn-profile-remove" title="Loại bỏ tài khoản khỏi thiết bị" onclick="removeSavedProfileFromDevice('${escapeHtml(p.docId)}', event)" aria-label="Loại bỏ">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
     `;
   }).join("");
 }
@@ -382,7 +449,7 @@ window.submitAuthForm = async function() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initAuthTheme();
-  renderSavedProfilesChips();
+  renderSavedProfilesTable();
 
   const stored = getStoredSession();
   const bannerEl = document.getElementById("active-session-banner");

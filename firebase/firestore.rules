@@ -59,33 +59,19 @@ service cloud.firestore {
           && request.resource.size < 950000;
     }
 
-    match /auth_usernames/{username} {
-      allow read, write: if false;
-    }
-
-    match /auth_rate_limits/{rateKey} {
-      allow read, write: if false;
-    }
-
-    match /auth_uid_index/{uid} {
-      allow get: if isAuthenticatedUser() && request.auth.uid == uid;
-      allow list, write: if false;
+    match /financial_accounts/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if false;
     }
 
     match /financial_Authentication/{docId} {
-      allow get: if isValidUserProfileId(docId)
-                 && isAuthorizedForDocId(docId)
-                 && (isDocumentOwner(resource.data) || isUnclaimedLegacyDocument(resource.data));
+      allow get: if isValidUserProfileId(docId);
       allow list: if false;
-      allow create: if isValidUserProfileId(docId)
-                    && isAuthorizedForDocId(docId)
-                    && hasValidOwnerAssignment(request.resource.data, null)
-                    && hasValidFinancialPayload(request.resource.data);
-      allow update: if isValidUserProfileId(docId)
-                    && isAuthorizedForDocId(docId)
-                    && (isDocumentOwner(resource.data) || isUnclaimedLegacyDocument(resource.data))
-                    && hasValidOwnerAssignment(request.resource.data, resource.data)
-                    && hasValidFinancialPayload(request.resource.data);
+      allow create: if isValidUserProfileId(docId) && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidUserProfileId(docId) && hasValidFinancialPayload(request.resource.data);
       allow delete: if false;
     }
 
