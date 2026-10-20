@@ -89,7 +89,7 @@ flowchart TD
 3. Trong bảng **API Keys**, nhấp vào khóa đang được ứng dụng web sử dụng (thường có tên `Browser key (auto created by Firebase)`).
 4. Tại mục **Set application restrictions**, chọn **Websites (HTTP referrers)**.
 5. Thêm các URL được phép gửi yêu cầu:
-   - `https://<ten-tai-khoan>.github.io/*` *(Tên miền GitHub Pages chính thức)*
+   - `https://financials-plan.github.io/*` *(Tên miền GitHub Pages chính thức)*
    - `https://<ten-mien-tuy-chinh>/*` *(Nếu sử dụng Custom Domain)*
    - `http://localhost:*` *(Chỉ dùng cho môi trường phát triển cục bộ)*
    - `http://127.0.0.1:*` *(Môi trường phát triển cục bộ)*
@@ -132,7 +132,7 @@ Mặc định, một API Key mới có thể gọi mọi dịch vụ Google Clou
 
 ## 4. Cấu hình & Nguyên lý Cloud Firestore Security Rules
 
-Toàn bộ quy tắc bảo mật của cơ sở dữ liệu đã được tối ưu hóa trong file [`./firebase/firestore.rules`](./firebase/firestore.rules). Dưới đây là phân tích chi tiết nguyên lý hoạt động:
+Toàn bộ quy tắc bảo mật của cơ sở dữ liệu đã được tối ưu hóa trong file [`./backend/firestore.rules`](./backend/firestore.rules). Dưới đây là phân tích chi tiết nguyên lý hoạt động:
 
 ### 4.1. Phân vùng dữ liệu người dùng độc lập (Tenant Isolation)
 
@@ -195,13 +195,13 @@ match /{document=**} {
 
 #### Cách 1: Triển khai nhanh bằng Firebase Console
 1. Truy cập [Firebase Console → Firestore Database → tab Rules](https://console.firebase.google.com/).
-2. Xóa bỏ nội dung cũ, sao chép toàn bộ mã trong file [`./firebase/firestore.rules`](./firebase/firestore.rules) dán vào ô soạn thảo.
+2. Xóa bỏ nội dung cũ, sao chép toàn bộ mã trong file [`./backend/firestore.rules`](./backend/firestore.rules) dán vào ô soạn thảo.
 3. Nhấn **Publish**.
 
 #### Cách 2: Triển khai tự động bằng Firebase CLI
 Mở terminal tại thư mục gốc của dự án:
 ```bash
-cd firebase
+cd backend
 firebase login
 firebase use financials-plan
 firebase deploy --only firestore:rules
@@ -211,7 +211,7 @@ firebase deploy --only firestore:rules
 
 ## 5. Cấu hình miễn trừ chỉ mục (Single-Field Index Exemptions)
 
-File cấu hình [`./firebase/firestore.indexes.json`](./firebase/firestore.indexes.json) vô hiệu hóa việc tự động đánh chỉ mục đơn trường (Single-field Index) đối với hai trường dữ liệu lớn:
+File cấu hình [`./backend/firestore.indexes.json`](./backend/firestore.indexes.json) vô hiệu hóa việc tự động đánh chỉ mục đơn trường (Single-field Index) đối với hai trường dữ liệu lớn:
 1. `_backups`: Mảng chứa tối đa 20 bản sao lưu lịch sử của hồ sơ.
 2. `monthlyDetails`: Đối tượng chứa chi tiết giao dịch thu chi của 12 tháng.
 
@@ -326,9 +326,9 @@ Sử dụng bảng kiểm tra này trước mỗi lần cập nhật phiên bả
 
 - [ ] **1. API Key Restrictions:** Đã cấu hình HTTP Referrers chỉ cho phép tên miền production (`https://*.github.io/*`) và localhost.
 - [ ] **2. API Scope:** Đã khóa API Key chỉ dùng riêng cho Cloud Firestore API.
-- [ ] **3. Security Rules:** Đã triển khai [`firestore.rules`](./firebase/firestore.rules) lên Firebase Console và xác nhận rule version là `2`.
+- [ ] **3. Security Rules:** Đã triển khai [`firestore.rules`](./backend/firestore.rules) lên Firebase Console và xác nhận rule version là `2`.
 - [ ] **4. Rules Simulation:** Đã chạy thử nghiệm Rules Playground với quyền truy cập giả lập không đúng `isValidDocId` để đảm bảo bị chặn (Denied).
-- [ ] **5. Index Overrides:** Đã triển khai [`firestore.indexes.json`](./firebase/firestore.indexes.json) để tắt đánh chỉ mục cho `_backups` và `monthlyDetails`.
+- [ ] **5. Index Overrides:** Đã triển khai [`firestore.indexes.json`](./backend/firestore.indexes.json) để tắt đánh chỉ mục cho `_backups` và `monthlyDetails`.
 - [ ] **6. Schema Integrity:** Dữ liệu mẫu kiểm tra hợp lệ với 22 trường bắt buộc và trường `_userMeta.userDocId`.
 - [ ] **7. Root Delete Block:** Xác nhận không thể thực hiện lệnh xóa document hồ sơ gốc (`allow delete: if false`).
 - [ ] **8. Size Ceiling:** Kiểm tra dung lượng tài liệu luôn duy trì dưới ngưỡng `900 KB` (`maxSafeBytes`).

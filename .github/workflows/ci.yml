@@ -1,0 +1,41 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify Core Repository Structure
+        run: |
+          test -f main.html
+          test -f index.html
+          test -f css/style.css
+          test -f js/script.js
+          test -f config/firebase-config.js
+          test -f backend/firestore.rules
+          test -f backend/security.js
+          test -f backend/server.js
+          test -f auth/index.html
+          test -f auth/auth.css
+          test -f auth/auth.js
+
+      - name: Syntax Check Backend JavaScript
+        run: |
+          node -c backend/security.js
+          node -c backend/server.js
+          node -c backend/functions/index.js

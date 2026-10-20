@@ -11,7 +11,7 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { firebaseConfig, firestoreSettings } from "../firebase-config.js";
+import { firebaseConfig, firestoreSettings } from "../config/firebase-config.js";
 
 let db = null;
 let auth = null;

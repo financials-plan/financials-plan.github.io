@@ -1,0 +1,26 @@
+{
+  "name": "financials-plan.github.io",
+  "version": "2.4.0",
+  "description": "Bảng Quản Lý & Hoạch Định Tài Chính Cá Nhân Chuyên Sâu",
+  "homepage": "https://financials-plan.github.io",
+  "main": "main.html",
+  "scripts": {
+    "start": "node backend/server.js",
+    "serve": "npx serve -l 8899 .",
+    "test": "node backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/financials-plan/financials-plan.github.io.git"
+  },
+  "keywords": [
+    "financial-planning",
+    "personal-finance",
+    "wealth-management",
+    "budgeting",
+    "firestore",
+    "github-pages"
+  ],
+  "author": "Financials Plan",
+  "license": "MIT"
+}

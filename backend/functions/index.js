@@ -8,8 +8,77 @@ const auth = admin.auth();
 const USERNAMES_COLLECTION = "auth_usernames";
 const UID_INDEX_COLLECTION = "auth_uid_index";
 const RATE_LIMIT_COLLECTION = "auth_rate_limits";
+const IP_RATE_LIMIT_COLLECTION = "auth_ip_rate_limits";
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_IP_ATTEMPTS = 25;
+const IP_LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
+
+const ALLOWED_ORIGINS = [
+  "https://financials-plan.github.io",
+  "http://localhost:8899",
+  "http://127.0.0.1:8899",
+  "http://localhost:8787",
+  "http://127.0.0.1:8787",
+  "http://localhost:5000",
+  "http://127.0.0.1:5000",
+  "http://localhost:3000",
+  "http://127.0.0.1:3000"
+];
+
+const FUNCTION_OPTS = {
+  region: "asia-southeast1",
+  cors: ALLOWED_ORIGINS,
+  maxInstances: 20
+};
+
+function extractClientIp(request) {
+  const rawReq = request.rawRequest;
+  if (!rawReq) return "unknown_ip";
+  const fwd = rawReq.headers ? rawReq.headers["x-forwarded-for"] : null;
+  if (typeof fwd === "string" && fwd) {
+    return fwd.split(",")[0].trim().replace(/[^a-zA-Z0-9_.:-]/g, "");
+  }
+  return (rawReq.socket?.remoteAddress || rawReq.ip || "unknown_ip").replace(/[^a-zA-Z0-9_.:-]/g, "");
+}
+
+async function checkAndRecordIpRateLimit(ip) {
+  if (!ip || ip === "unknown_ip") return;
+  const safeDocKey = ip.replace(/[/.:]/g, "_");
+  const ref = db.collection(IP_RATE_LIMIT_COLLECTION).doc(safeDocKey);
+  const now = Date.now();
+  const snap = await ref.get();
+  const data = snap.exists ? snap.data() : { attempts: 0, firstAttemptAt: now, lockedUntil: 0 };
+
+  if (data.lockedUntil && data.lockedUntil > now) {
+    const waitSec = Math.ceil((data.lockedUntil - now) / 1000);
+    throw new HttpsError(
+      "resource-exhausted",
+      `Yêu cầu từ địa chỉ mạng của bạn tạm thời bị khóa do gửi quá nhiều truy vấn. Vui lòng thử lại sau ${waitSec} giây.`
+    );
+  }
+
+  const withinWindow = (now - (data.firstAttemptAt || 0)) < IP_LOCKOUT_WINDOW_MS;
+  const attempts = withinWindow ? ((data.attempts || 0) + 1) : 1;
+  const firstAttemptAt = withinWindow ? data.firstAttemptAt : now;
+  const lockedUntil = attempts >= MAX_IP_ATTEMPTS ? (now + IP_LOCKOUT_WINDOW_MS) : 0;
+  await ref.set({ attempts, firstAttemptAt, lockedUntil, updatedAt: now });
+}
+
+function assertSafePayload(data) {
+  if (!data || typeof data !== "object") return;
+  const forbidden = ["__proto__", "constructor", "prototype"];
+  for (const key of forbidden) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      throw new HttpsError("invalid-argument", "Phát hiện payload không hợp lệ.");
+    }
+  }
+}
+
+function sanitizeInput(val, maxLen = 128) {
+  if (typeof val !== "string") return "";
+  return val.replace(/\0/g, "").trim().slice(0, maxLen);
+}
 
 function normalizeUsername(raw) {
   if (!raw || typeof raw !== "string") return "";
@@ -115,10 +184,14 @@ async function triggerPasswordResetEmailOnServer(recoveryEmail) {
   return response.ok;
 }
 
-exports.authRegisterWithUsername = onCall({ region: "asia-southeast1" }, async (request) => {
-  const rawUsername = String(request.data?.username || "").trim();
-  const rawRecoveryEmail = String(request.data?.recoveryEmail || "").trim().toLowerCase();
-  const password = String(request.data?.password || "");
+exports.authRegisterWithUsername = onCall(FUNCTION_OPTS, async (request) => {
+  const clientIp = extractClientIp(request);
+  await checkAndRecordIpRateLimit(clientIp);
+  assertSafePayload(request.data);
+
+  const rawUsername = sanitizeInput(request.data?.username, 32);
+  const rawRecoveryEmail = sanitizeInput(request.data?.recoveryEmail, 120).toLowerCase();
+  const password = sanitizeInput(request.data?.password, 128);
 
   if (!rawUsername) {
     throw new HttpsError("invalid-argument", "Vui lòng nhập Username.");
@@ -235,9 +308,13 @@ exports.authRegisterWithUsername = onCall({ region: "asia-southeast1" }, async (
   };
 });
 
-exports.authLoginWithUsername = onCall({ region: "asia-southeast1" }, async (request) => {
-  const rawUsername = String(request.data?.username || "").trim();
-  const password = String(request.data?.password || "");
+exports.authLoginWithUsername = onCall(FUNCTION_OPTS, async (request) => {
+  const clientIp = extractClientIp(request);
+  await checkAndRecordIpRateLimit(clientIp);
+  assertSafePayload(request.data);
+
+  const rawUsername = sanitizeInput(request.data?.username, 32);
+  const password = sanitizeInput(request.data?.password, 128);
 
   if (!rawUsername || !password) {
     throw new HttpsError("invalid-argument", "Vui lòng nhập đầy đủ Username và Mật khẩu.");
@@ -293,8 +370,12 @@ exports.authLoginWithUsername = onCall({ region: "asia-southeast1" }, async (req
   };
 });
 
-exports.authRequestPasswordRecovery = onCall({ region: "asia-southeast1" }, async (request) => {
-  const identifier = String(request.data?.identifier || "").trim();
+exports.authRequestPasswordRecovery = onCall(FUNCTION_OPTS, async (request) => {
+  const clientIp = extractClientIp(request);
+  await checkAndRecordIpRateLimit(clientIp);
+  assertSafePayload(request.data);
+
+  const identifier = sanitizeInput(request.data?.identifier, 120);
   if (!identifier) {
     throw new HttpsError("invalid-argument", "Vui lòng nhập Username hoặc Email khôi phục.");
   }
@@ -368,13 +449,17 @@ exports.authRequestPasswordRecovery = onCall({ region: "asia-southeast1" }, asyn
   };
 });
 
-exports.authChangePassword = onCall({ region: "asia-southeast1" }, async (request) => {
+exports.authChangePassword = onCall(FUNCTION_OPTS, async (request) => {
+  const clientIp = extractClientIp(request);
+  await checkAndRecordIpRateLimit(clientIp);
+  assertSafePayload(request.data);
+
   if (!request.auth || !request.auth.uid) {
     throw new HttpsError("unauthenticated", "Vui lòng đăng nhập trước khi đổi mật khẩu.");
   }
 
-  const currentPassword = String(request.data?.currentPassword || "");
-  const newPassword = String(request.data?.newPassword || "");
+  const currentPassword = sanitizeInput(request.data?.currentPassword, 128);
+  const newPassword = sanitizeInput(request.data?.newPassword, 128);
 
   if (!currentPassword || !newPassword) {
     throw new HttpsError("invalid-argument", "Vui lòng nhập mật khẩu hiện tại và mật khẩu mới.");
@@ -411,13 +496,17 @@ exports.authChangePassword = onCall({ region: "asia-southeast1" }, async (reques
   };
 });
 
-exports.authUpdateRecoveryEmail = onCall({ region: "asia-southeast1" }, async (request) => {
+exports.authUpdateRecoveryEmail = onCall(FUNCTION_OPTS, async (request) => {
+  const clientIp = extractClientIp(request);
+  await checkAndRecordIpRateLimit(clientIp);
+  assertSafePayload(request.data);
+
   if (!request.auth || !request.auth.uid) {
     throw new HttpsError("unauthenticated", "Vui lòng đăng nhập để cập nhật email khôi phục.");
   }
 
-  const newEmail = String(request.data?.recoveryEmail || "").trim().toLowerCase();
-  const currentPassword = String(request.data?.currentPassword || "");
+  const newEmail = sanitizeInput(request.data?.recoveryEmail, 120).toLowerCase();
+  const currentPassword = sanitizeInput(request.data?.currentPassword, 128);
 
   if (!newEmail || !isEmailFormat(newEmail)) {
     throw new HttpsError("invalid-argument", "Vui lòng nhập địa chỉ Email khôi phục hợp lệ.");

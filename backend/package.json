@@ -1,0 +1,11 @@
+{
+  "name": "financials-plan-backend",
+  "version": "1.0.0",
+  "description": "Hardened Backend API and Security Service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {}
+}
