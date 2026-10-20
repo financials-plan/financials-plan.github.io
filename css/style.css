@@ -2769,7 +2769,7 @@ input.cell-blue { padding: 7px 10px; }
 [data-theme="dark"] .val-gold { color: #A5B4FC; }
 
 .career-fixed-chart-wrapper { width: 100%; }
-.fixed-size-card { height: 340px; display: flex; flex-direction: column; }
+.fixed-size-card { height: 380px; display: flex; flex-direction: column; }
 .career-canvas-container { flex: 1; position: relative; width: 100%; min-height: 0; }
 
 .month-top-grid {

@@ -683,7 +683,6 @@ function ensureFixedInvestmentGoals() {
   let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
   if (!collegeGoal) {
     collegeGoal = createFixedCollegeGoal();
-    AppState.tcGoals.unshift(collegeGoal);
   } else {
     const tpl = createFixedCollegeGoal();
     Object.keys(tpl).forEach(k => {
@@ -702,8 +701,6 @@ function ensureFixedInvestmentGoals() {
   let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
   if (!retireGoal) {
     retireGoal = createFixedRetirementGoal();
-    const collegeIdx = AppState.tcGoals.indexOf(collegeGoal);
-    AppState.tcGoals.splice(collegeIdx + 1, 0, retireGoal);
   } else {
     const tpl = createFixedRetirementGoal();
     Object.keys(tpl).forEach(k => {
@@ -718,6 +715,9 @@ function ensureFixedInvestmentGoals() {
     retireGoal.type = "invest";
     normalizeGoalNumericFields(retireGoal, tpl);
   }
+
+  const regularGoals = AppState.tcGoals.filter(g => !isFixedInvestmentGoal(g));
+  AppState.tcGoals = [...regularGoals, collegeGoal, retireGoal];
 }
 
 function createEmptyAppState() {
@@ -894,10 +894,9 @@ function calculateCollegeGoal(goal) {
   const nMonths = nYears * 12;
   goal.accumulationYears = nYears;
 
-  const rAnnualPct = portfolio.expectedAvgReturn > 0
-    ? portfolio.expectedAvgReturn
-    : (Number(goal.rate) || Number(goal.estimatedRate) || 0);
-  goal.rate = rAnnualPct;
+  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
+    ? Number(goal.rate)
+    : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
 
   const periods = Number(goal.collegePeriods || goal.yearsRetire) || 0;
@@ -969,10 +968,9 @@ function calculateRetirementGoal(goal) {
   const nMonths = nYears * 12;
   goal.accumulationYears = nYears;
 
-  const rAnnualPct = portfolio.expectedAvgReturn > 0
-    ? portfolio.expectedAvgReturn
-    : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
-  goal.rate = rAnnualPct;
+  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
+    ? Number(goal.rate)
+    : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
 
   const reserveMonths = Number(goal.reserveMonths) || 0;
@@ -1061,10 +1059,9 @@ function calculateMonthlyNeed(goal) {
   }
 
   const portfolio = computeGoalPortfolioMetrics(goal);
-  const rAnnualPct = portfolio.expectedAvgReturn > 0
-    ? portfolio.expectedAvgReturn
-    : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
-  goal.rate = rAnnualPct;
+  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
+    ? Number(goal.rate)
+    : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
   const infRate = (Number(goal.inflation) || 0) / 100;
   const targetFV = (Number(goal.val) || 0) * Math.pow(1 + infRate, nYears);
@@ -2127,9 +2124,9 @@ function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
     });
 
     if (totalWeight > 0 && avgRate > 0) {
-      g.rate = parseFloat(avgRate.toFixed(2));
-    } else if (validProducts.length === 0) {
-      g.rate = 0;
+      g.effectivePortfolioRate = parseFloat(avgRate.toFixed(2));
+    } else {
+      g.effectivePortfolioRate = 0;
     }
     g.monthly = calculateMonthlyNeed(g);
   });
@@ -3497,29 +3494,26 @@ function renderCareerChart() {
   if (!canvas || typeof Chart === 'undefined') return;
 
   const themeTokens = typeof window.getChartThemeTokens === 'function' ? window.getChartThemeTokens() : {
-    text: '#292747', textMuted: '#8582A3', grid: '#E8E5F7', border: '#ffffff', planBar: '#E8E5F7'
+    isDark: false, text: '#292747', textMuted: '#8582A3', grid: '#E8E5F7', border: '#ffffff', planBar: '#E8E5F7'
   };
 
   const dataList = AppState.careerDetailList.length > 0 ? AppState.careerDetailList : calculateCareerDetails();
-  const labels = dataList.map(x => `${x.age} tuổi`);
+  const labels = dataList.map(x => String(x.age));
   const targets = dataList.map(x => x.target);
   const routes = dataList.map(x => x.route);
 
-  const getRouteContinuousGradient = (context) => {
+  const getRouteFillGradient = (context) => {
     const chart = context.chart;
     const { ctx, chartArea } = chart;
-    if (!chartArea) return '#159F87';
-
-    const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-    const totalPoints = routes.length;
-    if (totalPoints <= 1) return '#159F87';
-
-    routes.forEach((val, i) => {
-      const stop = i / (totalPoints - 1);
-      const isMet = val >= targets[i];
-      gradient.addColorStop(stop, isMet ? '#159F87' : '#F06E78');
-    });
-
+    if (!chartArea) return 'transparent';
+    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+    if (themeTokens.isDark) {
+      gradient.addColorStop(0, 'rgba(129, 140, 248, 0.22)');
+      gradient.addColorStop(1, 'rgba(129, 140, 248, 0.00)');
+    } else {
+      gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
+      gradient.addColorStop(1, 'rgba(79, 70, 229, 0.00)');
+    }
     return gradient;
   };
 
@@ -3530,33 +3524,33 @@ function renderCareerChart() {
       labels: labels,
       datasets: [
         {
-          label: "Thu nhập cần có để đạt mục tiêu",
-          data: targets,
-          borderColor: "#8582A3",
-          backgroundColor: "rgba(133, 130, 163, 0.1)",
+          label: "Thu nhập theo lộ trình dự kiến",
+          data: routes,
+          borderColor: themeTokens.isDark ? '#818CF8' : '#4F46E5',
+          backgroundColor: getRouteFillGradient,
           borderWidth: 2.5,
-          borderDash: [5, 5],
-          pointRadius: 4,
+          pointRadius: 2.5,
           pointHoverRadius: 6,
-          pointBackgroundColor: "#8582A3",
-          fill: false,
-          tension: 0.25
+          pointBackgroundColor: themeTokens.isDark ? '#818CF8' : '#4F46E5',
+          pointBorderColor: themeTokens.border,
+          pointBorderWidth: 1.5,
+          fill: true,
+          tension: 0.28
         },
         {
-          label: "Thu nhập bạn dự kiến kiếm được",
-          data: routes,
-          borderColor: getRouteContinuousGradient,
-          borderWidth: 3,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointBackgroundColor: ctx => {
-            const idx = ctx.dataIndex;
-            return routes[idx] >= targets[idx] ? "#159F87" : "#F06E78";
-          },
-          pointBorderColor: themeTokens.border,
-          pointBorderWidth: 2,
+          label: "Thu nhập cần kiếm để đạt mục tiêu",
+          data: targets,
+          borderColor: themeTokens.isDark ? '#FBBF24' : '#D97706',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: themeTokens.isDark ? '#FBBF24' : '#D97706',
+          pointHoverBorderColor: themeTokens.border,
+          pointHoverBorderWidth: 2,
           fill: false,
-          tension: 0.25
+          tension: 0.2
         }
       ]
     },
@@ -3567,26 +3561,45 @@ function renderCareerChart() {
       plugins: {
         legend: {
           position: 'top',
+          align: 'end',
           labels: {
             font: { family: 'Inter', size: 11, weight: '600' },
             color: themeTokens.text,
-            boxWidth: 24,
-            boxHeight: 10,
+            boxWidth: 20,
+            boxHeight: 8,
             padding: 16
           }
         },
         tooltip: {
+          backgroundColor: themeTokens.isDark ? 'rgba(15, 23, 42, 0.94)' : 'rgba(255, 255, 255, 0.96)',
+          titleColor: themeTokens.isDark ? '#F8FAFC' : '#0F172A',
+          bodyColor: themeTokens.isDark ? '#CBD5E1' : '#334155',
+          borderColor: themeTokens.isDark ? '#334155' : '#E2E8F0',
+          borderWidth: 1,
+          padding: 10,
+          boxPadding: 4,
+          cornerRadius: 8,
           callbacks: {
+            title: ctx => {
+              const idx = ctx[0].dataIndex;
+              const item = dataList[idx];
+              const yr = item?.year || (AppState.currentYear + idx);
+              return `${item?.age || labels[idx]} tuổi (Năm ${yr})`;
+            },
             label: ctx => {
               if (ctx.raw === null || ctx.raw === undefined) return '';
               const val = Number(ctx.raw).toFixed(1);
-              if (ctx.datasetIndex === 1) {
-                const targetVal = targets[ctx.dataIndex];
-                const diff = (ctx.raw - targetVal).toFixed(1);
-                const status = ctx.raw >= targetVal ? `[Đạt (+${diff})]` : `[Cần thêm (${diff})]`;
-                return ` ${ctx.dataset.label}: ${val} ${status}`;
+              return ` ${ctx.dataset.label}: ${val} tr/tháng`;
+            },
+            afterBody: ctx => {
+              const idx = ctx[0].dataIndex;
+              const rVal = Number(routes[idx]) || 0;
+              const tVal = Number(targets[idx]) || 0;
+              const diff = Number((rVal - tVal).toFixed(1));
+              if (rVal >= tVal) {
+                return `\n Trạng thái: Đạt mục tiêu (+${diff} tr/tháng)`;
               }
-              return ` ${ctx.dataset.label}: ${val}`;
+              return `\n Trạng thái: Cần thêm ${Math.abs(diff)} tr/tháng`;
             }
           }
         }
@@ -3595,11 +3608,45 @@ function renderCareerChart() {
         y: {
           beginAtZero: true,
           suggestedMax: 100,
-          ticks: { stepSize: 10, font: { family: 'Inter', size: 10 }, color: themeTokens.textMuted },
-          grid: { color: themeTokens.grid },
-          title: { display: true, text: "Triệu đồng / tháng", font: { family: 'Inter', size: 11, weight: 600 }, color: themeTokens.text }
+          ticks: {
+            stepSize: 10,
+            font: { family: 'Inter', size: 10, weight: '500' },
+            color: themeTokens.textMuted,
+            callback: v => `${v}`
+          },
+          grid: {
+            color: themeTokens.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)'
+          },
+          title: {
+            display: true,
+            text: "Triệu đồng / tháng",
+            font: { family: 'Inter', size: 11, weight: '600' },
+            color: themeTokens.text,
+            padding: { bottom: 8 }
+          }
         },
-        x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 10 }, color: themeTokens.textMuted } }
+        x: {
+          grid: {
+            display: true,
+            color: themeTokens.isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.025)',
+            drawTicks: true
+          },
+          ticks: {
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0,
+            font: { family: 'Inter', size: 10, weight: '500' },
+            color: themeTokens.textMuted,
+            padding: 6
+          },
+          title: {
+            display: true,
+            text: "Độ tuổi (từng năm)",
+            font: { family: 'Inter', size: 11, weight: '600' },
+            color: themeTokens.text,
+            padding: { top: 8, bottom: 2 }
+          }
+        }
       }
     }
   });
@@ -4119,8 +4166,22 @@ window.onGoalFieldChange = function(idx, field, val) {
   g[field] = val;
   g.monthly = calculateMonthlyNeed(g);
 
+  if (field === 'type') {
+    const rows = document.querySelectorAll('#tbody-tc-form-goals tr');
+    if (rows && rows[idx]) {
+      const inputs = rows[idx].querySelectorAll('input');
+      if (inputs && inputs[4]) {
+        inputs[4].disabled = (val === 'debt');
+        inputs[4].style.background = (val === 'debt') ? '#f8fafc' : '';
+        inputs[4].style.cursor = (val === 'debt') ? 'not-allowed' : '';
+      }
+    }
+  }
+
+  const mCell = document.getElementById(`tc-goal-monthly-${idx}`);
+  if (mCell) mCell.textContent = `${(Number(g.monthly) || 0).toFixed(2)}`;
+
   syncDebtGoalToOverallData();
-  renderTcGoalsFormTable();
   syncGoalsToCards();
   renderTcMatrixTable();
   recalculateAll();
@@ -4147,7 +4208,13 @@ window.addNewTcGoalRow = function() {
   };
   newGoal.monthly = calculateMonthlyNeed(newGoal);
 
-  AppState.tcGoals.push(newGoal);
+  const fixedStart = AppState.tcGoals.findIndex(isFixedInvestmentGoal);
+  if (fixedStart >= 0) {
+    AppState.tcGoals.splice(fixedStart, 0, newGoal);
+  } else {
+    AppState.tcGoals.push(newGoal);
+  }
+  ensureFixedInvestmentGoals();
 
   renderTcGoalsFormTable();
   syncGoalsToCards();
