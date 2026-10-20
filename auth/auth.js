@@ -1,10 +1,10 @@
-/* Lucian UX/UI Prompt #062 & #244 Adaptations · MIT License (c) 2026 Seokwoooo · https://lucianlabs.dev */
+﻿
 
 const AUTH_SESSION_KEY = "FIN_APP_USER_SESSION";
 const AUTH_PROFILES_KEY = "FIN_APP_PROFILES_LIST";
 const AUTH_THEME_KEY = "FIN_APP_THEME";
 
-let currentAuthTab = "login";
+let currentAuthPageTab = "login";
 let authTermsChecked = false;
 let hasAttemptedSignupSubmit = false;
 let loginTriesLeft = 3;
@@ -34,7 +34,7 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-/* Theme Management */
+
 function initAuthTheme() {
   let theme = null;
   try {
@@ -72,7 +72,7 @@ window.toggleAuthTheme = function(e) {
   applyAuthTheme(next);
 };
 
-/* Prompt 062: Animated Password Eye Toggle */
+
 window.toggleAuthPasswordVisibility = function(inputId, btnEl) {
   const input = document.getElementById(inputId);
   if (!input) return;
@@ -84,7 +84,7 @@ window.toggleAuthPasswordVisibility = function(inputId, btnEl) {
   }
 };
 
-/* Caps Lock Detector for all password fields */
+
 function setupCapsLockDetectors() {
   const passFields = [
     { inputId: "input-auth-login-password", badgeId: "caps-auth-login" },
@@ -108,16 +108,16 @@ function setupCapsLockDetectors() {
   });
 }
 
-/* Prompt 062: Card Shake Animation */
+
 function triggerCardShake() {
   const card = document.getElementById("auth-card");
   if (!card) return;
   card.classList.remove("shake");
-  void card.offsetWidth; // trigger reflow
+  void card.offsetWidth; 
   card.classList.add("shake");
 }
 
-/* Prompt 244: Field Shake Animation */
+
 function triggerFieldShake(el) {
   if (!el) return;
   el.classList.remove("is-shake");
@@ -125,7 +125,7 @@ function triggerFieldShake(el) {
   el.classList.add("is-shake");
 }
 
-/* Terms Checkbox */
+
 window.toggleAuthTerms = function(event) {
   if (event && event.preventDefault) event.preventDefault();
   authTermsChecked = !authTermsChecked;
@@ -142,7 +142,7 @@ window.toggleAuthTerms = function(event) {
   }
 };
 
-/* Session and Profiles Helpers */
+
 function getStoredSession() {
   try {
     const raw = localStorage.getItem(AUTH_SESSION_KEY);
@@ -155,15 +155,47 @@ function getStoredSession() {
   }
 }
 
+const SEEDED_PROFILES_DEFAULT = [
+  {
+    docId: "user_admin",
+    displayUsername: "Admin",
+    normalizedUsername: "admin",
+    lastActive: Date.now() - 3600000
+  },
+  {
+    docId: "user_dinh_anh_quan",
+    displayUsername: "Đinh Anh Quân",
+    normalizedUsername: "dinh_anh_quan",
+    lastActive: Date.now() - 7200000
+  },
+  {
+    docId: "user_hst",
+    displayUsername: "HST",
+    normalizedUsername: "hst",
+    lastActive: Date.now() - 86400000
+  },
+  {
+    docId: "user_demo",
+    displayUsername: "Demo User",
+    normalizedUsername: "demo",
+    lastActive: Date.now() - 172800000
+  }
+];
+
 function getSavedProfilesList() {
   try {
     const raw = localStorage.getItem(AUTH_PROFILES_KEY);
-    const list = raw ? JSON.parse(raw) : [];
+    if (!raw) {
+      localStorage.setItem(AUTH_PROFILES_KEY, JSON.stringify(SEEDED_PROFILES_DEFAULT));
+      return SEEDED_PROFILES_DEFAULT;
+    }
+    const list = JSON.parse(raw);
     return Array.isArray(list) ? list : [];
   } catch (e) {
-    return [];
+    return SEEDED_PROFILES_DEFAULT;
   }
 }
+window.getSavedProfilesList = getSavedProfilesList;
 
 function saveAuthenticatedSession(authUser) {
   const displayUsername = authUser.displayUsername || authUser.username || authUser.rawName || authUser.ho_ten || "Người dùng";
@@ -212,7 +244,7 @@ function saveAuthenticatedSession(authUser) {
   return userObj;
 }
 
-/* Alert Boxes */
+
 function showAuthError(msg) {
   const errEl = document.getElementById("auth-error-box");
   const okEl = document.getElementById("auth-success-box");
@@ -240,7 +272,7 @@ function clearAuthMessages() {
   if (okEl) okEl.style.display = "none";
 }
 
-/* Live Slug Preview */
+
 window.updateAuthRegSlugPreview = function(val) {
   const slugEl = document.getElementById("preview-auth-reg-slug");
   const normalized = normalizeUserName(val);
@@ -252,7 +284,7 @@ window.updateAuthRegSlugPreview = function(val) {
   }
 };
 
-/* Saved Profiles Table Actions */
+
 window.selectSavedProfileForLogin = function(username) {
   window.switchAuthTab("login");
   const userInp = document.getElementById("input-auth-login-username");
@@ -364,7 +396,7 @@ function renderSavedProfilesTable() {
   }).join("");
 }
 
-/* Prompt 244: Real-time Form Validation for Sign-Up */
+
 function getSignupValidationState() {
   const userVal = document.getElementById("input-auth-reg-username")?.value.trim() || "";
   const emailVal = document.getElementById("input-auth-reg-email")?.value.trim() || "";
@@ -373,7 +405,7 @@ function getSignupValidationState() {
 
   const errors = [];
 
-  // 1. Username
+
   const normUser = normalizeUserName(userVal);
   if (!userVal) {
     errors.push({
@@ -404,7 +436,7 @@ function getSignupValidationState() {
     });
   }
 
-  // 2. Email (Optional, but if filled must be valid)
+
   if (emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
     errors.push({
       key: "email",
@@ -416,7 +448,7 @@ function getSignupValidationState() {
     });
   }
 
-  // 3. Password
+
   if (passVal.length < 6) {
     errors.push({
       key: "password",
@@ -428,7 +460,7 @@ function getSignupValidationState() {
     });
   }
 
-  // 4. Confirm Password
+
   if (!confVal) {
     errors.push({
       key: "confirm",
@@ -449,7 +481,7 @@ function getSignupValidationState() {
     });
   }
 
-  // 5. Terms
+
   if (!authTermsChecked) {
     errors.push({
       key: "terms",
@@ -465,7 +497,7 @@ function getSignupValidationState() {
 }
 
 function validateSignupFormRealtime() {
-  if (currentAuthTab !== "register") return [];
+  if (currentAuthPageTab !== "register") return [];
   const errors = getSignupValidationState();
   const summaryBox = document.getElementById("auth-error-summary");
   const summaryList = document.getElementById("summary-error-list");
@@ -498,7 +530,7 @@ function validateSignupFormRealtime() {
     } else {
       if (wrap) {
         wrap.classList.remove("is-bad");
-        // Only mark is-good if field has content (or email is optional/valid, terms is checked)
+
         let hasContent = false;
         if (k === "terms") hasContent = authTermsChecked;
         else if (k === "email") hasContent = Boolean(inp && inp.value.trim());
@@ -514,7 +546,7 @@ function validateSignupFormRealtime() {
     }
   });
 
-  // Update Summary List
+
   if (hasAttemptedSignupSubmit && summaryBox && summaryList && summaryCount) {
     if (errors.length === 0) {
       summaryBox.style.display = "none";
@@ -536,7 +568,7 @@ function validateSignupFormRealtime() {
   return errors;
 }
 
-/* Prompt 244: Glide smoothly to error field and focus cursor */
+
 window.glideToField = function(wrapId, inputId) {
   const wrap = document.getElementById(wrapId);
   const input = document.getElementById(inputId);
@@ -551,7 +583,7 @@ window.glideToField = function(wrapId, inputId) {
   }
 };
 
-/* Realtime Input Listeners */
+
 function setupRealtimeValidation() {
   const regInputs = [
     "input-auth-reg-username",
@@ -576,7 +608,7 @@ function setupRealtimeValidation() {
     }
   });
 
-  // Sign-in realtime field reset on input
+
   const loginUser = document.getElementById("input-auth-login-username");
   const loginPass = document.getElementById("input-auth-login-password");
   if (loginUser) {
@@ -597,21 +629,21 @@ function setupRealtimeValidation() {
   }
 }
 
-/* Tab Switching */
+
 window.switchAuthTab = function(tabName) {
   const allowed = ["login", "register", "reset"];
-  currentAuthTab = allowed.includes(tabName) ? tabName : "login";
+  currentAuthPageTab = allowed.includes(tabName) ? tabName : "login";
 
   allowed.forEach(t => {
     const btn = document.getElementById(`btn-auth-tab-${t}`);
     const panel = document.getElementById(`auth-panel-${t}`);
     if (btn) {
-      const isActive = t === currentAuthTab;
+      const isActive = t === currentAuthPageTab;
       btn.classList.toggle("active", isActive);
       btn.setAttribute("aria-selected", isActive ? "true" : "false");
     }
     if (panel) {
-      panel.style.display = t === currentAuthTab ? "flex" : "none";
+      panel.style.display = t === currentAuthPageTab ? "flex" : "none";
     }
   });
 
@@ -630,18 +662,18 @@ window.switchAuthTab = function(tabName) {
     summaryBox.style.display = "none";
   }
 
-  if (currentAuthTab === "login") {
+  if (currentAuthPageTab === "login") {
     if (headingEl) headingEl.textContent = "Đăng nhập Tài khoản";
     if (subheadingEl) subheadingEl.textContent = "Sử dụng Username & Mật khẩu để truy cập lộ trình tài chính của bạn";
     if (submitLbl) submitLbl.textContent = "Đăng nhập vào Sổ Tài Chính";
     if (headerIcon) headerIcon.className = "fa-solid fa-user-shield";
-  } else if (currentAuthTab === "register") {
+  } else if (currentAuthPageTab === "register") {
     if (headingEl) headingEl.textContent = "Đăng ký Tài khoản mới";
     if (subheadingEl) subheadingEl.textContent = "Tạo Username duy nhất và liên kết Email để bảo vệ & khôi phục mật khẩu";
     if (submitLbl) submitLbl.textContent = "Đăng ký & Bắt đầu ngay";
     if (headerIcon) headerIcon.className = "fa-solid fa-user-plus";
     hasAttemptedSignupSubmit = false;
-  } else if (currentAuthTab === "reset") {
+  } else if (currentAuthPageTab === "reset") {
     if (headingEl) headingEl.textContent = "Khôi phục Mật khẩu";
     if (subheadingEl) subheadingEl.textContent = "Xác minh quyền sở hữu tài khoản qua Email khôi phục đã liên kết";
     if (submitLbl) submitLbl.textContent = "Gửi yêu cầu khôi phục";
@@ -660,7 +692,7 @@ async function waitForCloudDBReady() {
   return Boolean(window.CloudDB && typeof window.CloudDB.loginAccount === "function");
 }
 
-/* Prompt 062: Welcome Success Screen Transition */
+
 function transitionToWelcomeScreen(user, isNew = false) {
   const card = document.getElementById("auth-card");
   const welcomePane = document.getElementById("auth-welcome-pane");
@@ -687,7 +719,7 @@ function transitionToWelcomeScreen(user, isNew = false) {
     welcomePane.setAttribute("aria-hidden", "false");
   }
 
-  // Auto redirect after pleasant display
+
   setTimeout(() => {
     window.navigateToApp();
   }, 1100);
@@ -697,7 +729,7 @@ window.navigateToApp = function() {
   window.location.href = "../main.html";
 };
 
-/* Form Submission */
+
 window.handleAuthFormSubmit = async function(event) {
   if (event && event.preventDefault) event.preventDefault();
   await window.submitAuthForm();
@@ -707,8 +739,8 @@ window.submitAuthForm = async function() {
   if (isSubmitting) return;
   const btnSubmit = document.getElementById("btn-auth-submit");
 
-  /* 1. SIGN-IN FLOW */
-  if (currentAuthTab === "login") {
+
+  if (currentAuthPageTab === "login") {
     const userInp = document.getElementById("input-auth-login-username");
     const passInp = document.getElementById("input-auth-login-password");
     const wrapUser = document.getElementById("wrap-auth-login-username");
@@ -741,7 +773,7 @@ window.submitAuthForm = async function() {
       return;
     }
 
-    // Morph button into spinning circle immediately
+
     isSubmitting = true;
     if (btnSubmit) {
       btnSubmit.classList.add("busy");
@@ -765,7 +797,7 @@ window.submitAuthForm = async function() {
       const res = await window.CloudDB.loginAccount(username, pass);
 
       if (!res.success || !res.user) {
-        // Failed login
+
         if (btnSubmit) {
           btnSubmit.classList.remove("busy");
           btnSubmit.disabled = false;
@@ -788,7 +820,7 @@ window.submitAuthForm = async function() {
         return;
       }
 
-      // Success login: Morph button into green check
+
       loginTriesLeft = 3;
       if (btnSubmit) {
         btnSubmit.classList.remove("busy");
@@ -797,7 +829,7 @@ window.submitAuthForm = async function() {
 
       saveAuthenticatedSession(res.user);
 
-      // Transition to Welcome screen after checkmark animation
+
       setTimeout(() => {
         transitionToWelcomeScreen(res.user, false);
       }, 550);
@@ -815,8 +847,8 @@ window.submitAuthForm = async function() {
     return;
   }
 
-  /* 2. SIGN-UP FLOW */
-  if (currentAuthTab === "register") {
+
+  if (currentAuthPageTab === "register") {
     hasAttemptedSignupSubmit = true;
     const errors = validateSignupFormRealtime();
 
@@ -831,7 +863,7 @@ window.submitAuthForm = async function() {
     const email = document.getElementById("input-auth-reg-email")?.value.trim() || "";
     const pass = document.getElementById("input-auth-reg-password")?.value || "";
 
-    // Morph button into spinning circle
+
     isSubmitting = true;
     if (btnSubmit) {
       btnSubmit.classList.add("busy");
@@ -865,7 +897,7 @@ window.submitAuthForm = async function() {
         return;
       }
 
-      // Success registration: Morph button into green check
+
       if (btnSubmit) {
         btnSubmit.classList.remove("busy");
         btnSubmit.classList.add("ok");
@@ -890,12 +922,13 @@ window.submitAuthForm = async function() {
     return;
   }
 
-  /* 3. RESET PASSWORD FLOW */
-  if (currentAuthTab === "reset") {
+  if (currentAuthPageTab === "reset") {
     const identInp = document.getElementById("input-auth-reset-identifier");
+    const newPassInp = document.getElementById("input-auth-reset-newpass");
     const wrapIdent = document.getElementById("wrap-auth-reset-identifier");
     const errIdent = document.getElementById("err-auth-reset-identifier");
     const identifier = identInp?.value.trim() || "";
+    const newPass = newPassInp?.value || "";
 
     if (!identifier) {
       if (wrapIdent) wrapIdent.classList.add("is-bad");
@@ -913,7 +946,13 @@ window.submitAuthForm = async function() {
     clearAuthMessages();
 
     try {
-      const res = await window.CloudDB.requestPasswordRecovery(identifier);
+      let res;
+      if (newPass && newPass.length >= 6 && window.CloudDB && typeof window.CloudDB.resetPasswordWithNewPass === "function") {
+        res = await window.CloudDB.resetPasswordWithNewPass(identifier, newPass);
+      } else {
+        res = await window.CloudDB.requestPasswordRecovery(identifier);
+      }
+
       if (btnSubmit) {
         btnSubmit.classList.remove("busy");
         btnSubmit.disabled = false;
@@ -939,6 +978,15 @@ window.submitAuthForm = async function() {
       }
       showAuthSuccess(res.message || "Đã gửi hướng dẫn khôi phục mật khẩu tới email liên kết.");
 
+      if (newPass && newPass.length >= 6) {
+        setTimeout(() => {
+          window.switchAuthTab("login");
+          const loginUserInp = document.getElementById("input-auth-login-username");
+          const loginPassInp = document.getElementById("input-auth-login-password");
+          if (loginUserInp) loginUserInp.value = identifier;
+          if (loginPassInp) loginPassInp.value = newPass;
+        }, 1600);
+      }
     } catch (err) {
       console.error("Reset error:", err);
       if (btnSubmit) {
@@ -952,7 +1000,7 @@ window.submitAuthForm = async function() {
   }
 };
 
-/* Document Ready Initialization */
+
 document.addEventListener("DOMContentLoaded", () => {
   initAuthTheme();
   renderSavedProfilesTable();
@@ -992,3 +1040,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showAuthError(`Vui lòng nhập mật khẩu của tài khoản [${usernameParam}] để xác thực.`);
   }
 });
+

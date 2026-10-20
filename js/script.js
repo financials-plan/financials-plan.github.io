@@ -1188,6 +1188,7 @@ function calculateCareerDetails() {
   const calendarYear = new Date().getFullYear();
   const startTrackingYear = Number(AppState.currentYear) || calendarYear;
 
+  let prevRoute = autoCurrentIncome;
   return ages.map((age) => {
     const yearOffset = age - baseAge;
     const year = startTrackingYear + yearOffset;
@@ -1203,8 +1204,17 @@ function calculateCareerDetails() {
       ? (hasManualActual ? exist.actual : (year === calendarYear || yearOffset === 0 ? autoCurrentIncome : (exist && exist.actual !== undefined ? exist.actual : null)))
       : null;
 
-    const hasManualRoute = exist && exist.manualRoute === true && exist.route !== undefined;
-    const defaultRoute = (yearOffset === 0 && !hasManualRoute) ? autoCurrentIncome : 0;
+    const hasManualRoute = Boolean(exist && exist.manualRoute === true && exist.route !== undefined && exist.route !== null);
+    let currentRoute;
+    if (hasManualRoute) {
+      currentRoute = Number(exist.route) || 0;
+      prevRoute = currentRoute;
+    } else if (exist && exist.route !== undefined && exist.route !== null && !exist.hasOwnProperty('manualRoute') && Number(exist.route) > 0) {
+      currentRoute = Number(exist.route);
+      prevRoute = currentRoute;
+    } else {
+      currentRoute = prevRoute;
+    }
 
     return {
       age,
@@ -1213,8 +1223,8 @@ function calculateCareerDetails() {
       manualActual: hasManualActual,
       canEditActual,
       target: targetVal,
-      route: hasManualRoute ? exist.route : (exist && exist.route ? exist.route : defaultRoute),
-      manualRoute: hasManualRoute || Boolean(exist && exist.route)
+      route: currentRoute,
+      manualRoute: hasManualRoute
     };
   });
 }
@@ -3484,6 +3494,7 @@ window.updateCareerDetailField = function(idx, field, val) {
   } else if (field === 'route') {
     item.route = val;
     item.manualRoute = true;
+    AppState.careerDetailList = calculateCareerDetails();
   }
   renderCareerTables();
   renderCareerChart();

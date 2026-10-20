@@ -57,7 +57,6 @@
 
     <main class="auth-main-container">
       <div class="auth-card" id="auth-card">
-        <!-- Form view container -->
         <div class="auth-card-form-pane" id="auth-card-form-pane">
           <div class="auth-card-header">
             <div class="auth-icon-circle">
@@ -98,7 +97,6 @@
             </button>
           </div>
 
-          <!-- Prompt 244 Form Validation Error Summary Banner -->
           <div id="auth-error-summary" class="auth-error-summary" role="alert" style="display: none;">
             <div class="summary-box">
               <div class="summary-header">
@@ -110,7 +108,6 @@
           </div>
 
           <form id="auth-main-form" class="auth-form-body" onsubmit="handleAuthFormSubmit(event)" novalidate>
-            <!-- Panel 1: Đăng nhập (Sign-in) -->
             <div id="auth-panel-login" class="auth-tab-panel">
               <div id="saved-profiles-section" class="saved-profiles-box" style="display: none;">
                 <div class="saved-profiles-header">
@@ -175,7 +172,6 @@
               </div>
             </div>
 
-            <!-- Panel 2: Đăng ký (Sign-up) -->
             <div id="auth-panel-register" class="auth-tab-panel" style="display: none;">
               <div class="form-group auth-field-wrap" id="wrap-auth-reg-username">
                 <div class="field-label-row">
@@ -264,7 +260,6 @@
               </div>
             </div>
 
-            <!-- Panel 3: Quên mật khẩu (Reset Password) -->
             <div id="auth-panel-reset" class="auth-tab-panel" style="display: none;">
               <div class="form-group auth-field-wrap" id="wrap-auth-reset-identifier">
                 <div class="field-label-row">
@@ -281,6 +276,19 @@
                 </div>
               </div>
 
+              <div class="form-group auth-field-wrap" id="wrap-auth-reset-newpass" style="margin-top: 14px;">
+                <div class="field-label-row">
+                  <label for="input-auth-reset-newpass">Mật khẩu mới (Tùy chọn - Nhập để đặt lại ngay)</label>
+                </div>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-key input-icon-left"></i>
+                  <input type="password" id="input-auth-reset-newpass" class="auth-input" placeholder="Tối thiểu 6 ký tự để đổi mật khẩu ngay..." autocomplete="new-password">
+                </div>
+                <div class="input-hint">
+                  Để trống nếu bạn chỉ muốn gửi hướng dẫn xác thực khôi phục qua email.
+                </div>
+              </div>
+
               <div class="auth-inline-links">
                 <button type="button" class="btn-link-inline" onclick="switchAuthTab('login')">
                   <i class="fa-solid fa-arrow-left"></i> Quay lại màn hình Đăng nhập
@@ -291,7 +299,6 @@
             <div id="auth-error-box" class="auth-alert auth-alert-error" style="display: none;"></div>
             <div id="auth-success-box" class="auth-alert auth-alert-success" style="display: none;"></div>
 
-            <!-- Submit button with Prompt 062 morphing spinner and check -->
             <div class="auth-submit-row">
               <button type="submit" class="btn-auth-submit" id="btn-auth-submit">
                 <span class="btn-submit-text" id="btn-auth-submit-label">Đăng nhập vào Sổ Tài Chính</span>
