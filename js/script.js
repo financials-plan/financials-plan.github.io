@@ -211,9 +211,18 @@ const UserSession = {
     try {
       const data = localStorage.getItem(this.PROFILES_KEY);
       const list = data ? JSON.parse(data) : [];
-      return Array.isArray(list) ? list : [];
+      if (!Array.isArray(list)) return [];
+      const current = this.getStored();
+      const activeDocId = current ? current.docId : null;
+      const cleanList = list.filter(p => {
+        if (!p || !p.docId) return false;
+        return p.authenticatedOnDevice === true || (activeDocId && p.docId === activeDocId);
+      });
+      if (cleanList.length !== list.length) {
+        localStorage.setItem(this.PROFILES_KEY, JSON.stringify(cleanList));
+      }
+      return cleanList;
     } catch (e) {
-      console.error("Lỗi đọc danh sách hồ sơ:", e);
       return [];
     }
   },
@@ -236,6 +245,7 @@ const UserSession = {
         uid: user.uid || '',
         maskedEmail: user.maskedEmail || '',
         hasRecoveryEmail: Boolean(user.hasRecoveryEmail),
+        authenticatedOnDevice: true,
         lastActive: Date.now()
       };
       if (existingIdx >= 0) {

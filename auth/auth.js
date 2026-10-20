@@ -1,4 +1,4 @@
-﻿
+
 
 const AUTH_SESSION_KEY = "FIN_APP_USER_SESSION";
 const AUTH_PROFILES_KEY = "FIN_APP_PROFILES_LIST";
@@ -155,44 +155,24 @@ function getStoredSession() {
   }
 }
 
-const SEEDED_PROFILES_DEFAULT = [
-  {
-    docId: "user_admin",
-    displayUsername: "Admin",
-    normalizedUsername: "admin",
-    lastActive: Date.now() - 3600000
-  },
-  {
-    docId: "user_dinh_anh_quan",
-    displayUsername: "Đinh Anh Quân",
-    normalizedUsername: "dinh_anh_quan",
-    lastActive: Date.now() - 7200000
-  },
-  {
-    docId: "user_hst",
-    displayUsername: "HST",
-    normalizedUsername: "hst",
-    lastActive: Date.now() - 86400000
-  },
-  {
-    docId: "user_demo",
-    displayUsername: "Demo User",
-    normalizedUsername: "demo",
-    lastActive: Date.now() - 172800000
-  }
-];
-
 function getSavedProfilesList() {
   try {
     const raw = localStorage.getItem(AUTH_PROFILES_KEY);
-    if (!raw) {
-      localStorage.setItem(AUTH_PROFILES_KEY, JSON.stringify(SEEDED_PROFILES_DEFAULT));
-      return SEEDED_PROFILES_DEFAULT;
-    }
+    if (!raw) return [];
     const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
+    if (!Array.isArray(list)) return [];
+    const currentSession = getStoredSession();
+    const activeDocId = currentSession ? currentSession.docId : null;
+    const cleanList = list.filter(p => {
+      if (!p || !p.docId) return false;
+      return p.authenticatedOnDevice === true || (activeDocId && p.docId === activeDocId);
+    });
+    if (cleanList.length !== list.length) {
+      localStorage.setItem(AUTH_PROFILES_KEY, JSON.stringify(cleanList));
+    }
+    return cleanList;
   } catch (e) {
-    return SEEDED_PROFILES_DEFAULT;
+    return [];
   }
 }
 window.getSavedProfilesList = getSavedProfilesList;
@@ -231,6 +211,7 @@ function saveAuthenticatedSession(authUser) {
       uid: userObj.uid,
       maskedEmail: userObj.maskedEmail,
       hasRecoveryEmail: userObj.hasRecoveryEmail,
+      authenticatedOnDevice: true,
       lastActive: Date.now()
     };
     if (existingIdx >= 0) {
