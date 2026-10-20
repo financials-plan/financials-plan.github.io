@@ -51,13 +51,7 @@ async function syncSeedAccountsToFirestore() {
     for (const k of keys) {
       const acc = DEFAULT_SEEDED_ACCOUNTS[k];
       const accRef = doc(db, ACCOUNTS_COLLECTION, acc.normalizedUsername);
-      const snap = await Promise.race([
-        getDoc(accRef),
-        new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 1500))
-      ]).catch(() => null);
-      if (!snap || !snap.exists()) {
-        await setDoc(accRef, { ...acc }, { merge: true }).catch(() => {});
-      }
+      await setDoc(accRef, { ...acc }, { merge: true }).catch(() => {});
     }
   } catch (e) {}
 }
@@ -264,6 +258,8 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     normalizedUsername: "admin",
     normalizedName: "admin",
     docId: "user_admin",
+    password: "admin123",
+    mat_khau: "admin123",
     salt: "seed_admin_salt_2026",
     passHash: "1afbe8df87daff1faacd1ba0a109c609186232a754290f7f76303d05d398f9b9",
     altPassHash: "94a3395695d9192d44df66e99b9a8f638a25db70d3aa04b43b98b6c805fb7c56",
@@ -284,6 +280,8 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     normalizedUsername: "dinh_anh_quan",
     normalizedName: "dinh_anh_quan",
     docId: "user_dinh_anh_quan",
+    password: "dinh_anh_quan",
+    mat_khau: "dinh_anh_quan",
     salt: "seed_daq_salt_2026",
     passHash: "4422ded22770a1e3223c02093ce9897bb89b7b9c425470135664c828845beb8d",
     altPassHash: "08e97570e51f30dad06081a4d6acb68acf5de69b11ee4d4795db3d69d08332ba",
@@ -304,6 +302,8 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     normalizedUsername: "hst",
     normalizedName: "hst",
     docId: "user_hst",
+    password: "hst2026",
+    mat_khau: "hst2026",
     salt: "seed_hst_salt_2026",
     passHash: "4cb16d1dcc95bc8e016cc29b3788b08a615b6d503e3169a5bb9dc6a7321841a9",
     altPassHash: "1ac72f8bacb84b00981f4597c6677c820b85c7b5269d3fc50381c6d19cef924b",
@@ -324,6 +324,8 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     normalizedUsername: "demo",
     normalizedName: "demo",
     docId: "user_demo",
+    password: "lumen2026",
+    mat_khau: "lumen2026",
     salt: "seed_demo_salt_2026",
     passHash: "59d73dc5fdb386046c4d456698970e204f3fc86bfe9b5054e0573895e1193388",
     altPassHash: "8d04d4560e9636ae3d886e6fa00c0826fe28661a0abacaa6bd7032e9ebb54ff7",
@@ -517,6 +519,8 @@ const FirestoreService = {
       ho_ten: rawUsername,
       normalizedUsername,
       normalizedName: normalizedUsername,
+      password: cleanPass,
+      mat_khau: cleanPass,
       recoveryEmail: cleanEmail || null,
       maskedEmail,
       hasRecoveryEmail: Boolean(cleanEmail),
@@ -671,6 +675,8 @@ const FirestoreService = {
 
     if (isFirebaseReady && db) {
       setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), {
+        password: cleanPass,
+        mat_khau: cleanPass,
         lastLoginAt: target.lastLoginAt,
         updatedAt: target.updatedAt
       }, { merge: true }).catch(() => {});
@@ -806,6 +812,8 @@ const FirestoreService = {
     saveLocalAuthAccounts(accounts);
     if (isFirebaseReady && db) {
       setDoc(doc(db, ACCOUNTS_COLLECTION, target.normalizedUsername), {
+        password: cleanPass,
+        mat_khau: cleanPass,
         passHash: target.passHash,
         updatedAt: target.updatedAt
       }, { merge: true }).catch(() => {});
@@ -895,6 +903,8 @@ const FirestoreService = {
     if (isFirebaseReady && db) {
       try {
         await setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
+          password: nxtPass,
+          mat_khau: nxtPass,
           salt: newSalt,
           passHash: newHash,
           updatedAt: nowIso

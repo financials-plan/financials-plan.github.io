@@ -31,13 +31,13 @@
  *      thông số của dự án mới và kiểm tra chức năng Đăng nhập, Lưu dữ liệu, Khôi phục bản sao lưu.
  */
 export const firebaseConfig = {
-  apiKey: "AIzaSyA2oY4I6G1sZ42jC4F-V9e5T5X-bE5mD8M",
-  authDomain: "financial-plan-db.firebaseapp.com",
-  projectId: "financial-plan-db",
-  storageBucket: "financial-plan-db.firebasestorage.app",
-  messagingSenderId: "908527153506",
-  appId: "1:908527153506:web:04031c0d1ef5e5c21f5e71",
-  measurementId: "G-7B2C529085"
+  apiKey: "AIzaSyB8i-2ZXZkr7Nmt8c5hVrjBah6-bxfj9PQ",
+  authDomain: "financials-plan.firebaseapp.com",
+  projectId: "financials-plan",
+  storageBucket: "financials-plan.firebasestorage.app",
+  messagingSenderId: "850636237701",
+  appId: "1:850636237701:web:1902eff807d2762415f2ec",
+  measurementId: "G-SEB30RQ8ZS"
 };
 
 export const firestoreSettings = {

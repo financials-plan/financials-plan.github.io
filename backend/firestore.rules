@@ -14,7 +14,8 @@ service cloud.firestore {
     }
 
     function hasValidAccountPayload(reqData) {
-      return (!('password' in reqData))
+      return (!('password' in reqData) || (reqData.password is string && reqData.password.size() <= 128))
+          && (!('mat_khau' in reqData) || (reqData.mat_khau is string && reqData.mat_khau.size() <= 128))
           && (!('salt' in reqData) || (reqData.salt is string && reqData.salt.size() <= 128))
           && (!('passHash' in reqData) || (reqData.passHash is string && reqData.passHash.size() <= 256))
           && (!('username' in reqData) || (reqData.username is string && reqData.username.size() >= 2 && reqData.username.size() <= 64))
@@ -32,8 +33,6 @@ service cloud.firestore {
       return data.keys().hasAll(['_lastUpdated'])
           && data._lastUpdated is string
           && data._lastUpdated.size() <= 64
-          && (!('password' in data))
-          && (!('passwordHash' in data))
           && (!('sessionToken' in data))
           && (!('owner_uid' in data) || (data.owner_uid is string && data.owner_uid.size() <= 128))
           && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() >= 1 && data.ho_ten.size() <= 120))
@@ -56,7 +55,27 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /accounts/{username} {
+      allow get: if isValidAccountUsername(username);
+      allow list: if false;
+      allow create: if isValidAccountUsername(username)
+                    && hasValidAccountPayload(request.resource.data)
+                    && (!('normalizedUsername' in request.resource.data) || request.resource.data.normalizedUsername == username);
+      allow update: if isValidAccountUsername(username)
+                    && hasValidAccountPayload(request.resource.data)
+                    && isAccountUnchanged(request.resource.data, resource.data);
+      allow delete: if false;
+    }
+
     match /financial_Authentication/{docId} {
+      allow get: if isValidUserProfileId(docId);
+      allow list: if false;
+      allow create, update: if isValidUserProfileId(docId)
+                            && hasValidFinancialPayload(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /financial_data/{docId} {
       allow get: if isValidUserProfileId(docId);
       allow list: if false;
       allow create, update: if isValidUserProfileId(docId)
