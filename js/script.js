@@ -1108,40 +1108,128 @@ function getMatrixIncomeNeed(yearOffset) {
   return sSum > 0 ? (sSum / rate) : 0;
 }
 
-function calculateAgeMilestones() {
-  const baseAge = AppState.currentAge;
-  const offsets = [0, 5, 10, 15, 20, 30];
+function classifyProductType(rawName) {
+  const name = String(rawName || "").toLowerCase().trim();
+  if (name.includes("cổ phiếu") || name.includes("cp") || name.includes("etf") || 
+      name.includes("dcbc") || name.includes("dcds") || name.includes("stock") || 
+      name.includes("equity")) {
+    return 'stocks';
+  }
+  if (name.includes("trái phiếu") || name.includes("tp") || name.includes("dcbf") || 
+      name.includes("bond")) {
+    return 'bonds';
+  }
+  if (name.includes("bảo hiểm") || name.includes("bh") || name.includes("insurance")) {
+    return 'ins';
+  }
+  if (name.includes("tiết kiệm") || name.includes("tiền gửi") || name.includes("finhay") || 
+      name.includes("ngân hàng") || name.includes("cash") || name.includes("deposit")) {
+    return 'cash';
+  }
+  return 'stocks';
+}
 
-  let s1 = 0, count1 = 0;
-  surveyQuestionsPart1.forEach((q, idx) => {
-    const c = AppState.surveyP1Choices?.[idx + 1];
-    if (c !== undefined && q.weights[c] !== undefined) {
-      s1 += q.weights[c];
-      count1++;
-    }
-  });
-  let riskStockShift = 0;
-  if (count1 > 0) {
-    if (s1 <= 20) riskStockShift = -10;
-    else if (s1 >= 30) riskStockShift = 10;
+function getPortfolioAllocationAtAge(targetAge) {
+  const targetYear = AppState.currentYear + (targetAge - AppState.currentAge);
+  let totalFlow = 0;
+  let flowStocks = 0;
+  let flowBonds = 0;
+  let flowIns = 0;
+  let flowCash = 0;
+  let flowWeightedReturn = 0;
+
+  if (Array.isArray(AppState.tcGoals)) {
+    AppState.tcGoals.forEach(g => {
+      if (targetYear >= g.start && targetYear <= g.end) {
+        const mNeed = calculateMonthlyNeed(g);
+        const annualFlow = mNeed * 12;
+        if (annualFlow > 0) {
+          const validAllocs = Array.isArray(g.allocProducts)
+            ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
+            : [];
+          const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+
+          if (totalW > 0) {
+            validAllocs.forEach(ap => {
+              const normWeight = (Number(ap.weight) || 0) / totalW;
+              const prodCash = annualFlow * normWeight;
+              const rRate = Number(ap.returnRate) || 0;
+              const pType = classifyProductType(ap.prodName);
+
+              totalFlow += prodCash;
+              flowWeightedReturn += prodCash * rRate;
+              if (pType === 'stocks') flowStocks += prodCash;
+              else if (pType === 'bonds') flowBonds += prodCash;
+              else if (pType === 'ins') flowIns += prodCash;
+              else flowCash += prodCash;
+            });
+          } else if (g.type === 'invest' || g.type === 'retirement' || g.type === 'college') {
+            const rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+            let pType = 'stocks';
+            if (rRate >= 12) pType = 'stocks';
+            else if (rRate >= 8) pType = 'bonds';
+            else if (rRate >= 6) pType = 'ins';
+            else if (rRate > 0) pType = 'cash';
+
+            totalFlow += annualFlow;
+            flowWeightedReturn += annualFlow * rRate;
+            if (pType === 'stocks') flowStocks += annualFlow;
+            else if (pType === 'bonds') flowBonds += annualFlow;
+            else if (pType === 'ins') flowIns += annualFlow;
+            else flowCash += annualFlow;
+          }
+        }
+      }
+    });
   }
 
-  const prodRates = (AppState.investProducts || []).map(p => Number(p.returnRate) || 0).filter(r => r > 0);
-  const stockRate = prodRates.length > 0 ? Math.max(...prodRates, 13.5) : 13.5;
-  const bondRate = prodRates.length > 1 ? prodRates[1] : 9.5;
-  const insRate = 4.5;
-  const cashRate = prodRates.length > 2 ? Math.min(...prodRates, 6.0) : 5.0;
+  if (totalFlow > 0) {
+    return {
+      stocks: (flowStocks / totalFlow) * 100,
+      bonds: (flowBonds / totalFlow) * 100,
+      ins: (flowIns / totalFlow) * 100,
+      cash: (flowCash / totalFlow) * 100,
+      returnNeed: flowWeightedReturn / totalFlow
+    };
+  }
+  return null;
+}
+
+function calculateAgeMilestones() {
+  const baseAge = AppState.currentAge;
+  const offsets = [0, 5, 10, 15, 20, 25];
+
+  const defaultBenchmark = [
+    { stocks: 23.57, bonds: 34.54, ins: 8.51, cash: 33.38, returnNeed: 8.94 },
+    { stocks: 56.76, bonds: 20.57, ins: 5.73, cash: 16.94, returnNeed: 11.06 },
+    { stocks: 81.33, bonds: 0.0, ins: 10.74, cash: 7.93, returnNeed: 12.28 },
+    { stocks: 45.45, bonds: 0.0, ins: 32.97, cash: 21.57, returnNeed: 9.95 },
+    { stocks: 32.33, bonds: 0.0, ins: 45.06, cash: 22.61, returnNeed: 9.15 },
+    { stocks: 20.82, bonds: 0.0, ins: 58.07, cash: 21.11, returnNeed: 8.51 }
+  ];
+
+  const defaultSkills = [
+    "Kỹ năng làm việc nhóm",
+    "Kỹ năng leader, kỹ năng xây dựng mô hình kinh doanh",
+    "Kỹ năng lãnh đạo",
+    "Kỹ năng quản lý doanh nghiệp",
+    "Kỹ năng tạo lập cộng đồng",
+    "Kỹ năng cố vấn & đầu tư bền vững"
+  ];
 
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = AppState.currentYear + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
 
-    const stocks = Math.max(15, Math.min(75, 100 - age + riskStockShift));
-    const ins = age >= 35 ? 10.0 : 7.0;
-    const cash = 5.0;
-    const bonds = Math.max(10, 100.0 - (stocks + ins + cash));
-    const returnNeed = ((stocks * stockRate + bonds * bondRate + ins * insRate + cash * cashRate) / 100);
+    const computedAlloc = getPortfolioAllocationAtAge(age);
+    const benchmark = defaultBenchmark[idx] || defaultBenchmark[defaultBenchmark.length - 1];
+
+    const stocks = computedAlloc ? computedAlloc.stocks : benchmark.stocks;
+    const bonds = computedAlloc ? computedAlloc.bonds : benchmark.bonds;
+    const ins = computedAlloc ? computedAlloc.ins : benchmark.ins;
+    const cash = computedAlloc ? computedAlloc.cash : benchmark.cash;
+    const returnNeed = computedAlloc ? computedAlloc.returnNeed : benchmark.returnNeed;
 
     return {
       age,
@@ -1152,7 +1240,9 @@ function calculateAgeMilestones() {
       ins,
       cash,
       returnNeed,
-      skills: AppState.skillsStore[idx] || ""
+      skills: (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== "")
+        ? AppState.skillsStore[idx]
+        : (defaultSkills[idx] || "")
     };
   });
 }
