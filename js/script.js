@@ -1230,14 +1230,7 @@ function calculateAgeMilestones() {
     { stocks: 20.82, bonds: 0.0, ins: 58.07, cash: 21.11, returnNeed: 8.51 }
   ];
 
-  const defaultSkills = [
-    "Kỹ năng làm việc nhóm",
-    "Kỹ năng leader, kỹ năng xây dựng mô hình kinh doanh",
-    "Kỹ năng lãnh đạo",
-    "Kỹ năng quản lý doanh nghiệp",
-    "Kỹ năng tạo lập cộng đồng",
-    "Kỹ năng cố vấn & đầu tư bền vững"
-  ];
+  const defaultSkills = [];
 
   return offsets.map((off, idx) => {
     const age = baseAge + off;
