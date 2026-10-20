@@ -949,9 +949,7 @@ function calculateCollegeGoal(goal) {
       targetFV = Number(goal.val) || 0;
     }
   } else {
-    const infRate = (Number(goal.inflation) || 0) / 100;
-    const baseVal = Number(goal.val) || 0;
-    targetFV = baseVal * (nYears > 0 ? Math.pow(1 + infRate, nYears) : 1);
+    targetFV = Number(goal.val) || 0;
   }
 
   goal.calculatedTargetFV = targetFV;
@@ -1016,8 +1014,7 @@ function calculateRetirementGoal(goal) {
     goal.monthlyCostEstimate = Number((baseTarget / reserveMonths).toFixed(2));
   }
 
-  const infRate = (Number(goal.inflation) || 0) / 100;
-  const targetFV = baseTarget * (nYears > 0 ? Math.pow(1 + infRate, nYears) : 1);
+  const targetFV = baseTarget;
   goal.calculatedTargetFV = targetFV;
 
   if (nMonths <= 0 || targetFV <= 0) {
@@ -1081,12 +1078,13 @@ function calculateMonthlyNeed(goal) {
   }
 
   const portfolio = computeGoalPortfolioMetrics(goal);
-  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
-    ? Number(goal.rate)
-    : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
+  const rAnnualPct = (portfolio.expectedAvgReturn > 0)
+    ? portfolio.expectedAvgReturn
+    : ((goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
+        ? Number(goal.rate)
+        : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
-  const infRate = (Number(goal.inflation) || 0) / 100;
-  const targetFV = (Number(goal.val) || 0) * Math.pow(1 + infRate, nYears);
+  const targetFV = Number(goal.val) || 0;
   const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
   const deficitFV = Math.max(0, targetFV - currentPaidFV);
 
@@ -4207,18 +4205,6 @@ function renderTcGoalsFormTable() {
                  oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
         </td>
-        <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number(g.inflation) || 0}"
-                 ${g.type === 'debt' ? 'disabled style="background:#f8fafc; cursor:not-allowed;"' : ''}
-                 oninput="onGoalFieldInput(${idx}, 'inflation', parseFloat(this.value)||0)"
-                 onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">
-        </td>
-        <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number((Number(g.rate) || 0).toFixed(2))}"
-                 oninput="onGoalFieldInput(${idx}, 'rate', parseFloat(this.value)||0)"
-                 onchange="onGoalFieldChange(${idx}, 'rate', parseFloat(this.value)||0)">
-        </td>
-        <td class="text-right font-bold text-success font-mono" id="tc-goal-monthly-${idx}">${(Number(g.monthly) || 0).toFixed(2)}</td>
         <td class="text-center">
           ${isFixed
             ? `<span class="badge-fixed-goal" title="Mục tiêu cố định không được xóa"><i class="fa-solid fa-shield-halved"></i></span>`
@@ -4283,15 +4269,7 @@ window.onGoalFieldChange = function(idx, field, val) {
   g.monthly = calculateMonthlyNeed(g);
 
   if (field === 'type') {
-    const rows = document.querySelectorAll('#tbody-tc-form-goals tr');
-    if (rows && rows[idx]) {
-      const inputs = rows[idx].querySelectorAll('input');
-      if (inputs && inputs[4]) {
-        inputs[4].disabled = (val === 'debt');
-        inputs[4].style.background = (val === 'debt') ? '#f8fafc' : '';
-        inputs[4].style.cursor = (val === 'debt') ? 'not-allowed' : '';
-      }
-    }
+    renderTcGoalsFormTable();
   }
 
   const mCell = document.getElementById(`tc-goal-monthly-${idx}`);
@@ -4465,7 +4443,7 @@ function createCardHtmlCollege(g, num) {
               <td>Số kỳ / năm chi trả dự kiến</td>
               <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
-              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
               <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
@@ -4475,7 +4453,7 @@ function createCardHtmlCollege(g, num) {
               <td>Chi phí định kỳ cần mỗi tháng</td>
               <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
-              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
               <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
             </tr>
@@ -4561,7 +4539,7 @@ function createCardHtmlRetirement(g, num) {
               <td>Số tháng dự phòng</td>
               <td class="cell-green-val font-mono" id="retire-reserve-months" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'reserveMonths', this.innerText)">${reserveMonths}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
-              <td class="cell-orange-val font-mono" id="retire-monthly-need">${mVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="retire-monthly-need">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
               <td class="cell-green-val font-mono" id="retire-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="retire-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
@@ -4571,7 +4549,7 @@ function createCardHtmlRetirement(g, num) {
               <td>Tổng ước tính chi phí (năm)</td>
               <td class="cell-green-val font-mono" id="retire-annual-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'annualCostEstimate', this.innerText)">${annualCost}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
-              <td class="cell-orange-val font-mono" id="retire-annual-need">${yVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="retire-annual-need">${yVal.toFixed(2)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
               <td colspan="2" class="cell-gold-val text-center font-mono" id="retire-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
             </tr>
@@ -4580,10 +4558,8 @@ function createCardHtmlRetirement(g, num) {
               <td class="font-bold text-right text-danger font-mono" id="retire-monthly-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyCostEstimate', this.innerText)">${monthlyCost}</td>
               <td style="text-align: right;">LS ước tính:</td>
               <td class="cell-green-val font-mono" id="retire-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
-              <td style="text-align: right;">Trượt giá:</td>
-              <td class="cell-green-val font-mono" id="retire-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
-              <td style="text-align: right;">Tiền sẵn có:</td>
-              <td class="cell-green-val text-center font-bold font-mono" id="retire-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
+              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="retire-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
             ${!portfolio.isWeightValid ? `
             <tr>
@@ -4691,7 +4667,13 @@ function createCardHtmlDebt(g, num) {
               <td>Lãi suất vay</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'rate', this.innerText)">${(Number(g.rate) || 0).toFixed(1)}%/năm</td>
               <td class="bg-col-head">Cần trả mỗi tháng</td>
-              <td class="cell-orange-val font-mono">${mVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono">${mVal.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td>Đã trả / Sẵn có</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td class="bg-col-head">Cần trả mỗi năm</td>
+              <td class="cell-orange-val font-mono">${(mVal * 12).toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -4738,7 +4720,7 @@ function createCardHtmlInvest(g, num) {
               <td>Năm bắt đầu</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${startYr}</td>
               <td>Cần gom</td>
-              <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetNeed.toFixed(0)}</td>
+              <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${Number(g.val) || 0}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
@@ -4755,20 +4737,20 @@ function createCardHtmlInvest(g, num) {
               <td class="text-right font-mono">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Trượt giá</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
+              <td>Tiền sẵn có</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
               <td class="font-bold">Cần / tháng</td>
-              <td class="cell-orange-val font-mono">${mVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Tiền sẵn có</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td>Số tiền còn thiếu</td>
+              <td class="text-right font-bold text-danger font-mono">${targetNeed.toFixed(2)}</td>
               <td class="font-bold">Cần / năm</td>
-              <td class="cell-orange-val font-mono">${yVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono">${yVal.toFixed(2)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
               <td colspan="2" class="cell-gold-val text-center font-mono">${portfolio.expectedAvgReturn.toFixed(2)}%/năm</td>
             </tr>
@@ -6208,12 +6190,11 @@ const CSV_TABLE_SCHEMAS = {
       { key: "paid", label: "Đã có / Đã trả", required: false, type: "number" },
       { key: "start", label: "Năm bắt đầu", required: true, type: "number" },
       { key: "end", label: "Năm kết thúc", required: true, type: "number" },
-      { key: "rate", label: "Lãi suất (%/năm)", required: false, type: "number" },
-      { key: "inflation", label: "Trượt giá (%/năm)", required: false, type: "number" }
+      { key: "rate", label: "Lãi suất (%/năm)", required: false, type: "number" }
     ],
     sampleRows: [
-      ["Mua nhà chung cư", "invest", "2000", "200", "2026", "2035", "12", "4"],
-      ["Trả góp xe", "debt", "300", "50", "2026", "2029", "9", "0"]
+      ["Mua nhà chung cư", "invest", "2000", "200", "2026", "2035", "12"],
+      ["Trả góp xe", "debt", "300", "50", "2026", "2029", "9"]
     ]
   }
 };
@@ -7263,7 +7244,7 @@ window.confirmCsvImport = function() {
         start: Number(r.start) || 0,
         end: Number(r.end) || 0,
         rate: Number(r.rate) || 0,
-        inflation: Number(r.inflation) || 0,
+        inflation: 0,
         monthly: 0,
         allocProducts: createEmptyAllocProducts()
       };
@@ -7275,7 +7256,7 @@ window.confirmCsvImport = function() {
           col.start = item.start;
           col.end = item.end;
           col.rate = item.rate;
-          col.inflation = item.inflation;
+          col.inflation = 0;
         }
         return;
       }
@@ -7287,7 +7268,7 @@ window.confirmCsvImport = function() {
           ret.start = item.start;
           ret.end = item.end;
           ret.rate = item.rate;
-          ret.inflation = item.inflation;
+          ret.inflation = 0;
         }
         return;
       }

@@ -2611,7 +2611,7 @@ input.cell-blue { padding: 7px 10px; }
 
 .tc-form-table-wrap { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-.tc-input-table { width: 100%; border-collapse: collapse; font-size: var(--fs-table); table-layout: auto; min-width: 1040px; }
+.tc-input-table { width: 100%; border-collapse: collapse; font-size: var(--fs-table); table-layout: auto; min-width: 680px; }
 
 .tc-input-table th {
   background-color: var(--bg-surface);
@@ -2632,10 +2632,9 @@ input.cell-blue { padding: 7px 10px; }
 .tc-input-table tbody tr:last-child td { border-bottom: 0; }
 
 .tc-input-table th.th-name { min-width: 170px; }
-.tc-input-table th.th-type { min-width: 150px; width: 10%; }
-.tc-input-table th.th-num { min-width: 96px; width: 9%; }
-.tc-input-table th.th-year { min-width: 82px; width: 7%; }
-.tc-input-table th.th-contrib { min-width: 118px; width: 11%; }
+.tc-input-table th.th-type { min-width: 140px; width: 15%; }
+.tc-input-table th.th-num { min-width: 110px; width: 14%; }
+.tc-input-table th.th-year { min-width: 85px; width: 10%; }
 .tc-input-table th.th-del { width: 48px; min-width: 44px; }
 
 .tc-form-bottom-bar { display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--border); background: var(--bg-surface); }
