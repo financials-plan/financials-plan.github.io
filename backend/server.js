@@ -57,8 +57,7 @@ function handleCors(req, res) {
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
-  } else if (!origin) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Vary", "Origin");
   }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
@@ -254,6 +253,7 @@ const server = http.createServer(async (req, res) => {
         expiresAt: Date.now() + 24 * 60 * 60 * 1000
       });
 
+      res.setHeader("Set-Cookie", `session_token=${token}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Strict`);
       sendJson(res, 200, {
         success: true,
         sessionToken: token,
@@ -266,6 +266,12 @@ const server = http.createServer(async (req, res) => {
           hasRecoveryEmail: account.hasRecoveryEmail
         }
       });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/auth/logout") {
+      res.setHeader("Set-Cookie", "session_token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
+      sendJson(res, 200, { success: true, message: "Đã đăng xuất" });
       return;
     }
 

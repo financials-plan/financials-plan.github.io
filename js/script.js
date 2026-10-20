@@ -189,6 +189,14 @@ const UserSession = {
       if (!data) return null;
       const parsed = JSON.parse(data);
       if (!parsed || typeof parsed !== 'object') return null;
+      if (parsed.authenticatedAt && (Date.now() - parsed.authenticatedAt > 7 * 24 * 60 * 60 * 1000)) {
+        localStorage.removeItem(this.STORAGE_KEY);
+        return null;
+      }
+      if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+        localStorage.removeItem(this.STORAGE_KEY);
+        return null;
+      }
       const displayUsername = parsed.displayUsername || parsed.username || parsed.rawName || parsed.ho_ten || '';
       const normalizedUsername = parsed.normalizedUsername || parsed.normalizedName || normalizeUserName(displayUsername);
       parsed.username = displayUsername;
@@ -265,6 +273,10 @@ const UserSession = {
       const safeCopy = Object.assign({}, user);
       delete safeCopy.password;
       delete safeCopy.passwordHash;
+      if (!safeCopy.authenticatedAt) {
+        safeCopy.authenticatedAt = Date.now();
+      }
+      safeCopy.lastActive = Date.now();
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(safeCopy));
     } catch (e) {
       console.error("Lỗi ghi session vào localStorage:", e);
@@ -6477,6 +6489,50 @@ window.processU032File = function(file) {
     list.lastElementChild.remove();
   }
 
+  function sizeFormat(b) {
+    if (b > 1048576) return (b / 1048576).toFixed(1) + ' MB';
+    return Math.max(1, Math.round(b / 1024)) + ' KB';
+  }
+
+  function showDone(note) {
+    li.classList.remove('fail');
+    li.classList.add('done');
+    const sm = li.querySelector('small');
+    if (sm) sm.textContent = `${sizeFormat(bytes)} · ${note}`;
+    const st = li.querySelector('.u032-st');
+    if (st) {
+      st.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.4"/></svg>';
+    }
+  }
+
+  function showFail(errText) {
+    li.classList.remove('done');
+    li.classList.add('fail');
+    const sm = li.querySelector('small');
+    if (sm) sm.textContent = errText;
+    const st = li.querySelector('.u032-st');
+    if (st) {
+      st.innerHTML = '<button type="button" class="u032-retry">Thử lại</button>';
+      const retryBtn = st.querySelector('.u032-retry');
+      if (retryBtn) {
+        retryBtn.onclick = () => {
+          li.remove();
+          window.processU032File(file);
+        };
+      }
+    }
+  }
+
+  if (bytes > 5 * 1024 * 1024) {
+    showFail("Dung lượng vượt quá giới hạn 5MB");
+    return;
+  }
+
+  if (ext !== 'json' && ext !== 'csv') {
+    showFail("Định dạng không được hỗ trợ (chỉ nhận .json hoặc .csv)");
+    return;
+  }
+
   const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const duration = rm ? 180 : 850 + Math.random() * 450;
   const t0 = performance.now();
@@ -6492,11 +6548,6 @@ window.processU032File = function(file) {
     readErr = "Không thể đọc dữ liệu file.";
   };
   reader.readAsText(file, "utf-8");
-
-  function sizeFormat(b) {
-    if (b > 1048576) return (b / 1048576).toFixed(1) + ' MB';
-    return Math.max(1, Math.round(b / 1024)) + ' KB';
-  }
 
   function frame(now) {
     const elapsed = now - t0;
@@ -6537,35 +6588,6 @@ window.processU032File = function(file) {
       window.displayCsvImportOptions();
     } else {
       showFail("Định dạng không được hỗ trợ (chỉ nhận .json hoặc .csv)");
-    }
-  }
-
-  function showDone(note) {
-    li.classList.remove('fail');
-    li.classList.add('done');
-    const sm = li.querySelector('small');
-    if (sm) sm.textContent = `${sizeFormat(bytes)} · ${note}`;
-    const st = li.querySelector('.u032-st');
-    if (st) {
-      st.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.4l3 3 6-6.4"/></svg>';
-    }
-  }
-
-  function showFail(errText) {
-    li.classList.remove('done');
-    li.classList.add('fail');
-    const sm = li.querySelector('small');
-    if (sm) sm.textContent = errText;
-    const st = li.querySelector('.u032-st');
-    if (st) {
-      st.innerHTML = '<button type="button" class="u032-retry">Thử lại</button>';
-      const retryBtn = st.querySelector('.u032-retry');
-      if (retryBtn) {
-        retryBtn.onclick = () => {
-          li.remove();
-          window.processU032File(file);
-        };
-      }
     }
   }
 

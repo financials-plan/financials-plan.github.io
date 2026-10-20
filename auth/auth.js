@@ -149,6 +149,14 @@ function getStoredSession() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || !parsed.docId) return null;
+    if (parsed.authenticatedAt && (Date.now() - parsed.authenticatedAt > 7 * 24 * 60 * 60 * 1000)) {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      return null;
+    }
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      return null;
+    }
     return parsed;
   } catch (e) {
     return null;
@@ -194,7 +202,9 @@ function saveAuthenticatedSession(authUser) {
     hasRecoveryEmail: Boolean(authUser.hasRecoveryEmail),
     docId: docId,
     sessionToken: authUser.sessionToken || "",
-    confirmedAt: new Date().toISOString()
+    confirmedAt: new Date().toISOString(),
+    authenticatedAt: Date.now(),
+    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000
   };
 
   try {
