@@ -7,23 +7,14 @@ service cloud.firestore {
       return username.matches('^[a-z0-9_.]{2,64}$');
     }
 
-    function isAccountOwner(resData) {
-      return request.auth != null
-          && resData != null
-          && (('uid' in resData && request.auth.uid == resData.uid)
-              || ('owner_uid' in resData && request.auth.uid == resData.owner_uid));
-    }
-
     function isAccountUnchanged(reqData, resData) {
       return (!('uid' in resData) || ('uid' in reqData && reqData.uid == resData.uid))
           && (!('username' in resData) || ('username' in reqData && reqData.username == resData.username))
-          && (!('normalizedUsername' in resData) || ('normalizedUsername' in reqData && reqData.normalizedUsername == resData.normalizedUsername))
-          && (!('owner_uid' in resData) || ('owner_uid' in reqData && reqData.owner_uid == resData.owner_uid));
+          && (!('normalizedUsername' in resData) || ('normalizedUsername' in reqData && reqData.normalizedUsername == resData.normalizedUsername));
     }
 
     function hasValidAccountPayload(reqData) {
       return (!('password' in reqData))
-          && (!('owner_uid' in reqData) || request.auth == null || reqData.owner_uid == request.auth.uid)
           && (!('salt' in reqData) || (reqData.salt is string && reqData.salt.size() <= 128))
           && (!('passHash' in reqData) || (reqData.passHash is string && reqData.passHash.size() <= 256))
           && (!('username' in reqData) || (reqData.username is string && reqData.username.size() >= 2 && reqData.username.size() <= 64))
@@ -37,30 +28,14 @@ service cloud.firestore {
           || docId.matches('^user_[a-z0-9_.]{2,80}$');
     }
 
-    function isAuthorizedForDocId(docId) {
-      return request.auth != null
-          && (!('docId' in request.auth.token) || request.auth.token.docId == docId);
-    }
-
-    function canReadFinancialDoc(docId, resData) {
-      return docId == 'khach_hang_mac_dinh'
-          || (request.auth != null && (
-                (resData != null && 'owner_uid' in resData && resData.owner_uid == request.auth.uid)
-                || ('docId' in request.auth.token && request.auth.token.docId == docId)
-             ));
-    }
-
     function hasValidFinancialPayload(data) {
-      return request.auth != null
-          && data.keys().hasAll(['_lastUpdated', 'owner_uid'])
+      return data.keys().hasAll(['_lastUpdated'])
           && data._lastUpdated is string
           && data._lastUpdated.size() <= 64
-          && data.owner_uid is string
-          && data.owner_uid == request.auth.uid
-          && data.owner_uid.size() >= 1
-          && data.owner_uid.size() <= 128
           && (!('password' in data))
           && (!('passwordHash' in data))
+          && (!('sessionToken' in data))
+          && (!('owner_uid' in data) || (data.owner_uid is string && data.owner_uid.size() <= 128))
           && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() >= 1 && data.ho_ten.size() <= 120))
           && (!('username' in data) || (data.username is string && data.username.size() >= 2 && data.username.size() <= 64))
           && (!('currentYear' in data) || (data.currentYear is number && data.currentYear >= 1900 && data.currentYear <= 2200))
@@ -70,29 +45,22 @@ service cloud.firestore {
     }
 
     match /financial_accounts/{username} {
-      allow get: if isValidAccountUsername(username)
-                 && (resource == null || request.auth == null || isAccountOwner(resource.data));
+      allow get: if isValidAccountUsername(username);
       allow list: if false;
       allow create: if isValidAccountUsername(username)
                     && hasValidAccountPayload(request.resource.data)
                     && (!('normalizedUsername' in request.resource.data) || request.resource.data.normalizedUsername == username);
       allow update: if isValidAccountUsername(username)
-                    && isAccountOwner(resource.data)
-                    && isAccountUnchanged(request.resource.data, resource.data)
-                    && hasValidAccountPayload(request.resource.data);
+                    && hasValidAccountPayload(request.resource.data)
+                    && isAccountUnchanged(request.resource.data, resource.data);
       allow delete: if false;
     }
 
     match /financial_Authentication/{docId} {
-      allow get: if isValidUserProfileId(docId) && canReadFinancialDoc(docId, resource.data);
+      allow get: if isValidUserProfileId(docId);
       allow list: if false;
-      allow create: if isValidUserProfileId(docId)
-                    && isAuthorizedForDocId(docId)
-                    && hasValidFinancialPayload(request.resource.data);
-      allow update: if isValidUserProfileId(docId)
-                    && isAuthorizedForDocId(docId)
-                    && hasValidFinancialPayload(request.resource.data)
-                    && (resource.data == null || !('owner_uid' in resource.data) || resource.data.owner_uid == request.auth.uid);
+      allow create, update: if isValidUserProfileId(docId)
+                            && hasValidFinancialPayload(request.resource.data);
       allow delete: if false;
     }
 
