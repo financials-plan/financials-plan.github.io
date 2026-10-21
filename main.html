@@ -1455,8 +1455,8 @@
 
             <div class="form-group">
               <label class="io-checkbox-item">
-                <input type="checkbox" id="chk-json-allow-keywords" onchange="updateJsonImportPreview()">
-                <span>Cho phép cập nhật thông số trong mục <strong>"Từ khóa"</strong> từ file JSON (Mặc định tắt để bảo vệ tuyệt đối thông số Từ khóa hiện tại)</span>
+                <input type="checkbox" id="chk-json-allow-keywords" checked onchange="updateJsonImportPreview()">
+                <span>Đồng bộ thông số trong mục <strong>"Từ khóa"</strong> từ file JSON (Năm, tuổi, danh mục chi tiêu, thu nhập, đầu tư, học tập)</span>
               </label>
             </div>
 
@@ -1484,12 +1484,23 @@
               <div class="form-group">
                 <label for="select-csv-target-table">1. Bảng dữ liệu đích:</label>
                 <select id="select-csv-target-table" class="io-select" onchange="onCsvTargetTableChange()">
-                  <option value="month_income">Thực thu theo tháng (Nhật ký thu)</option>
-                  <option value="month_expense">Thực chi theo tháng (Nhật ký chi)</option>
-                  <option value="month_learning">Chi phí học tập theo tháng</option>
-                  <option value="plan_income">Dự kiến thu hàng tháng (Kế hoạch năm)</option>
-                  <option value="plan_expense">Dự kiến chi hàng tháng (Kế hoạch năm)</option>
-                  <option value="tc_goals">Mục tiêu tài chính (Khoản nợ &amp; Đầu tư)</option>
+                  <optgroup label="Từ khóa thiết lập">
+                    <option value="keywords_expense">Từ khóa: Danh mục chi phí</option>
+                    <option value="keywords_income">Từ khóa: Danh mục nguồn thu nhập</option>
+                    <option value="keywords_learning">Từ khóa: Kế hoạch phát triển chuyên môn</option>
+                    <option value="keywords_invest">Từ khóa: Danh mục sản phẩm đầu tư</option>
+                  </optgroup>
+                  <optgroup label="Kế hoạch &amp; Lộ trình">
+                    <option value="plan_income">Dự kiến thu hàng tháng (Kế hoạch năm)</option>
+                    <option value="plan_expense">Dự kiến chi hàng tháng (Kế hoạch năm)</option>
+                    <option value="tc_goals">Mục tiêu tài chính (Khoản nợ &amp; Đầu tư)</option>
+                    <option value="career_route">Cân đối lộ trình nghề nghiệp</option>
+                  </optgroup>
+                  <optgroup label="Nhật ký 12 tháng">
+                    <option value="month_income">Thực thu theo tháng (Nhật ký thu)</option>
+                    <option value="month_expense">Thực chi theo tháng (Nhật ký chi)</option>
+                    <option value="month_learning">Chi phí học tập theo tháng</option>
+                  </optgroup>
                 </select>
               </div>
               <div class="form-group" id="csv-month-select-group">
@@ -1520,10 +1531,12 @@
                   <option value="replace">Thay thế bảng đích (Replace)</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>&nbsp;</label>
+              <div class="form-group" style="display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
                 <button type="button" class="btn-cloud-sync" onclick="downloadCsvTemplate()">
-                  <i class="fa-solid fa-table"></i> <span>Tải file CSV mẫu của bảng này</span>
+                  <i class="fa-solid fa-table"></i> <span>Tải file CSV mẫu</span>
+                </button>
+                <button type="button" class="btn-cloud-sync" onclick="exportCurrentTableToCsv()">
+                  <i class="fa-solid fa-file-arrow-down"></i> <span>Xuất bảng này ra CSV</span>
                 </button>
               </div>
             </div>
@@ -1563,6 +1576,10 @@
               <div class="bk-meta-item">
                 <span class="bk-meta-lbl">Năm &amp; Tuổi:</span>
                 <strong class="bk-meta-val" id="io-export-year-age">2026 / 21T</strong>
+              </div>
+              <div class="bk-meta-item">
+                <span class="bk-meta-lbl">Từ khóa thiết lập:</span>
+                <strong class="bk-meta-val" id="io-export-keywords-count">0 mục</strong>
               </div>
               <div class="bk-meta-item">
                 <span class="bk-meta-lbl">Mục tiêu tài chính:</span>

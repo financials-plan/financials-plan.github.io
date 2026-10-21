@@ -776,6 +776,8 @@ function createEmptyAppState() {
     planExpense: [],
     skillsStore: {},
     careerDetailList: [],
+    careerActualOverrides: {},
+    careerRouteOverrides: {},
     matrixOverrides: {},
     monthlyDetails: emptyMonthly,
     surveyP1Choices: {},
@@ -1296,20 +1298,24 @@ function calculateCareerDetails() {
     const year = startTrackingYear + yearOffset;
     const targetVal = getMatrixIncomeNeed(yearOffset) || 0;
 
-    const canEditActual = (startTrackingYear < calendarYear)
-      ? (year <= calendarYear)
-      : (year === startTrackingYear);
-
     const exist = existingMap[age];
-    const hasManualActual = exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null;
-    const actualVal = canEditActual
-      ? (hasManualActual ? exist.actual : (year === calendarYear || yearOffset === 0 ? (exist && exist.actual !== undefined ? exist.actual : autoActualIncome) : (exist && exist.actual !== undefined ? exist.actual : null)))
-      : null;
+    const overrideActual = AppState.careerActualOverrides ? AppState.careerActualOverrides[age] : undefined;
+    const hasManualActual = (overrideActual !== undefined && overrideActual !== null) || Boolean(exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null);
 
-    const hasManualRoute = Boolean(exist && exist.manualRoute === true && exist.route !== undefined && exist.route !== null);
+    let actualVal = null;
+    if (hasManualActual) {
+      actualVal = overrideActual !== undefined ? overrideActual : exist.actual;
+    } else if (exist && exist.actual !== undefined && exist.actual !== null) {
+      actualVal = exist.actual;
+    } else if (yearOffset === 0 && autoActualIncome > 0) {
+      actualVal = autoActualIncome;
+    }
+
+    const overrideRoute = AppState.careerRouteOverrides ? AppState.careerRouteOverrides[age] : undefined;
+    const hasManualRoute = (overrideRoute !== undefined && overrideRoute !== null) || Boolean(exist && exist.manualRoute === true && exist.route !== undefined && exist.route !== null);
     let currentRoute;
     if (hasManualRoute) {
-      currentRoute = Number(exist.route) || 0;
+      currentRoute = Number(overrideRoute !== undefined ? overrideRoute : exist.route) || 0;
       prevRoute = currentRoute;
     } else if (exist && exist.route !== undefined && exist.route !== null && Number(exist.route) > 0) {
       currentRoute = Number(exist.route);
@@ -1323,7 +1329,7 @@ function calculateCareerDetails() {
       year,
       actual: actualVal,
       manualActual: hasManualActual,
-      canEditActual,
+      canEditActual: true,
       target: targetVal,
       route: currentRoute,
       manualRoute: hasManualRoute
@@ -3540,33 +3546,40 @@ function renderCareerTables() {
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
-    const calendarYear = new Date().getFullYear();
     tb2.innerHTML = AppState.careerDetailList.map((item, idx) => {
-      const isDeficit = item.route < item.target;
-      const diffVal = Math.abs(item.target - item.route).toFixed(1);
-      const canEditActual = Boolean(item.canEditActual);
+      const hasTarget = item.target > 0;
+      const isDeficit = hasTarget && (item.route < item.target);
+      const diffVal = hasTarget ? Math.abs(item.target - item.route).toFixed(1) : '0.0';
 
       return `
         <tr>
           <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
 
-          <td class="text-right font-bold font-mono ${canEditActual ? 'cell-blue' : 'cell-disabled-readonly'}"
-              ${canEditActual ? `contenteditable="true" spellcheck="false" onblur="updateCareerDetailField(${idx}, 'actual', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)" title="Nhấn để nhập thu nhập thực tế năm ${item.year}"` : `title="Năm ${item.year} là năm tương lai (chỉ ghi nhận thực tế đến năm hiện tại ${calendarYear})"`}>
-            ${(canEditActual && item.actual !== null && item.actual !== undefined) ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
+          <td class="text-right font-bold font-mono cell-blue"
+              contenteditable="true" spellcheck="false"
+              onblur="updateCareerDetailField(${idx}, 'actual', this.innerText.trim() === '' || this.innerText.trim() === '-' ? null : parseFloat(this.innerText.replace(/[^0-9.-]/g, '')))"
+              title="Nhấn để nhập thu nhập thực tế (tuổi ${item.age})">
+            ${(item.actual !== null && item.actual !== undefined && !isNaN(item.actual)) ? Number(item.actual).toFixed(1) : '<span class="dash-null">-</span>'}
           </td>
 
-          <td class="text-right font-bold text-primary font-mono">${item.target.toFixed(1)}</td>
+          <td class="text-right font-bold text-primary font-mono">
+            ${hasTarget ? item.target.toFixed(1) : '<span class="dash-null">-</span>'}
+          </td>
 
           <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}"
               contenteditable="true" spellcheck="false"
-              onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">
-            ${item.route.toFixed(1)}
+              onblur="updateCareerDetailField(${idx}, 'route', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)"
+              title="Nhấn để nhập thu nhập theo lộ trình kỳ vọng (tuổi ${item.age})">
+            ${item.route > 0 ? item.route.toFixed(1) : (item.route === 0 && idx === 0 ? '0.0' : item.route.toFixed(1))}
           </td>
 
           <td class="text-center">
-            ${isDeficit
-              ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal})</span>`
-              : `<span class="success-badge">✅ Vững tâm (Đạt)</span>`
+            ${!hasTarget
+              ? `<span class="dash-null">-</span>`
+              : (isDeficit
+                  ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal})</span>`
+                  : `<span class="success-badge">✅ Vững tâm (Đạt)</span>`
+                )
             }
           </td>
         </tr>
@@ -3580,26 +3593,22 @@ window.updateCareerDetailField = function(idx, field, val) {
   if (!item) return;
 
   if (field === 'actual') {
-    const calendarYear = new Date().getFullYear();
-    const startTrackingYear = Number(AppState.currentYear) || calendarYear;
-    const canEdit = (startTrackingYear < calendarYear)
-      ? (item.year <= calendarYear)
-      : (item.year === startTrackingYear);
-
-    if (!canEdit) {
-      showToast(`Năm ${item.year} là năm tương lai, không thể nhập thu nhập thực tế!`, "warning");
-      renderCareerTables();
-      return;
-    }
-    item.actual = val;
-    item.manualActual = true;
+    if (!AppState.careerActualOverrides) AppState.careerActualOverrides = {};
+    const parsedVal = (val === '' || isNaN(val) || val === null) ? null : Number(val);
+    AppState.careerActualOverrides[item.age] = parsedVal;
+    item.actual = parsedVal;
+    item.manualActual = parsedVal !== null;
   } else if (field === 'route') {
-    item.route = val;
+    if (!AppState.careerRouteOverrides) AppState.careerRouteOverrides = {};
+    const parsedVal = (val === '' || isNaN(val) || val === null) ? 0 : Number(val);
+    AppState.careerRouteOverrides[item.age] = parsedVal;
+    item.route = parsedVal;
     item.manualRoute = true;
     AppState.careerDetailList = calculateCareerDetails();
   }
   renderCareerTables();
   renderCareerChart();
+  window.markUnsavedChanges();
 };
 
 function renderCareerChart() {
@@ -6114,6 +6123,77 @@ let pendingJsonImportPayload = null;
 let pendingCsvParsedState = null;
 
 const CSV_TABLE_SCHEMAS = {
+  keywords_expense: {
+    label: "Từ khóa: Danh mục chi phí",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Tên khoản mục chi", required: true }
+    ],
+    sampleRows: [
+      ["Tiền ăn uống, sinh hoạt"],
+      ["Tiền thuê nhà, điện nước"],
+      ["Mua sắm cá nhân"],
+      ["Chi phí đi lại, xăng xe"],
+      ["Quỹ khẩn cấp, y tế"]
+    ]
+  },
+  keywords_income: {
+    label: "Từ khóa: Danh mục nguồn thu nhập",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Tên nguồn thu", required: true }
+    ],
+    sampleRows: [
+      ["Lương chính công ty"],
+      ["Thưởng dự án, hoa hồng"],
+      ["Thu nhập làm thêm, freelance"],
+      ["Lợi tức đầu tư, cổ tức"]
+    ]
+  },
+  keywords_learning: {
+    label: "Từ khóa: Kế hoạch phát triển chuyên môn",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Hạng mục phát triển", required: true }
+    ],
+    sampleRows: [
+      ["Chứng chỉ chuyên môn (CFA / ACCA / PMP)"],
+      ["Ngoại ngữ (IELTS / HSK / JLPT)"],
+      ["Khóa học quản trị tài chính & đầu tư"],
+      ["Kỹ năng công nghệ & phân tích dữ liệu"]
+    ]
+  },
+  keywords_invest: {
+    label: "Từ khóa: Danh mục sản phẩm đầu tư",
+    requireMonth: false,
+    fields: [
+      { key: "name", label: "Sản phẩm tài chính", required: true },
+      { key: "returnRate", label: "Lãi suất (%/năm)", required: true, type: "number" },
+      { key: "risk", label: "Rủi ro (%)", required: false, type: "number" }
+    ],
+    sampleRows: [
+      ["Cổ phiếu tăng trưởng (VN30)", "15.0", "20.0"],
+      ["Chứng chỉ quỹ mở (DCDS / DCBC)", "12.0", "15.0"],
+      ["Trái phiếu doanh nghiệp uy tín (DCBF)", "9.5", "5.0"],
+      ["Gửi tiết kiệm ngân hàng kỳ hạn", "6.5", "1.0"]
+    ]
+  },
+  career_route: {
+    label: "Cân đối lộ trình nghề nghiệp",
+    requireMonth: false,
+    fields: [
+      { key: "age", label: "Số tuổi", required: true, type: "number" },
+      { key: "actual", label: "Thu nhập thực tế (triệu/tháng)", required: false, type: "number" },
+      { key: "route", label: "Thu nhập kỳ vọng (triệu/tháng)", required: false, type: "number" }
+    ],
+    sampleRows: [
+      ["22", "10.0", "12.0"],
+      ["23", "15.0", "12.0"],
+      ["24", "20.0", "12.0"],
+      ["25", "", "15.0"],
+      ["26", "", "20.0"]
+    ]
+  },
   month_income: {
     label: "Thực thu theo tháng",
     requireMonth: true,
@@ -6252,6 +6332,7 @@ window.switchDataIoTab = function(tabId) {
 function refreshExportJsonSummary() {
   const userLbl = document.getElementById('io-export-user-label');
   const yrAgeLbl = document.getElementById('io-export-year-age');
+  const kwLbl = document.getElementById('io-export-keywords-count');
   const goalsLbl = document.getElementById('io-export-goals-count');
   const planLbl = document.getElementById('io-export-plan-count');
   const txLbl = document.getElementById('io-export-tx-count');
@@ -6263,6 +6344,10 @@ function refreshExportJsonSummary() {
   }
   if (yrAgeLbl) {
     yrAgeLbl.textContent = `${AppState.currentYear || 2026} / ${AppState.currentAge || 21} tuổi`;
+  }
+  if (kwLbl) {
+    const kwTotal = (AppState.expenses?.length || 0) + (AppState.incomeList?.length || 0) + (AppState.investProducts?.length || 0) + (AppState.planList?.length || 0);
+    kwLbl.textContent = `${kwTotal} mục (${AppState.expenses?.length || 0} chi, ${AppState.incomeList?.length || 0} thu, ${AppState.investProducts?.length || 0} ĐT)`;
   }
   if (goalsLbl) {
     goalsLbl.textContent = `${(AppState.tcGoals || []).length} mục tiêu`;
@@ -6648,12 +6733,13 @@ window.updateJsonImportPreview = function() {
 
   if (verEl) verEl.textContent = `Schema ${pendingJsonImportPayload.schemaVersion}`;
   if (listEl) {
+    const kwCount = (d.expenses?.length || 0) + (d.incomeList?.length || 0) + (d.investProducts?.length || 0) + (d.planList?.length || 0);
     const modeLabel = mode === 'add'
       ? 'Thêm dữ liệu mới (Add)'
       : (mode === 'replace' ? 'Thay thế dữ liệu hiện có (Replace)' : 'Cập nhật dữ liệu trùng khóa (Update)');
     listEl.innerHTML = `
       <div>• <strong>Chế độ nhập đã chọn:</strong> ${modeLabel}</div>
-      <div>• <strong>Bảo vệ mục "Từ khóa":</strong> ${allowKeywords ? 'Cho phép cập nhật từ file JSON' : 'Giữ nguyên tuyệt đối thông số Từ khóa hiện tại'}</div>
+      <div>• <strong>Thông số "Từ khóa" trong file:</strong> ${kwCount} mục (${d.expenses?.length || 0} chi, ${d.incomeList?.length || 0} thu, ${d.investProducts?.length || 0} đầu tư, ${d.planList?.length || 0} học tập) - ${allowKeywords ? '<span class="text-success font-bold">Sẽ đồng bộ</span>' : '<span class="text-muted">Bỏ qua (Giữ hiện tại)</span>'}</div>
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
@@ -6830,6 +6916,42 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
     else if (mode === 'update') Object.assign(AppState.surveyP2Choices, cleanImport.surveyP2Choices);
   }
 
+  if (cleanImport.careerActualOverrides && typeof cleanImport.careerActualOverrides === 'object') {
+    if (mode === 'replace') AppState.careerActualOverrides = { ...cleanImport.careerActualOverrides };
+    else {
+      if (!AppState.careerActualOverrides) AppState.careerActualOverrides = {};
+      Object.assign(AppState.careerActualOverrides, cleanImport.careerActualOverrides);
+    }
+  }
+  if (cleanImport.careerRouteOverrides && typeof cleanImport.careerRouteOverrides === 'object') {
+    if (mode === 'replace') AppState.careerRouteOverrides = { ...cleanImport.careerRouteOverrides };
+    else {
+      if (!AppState.careerRouteOverrides) AppState.careerRouteOverrides = {};
+      Object.assign(AppState.careerRouteOverrides, cleanImport.careerRouteOverrides);
+    }
+  }
+  if (Array.isArray(cleanImport.careerDetailList)) {
+    if (mode === 'replace') {
+      AppState.careerDetailList = cleanImport.careerDetailList.map(item => Object.assign({}, item));
+    } else {
+      if (!Array.isArray(AppState.careerDetailList)) AppState.careerDetailList = [];
+      cleanImport.careerDetailList.forEach(item => {
+        if (!item || typeof item !== 'object') return;
+        const idx = AppState.careerDetailList.findIndex(x => x.age === item.age);
+        if (idx === -1) AppState.careerDetailList.push(Object.assign({}, item));
+        else if (mode === 'update') Object.assign(AppState.careerDetailList[idx], item);
+      });
+    }
+  }
+  if (cleanImport.skillsStore && typeof cleanImport.skillsStore === 'object') {
+    if (mode === 'replace') AppState.skillsStore = { ...cleanImport.skillsStore };
+    else if (mode === 'update') Object.assign(AppState.skillsStore, cleanImport.skillsStore);
+  }
+  if (cleanImport.matrixOverrides && typeof cleanImport.matrixOverrides === 'object') {
+    if (mode === 'replace') AppState.matrixOverrides = { ...cleanImport.matrixOverrides };
+    else if (mode === 'update') Object.assign(AppState.matrixOverrides, cleanImport.matrixOverrides);
+  }
+
   ensureFixedInvestmentGoals();
   syncInvestProductsToGoals();
   const yEl = document.getElementById('input-year');
@@ -6951,6 +7073,112 @@ window.downloadCsvTemplate = function() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+window.exportCurrentTableToCsv = function() {
+  const tableKey = document.getElementById('select-csv-target-table')?.value || 'month_income';
+  const schema = CSV_TABLE_SCHEMAS[tableKey];
+  if (!schema) return;
+  const month = parseInt(document.getElementById('select-csv-target-month')?.value || String(AppState.currentMonth || 1), 10) || 1;
+  const headerLine = schema.fields.map(f => `"${f.key}"`).join(',');
+  const rows = [];
+
+  if (tableKey === 'keywords_expense') {
+    (AppState.expenses || []).forEach(item => {
+      rows.push([`"${String(item).replace(/"/g, '""')}"`]);
+    });
+  } else if (tableKey === 'keywords_income') {
+    (AppState.incomeList || []).forEach(item => {
+      rows.push([`"${String(item).replace(/"/g, '""')}"`]);
+    });
+  } else if (tableKey === 'keywords_learning') {
+    (AppState.planList || []).forEach(item => {
+      rows.push([`"${String(item).replace(/"/g, '""')}"`]);
+    });
+  } else if (tableKey === 'keywords_invest') {
+    (AppState.investProducts || []).forEach(p => {
+      rows.push([
+        `"${String(p.name || '').replace(/"/g, '""')}"`,
+        `"${Number(p.returnRate || 0).toFixed(1)}"`,
+        `"${Number(p.risk || 0).toFixed(1)}"`
+      ]);
+    });
+  } else if (tableKey === 'career_route') {
+    const list = (AppState.careerDetailList && AppState.careerDetailList.length > 0) ? AppState.careerDetailList : calculateCareerDetails();
+    list.forEach(item => {
+      const act = (item.actual !== null && item.actual !== undefined && !isNaN(item.actual)) ? Number(item.actual).toFixed(1) : "";
+      const rt = (item.route !== null && item.route !== undefined && !isNaN(item.route)) ? Number(item.route).toFixed(1) : "";
+      rows.push([`"${item.age}"`, `"${act}"`, `"${rt}"`]);
+    });
+  } else if (tableKey === 'plan_income') {
+    (AppState.planIncome || []).forEach(p => {
+      rows.push([
+        `"${String(p.name || '').replace(/"/g, '""')}"`,
+        `"${Number(p.plan || 0).toFixed(1)}"`,
+        `"${String(p.note || '').replace(/"/g, '""')}"`
+      ]);
+    });
+  } else if (tableKey === 'plan_expense') {
+    (AppState.planExpense || []).forEach(p => {
+      rows.push([
+        `"${String(p.name || '').replace(/"/g, '""')}"`,
+        `"${Number(p.plan || 0).toFixed(1)}"`,
+        `"${String(p.note || '').replace(/"/g, '""')}"`
+      ]);
+    });
+  } else if (tableKey === 'tc_goals') {
+    (AppState.tcGoals || []).forEach(g => {
+      rows.push([
+        `"${String(g.name || '').replace(/"/g, '""')}"`,
+        `"${g.type || 'invest'}"`,
+        `"${Number(g.val || 0)}"`,
+        `"${Number(g.paid || 0)}"`,
+        `"${Number(g.start || 0)}"`,
+        `"${Number(g.end || 0)}"`,
+        `"${Number(g.rate || 0)}"`
+      ]);
+    });
+  } else if (tableKey === 'month_income') {
+    const md = AppState.monthlyDetails?.[month];
+    (md?.incomes || []).forEach(tx => {
+      rows.push([
+        `"${String(tx.date || '').replace(/"/g, '""')}"`,
+        `"${String(tx.cat || '').replace(/"/g, '""')}"`,
+        `"${Number(tx.val || 0).toFixed(1)}"`
+      ]);
+    });
+  } else if (tableKey === 'month_expense') {
+    const md = AppState.monthlyDetails?.[month];
+    (md?.expenses || []).forEach(tx => {
+      rows.push([
+        `"${String(tx.date || '').replace(/"/g, '""')}"`,
+        `"${String(tx.cat || '').replace(/"/g, '""')}"`,
+        `"${Number(tx.val || 0).toFixed(1)}"`
+      ]);
+    });
+  } else if (tableKey === 'month_learning') {
+    const md = AppState.monthlyDetails?.[month];
+    (md?.learningDetails || []).forEach(l => {
+      rows.push([
+        `"${String(l.name || '').replace(/"/g, '""')}"`,
+        `"${Number(l.cost || 0).toFixed(1)}"`,
+        `"${String(l.note || '').replace(/"/g, '""')}"`
+      ]);
+    });
+  }
+
+  const csvContent = "\uFEFF" + [headerLine, ...rows.map(r => r.join(','))].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const suffix = schema.requireMonth ? `_t${month}` : '';
+  a.download = `du_lieu_${tableKey}${suffix}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`Đã xuất bảng [${schema.label}] ra file CSV!`, "success");
 };
 
 window.handleCsvFileSelected = function(event) {
@@ -7279,6 +7507,70 @@ window.confirmCsvImport = function() {
       }
     });
     ensureFixedInvestmentGoals();
+  } else if (tableKey === 'keywords_expense') {
+    if (mode === 'replace') AppState.expenses = [];
+    records.forEach(r => {
+      const name = String(r.name || '').trim();
+      if (name && !AppState.expenses.includes(name)) {
+        AppState.expenses.push(name);
+      }
+    });
+    renderSetupTables();
+    syncKeywordChangesToDependentSheets();
+  } else if (tableKey === 'keywords_income') {
+    if (mode === 'replace') AppState.incomeList = [];
+    records.forEach(r => {
+      const name = String(r.name || '').trim();
+      if (name && !AppState.incomeList.includes(name)) {
+        AppState.incomeList.push(name);
+      }
+    });
+    renderSetupTables();
+    syncKeywordChangesToDependentSheets();
+  } else if (tableKey === 'keywords_learning') {
+    if (mode === 'replace') AppState.planList = [];
+    records.forEach(r => {
+      const name = String(r.name || '').trim();
+      if (name && !AppState.planList.includes(name)) {
+        AppState.planList.push(name);
+      }
+    });
+    renderSetupTables();
+    syncKeywordChangesToDependentSheets();
+  } else if (tableKey === 'keywords_invest') {
+    if (mode === 'replace') AppState.investProducts = [];
+    records.forEach(r => {
+      const name = String(r.name || '').trim();
+      if (!name) return;
+      const retRate = parseFloat(r.returnRate) || 0;
+      const riskVal = parseFloat(r.risk) || 0;
+      const idx = AppState.investProducts.findIndex(p => p.name === name);
+      if (idx >= 0 && mode === 'update') {
+        AppState.investProducts[idx].returnRate = retRate;
+        AppState.investProducts[idx].risk = riskVal;
+      } else if (idx === -1) {
+        AppState.investProducts.push({ name: name, returnRate: retRate, risk: riskVal });
+      }
+    });
+    renderSetupTables();
+    syncInvestProductsToGoals();
+  } else if (tableKey === 'career_route') {
+    if (!AppState.careerActualOverrides) AppState.careerActualOverrides = {};
+    if (!AppState.careerRouteOverrides) AppState.careerRouteOverrides = {};
+    records.forEach(r => {
+      const age = parseInt(r.age, 10);
+      if (!isNaN(age)) {
+        if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '' && !isNaN(Number(r.actual))) {
+          AppState.careerActualOverrides[age] = Number(r.actual);
+        }
+        if (r.route !== undefined && r.route !== null && String(r.route).trim() !== '' && !isNaN(Number(r.route))) {
+          AppState.careerRouteOverrides[age] = Number(r.route);
+        }
+      }
+    });
+    AppState.careerDetailList = calculateCareerDetails();
+    renderCareerTables();
+    renderCareerChart();
   }
 
   renderPlanTables();
