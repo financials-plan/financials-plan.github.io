@@ -6749,7 +6749,7 @@ window.updateJsonImportPreview = function() {
   if (prevBox) prevBox.style.display = 'flex';
 };
 
-window.applyJsonImportData = function(importData, mode = 'update', allowKeywords = false) {
+window.applyJsonImportData = function(importData, mode = 'update', allowKeywords = true) {
   if (!importData || typeof importData !== 'object') return false;
   const cleanImport = JSON.parse(JSON.stringify(importData));
 
@@ -6782,13 +6782,31 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
       }
     }
     if (Array.isArray(cleanImport.investProducts)) {
-      if (mode === 'replace') AppState.investProducts = [...cleanImport.investProducts];
-      else {
-        cleanImport.investProducts.forEach(prod => {
-          if (!prod || !prod.name) return;
+      const sanitizedProds = cleanImport.investProducts.map(prod => {
+        if (!prod || !prod.name) return null;
+        const ret = (typeof prod.returnRate === 'string')
+          ? (parseFloat(prod.returnRate.replace(/[^0-9.-]/g, '')) || 0)
+          : (Number(prod.returnRate) || 0);
+        const rsk = (typeof prod.risk === 'string')
+          ? (parseFloat(prod.risk.replace(/[^0-9.-]/g, '')) || 0)
+          : (Number(prod.risk) || 0);
+        return {
+          name: String(prod.name).trim(),
+          returnRate: ret,
+          risk: rsk
+        };
+      }).filter(Boolean);
+
+      if (mode === 'replace') {
+        AppState.investProducts = sanitizedProds;
+      } else {
+        sanitizedProds.forEach(prod => {
           const idx = AppState.investProducts.findIndex(p => p.name === prod.name);
-          if (idx === -1) AppState.investProducts.push(prod);
-          else if (mode === 'update') AppState.investProducts[idx] = Object.assign(AppState.investProducts[idx], prod);
+          if (idx === -1) {
+            AppState.investProducts.push(prod);
+          } else if (mode === 'update') {
+            AppState.investProducts[idx] = Object.assign(AppState.investProducts[idx], prod);
+          }
         });
       }
     }
