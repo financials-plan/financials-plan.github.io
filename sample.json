@@ -1,8 +1,8 @@
 {
   "schemaVersion": "2.2.0",
-  "exportedAt": "2026-10-21T12:01:09.896Z",
+  "exportedAt": "2026-10-21T12:03:43.015Z",
   "accountMeta": {
-    "ho_ten": "Người dùng mẫu",
+    "ho_ten": "Người dùng mẫu (Sample Test)",
     "docId": "tai_khoan_kiem_thu"
   },
   "data": {
@@ -12,7 +12,7 @@
     "currentMonth": 1,
     "targetSavingsRate": 40,
     "visionAge": "50",
-    "visionDesc": "413",
+    "visionDesc": "Từng bước đạt mục tiêu tài chính trong tương lai",
     "expenses": [
       "Mua thực phẩm",
       "Mua đồ dùng trong nhà",
@@ -32,24 +32,14 @@
     ],
     "incomeList": [
       "Lương từ công ty",
-      "Thu nhập khác",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8"
+      "Thu nhập khác"
     ],
     "planList": [
       "Mua sách",
       "Khóa học ngắn hạn",
       "Khóa học dài hạn",
       "Tham gia các buổi diễn thuyết",
-      "Chi phát triển bản thân khác",
-      "6",
-      "7",
-      "8",
-      "9",
-      "10"
+      "Chi phát triển bản thân khác"
     ],
     "investProducts": [
       {
@@ -450,26 +440,23 @@
     ],
     "skillsList": [
       {
-        "name": "369"
+        "name": "Cần bổ sung kiến thức về quản lý tài chính và đầu tư"
       },
       {
-        "name": "437"
+        "name": "Phát triển chuyên môn sâu và kỹ năng lãnh đạo đội ngũ"
       }
     ],
     "familyList": [
       {
-        "name": "440"
+        "name": "Gia đình có nguồn hỗ trợ ổn định, không có áp lực nợ xấu"
       }
     ],
     "jobList": [
       {
-        "name": "438"
+        "name": "Môi trường công việc có lộ trình thăng tiến rõ ràng"
       },
       {
-        "name": "368"
-      },
-      {
-        "name": "439"
+        "name": "Cơ hội gia tăng thu nhập và học hỏi công nghệ mới"
       }
     ],
     "careerActualOverrides": {
@@ -486,26 +473,15 @@
       "42": 40
     },
     "skillsStore": {
-      "0": "115",
-      "1": "116",
-      "2": "117",
-      "3": "118",
-      "4": "119"
+      "0": "Quản lý công việc cá nhân hiệu quả, hoàn thành tốt các nhiệm vụ được giao",
+      "1": "Quản lý đội nhóm nhỏ (3-5 người), giao việc và giải quyết xung đột tốt",
+      "2": "Phát triển chiến lược dài hạn, hoạch định nguồn lực và tài chính cho phòng ban",
+      "3": "Lãnh đạo cấp cao, định hướng chiến lược doanh nghiệp và quản trị rủi ro",
+      "4": "Cố vấn chiến lược, chuyên gia độc lập hoặc thành viên hội đồng quản trị"
     },
     "monthlyDetails": {
       "1": {
-        "incomes": [
-          {
-            "date": "2022-01-15",
-            "cat": "21",
-            "val": 20
-          },
-          {
-            "date": "2022-01-30",
-            "cat": "372",
-            "val": 4
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-01-01",
@@ -573,28 +549,7 @@
         "reconExpenseNotes": {}
       },
       "2": {
-        "incomes": [
-          {
-            "date": "2022-02-15",
-            "cat": "21",
-            "val": 25
-          },
-          {
-            "date": "2022-02-20",
-            "cat": "44612",
-            "val": 1
-          },
-          {
-            "date": "2022-02-28",
-            "cat": "44620",
-            "val": 1.5
-          },
-          {
-            "date": "2022-02-28",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-02-01",
@@ -647,28 +602,7 @@
         "reconExpenseNotes": {}
       },
       "3": {
-        "incomes": [
-          {
-            "date": "2022-03-15",
-            "cat": "21",
-            "val": 18
-          },
-          {
-            "date": "2022-03-20",
-            "cat": "44612",
-            "val": 2
-          },
-          {
-            "date": "2022-03-28",
-            "cat": "44620",
-            "val": 2.5
-          },
-          {
-            "date": "2022-03-28",
-            "cat": "44620",
-            "val": 1.2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-03-01",
@@ -736,28 +670,7 @@
         "reconExpenseNotes": {}
       },
       "4": {
-        "incomes": [
-          {
-            "date": "2022-04-15",
-            "cat": "21",
-            "val": 19
-          },
-          {
-            "date": "2022-04-20",
-            "cat": "44612",
-            "val": 4
-          },
-          {
-            "date": "2022-04-28",
-            "cat": "44620",
-            "val": 0.3
-          },
-          {
-            "date": "2022-04-28",
-            "cat": "44620",
-            "val": 0.6
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-04-01",
@@ -805,28 +718,7 @@
         "reconExpenseNotes": {}
       },
       "5": {
-        "incomes": [
-          {
-            "date": "2022-05-15",
-            "cat": "21",
-            "val": 20
-          },
-          {
-            "date": "2022-05-20",
-            "cat": "44612",
-            "val": 10
-          },
-          {
-            "date": "2022-05-28",
-            "cat": "44620",
-            "val": 2
-          },
-          {
-            "date": "2022-05-28",
-            "cat": "44620",
-            "val": 0.8
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-05-01",
@@ -884,28 +776,7 @@
         "reconExpenseNotes": {}
       },
       "6": {
-        "incomes": [
-          {
-            "date": "2022-06-15",
-            "cat": "21",
-            "val": 18
-          },
-          {
-            "date": "2022-06-20",
-            "cat": "44612",
-            "val": 6
-          },
-          {
-            "date": "2022-06-28",
-            "cat": "44620",
-            "val": 3
-          },
-          {
-            "date": "2022-06-28",
-            "cat": "44620",
-            "val": 0.5
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-06-01",
@@ -953,28 +824,7 @@
         "reconExpenseNotes": {}
       },
       "7": {
-        "incomes": [
-          {
-            "date": "2022-07-15",
-            "cat": "21",
-            "val": 18
-          },
-          {
-            "date": "2022-07-20",
-            "cat": "44612",
-            "val": 4
-          },
-          {
-            "date": "2022-07-28",
-            "cat": "44620",
-            "val": 5
-          },
-          {
-            "date": "2022-07-28",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-07-01",
@@ -1027,23 +877,7 @@
         "reconExpenseNotes": {}
       },
       "8": {
-        "incomes": [
-          {
-            "date": "2022-08-15",
-            "cat": "21",
-            "val": 18
-          },
-          {
-            "date": "2022-08-20",
-            "cat": "44612",
-            "val": 5
-          },
-          {
-            "date": "2022-08-28",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-08-01",
@@ -1096,28 +930,7 @@
         "reconExpenseNotes": {}
       },
       "9": {
-        "incomes": [
-          {
-            "date": "2022-09-15",
-            "cat": "21",
-            "val": 20
-          },
-          {
-            "date": "2022-09-20",
-            "cat": "44612",
-            "val": 5
-          },
-          {
-            "date": "2022-09-28",
-            "cat": "44620",
-            "val": 1
-          },
-          {
-            "date": "2022-09-29",
-            "cat": "44620",
-            "val": 1
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-09-01",
@@ -1170,28 +983,7 @@
         "reconExpenseNotes": {}
       },
       "10": {
-        "incomes": [
-          {
-            "date": "2022-10-15",
-            "cat": "21",
-            "val": 20
-          },
-          {
-            "date": "2022-10-20",
-            "cat": "44612",
-            "val": 5
-          },
-          {
-            "date": "2022-10-23",
-            "cat": "44620",
-            "val": 1
-          },
-          {
-            "date": "2022-10-28",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-10-01",
@@ -1229,28 +1021,7 @@
         "reconExpenseNotes": {}
       },
       "11": {
-        "incomes": [
-          {
-            "date": "2022-11-15",
-            "cat": "21",
-            "val": 19
-          },
-          {
-            "date": "2022-11-20",
-            "cat": "44612",
-            "val": 2
-          },
-          {
-            "date": "2022-11-28",
-            "cat": "44620",
-            "val": 1
-          },
-          {
-            "date": "2022-11-28",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-11-01",
@@ -1293,28 +1064,7 @@
         "reconExpenseNotes": {}
       },
       "12": {
-        "incomes": [
-          {
-            "date": "2022-12-15",
-            "cat": "21",
-            "val": 20
-          },
-          {
-            "date": "2022-12-20",
-            "cat": "44612",
-            "val": 10
-          },
-          {
-            "date": "2022-12-28",
-            "cat": "44620",
-            "val": 3
-          },
-          {
-            "date": "2022-12-30",
-            "cat": "44620",
-            "val": 2
-          }
-        ],
+        "incomes": [],
         "expenses": [
           {
             "date": "2022-12-01",
