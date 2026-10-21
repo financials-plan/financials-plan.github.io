@@ -1284,14 +1284,13 @@ function calculateCareerDetails() {
       activeIncomeMonths++;
     }
   }
-  const planMonthlyInc = (AppState.planIncome || []).reduce((s, p) => s + (Number(p.plan) || 0), 0);
-  const autoCurrentIncome = activeIncomeMonths > 0
+  const autoActualIncome = activeIncomeMonths > 0
     ? (actualCurrentYear / activeIncomeMonths)
-    : planMonthlyInc;
+    : 0;
   const calendarYear = new Date().getFullYear();
   const startTrackingYear = Number(AppState.currentYear) || calendarYear;
 
-  let prevRoute = autoCurrentIncome;
+  let prevRoute = 0;
   return ages.map((age) => {
     const yearOffset = age - baseAge;
     const year = startTrackingYear + yearOffset;
@@ -1304,7 +1303,7 @@ function calculateCareerDetails() {
     const exist = existingMap[age];
     const hasManualActual = exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null;
     const actualVal = canEditActual
-      ? (hasManualActual ? exist.actual : (year === calendarYear || yearOffset === 0 ? autoCurrentIncome : (exist && exist.actual !== undefined ? exist.actual : null)))
+      ? (hasManualActual ? exist.actual : (year === calendarYear || yearOffset === 0 ? (exist && exist.actual !== undefined ? exist.actual : autoActualIncome) : (exist && exist.actual !== undefined ? exist.actual : null)))
       : null;
 
     const hasManualRoute = Boolean(exist && exist.manualRoute === true && exist.route !== undefined && exist.route !== null);
@@ -1312,7 +1311,7 @@ function calculateCareerDetails() {
     if (hasManualRoute) {
       currentRoute = Number(exist.route) || 0;
       prevRoute = currentRoute;
-    } else if (exist && exist.route !== undefined && exist.route !== null && !exist.hasOwnProperty('manualRoute') && Number(exist.route) > 0) {
+    } else if (exist && exist.route !== undefined && exist.route !== null && Number(exist.route) > 0) {
       currentRoute = Number(exist.route);
       prevRoute = currentRoute;
     } else {
