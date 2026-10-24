@@ -1293,20 +1293,16 @@ function calculateAgeMilestones() {
     { stocks: 20.82, bonds: 0.0, ins: 58.07, cash: 21.11, returnNeed: 8.51 }
   ];
 
-  const defaultSkills = [
-    "Kỹ năng làm việc nhóm",
-    "Kỹ năng leader, kỹ năng xây dựng mô hình kinh doanh",
-    "Kỹ năng lãnh đạo",
-    "Kỹ năng quản lý doanh nghiệp",
-    "Kỹ năng tạo lập cộng đồng",
-    ""
-  ];
-
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const benchmark = defaultBenchmark[idx] || defaultBenchmark[defaultBenchmark.length - 1];
+
+    let skillVal = '';
+    if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
+      skillVal = String(AppState.skillsStore[idx]);
+    }
 
     return {
       age,
@@ -1317,9 +1313,7 @@ function calculateAgeMilestones() {
       ins: benchmark.ins,
       cash: benchmark.cash,
       returnNeed: benchmark.returnNeed,
-      skills: (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== "")
-        ? AppState.skillsStore[idx]
-        : (defaultSkills[idx] || "")
+      skills: skillVal
     };
   });
 }
@@ -3924,7 +3918,15 @@ function renderCareerTables() {
         <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
         <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
         <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="AppState.skillsStore[${idx}]=this.innerText.trim();">${escapeHtml(item.skills || '')}</td>
+        <td>
+          <input type="text"
+                 class="input-inline-cell font-semibold"
+                 value="${escapeHtml(item.skills || '')}"
+                 placeholder="Nhập kỹ năng cốt lõi cần trui rèn..."
+                 oninput="updateCareerSkill(${idx}, this.value, false)"
+                 onchange="updateCareerSkill(${idx}, this.value, true)"
+                 onblur="updateCareerSkill(${idx}, this.value, true)">
+        </td>
       </tr>
     `).join('');
   }
@@ -3994,6 +3996,19 @@ window.updateCareerDetailField = function(idx, field, val) {
   }
   renderCareerTables();
   renderCareerChart();
+  window.markUnsavedChanges();
+};
+
+window.updateCareerSkill = function(idx, val, isBlur = false) {
+  if (!AppState.skillsStore || typeof AppState.skillsStore !== 'object') {
+    AppState.skillsStore = {};
+  }
+  const cleanVal = isBlur ? String(val || '').trim() : String(val !== undefined && val !== null ? val : '');
+  AppState.skillsStore[idx] = cleanVal;
+  const docId = (window.UserSession && UserSession.currentUser) ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
+  try {
+    localStorage.setItem('FIN_APP_LAST_STATE_' + docId, JSON.stringify(AppState));
+  } catch (e) {}
   window.markUnsavedChanges();
 };
 
@@ -6835,7 +6850,7 @@ window.validateAndPrepareJsonImport = function(rawText) {
     "currentYear", "currentAge", "birthYear", "expenses", "incomeList", "planList",
     "investProducts", "tcGoals", "planIncome", "planExpense", "monthlyDetails",
     "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices",
-    "yearEndBalanceSheet"
+    "yearEndBalanceSheet", "skillsStore"
   ];
   const hasAnyKnownKey = knownKeys.some(k => k in candidateData);
   if (!hasAnyKnownKey) {
@@ -7363,7 +7378,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   }
   if (cleanImport.skillsStore && typeof cleanImport.skillsStore === 'object') {
     if (mode === 'replace') AppState.skillsStore = { ...cleanImport.skillsStore };
-    else if (mode === 'update') Object.assign(AppState.skillsStore, cleanImport.skillsStore);
+    else Object.assign(AppState.skillsStore, cleanImport.skillsStore);
   }
   if (cleanImport.matrixOverrides && typeof cleanImport.matrixOverrides === 'object') {
     if (mode === 'replace') AppState.matrixOverrides = { ...cleanImport.matrixOverrides };
@@ -8064,7 +8079,7 @@ window.hasAppStateData = function() {
     (AppState.planExpense && AppState.planExpense.length > 0) ||
     (AppState.surveyP1Choices && Object.keys(AppState.surveyP1Choices).length > 0) ||
     (AppState.surveyP2Choices && Object.keys(AppState.surveyP2Choices).length > 0) ||
-    (AppState.skillsStore && Object.keys(AppState.skillsStore).length > 0)
+    (AppState.skillsStore && Object.values(AppState.skillsStore).some(v => typeof v === 'string' && v.trim() !== ''))
   ) {
     return true;
   }
