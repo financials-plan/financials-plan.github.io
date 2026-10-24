@@ -736,9 +736,14 @@
           <div id="career-sec-1" class="career-section-pane active">
             <div class="d-flex-between mb-3" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
               <div class="sheet-title-text"><i class="fa-solid fa-layer-group"></i> Lộ trình phân bổ tài sản & Phát triển chuyên môn theo từng giai đoạn</div>
-              <button type="button" class="btn-cloud-sync btn-sm" onclick="openPortfolio30YrModal()" title="Xem bảng trung gian theo dõi phân bổ tài sản đầu tư 30 năm (21 - 50 tuổi) theo file Excel gốc">
-                <i class="fa-solid fa-table-cells"></i> <span>Xem chi tiết phân bổ 30 năm (Bảng trung gian)</span>
-              </button>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn-cloud-sync btn-sm" onclick="resetCareerMilestones()" title="Khôi phục lại tỷ lệ % tính toán khuyến nghị tự động">
+                  <i class="fa-solid fa-rotate-left"></i> <span>Đặt lại % mặc định</span>
+                </button>
+                <button type="button" class="btn-cloud-sync btn-sm" onclick="openPortfolio30YrModal()" title="Xem bảng trung gian theo dõi phân bổ tài sản đầu tư 30 năm (21 - 50 tuổi) theo file Excel gốc">
+                  <i class="fa-solid fa-table-cells"></i> <span>Xem chi tiết phân bổ 30 năm (Bảng trung gian)</span>
+                </button>
+              </div>
             </div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
@@ -2097,7 +2102,7 @@
   </div>
 
   <script type="module" src="./backend/firestore-service.js"></script>
-  <script src="./js/script.js?v=3.0.6"></script>
+  <script src="./js/script.js?v=3.0.7"></script>
 
 </body>
 </html>

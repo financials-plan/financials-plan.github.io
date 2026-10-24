@@ -775,6 +775,7 @@ function createEmptyAppState() {
     planIncome: [],
     planExpense: [],
     skillsStore: {},
+    milestonesStore: {},
     careerDetailList: [],
     careerActualOverrides: {},
     careerRouteOverrides: {},
@@ -1426,11 +1427,24 @@ function calculateAgeMilestones() {
   const offsets = [0, 5, 10, 15, 20, 25];
   const p30 = getPortfolio30YrData();
 
+  if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
+    AppState.milestonesStore = {};
+  }
+
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const benchmark = p30[off] || DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
+    const dynamicAlloc = getPortfolioAllocationAtAge(age);
+
+    const baseStocks = (dynamicAlloc && dynamicAlloc.stocks !== undefined) ? dynamicAlloc.stocks : (benchmark.stockTot !== undefined ? benchmark.stockTot : 0);
+    const baseBonds = (dynamicAlloc && dynamicAlloc.bonds !== undefined) ? dynamicAlloc.bonds : (benchmark.bondTot !== undefined ? benchmark.bondTot : 0);
+    const baseIns = (dynamicAlloc && dynamicAlloc.ins !== undefined) ? dynamicAlloc.ins : (benchmark.insTot !== undefined ? benchmark.insTot : 0);
+    const baseCash = (dynamicAlloc && dynamicAlloc.cash !== undefined) ? dynamicAlloc.cash : (benchmark.cashTot !== undefined ? benchmark.cashTot : 0);
+    const baseReturn = (dynamicAlloc && dynamicAlloc.returnNeed !== undefined) ? dynamicAlloc.returnNeed : (benchmark.ret !== undefined ? benchmark.ret : 0);
+
+    const userStore = AppState.milestonesStore[idx] || {};
 
     let skillVal = '';
     if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
@@ -1441,11 +1455,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: benchmark.stockTot !== undefined ? benchmark.stockTot : 0,
-      bonds: benchmark.bondTot !== undefined ? benchmark.bondTot : 0,
-      ins: benchmark.insTot !== undefined ? benchmark.insTot : 0,
-      cash: benchmark.cashTot !== undefined ? benchmark.cashTot : 0,
-      returnNeed: benchmark.ret !== undefined ? benchmark.ret : 0,
+      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : baseStocks,
+      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : baseBonds,
+      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : baseIns,
+      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : baseCash,
+      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : baseReturn,
       skills: skillVal
     };
   });
@@ -4046,11 +4060,31 @@ function renderCareerTables() {
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
         <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold font-mono">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'stocks', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Cổ phiếu (tuổi ${item.age})">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'bonds', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Trái phiếu (tuổi ${item.age})">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'ins', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Bảo hiểm (tuổi ${item.age})">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'cash', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Tiền gửi NH (tuổi ${item.age})">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-success font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'returnNeed', this.innerText)"
+            title="Nhấn để chỉnh sửa Mức sinh lời cần thiết (tuổi ${item.age})">${item.returnNeed.toFixed(2)}%</td>
         <td>
           <input type="text"
                  class="input-inline-cell font-semibold"
@@ -4143,6 +4177,37 @@ window.updateCareerSkill = function(idx, val, isBlur = false) {
     localStorage.setItem('FIN_APP_LAST_STATE_' + docId, JSON.stringify(AppState));
   } catch (e) {}
   window.markUnsavedChanges();
+};
+
+window.updateCareerMilestoneField = function(idx, field, val) {
+  if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
+    AppState.milestonesStore = {};
+  }
+  if (!AppState.milestonesStore[idx]) {
+    AppState.milestonesStore[idx] = {};
+  }
+  const cleanStr = String(val || '').replace(/[^0-9.-]/g, '').trim();
+  if (cleanStr === '' || isNaN(cleanStr)) {
+    delete AppState.milestonesStore[idx][field];
+  } else {
+    AppState.milestonesStore[idx][field] = parseFloat(cleanStr);
+  }
+  const docId = (window.UserSession && UserSession.currentUser) ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
+  try {
+    localStorage.setItem('FIN_APP_LAST_STATE_' + docId, JSON.stringify(AppState));
+  } catch (e) {}
+  window.markUnsavedChanges();
+  renderCareerTables();
+};
+
+window.resetCareerMilestones = function() {
+  AppState.milestonesStore = {};
+  const docId = (window.UserSession && UserSession.currentUser) ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
+  try {
+    localStorage.setItem('FIN_APP_LAST_STATE_' + docId, JSON.stringify(AppState));
+  } catch (e) {}
+  window.markUnsavedChanges();
+  renderCareerTables();
 };
 
 function renderCareerChart() {
@@ -6983,7 +7048,7 @@ window.validateAndPrepareJsonImport = function(rawText) {
     "currentYear", "currentAge", "birthYear", "expenses", "incomeList", "planList",
     "investProducts", "tcGoals", "planIncome", "planExpense", "monthlyDetails",
     "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices",
-    "yearEndBalanceSheet", "skillsStore"
+    "yearEndBalanceSheet", "skillsStore", "milestonesStore"
   ];
   const hasAnyKnownKey = knownKeys.some(k => k in candidateData);
   if (!hasAnyKnownKey) {
@@ -7512,6 +7577,10 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   if (cleanImport.skillsStore && typeof cleanImport.skillsStore === 'object') {
     if (mode === 'replace') AppState.skillsStore = { ...cleanImport.skillsStore };
     else Object.assign(AppState.skillsStore, cleanImport.skillsStore);
+  }
+  if (cleanImport.milestonesStore && typeof cleanImport.milestonesStore === 'object') {
+    if (mode === 'replace') AppState.milestonesStore = { ...cleanImport.milestonesStore };
+    else Object.assign(AppState.milestonesStore, cleanImport.milestonesStore);
   }
   if (cleanImport.matrixOverrides && typeof cleanImport.matrixOverrides === 'object') {
     if (mode === 'replace') AppState.matrixOverrides = { ...cleanImport.matrixOverrides };
@@ -8212,7 +8281,8 @@ window.hasAppStateData = function() {
     (AppState.planExpense && AppState.planExpense.length > 0) ||
     (AppState.surveyP1Choices && Object.keys(AppState.surveyP1Choices).length > 0) ||
     (AppState.surveyP2Choices && Object.keys(AppState.surveyP2Choices).length > 0) ||
-    (AppState.skillsStore && Object.values(AppState.skillsStore).some(v => typeof v === 'string' && v.trim() !== ''))
+    (AppState.skillsStore && Object.values(AppState.skillsStore).some(v => typeof v === 'string' && v.trim() !== '')) ||
+    (AppState.milestonesStore && Object.keys(AppState.milestonesStore).length > 0)
   ) {
     return true;
   }
