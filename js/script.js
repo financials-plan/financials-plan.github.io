@@ -1151,67 +1151,276 @@ function classifyProductType(rawName) {
   return 'stocks';
 }
 
-function getPortfolioAllocationAtAge(targetAge) {
-  const targetYear = AppState.currentYear + (targetAge - AppState.currentAge);
-  let totalFlow = 0;
-  let flowStocks = 0;
-  let flowBonds = 0;
-  let flowIns = 0;
-  let flowCash = 0;
-  let flowWeightedReturn = 0;
+function classifyProductClass(name) {
+  const n = (name || '').toLowerCase().trim();
+  if (n.includes('etf')) return 'etf';
+  if (n.includes('dcbc') || n.includes('dcds') || n.includes('quỹ cổ phiếu')) return 'fund_stock';
+  if (n.includes('trái phiếu') || n.includes('dcbf') || n.includes('quỹ trái phiếu')) return 'bonds';
+  if (n.includes('bảo hiểm') || n.includes('bh ')) return 'insurance';
+  if (n.includes('finhay')) return 'finhay';
+  if (n.includes('tiền gửi') || n.includes('tiết kiệm') || n.includes('ngân hàng')) return 'savings';
+  return 'other';
+}
 
-  if (Array.isArray(AppState.tcGoals)) {
-    AppState.tcGoals.forEach(g => {
-      if (targetYear >= g.start && targetYear <= g.end) {
-        const mNeed = calculateMonthlyNeed(g);
-        const annualFlow = mNeed * 12;
-        if (annualFlow > 0) {
-          const validAllocs = Array.isArray(g.allocProducts)
-            ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
-            : [];
-          const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+function computeTcPart3Data() {
+  const startY = Number(AppState.currentYear) || 2026;
+  const startA = Number(AppState.currentAge) || 21;
+  const investGoals = (AppState.tcGoals || []).filter(g => g.type === 'invest');
 
-          if (totalW > 0) {
-            validAllocs.forEach(ap => {
-              const normWeight = (Number(ap.weight) || 0) / totalW;
-              const prodCash = annualFlow * normWeight;
-              const rRate = Number(ap.returnRate) || 0;
-              const pType = classifyProductType(ap.prodName);
+  const allEndYears = (AppState.tcGoals || []).map(g => Number(g.end) || 0).filter(y => y >= startY);
+  const maxEnd = allEndYears.length > 0 ? Math.max(...allEndYears) : (startY + 38);
+  const totalYears = Math.min(50, Math.max(30, maxEnd - startY + 1));
 
-              totalFlow += prodCash;
-              flowWeightedReturn += prodCash * rRate;
-              if (pType === 'stocks') flowStocks += prodCash;
-              else if (pType === 'bonds') flowBonds += prodCash;
-              else if (pType === 'ins') flowIns += prodCash;
-              else flowCash += prodCash;
-            });
-          } else if (g.type === 'invest' || g.type === 'retirement' || g.type === 'college') {
-            const rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-            let pType = 'stocks';
-            if (rRate >= 12) pType = 'stocks';
-            else if (rRate >= 8) pType = 'bonds';
-            else if (rRate >= 6) pType = 'ins';
-            else if (rRate > 0) pType = 'cash';
-
-            totalFlow += annualFlow;
-            flowWeightedReturn += annualFlow * rRate;
-            if (pType === 'stocks') flowStocks += annualFlow;
-            else if (pType === 'bonds') flowBonds += annualFlow;
-            else if (pType === 'ins') flowIns += annualFlow;
-            else flowCash += annualFlow;
-          }
-        }
+  const productNames = (AppState.investProducts || []).map(p => p.name).filter(Boolean);
+  (investGoals || []).forEach(g => {
+    (g.allocProducts || []).forEach(ap => {
+      if (ap.prodName && !productNames.includes(ap.prodName)) {
+        productNames.push(ap.prodName);
       }
+    });
+  });
+  if (productNames.length === 0) {
+    productNames.push('Tiền gửi ngân hàng', 'Trái phiếu Techcombank', 'DCBC', 'ETF - ETFVFM');
+  }
+
+  const classAvgRates = {
+    etf: 14.0, fund_stock: 13.5, bonds: 9.833, insurance: 8.0, finhay: 6.0, savings: 5.0, other: 3.0
+  };
+  const classGroups = { etf: [], fund_stock: [], bonds: [], insurance: [], finhay: [], savings: [], other: [] };
+  (AppState.investProducts || []).forEach(p => {
+    const cls = classifyProductClass(p.name);
+    if (classGroups[cls] && Number(p.returnRate) > 0) {
+      classGroups[cls].push(Number(p.returnRate));
+    }
+  });
+  Object.keys(classGroups).forEach(cls => {
+    if (classGroups[cls].length > 0) {
+      classAvgRates[cls] = classGroups[cls].reduce((s, v) => s + v, 0) / classGroups[cls].length;
+    }
+  });
+
+  const table1Rows = [];
+  const table2Rows = [];
+  const table3Rows = [];
+
+  for (let y = 0; y < totalYears; y++) {
+    const yr = startY + y;
+    const age = startA + y;
+
+    const t1Row = { year: yr, age, goals: {} };
+    const prodBalances = {};
+    productNames.forEach(pn => { prodBalances[pn] = 0; });
+
+    investGoals.forEach(g => {
+      const active = yr >= g.start && yr <= g.end;
+      const gId = g.id || g.name;
+      t1Row.goals[gId] = { name: g.name, products: {} };
+
+      const m = (g.monthly !== undefined && g.monthly !== null) ? Number(g.monthly) : calculateMonthlyNeed(g);
+      const annualNeed = m * 12;
+
+      (g.allocProducts || []).forEach(ap => {
+        if (!ap.prodName || !(Number(ap.weight) > 0)) return;
+        const pName = ap.prodName;
+        const w = (Number(ap.weight) || 0) / 100;
+
+        const matchedProd = (AppState.investProducts || []).find(ip => ip.name === pName);
+        const r = (matchedProd ? Number(matchedProd.returnRate) : (Number(ap.returnRate) || 0)) / 100;
+
+        if (active) {
+          const contrib = annualNeed * w;
+          const prevBal = (y > 0 && table1Rows[y - 1]?.goals[gId]?.products[pName]) ? table1Rows[y - 1].goals[gId].products[pName].bal : 0;
+          const bal = contrib + prevBal * (1 + r);
+          t1Row.goals[gId].products[pName] = { contrib, bal, r: r * 100 };
+          prodBalances[pName] = (prodBalances[pName] || 0) + bal;
+        } else {
+          t1Row.goals[gId].products[pName] = { contrib: 0, bal: 0, r: r * 100 };
+        }
+      });
+    });
+    table1Rows.push(t1Row);
+
+    let totalBal = 0;
+    const t2Row = { year: yr, age, products: {} };
+    productNames.forEach(pn => {
+      const val = prodBalances[pn] || 0;
+      t2Row.products[pn] = val;
+      totalBal += val;
+    });
+    t2Row.total = totalBal;
+    table2Rows.push(t2Row);
+
+    const classBals = { etf: 0, fund_stock: 0, bonds: 0, insurance: 0, finhay: 0, savings: 0, other: 0 };
+    productNames.forEach(pn => {
+      const cls = classifyProductClass(pn);
+      classBals[cls] = (classBals[cls] || 0) + (prodBalances[pn] || 0);
+    });
+
+    const classWeights = {};
+    let expectedPortfolioReturn = 0;
+
+    Object.keys(classBals).forEach(cls => {
+      const w = totalBal > 0 ? (classBals[cls] / totalBal) * 100 : 0;
+      classWeights[cls] = w;
+      expectedPortfolioReturn += (w / 100) * classAvgRates[cls];
+    });
+
+    const stocks = classWeights.etf + classWeights.fund_stock;
+    const bonds = classWeights.bonds;
+    const ins = classWeights.insurance;
+    const cash = classWeights.savings + classWeights.finhay + classWeights.other;
+
+    table3Rows.push({
+      year: yr,
+      age,
+      classBals,
+      classWeights,
+      totalWeight: totalBal > 0 ? 100 : 0,
+      expectedPortfolioReturn: totalBal > 0 ? expectedPortfolioReturn : 0,
+      stocks,
+      bonds,
+      ins,
+      cash,
+      totalInvestment: totalBal
     });
   }
 
-  if (totalFlow > 0) {
+  return { table1Rows, table2Rows, table3Rows, classAvgRates, productNames, investGoals };
+}
+
+window.computeTcPart3Data = computeTcPart3Data;
+
+function renderTcPart3Tables() {
+  const gHead1 = document.getElementById('tr-tc-p3-ghead-1');
+  const gHead2 = document.getElementById('tr-tc-p3-ghead-2');
+  const gBody = document.getElementById('tbody-tc-part3-goals');
+  const pHead = document.getElementById('tr-tc-p3-phead');
+  const pBody = document.getElementById('tbody-tc-part3-products');
+  const aHead1 = document.getElementById('tr-tc-p3-ahead-1');
+  const aHead2 = document.getElementById('tr-tc-p3-ahead-2');
+  const aBody = document.getElementById('tbody-tc-part3-allocation');
+
+  if (!gHead1 || !gHead2 || !gBody || !pHead || !pBody || !aHead1 || !aHead2 || !aBody) return;
+
+  const data = computeTcPart3Data();
+  const { table1Rows, table2Rows, table3Rows, classAvgRates, productNames, investGoals } = data;
+
+  const esc = (str) => typeof escapeHtml === 'function' ? escapeHtml(str) : String(str || '');
+
+  let gh1 = `<th rowspan="2" style="min-width: 60px;">Năm</th><th rowspan="2" style="min-width: 55px;">Tuổi</th>`;
+  let gh2 = '';
+  investGoals.forEach(g => {
+    const validProds = (g.allocProducts || []).filter(ap => ap.prodName);
+    const span = Math.max(1, validProds.length);
+    gh1 += `<th colspan="${span}" class="text-center">${esc(g.name)}</th>`;
+    if (validProds.length > 0) {
+      validProds.forEach(ap => {
+        gh2 += `<th style="min-width: 100px;">${esc(ap.prodName)}</th>`;
+      });
+    } else {
+      gh2 += `<th style="min-width: 100px;">-</th>`;
+    }
+  });
+  gHead1.innerHTML = gh1;
+  gHead2.innerHTML = gh2;
+
+  gBody.innerHTML = table1Rows.map(row => {
+    let cells = '';
+    investGoals.forEach(g => {
+      const gId = g.id || g.name;
+      const validProds = (g.allocProducts || []).filter(ap => ap.prodName);
+      if (validProds.length > 0) {
+        validProds.forEach(ap => {
+          const bal = row.goals[gId]?.products[ap.prodName]?.bal || 0;
+          cells += `<td class="text-right font-mono ${bal > 0 ? 'text-primary font-semibold' : 'text-muted'}">${bal > 0 ? bal.toFixed(1) : '-'}</td>`;
+        });
+      } else {
+        cells += `<td class="text-center font-mono text-muted">-</td>`;
+      }
+    });
+    return `
+      <tr>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
+        ${cells}
+      </tr>
+    `;
+  }).join('');
+
+  pHead.innerHTML = `
+    <th style="min-width: 60px;">Năm</th>
+    <th style="min-width: 55px;">Tuổi</th>
+    ${productNames.map(pn => `<th style="min-width: 110px;">${esc(pn)}</th>`).join('')}
+    <th style="min-width: 120px;" class="col-highlight-gold">Tổng cộng</th>
+  `;
+
+  pBody.innerHTML = table2Rows.map(row => `
+    <tr>
+      <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
+      <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
+      ${productNames.map(pn => {
+        const val = row.products[pn] || 0;
+        return `<td class="text-right font-mono ${val > 0 ? 'font-semibold' : 'text-muted'}">${val > 0 ? val.toFixed(1) : '-'}</td>`;
+      }).join('')}
+      <td class="text-right font-mono font-bold val-gold">${row.total > 0 ? row.total.toFixed(1) : '-'}</td>
+    </tr>
+  `).join('');
+
+  aHead1.innerHTML = `
+    <th rowspan="2" style="min-width: 60px;">Năm</th>
+    <th rowspan="2" style="min-width: 55px;">Tuổi</th>
+    <th colspan="7" class="text-center">Tỷ trọng lớp tài sản đầu tư (%)</th>
+    <th rowspan="2" style="min-width: 80px;" class="col-highlight-gold">Tỷ trọng</th>
+    <th rowspan="2" style="min-width: 95px;" class="col-highlight-orange">% E(R)</th>
+    <th colspan="4" class="text-center bg-header-sub">Liên kết Lộ trình nghề nghiệp</th>
+  `;
+
+  aHead2.innerHTML = `
+    <th>ETF<br><small>${classAvgRates.etf.toFixed(1)}%</small></th>
+    <th>Quỹ cổ phiếu<br><small>${classAvgRates.fund_stock.toFixed(1)}%</small></th>
+    <th>Trái phiếu<br><small>${classAvgRates.bonds.toFixed(1)}%</small></th>
+    <th>Bảo hiểm<br><small>${classAvgRates.insurance.toFixed(1)}%</small></th>
+    <th>Finhay<br><small>${classAvgRates.finhay.toFixed(1)}%</small></th>
+    <th>Tiết kiệm<br><small>${classAvgRates.savings.toFixed(1)}%</small></th>
+    <th>Khác<br><small>${classAvgRates.other.toFixed(1)}%</small></th>
+    <th style="min-width: 85px;">Cổ phiếu</th>
+    <th style="min-width: 85px;">Trái phiếu</th>
+    <th style="min-width: 85px;">Bảo hiểm</th>
+    <th style="min-width: 85px;">Tiền gửi NH</th>
+  `;
+
+  const classKeys = ['etf', 'fund_stock', 'bonds', 'insurance', 'finhay', 'savings', 'other'];
+
+  aBody.innerHTML = table3Rows.map(row => `
+    <tr>
+      <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
+      <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
+      ${classKeys.map(k => {
+        const w = row.classWeights[k] || 0;
+        return `<td class="text-right font-mono ${w > 0 ? '' : 'text-muted'}">${w > 0 ? w.toFixed(1) + '%' : '-'}</td>`;
+      }).join('')}
+      <td class="text-right font-mono font-bold val-gold">${row.totalWeight > 0 ? row.totalWeight.toFixed(0) + '%' : '-'}</td>
+      <td class="text-right font-mono font-bold val-orange">${row.expectedPortfolioReturn > 0 ? row.expectedPortfolioReturn.toFixed(2) + '%' : '-'}</td>
+      <td class="text-right font-mono font-semibold">${row.stocks > 0 ? row.stocks.toFixed(1) + '%' : '-'}</td>
+      <td class="text-right font-mono font-semibold">${row.bonds > 0 ? row.bonds.toFixed(1) + '%' : '-'}</td>
+      <td class="text-right font-mono font-semibold">${row.ins > 0 ? row.ins.toFixed(1) + '%' : '-'}</td>
+      <td class="text-right font-mono font-semibold">${row.cash > 0 ? row.cash.toFixed(1) + '%' : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+window.renderTcPart3Tables = renderTcPart3Tables;
+
+function getPortfolioAllocationAtAge(targetAge) {
+  const p3 = computeTcPart3Data();
+  const row = (p3.table3Rows || []).find(r => r.age === targetAge);
+  if (row && row.totalInvestment > 0) {
     return {
-      stocks: (flowStocks / totalFlow) * 100,
-      bonds: (flowBonds / totalFlow) * 100,
-      ins: (flowIns / totalFlow) * 100,
-      cash: (flowCash / totalFlow) * 100,
-      returnNeed: flowWeightedReturn / totalFlow
+      stocks: row.stocks,
+      bonds: row.bonds,
+      ins: row.ins,
+      cash: row.cash,
+      returnNeed: row.expectedPortfolioReturn
     };
   }
   return null;
@@ -1557,17 +1766,17 @@ window.switchMonthSection = function(secNum) {
 };
 
 window.switchTcSection = function(secNum) {
-  if (secNum === 3) {
-    window.switchTab('tab-muctieu-bt');
-    return;
-  }
   document.getElementById('btn-tc-sec1')?.classList.toggle('active', secNum === 1);
   document.getElementById('btn-tc-sec2')?.classList.toggle('active', secNum === 2);
+  document.getElementById('btn-tc-sec3')?.classList.toggle('active', secNum === 3);
   document.getElementById('tc-section-1')?.classList.toggle('active', secNum === 1);
   document.getElementById('tc-section-2')?.classList.toggle('active', secNum === 2);
+  document.getElementById('tc-section-3')?.classList.toggle('active', secNum === 3);
   if (secNum === 2) {
     renderTcMatrixTable();
     setTimeout(renderTcMatrixChart, 60);
+  } else if (secNum === 3) {
+    renderTcPart3Tables();
   }
 };
 
@@ -5032,6 +5241,7 @@ function renderTcMatrixTable() {
   }
   tbody.innerHTML = rows;
   renderTcMatrixChart();
+  renderTcPart3Tables();
 }
 
 window.onMatrixCellChange = function(td, rIdx) {
