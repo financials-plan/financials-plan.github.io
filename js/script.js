@@ -1165,7 +1165,8 @@ function classifyProductType(rawName) {
 
 function getPortfolioAllocationAtAge(targetAge) {
   const startYr = Number(AppState.currentYear) || 2026;
-  const targetYear = startYr + (targetAge - (Number(AppState.currentAge) || 21));
+  const startAge = Number(AppState.currentAge) || 21;
+  const targetYear = startYr + (targetAge - startAge);
   if (targetYear < startYr) return null;
 
   const goals = Array.isArray(AppState.tcGoals)
@@ -1173,108 +1174,71 @@ function getPortfolioAllocationAtAge(targetAge) {
     : [];
   if (goals.length === 0) return null;
 
-  const balances = goals.map(g => (g.allocProducts || []).map(() => 0));
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
 
-  let finalStocks = 0, finalBonds = 0, finalIns = 0, finalCash = 0;
-  let finalWeightedReturn = 0;
+  let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
+  let totalFlow = 0;
+  let weightedReturn = 0;
 
-  for (let yr = startYr; yr <= targetYear; yr++) {
-    let yrStocks = 0, yrBonds = 0, yrIns = 0, yrCash = 0;
-    let yrWeightedReturn = 0;
+  goals.forEach(g => {
+    const isActive = (targetYear >= g.start && targetYear <= g.end);
+    if (!isActive) return;
 
-    goals.forEach((g, gIdx) => {
-      const isRetire = (g.fixedType === 'retirement' || g.type === 'retirement' || String(g.name || "").toLowerCase().includes("hưu trí"));
-      const isActive = (yr >= g.start && yr <= g.end);
-      const isPast = (yr > g.end);
+    const mNeed = calculateMonthlyNeed(g);
+    const annualFlow = mNeed * 12;
+    if (annualFlow <= 0) return;
 
-      const mNeed = calculateMonthlyNeed(g);
-      const annualFlow = mNeed * 12;
-      const validAllocs = Array.isArray(g.allocProducts)
-        ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
-        : [];
-      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+    const validAllocs = Array.isArray(g.allocProducts)
+      ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
+      : [];
+    const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
 
-      if (totalW > 0) {
-        validAllocs.forEach((ap, pIdx) => {
-          const normWeight = (Number(ap.weight) || 0) / totalW;
-          const rRate = Number(ap.returnRate) || 0;
-          const rFrac = rRate / 100;
-          const pType = classifyProductType(ap.prodName);
+    if (totalW > 0) {
+      validAllocs.forEach(ap => {
+        const normWeight = (Number(ap.weight) || 0) / totalW;
+        const prodFlow = annualFlow * normWeight;
 
-          const prevBal = balances[gIdx][pIdx] || 0;
-          let curBal = 0;
-          if (isActive) {
-            curBal = prevBal * (1 + rFrac) + (annualFlow * normWeight);
-          } else if (isPast) {
-            if (isRetire) {
-              curBal = prevBal * (1 + rFrac);
-            } else {
-              curBal = 0;
-            }
-          } else {
-            curBal = 0;
-          }
-          balances[gIdx][pIdx] = curBal;
-
-          if (yr === targetYear && curBal > 0) {
-            if (pType === 'stocks') yrStocks += curBal;
-            else if (pType === 'bonds') yrBonds += curBal;
-            else if (pType === 'ins') yrIns += curBal;
-            else yrCash += curBal;
-            yrWeightedReturn += curBal * rRate;
-          }
-        });
-      } else if (g.type === 'invest' || g.type === 'retirement' || g.type === 'college') {
-        const rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-        const rFrac = rRate / 100;
-        let pType = 'stocks';
-        if (rRate >= 12) pType = 'stocks';
-        else if (rRate >= 8) pType = 'bonds';
-        else if (rRate >= 6) pType = 'ins';
-        else if (rRate > 0) pType = 'cash';
-
-        const prevBal = balances[gIdx][0] || 0;
-        let curBal = 0;
-        if (isActive) {
-          curBal = prevBal * (1 + rFrac) + annualFlow;
-        } else if (isPast) {
-          if (isRetire) {
-            curBal = prevBal * (1 + rFrac);
-          } else {
-            curBal = 0;
-          }
-        } else {
-          curBal = 0;
+        let rRate = Number(ap.returnRate) || 0;
+        if (rRate === 0) {
+          const matched = validProducts.find(ip => ip && ip.name && ip.name.trim() === String(ap.prodName).trim());
+          if (matched) rRate = Number(matched.returnRate) || 0;
         }
-        balances[gIdx][0] = curBal;
+        if (rRate === 0) rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
 
-        if (yr === targetYear && curBal > 0) {
-          if (pType === 'stocks') yrStocks += curBal;
-          else if (pType === 'bonds') yrBonds += curBal;
-          else if (pType === 'ins') yrIns += curBal;
-          else yrCash += curBal;
-          yrWeightedReturn += curBal * rRate;
-        }
-      }
-    });
+        const pType = classifyProductType(ap.prodName);
+        totalFlow += prodFlow;
+        weightedReturn += prodFlow * rRate;
 
-    if (yr === targetYear) {
-      finalStocks = yrStocks;
-      finalBonds = yrBonds;
-      finalIns = yrIns;
-      finalCash = yrCash;
-      finalWeightedReturn = yrWeightedReturn;
+        if (pType === 'stocks') flowStocks += prodFlow;
+        else if (pType === 'bonds') flowBonds += prodFlow;
+        else if (pType === 'ins') flowIns += prodFlow;
+        else flowCash += prodFlow;
+      });
+    } else {
+      let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+      let pType = 'stocks';
+      if (rRate >= 12) pType = 'stocks';
+      else if (rRate >= 8) pType = 'bonds';
+      else if (rRate >= 6) pType = 'ins';
+      else if (rRate > 0) pType = 'cash';
+
+      totalFlow += annualFlow;
+      weightedReturn += annualFlow * rRate;
+
+      if (pType === 'stocks') flowStocks += annualFlow;
+      else if (pType === 'bonds') flowBonds += annualFlow;
+      else if (pType === 'ins') flowIns += annualFlow;
+      else flowCash += annualFlow;
     }
-  }
+  });
 
-  const totalBal = finalStocks + finalBonds + finalIns + finalCash;
-  if (totalBal > 0) {
+  if (totalFlow > 0) {
     return {
-      stocks: (finalStocks / totalBal) * 100,
-      bonds: (finalBonds / totalBal) * 100,
-      ins: (finalIns / totalBal) * 100,
-      cash: (finalCash / totalBal) * 100,
-      returnNeed: finalWeightedReturn / totalBal
+      stocks: (flowStocks / totalFlow) * 100,
+      bonds: (flowBonds / totalFlow) * 100,
+      ins: (flowIns / totalFlow) * 100,
+      cash: (flowCash / totalFlow) * 100,
+      returnNeed: weightedReturn / totalFlow
     };
   }
   return null;
