@@ -33,4 +33,7 @@ ui-debug.log*
 sample.json
 test_sample.json
 so-tai-chinh-standalone.html
+prompt/
+scripts/
+temp_excel_inspect/
 

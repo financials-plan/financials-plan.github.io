@@ -781,7 +781,11 @@ function createEmptyAppState() {
     matrixOverrides: {},
     monthlyDetails: emptyMonthly,
     surveyP1Choices: {},
-    surveyP2Choices: {}
+    surveyP2Choices: {},
+    yearEndBalanceSheet: {
+      assets: [],
+      liabilities: []
+    }
   };
 }
 
@@ -825,6 +829,7 @@ window.resetAppStateToEmpty = function() {
   syncGoalsToCards();
   renderTcMatrixTable();
   recalculateAll();
+  renderYearEndBalanceSheet();
 };
 
 const surveyQuestionsPart1 = [
@@ -1464,6 +1469,17 @@ window.switchMonthTab = function(m) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-month')?.classList.add('active');
 
+  const sec3Btn = document.getElementById('btn-month-sec3');
+  if (sec3Btn) {
+    sec3Btn.style.display = (m === 12) ? 'inline-flex' : 'none';
+  }
+  if (m !== 12) {
+    const sec3Pane = document.getElementById('month-sec-3');
+    if (sec3Pane && sec3Pane.classList.contains('active')) {
+      switchMonthSection(1);
+    }
+  }
+
   renderMonthView(m);
   setTimeout(updateSlidingHighlight, 40);
 };
@@ -1608,9 +1624,12 @@ function initSideRail() {
 window.switchMonthSection = function(secNum) {
   document.getElementById('btn-month-sec1')?.classList.toggle('active', secNum === 1);
   document.getElementById('btn-month-sec2')?.classList.toggle('active', secNum === 2);
+  document.getElementById('btn-month-sec3')?.classList.toggle('active', secNum === 3);
   document.getElementById('month-sec-1')?.classList.toggle('active', secNum === 1);
   document.getElementById('month-sec-2')?.classList.toggle('active', secNum === 2);
+  document.getElementById('month-sec-3')?.classList.toggle('active', secNum === 3);
   if (secNum === 1) renderMonthHorizontalBarChart();
+  if (secNum === 3) renderYearEndBalanceSheet();
 };
 
 window.switchTcSection = function(secNum) {
@@ -3149,6 +3168,14 @@ function renderReconciliationTable(m) {
 
   const mSumSav = document.getElementById('m-summary-savings');
   if (mSumSav) mSumSav.textContent = fmtSummaryVal(savings);
+
+  const sec3Btn = document.getElementById('btn-month-sec3');
+  if (sec3Btn) {
+    sec3Btn.style.display = (m === 12) ? 'inline-flex' : 'none';
+  }
+  if (m === 12) {
+    renderYearEndBalanceSheet();
+  }
 }
 
 window.addMonthDetailIncomeRow = function() {
@@ -3533,6 +3560,226 @@ function syncLearningToDashboard() {
   renderMonthHorizontalBarChart();
   recalculateAll();
 }
+
+function ensureYearEndBalanceSheet() {
+  if (!AppState.yearEndBalanceSheet || typeof AppState.yearEndBalanceSheet !== 'object') {
+    AppState.yearEndBalanceSheet = { assets: [], liabilities: [] };
+  }
+  if (!Array.isArray(AppState.yearEndBalanceSheet.assets)) {
+    AppState.yearEndBalanceSheet.assets = [];
+  }
+  if (!Array.isArray(AppState.yearEndBalanceSheet.liabilities)) {
+    AppState.yearEndBalanceSheet.liabilities = [];
+  }
+}
+
+function getAnnualActualIncome() {
+  let sum = 0;
+  for (let m = 1; m <= 12; m++) {
+    const list = AppState.monthlyDetails[m]?.incomes || [];
+    for (let i = 0; i < list.length; i++) {
+      sum += Number(list[i].val) || 0;
+    }
+  }
+  return sum;
+}
+
+function getAnnualActualExpense() {
+  let sum = 0;
+  for (let m = 1; m <= 12; m++) {
+    const list = AppState.monthlyDetails[m]?.expenses || [];
+    for (let i = 0; i < list.length; i++) {
+      sum += Number(list[i].val) || 0;
+    }
+  }
+  return sum;
+}
+
+function updateBalanceSheetCalculations() {
+  ensureYearEndBalanceSheet();
+  let assetsSubtotal = 0;
+  AppState.yearEndBalanceSheet.assets.forEach(a => {
+    assetsSubtotal += Number(a.val) || 0;
+  });
+
+  const humanCapitalIncome = getAnnualActualIncome();
+  const totalAssets = assetsSubtotal + humanCapitalIncome;
+
+  let liabSubtotal = 0;
+  AppState.yearEndBalanceSheet.liabilities.forEach(l => {
+    liabSubtotal += Number(l.val) || 0;
+  });
+
+  const obligationsExpense = getAnnualActualExpense();
+  const totalLiabilities = liabSubtotal + obligationsExpense;
+
+  const netWorth = totalAssets - totalLiabilities;
+  const debtRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+
+  const footAssetsSub = document.getElementById('tfoot-bs-assets-subtotal');
+  if (footAssetsSub) footAssetsSub.textContent = assetsSubtotal.toFixed(1);
+
+  const footHumanIncome = document.getElementById('bs-human-capital-income');
+  if (footHumanIncome) footHumanIncome.textContent = humanCapitalIncome.toFixed(1);
+
+  const footTotalAssets = document.getElementById('tfoot-bs-total-assets');
+  if (footTotalAssets) footTotalAssets.textContent = totalAssets.toFixed(1);
+
+  const kpiTotalAssets = document.getElementById('bs-kpi-total-assets');
+  if (kpiTotalAssets) kpiTotalAssets.textContent = totalAssets.toFixed(2);
+
+  const footLiabSub = document.getElementById('tfoot-bs-liab-subtotal');
+  if (footLiabSub) footLiabSub.textContent = liabSubtotal.toFixed(1);
+
+  const footObligationsExp = document.getElementById('bs-obligations-expense');
+  if (footObligationsExp) footObligationsExp.textContent = obligationsExpense.toFixed(1);
+
+  const footTotalLiab = document.getElementById('tfoot-bs-total-liab');
+  if (footTotalLiab) footTotalLiab.textContent = totalLiabilities.toFixed(1);
+
+  const kpiTotalLiab = document.getElementById('bs-kpi-total-liabilities');
+  if (kpiTotalLiab) kpiTotalLiab.textContent = totalLiabilities.toFixed(2);
+
+  const kpiNetWorth = document.getElementById('bs-kpi-net-worth');
+  if (kpiNetWorth) {
+    const formattedVal = netWorth >= 0 ? netWorth.toFixed(2) : `(${Math.abs(netWorth).toFixed(2)})`;
+    kpiNetWorth.innerHTML = `${formattedVal} <small>tr</small>`;
+    kpiNetWorth.className = `kpi-value font-bold ${netWorth >= 0 ? 'text-success' : 'text-danger'}`;
+  }
+
+  const netWorthVal = document.getElementById('bs-net-worth-val');
+  if (netWorthVal) {
+    netWorthVal.textContent = (netWorth >= 0 ? netWorth.toFixed(1) : `(${Math.abs(netWorth).toFixed(1)})`) + ' tr';
+    netWorthVal.className = `font-size-xl font-bold font-mono ${netWorth >= 0 ? 'text-success' : 'text-danger'}`;
+  }
+
+  const debtRatioVal = document.getElementById('bs-debt-ratio-val');
+  if (debtRatioVal) {
+    debtRatioVal.textContent = debtRatio.toFixed(1) + '%';
+    debtRatioVal.className = `font-size-md font-bold font-mono ${debtRatio > 60 ? 'text-danger' : (debtRatio > 40 ? 'text-warning' : 'text-success')}`;
+  }
+}
+
+function renderYearEndBalanceSheet() {
+  ensureYearEndBalanceSheet();
+  const tbAssets = document.getElementById('tbody-bs-assets');
+  if (tbAssets) {
+    tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => `
+      <tr>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên loại tài sản..." oninput="updateBalanceSheetAssetField(${idx}, 'name', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
+        </td>
+        <td>
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
+        </td>
+        <td class="text-center">
+          <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  const tbLiab = document.getElementById('tbody-bs-liabilities');
+  if (tbLiab) {
+    tbLiab.innerHTML = AppState.yearEndBalanceSheet.liabilities.map((item, idx) => `
+      <tr>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
+        <td>
+          <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên khoản nợ / nghĩa vụ..." oninput="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)">
+        </td>
+        <td>
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
+        </td>
+        <td class="text-center">
+          <button type="button" class="btn-table-del" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  updateBalanceSheetCalculations();
+}
+
+window.addBalanceSheetAssetRow = function() {
+  ensureYearEndBalanceSheet();
+  AppState.yearEndBalanceSheet.assets.push({
+    name: "Tài sản mới",
+    val: 0.0
+  });
+  renderYearEndBalanceSheet();
+  window.markUnsavedChanges();
+};
+
+window.updateBalanceSheetAssetFieldLive = function(idx, field, rawVal) {
+  ensureYearEndBalanceSheet();
+  const item = AppState.yearEndBalanceSheet.assets[idx];
+  if (!item) return;
+  if (field === 'val') {
+    item.val = parseFloat(rawVal) || 0;
+    updateBalanceSheetCalculations();
+  }
+};
+
+window.updateBalanceSheetAssetField = function(idx, field, rawVal) {
+  ensureYearEndBalanceSheet();
+  const item = AppState.yearEndBalanceSheet.assets[idx];
+  if (!item) return;
+  if (field === 'name') {
+    item.name = String(rawVal || '').trim();
+  } else if (field === 'val') {
+    item.val = parseFloat(rawVal) || 0;
+  }
+  updateBalanceSheetCalculations();
+  window.markUnsavedChanges();
+};
+
+window.deleteBalanceSheetAssetRow = function(idx) {
+  ensureYearEndBalanceSheet();
+  AppState.yearEndBalanceSheet.assets.splice(idx, 1);
+  renderYearEndBalanceSheet();
+  window.markUnsavedChanges();
+};
+
+window.addBalanceSheetLiabilityRow = function() {
+  ensureYearEndBalanceSheet();
+  AppState.yearEndBalanceSheet.liabilities.push({
+    name: "Khoản nợ mới",
+    val: 0.0
+  });
+  renderYearEndBalanceSheet();
+  window.markUnsavedChanges();
+};
+
+window.updateBalanceSheetLiabilityFieldLive = function(idx, field, rawVal) {
+  ensureYearEndBalanceSheet();
+  const item = AppState.yearEndBalanceSheet.liabilities[idx];
+  if (!item) return;
+  if (field === 'val') {
+    item.val = parseFloat(rawVal) || 0;
+    updateBalanceSheetCalculations();
+  }
+};
+
+window.updateBalanceSheetLiabilityField = function(idx, field, rawVal) {
+  ensureYearEndBalanceSheet();
+  const item = AppState.yearEndBalanceSheet.liabilities[idx];
+  if (!item) return;
+  if (field === 'name') {
+    item.name = String(rawVal || '').trim();
+  } else if (field === 'val') {
+    item.val = parseFloat(rawVal) || 0;
+  }
+  updateBalanceSheetCalculations();
+  window.markUnsavedChanges();
+};
+
+window.deleteBalanceSheetLiabilityRow = function(idx) {
+  ensureYearEndBalanceSheet();
+  AppState.yearEndBalanceSheet.liabilities.splice(idx, 1);
+  renderYearEndBalanceSheet();
+  window.markUnsavedChanges();
+};
 
 window.monthBarChartInstance = null;
 function renderMonthHorizontalBarChart() {
@@ -5246,6 +5493,7 @@ function recalculateAll() {
   renderDashboardMatrices();
   renderDashboardAllCharts();
   updatePlanTotals();
+  renderYearEndBalanceSheet();
 }
 
 function updateCloudStatus(status, text) {
@@ -6427,14 +6675,26 @@ function refreshExportJsonSummary() {
 
 window.buildExportJsonPayload = function() {
   ensureFixedInvestmentGoals();
+  ensureYearEndBalanceSheet();
   const cleanState = JSON.parse(JSON.stringify(AppState));
+  delete cleanState.careerDetailList;
+  if (Array.isArray(cleanState.tcGoals)) {
+    cleanState.tcGoals = cleanState.tcGoals.map(g => {
+      const copy = { ...g };
+      delete copy.monthly;
+      delete copy.annual;
+      delete copy.needed;
+      delete copy._manualValOverride;
+      return copy;
+    });
+  }
   Object.keys(cleanState).forEach(k => {
     if (k.startsWith('_') || k === 'passwordHash' || k === 'token' || k === 'secret') {
       delete cleanState[k];
     }
   });
   return {
-    schemaVersion: "2.2.0",
+    schemaVersion: "3.0.0",
     exportedAt: new Date().toISOString(),
     accountMeta: {
       ho_ten: UserSession.currentUser?.rawName || "Khách",
@@ -6492,7 +6752,8 @@ window.validateAndPrepareJsonImport = function(rawText) {
   const knownKeys = [
     "currentYear", "currentAge", "birthYear", "expenses", "incomeList", "planList",
     "investProducts", "tcGoals", "planIncome", "planExpense", "monthlyDetails",
-    "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices"
+    "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices",
+    "yearEndBalanceSheet"
   ];
   const hasAnyKnownKey = knownKeys.some(k => k in candidateData);
   if (!hasAnyKnownKey) {
@@ -7027,6 +7288,34 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
     else if (mode === 'update') Object.assign(AppState.matrixOverrides, cleanImport.matrixOverrides);
   }
 
+  if (cleanImport.yearEndBalanceSheet && typeof cleanImport.yearEndBalanceSheet === 'object') {
+    ensureYearEndBalanceSheet();
+    if (Array.isArray(cleanImport.yearEndBalanceSheet.assets)) {
+      if (mode === 'replace') {
+        AppState.yearEndBalanceSheet.assets = cleanImport.yearEndBalanceSheet.assets.map(a => ({ name: String(a?.name || ''), val: Number(a?.val) || 0 }));
+      } else {
+        cleanImport.yearEndBalanceSheet.assets.forEach(a => {
+          if (!a || !a.name) return;
+          const idx = AppState.yearEndBalanceSheet.assets.findIndex(x => x.name === a.name);
+          if (idx === -1) AppState.yearEndBalanceSheet.assets.push({ name: String(a.name), val: Number(a.val) || 0 });
+          else if (mode === 'update') AppState.yearEndBalanceSheet.assets[idx] = { name: String(a.name), val: Number(a.val) || 0 };
+        });
+      }
+    }
+    if (Array.isArray(cleanImport.yearEndBalanceSheet.liabilities)) {
+      if (mode === 'replace') {
+        AppState.yearEndBalanceSheet.liabilities = cleanImport.yearEndBalanceSheet.liabilities.map(l => ({ name: String(l?.name || ''), val: Number(l?.val) || 0 }));
+      } else {
+        cleanImport.yearEndBalanceSheet.liabilities.forEach(l => {
+          if (!l || !l.name) return;
+          const idx = AppState.yearEndBalanceSheet.liabilities.findIndex(x => x.name === l.name);
+          if (idx === -1) AppState.yearEndBalanceSheet.liabilities.push({ name: String(l.name), val: Number(l.val) || 0 });
+          else if (mode === 'update') AppState.yearEndBalanceSheet.liabilities[idx] = { name: String(l.name), val: Number(l.val) || 0 };
+        });
+      }
+    }
+  }
+
   ensureFixedInvestmentGoals();
   syncInvestProductsToGoals();
   const yEl = document.getElementById('input-year');
@@ -7046,6 +7335,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   renderMonthView(AppState.currentMonth);
   syncGoalsToCards();
   recalculateAll();
+  renderYearEndBalanceSheet();
   window.markUnsavedChanges();
   return true;
 };

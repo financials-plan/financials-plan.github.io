@@ -57,7 +57,8 @@ financials-plan.github.io/
     ├── firebase.json                # Cấu hình triển khai Firebase CLI
     ├── .firebaserc                  # Khai báo Project ID mặc định
     └── functions/                   # Cloud Functions (Firebase Functions v2)
-└── docs/                            # Tài liệu bổ trợ
+└── docs/                            # Tài liệu bổ trợ & lý thuyết
+    ├── CONG_THUC_TINH_TOAN.md       # Báo cáo toán học tài chính (LaTeX) chuẩn hóa toàn bộ công thức
     └── FIRESTORE_SETUP_CHECKLIST.md # Hướng dẫn kiểm tra triển khai Cloud Firestore
 ```
 
@@ -68,11 +69,16 @@ financials-plan.github.io/
 1. **Từ khóa thiết lập (`tab-tukhoa`):** Quản lý danh mục nguồn thu, khoản chi, quỹ dự phòng và rổ sản phẩm đầu tư.
 2. **Dashboard phân tích (`tab-dashboard`):** Trung tâm giám sát dòng tiền, cơ cấu tài sản và tổng hợp số liệu thời gian thực.
 3. **Mục tiêu bản thân (`tab-muctieu-bt`):** Bảng nhập liệu trung tâm chứa các mục tiêu nợ, tích lũy, hưu trí, học tập.
-4. **Mục tiêu tài chính (`tab-muctieu-tc`):** Phân bổ chi tiết từng mục tiêu và ma trận dòng tiền 33 năm.
-5. **Cân đối lộ trình nghề nghiệp (`tab-candoi`):** So khớp thu nhập từ lộ trình thăng tiến với nhu cầu hoàn thành mục tiêu.
+4. **Mục tiêu tài chính (`tab-muctieu-tc`):** Phân bổ chi tiết từng mục tiêu và ma trận dòng tiền 33 năm theo lý thuyết tài chính hiện đại.
+5. **Cân đối lộ trình nghề nghiệp (`tab-candoi`):** So khớp thu nhập từ lộ trình thăng tiến với nhu cầu hoàn thành mục tiêu, tự động tính toán nhu cầu thu nhập.
 6. **Kế hoạch thu nhập & chi tiêu (`tab-kehoach`):** Hoạch định ngân sách dự kiến cho 12 tháng trong năm.
-7. **Theo dõi thu chi 12 tháng (`tab-month`):** Đối soát phương sai giữa ngân sách kế hoạch và chi tiêu thực tế.
-8. **Khảo sát đánh giá bản thân (`tab-khaosat`):** Hệ thống 21 câu hỏi định lượng khẩu vị rủi ro tài chính.
+7. **Theo dõi thu chi 12 tháng & Bảng cân đối cuối năm (`tab-month`):**
+   - Phân hệ đối soát thu chi thực tế hàng tháng so với kế hoạch.
+   - Phân hệ nhật ký chi phí học tập & phát triển kỹ năng bản thân.
+   - **Bảng cân đối tài sản - nợ cuối năm (Tháng 12):** Tổng hợp tài sản tích lũy đầu tư, nguồn lực con người (tổng thu nhập 1 năm), các khoản nợ vay và chi phí sinh hoạt, tính toán Giá trị tài sản ròng (Net Worth) và Tỷ lệ đòn bẩy tài chính ($DR$).
+8. **Khảo sát đánh giá bản thân (`tab-khaosat`):** Hệ thống 21 câu hỏi định lượng khẩu vị rủi ro và khả năng chịu đựng rủi ro theo chuẩn CFA.
+9. **Bộ JSON Tổng thuần dữ liệu nhập (Pure Input Master JSON - Schema 3.0.0):** Xuất và nạp toàn diện hồ sơ tài chính. Quy tắc: chỉ lưu trữ dữ liệu người dùng nhập vào, tuyệt đối không lưu dữ liệu tính toán; máy tính tự động tính toán lại 100% tất cả các bảng khi mở hồ sơ.
+10. **Tài liệu công thức tài chính chuẩn LaTeX (`docs/CONG_THUC_TINH_TOAN.md`):** Thuyết minh chi tiết toàn bộ cơ sở lý thuyết tài chính, công thức toán học và đơn vị tính của hệ thống.
 
 ---
 
