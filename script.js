@@ -3680,7 +3680,7 @@ function renderYearEndBalanceSheet() {
   const tbAssets = document.getElementById('tbody-bs-assets');
   if (tbAssets) {
     if (AppState.yearEndBalanceSheet.assets.length === 0) {
-      tbAssets.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có tài sản nào. Bấm nút <b>"+ Từ khóa"</b> hoặc <b>"+ Tự thêm"</b> để thêm tài sản đang nắm giữ.</td></tr>`;
+      tbAssets.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có tài sản nào. Bấm nút <b>"+ Thêm tài sản"</b> để thêm tài sản đang nắm giữ.</td></tr>`;
     } else {
       const investProds = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
       tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => {
@@ -3718,8 +3718,8 @@ function renderYearEndBalanceSheet() {
             <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
             <td>
               <select class="select-inline-cell" style="font-size: 12px; font-weight: 600;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
-                <option value="keyword" ${!isCustom ? 'selected' : ''}>Từ khóa (SP đầu tư)</option>
-                <option value="custom" ${isCustom ? 'selected' : ''}>Tự thêm riêng</option>
+                <option value="keyword" ${!isCustom ? 'selected' : ''}>Sản phẩm đầu tư</option>
+                <option value="custom" ${isCustom ? 'selected' : ''}>Tài sản khác</option>
               </select>
             </td>
             <td>${nameCellHtml}</td>
