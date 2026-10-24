@@ -1244,24 +1244,113 @@ function getPortfolioAllocationAtAge(targetAge) {
   return null;
 }
 
+const DEFAULT_PORTFOLIO_30YR_BENCHMARK = [
+  {"off":0,"etf":3.06,"stockFund":20.51,"bondFund":34.54,"ins":8.51,"finhay":0,"savings":33.38,"other":0,"total":100,"ret":8.94,"stockTot":23.57,"bondTot":34.54,"insTot":8.51,"cashTot":33.38},
+  {"off":1,"etf":13.46,"stockFund":5.85,"bondFund":43.93,"ins":13.33,"finhay":0,"savings":23.42,"other":0,"total":100,"ret":9.23,"stockTot":19.32,"bondTot":43.93,"insTot":13.33,"cashTot":23.42},
+  {"off":2,"etf":13.39,"stockFund":19.83,"bondFund":40.9,"ins":8.34,"finhay":0,"savings":17.54,"other":0,"total":100,"ret":10.12,"stockTot":33.22,"bondTot":40.9,"insTot":8.34,"cashTot":17.54},
+  {"off":3,"etf":13.43,"stockFund":26.08,"bondFund":39.4,"ins":6.24,"finhay":0,"savings":14.84,"other":0,"total":100,"ret":10.52,"stockTot":39.51,"bondTot":39.4,"insTot":6.24,"cashTot":14.84},
+  {"off":4,"etf":17.15,"stockFund":48.11,"bondFund":14.75,"ins":8.21,"finhay":0,"savings":11.78,"other":0,"total":100,"ret":11.59,"stockTot":65.26,"bondTot":14.75,"insTot":8.21,"cashTot":11.78},
+  {"off":5,"etf":14.12,"stockFund":42.63,"bondFund":20.57,"ins":5.73,"finhay":0,"savings":16.94,"other":0,"total":100,"ret":11.06,"stockTot":56.76,"bondTot":20.57,"insTot":5.73,"cashTot":16.94},
+  {"off":6,"etf":12.72,"stockFund":40.39,"bondFund":23.33,"ins":4.53,"finhay":0,"savings":19.04,"other":0,"total":100,"ret":10.84,"stockTot":53.1,"bondTot":23.33,"insTot":4.53,"cashTot":19.04},
+  {"off":7,"etf":11.94,"stockFund":39.42,"bondFund":24.87,"ins":3.82,"finhay":0,"savings":19.94,"other":0,"total":100,"ret":10.74,"stockTot":51.37,"bondTot":24.87,"insTot":3.82,"cashTot":19.94},
+  {"off":8,"etf":5.7,"stockFund":46.93,"bondFund":19.55,"ins":5.64,"finhay":0,"savings":22.18,"other":0,"total":100,"ret":10.62,"stockTot":52.63,"bondTot":19.55,"insTot":5.64,"cashTot":22.18},
+  {"off":9,"etf":5.32,"stockFund":45.61,"bondFund":20.1,"ins":6.21,"finhay":0,"savings":22.76,"other":0,"total":100,"ret":10.51,"stockTot":50.93,"bondTot":20.1,"insTot":6.21,"cashTot":22.76},
+  {"off":10,"etf":8.23,"stockFund":73.1,"bondFund":0,"ins":10.74,"finhay":0,"savings":7.93,"other":0,"total":100,"ret":12.28,"stockTot":81.33,"bondTot":0,"insTot":10.74,"cashTot":7.93},
+  {"off":11,"etf":7.93,"stockFund":72.7,"bondFund":0,"ins":11.21,"finhay":0,"savings":8.17,"other":0,"total":100,"ret":12.23,"stockTot":80.62,"bondTot":0,"insTot":11.21,"cashTot":8.17},
+  {"off":12,"etf":7.68,"stockFund":72.57,"bondFund":0,"ins":11.52,"finhay":0,"savings":8.23,"other":0,"total":100,"ret":12.2,"stockTot":80.25,"bondTot":0,"insTot":11.52,"cashTot":8.23},
+  {"off":13,"etf":7.47,"stockFund":72.64,"bondFund":0,"ins":11.73,"finhay":0,"savings":8.17,"other":0,"total":100,"ret":12.2,"stockTot":80.11,"bondTot":0,"insTot":11.73,"cashTot":8.17},
+  {"off":14,"etf":7.28,"stockFund":72.86,"bondFund":0,"ins":11.85,"finhay":0,"savings":8.01,"other":0,"total":100,"ret":12.2,"stockTot":80.14,"bondTot":0,"insTot":11.85,"cashTot":8.01},
+  {"off":15,"etf":19.72,"stockFund":25.74,"bondFund":0,"ins":32.97,"finhay":0,"savings":21.57,"other":0,"total":100,"ret":9.95,"stockTot":45.45,"bondTot":0,"insTot":32.97,"cashTot":21.57},
+  {"off":16,"etf":19.52,"stockFund":26.04,"bondFund":0,"ins":33.36,"finhay":0,"savings":21.08,"other":0,"total":100,"ret":9.97,"stockTot":45.56,"bondTot":0,"insTot":33.36,"cashTot":21.08},
+  {"off":17,"etf":19.39,"stockFund":26.43,"bondFund":0,"ins":33.68,"finhay":0,"savings":20.51,"other":0,"total":100,"ret":10,"stockTot":45.81,"bondTot":0,"insTot":33.68,"cashTot":20.51},
+  {"off":18,"etf":14.67,"stockFund":23.76,"bondFund":0,"ins":39.19,"finhay":0,"savings":22.38,"other":0,"total":100,"ret":9.52,"stockTot":38.43,"bondTot":0,"insTot":39.19,"cashTot":22.38},
+  {"off":19,"etf":15.07,"stockFund":24.86,"bondFund":0,"ins":39.13,"finhay":0,"savings":20.94,"other":0,"total":100,"ret":9.64,"stockTot":39.93,"bondTot":0,"insTot":39.13,"cashTot":20.94},
+  {"off":20,"etf":10.09,"stockFund":22.24,"bondFund":0,"ins":45.06,"finhay":0,"savings":22.61,"other":0,"total":100,"ret":9.15,"stockTot":32.33,"bondTot":0,"insTot":45.06,"cashTot":22.61},
+  {"off":21,"etf":10.45,"stockFund":23.3,"bondFund":0,"ins":45.05,"finhay":0,"savings":21.2,"other":0,"total":100,"ret":9.27,"stockTot":33.75,"bondTot":0,"insTot":45.05,"cashTot":21.2},
+  {"off":22,"etf":5.28,"stockFund":20.76,"bondFund":0,"ins":51.33,"finhay":0,"savings":22.64,"other":0,"total":100,"ret":8.78,"stockTot":26.03,"bondTot":0,"insTot":51.33,"cashTot":22.64},
+  {"off":23,"etf":5.58,"stockFund":21.77,"bondFund":0,"ins":51.4,"finhay":0,"savings":21.25,"other":0,"total":100,"ret":8.89,"stockTot":27.35,"bondTot":0,"insTot":51.4,"cashTot":21.25},
+  {"off":24,"etf":0.28,"stockFund":19.35,"bondFund":0,"ins":57.92,"finhay":0,"savings":22.45,"other":0,"total":100,"ret":8.41,"stockTot":19.63,"bondTot":0,"insTot":57.92,"cashTot":22.45},
+  {"off":25,"etf":0.51,"stockFund":20.31,"bondFund":0,"ins":58.07,"finhay":0,"savings":21.11,"other":0,"total":100,"ret":8.51,"stockTot":20.82,"bondTot":0,"insTot":58.07,"cashTot":21.11},
+  {"off":26,"etf":-4.83,"stockFund":18.05,"bondFund":0,"ins":64.72,"finhay":0,"savings":22.05,"other":0,"total":100,"ret":8.04,"stockTot":13.23,"bondTot":0,"insTot":64.72,"cashTot":22.05},
+  {"off":27,"etf":-4.69,"stockFund":18.97,"bondFund":0,"ins":64.97,"finhay":0,"savings":20.75,"other":0,"total":100,"ret":8.14,"stockTot":14.27,"bondTot":0,"insTot":64.97,"cashTot":20.75},
+  {"off":28,"etf":-9.98,"stockFund":16.9,"bondFund":0,"ins":71.64,"finhay":0,"savings":21.45,"other":0,"total":100,"ret":7.69,"stockTot":6.91,"bondTot":0,"insTot":71.64,"cashTot":21.45},
+  {"off":29,"etf":-9.95,"stockFund":17.76,"bondFund":0,"ins":71.98,"finhay":0,"savings":20.21,"other":0,"total":100,"ret":7.77,"stockTot":7.81,"bondTot":0,"insTot":71.98,"cashTot":20.21}
+];
+
+function getPortfolio30YrData() {
+  const startYr = Number(AppState.currentYear) || 2026;
+  const startAge = Number(AppState.currentAge) || 21;
+  return DEFAULT_PORTFOLIO_30YR_BENCHMARK.map((b, i) => {
+    const yr = startYr + i;
+    const age = startAge + i;
+    const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
+    return {
+      ...b,
+      year: yr,
+      age: age,
+      isMilestone: isMilestone
+    };
+  });
+}
+
+function renderPortfolio30YrTable() {
+  const tb = document.getElementById('tbody-portfolio-30yr');
+  if (!tb) return;
+  const list = getPortfolio30YrData();
+  let sumRet = 0;
+  tb.innerHTML = list.map(item => {
+    sumRet += Number(item.ret) || 0;
+    const rowClass = item.isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+    const rowStyle = item.isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+    return `<tr class="${rowClass}" style="${rowStyle}">
+      <td class="text-center font-mono">${item.year}</td>
+      <td class="text-right font-mono">${item.etf.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.stockFund.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.bondFund.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.ins.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.finhay.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.savings.toFixed(1)}%</td>
+      <td class="text-right font-mono">${item.other.toFixed(1)}%</td>
+      <td class="text-center font-mono font-bold">${item.total}%</td>
+      <td class="text-right font-mono font-bold text-success">${item.ret.toFixed(2)}%</td>
+      <td class="text-center font-mono font-bold" style="background-color: #e0e7ff; color: #1e3a8a;">${item.age}</td>
+      <td class="text-right font-mono font-bold">${item.stockTot.toFixed(1)}%</td>
+      <td class="text-right font-mono font-bold">${item.bondTot.toFixed(1)}%</td>
+      <td class="text-right font-mono font-bold">${item.insTot.toFixed(1)}%</td>
+      <td class="text-right font-mono font-bold">${item.cashTot.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+  const avgEl = document.getElementById('cell-avg-portfolio-ret');
+  if (avgEl && list.length > 0) {
+    avgEl.textContent = (sumRet / list.length).toFixed(2) + '%';
+  }
+}
+
+function openPortfolio30YrModal() {
+  const modal = document.getElementById('portfolio-30yr-modal-overlay');
+  if (modal) {
+    modal.style.display = 'flex';
+    renderPortfolio30YrTable();
+  }
+}
+
+function closePortfolio30YrModal() {
+  const modal = document.getElementById('portfolio-30yr-modal-overlay');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
 function calculateAgeMilestones() {
   const baseAge = Number(AppState.currentAge) || 21;
   const offsets = [0, 5, 10, 15, 20, 25];
-
-  const defaultBenchmark = [
-    { stocks: 23.57, bonds: 34.54, ins: 8.51, cash: 33.38, returnNeed: 8.94 },
-    { stocks: 56.76, bonds: 20.57, ins: 5.73, cash: 16.94, returnNeed: 11.06 },
-    { stocks: 81.33, bonds: 0.0, ins: 10.74, cash: 7.93, returnNeed: 12.28 },
-    { stocks: 45.45, bonds: 0.0, ins: 32.97, cash: 21.57, returnNeed: 9.95 },
-    { stocks: 32.33, bonds: 0.0, ins: 45.06, cash: 22.61, returnNeed: 9.15 },
-    { stocks: 20.82, bonds: 0.0, ins: 58.07, cash: 21.11, returnNeed: 8.51 }
-  ];
+  const p30 = getPortfolio30YrData();
 
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-    const benchmark = defaultBenchmark[idx] || defaultBenchmark[defaultBenchmark.length - 1];
+    const benchmark = p30[off] || DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
 
     let skillVal = '';
     if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
@@ -1272,11 +1361,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: benchmark.stocks,
-      bonds: benchmark.bonds,
-      ins: benchmark.ins,
-      cash: benchmark.cash,
-      returnNeed: benchmark.returnNeed,
+      stocks: benchmark.stockTot !== undefined ? benchmark.stockTot : 0,
+      bonds: benchmark.bondTot !== undefined ? benchmark.bondTot : 0,
+      ins: benchmark.insTot !== undefined ? benchmark.insTot : 0,
+      cash: benchmark.cashTot !== undefined ? benchmark.cashTot : 0,
+      returnNeed: benchmark.ret !== undefined ? benchmark.ret : 0,
       skills: skillVal
     };
   });
@@ -8394,6 +8483,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  const portfolioOverlay = document.getElementById('portfolio-30yr-modal-overlay');
+  if (portfolioOverlay) {
+    portfolioOverlay.addEventListener('click', (e) => {
+      if (e.target === portfolioOverlay) {
+        closePortfolio30YrModal();
+      }
+    });
+  }
   const exitSaveOverlay = document.getElementById('exit-save-modal-overlay');
   if (exitSaveOverlay) {
     exitSaveOverlay.addEventListener('click', (e) => {
@@ -8404,6 +8501,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      const pModal = document.getElementById('portfolio-30yr-modal-overlay');
+      if (pModal && pModal.style.display !== 'none') {
+        closePortfolio30YrModal();
+      }
       const backupModal = document.getElementById('backup-modal-overlay');
       if (backupModal && backupModal.classList.contains('active')) {
         window.closeBackupManagerModal();
@@ -8418,6 +8519,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  window.openPortfolio30YrModal = openPortfolio30YrModal;
+  window.closePortfolio30YrModal = closePortfolio30YrModal;
+  window.renderPortfolio30YrTable = renderPortfolio30YrTable;
+  window.getPortfolio30YrData = getPortfolio30YrData;
 
   if (typeof window.initU032Upload === 'function') {
     window.initU032Upload();
