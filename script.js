@@ -1131,94 +1131,152 @@ function getMatrixIncomeNeed(yearOffset) {
 }
 
 function classifyProductType(rawName) {
-  const name = String(rawName || "").toLowerCase().trim();
-  if (name.includes("cổ phiếu") || name.includes("cp") || name.includes("etf") || 
+  let name = String(rawName || "").toLowerCase().trim();
+  name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+  name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+  name = name.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+  name = name.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+  name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+  name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+  name = name.replace(/đ/g, 'd');
+  if (name.includes("co phieu") || name.includes("cp") || name.includes("etf") || 
       name.includes("dcbc") || name.includes("dcds") || name.includes("stock") || 
       name.includes("equity")) {
     return 'stocks';
   }
-  if (name.includes("trái phiếu") || name.includes("tp") || name.includes("dcbf") || 
+  if (name.includes("trai phieu") || name.includes("tp") || name.includes("dcbf") || 
       name.includes("bond")) {
     return 'bonds';
   }
-  if (name.includes("bảo hiểm") || name.includes("bh") || name.includes("insurance")) {
+  if (name.includes("bao hiem") || name.includes("bh") || name.includes("insurance")) {
     return 'ins';
   }
-  if (name.includes("tiết kiệm") || name.includes("tiền gửi") || name.includes("finhay") || 
-      name.includes("ngân hàng") || name.includes("cash") || name.includes("deposit")) {
+  if (name.includes("tiet kiem") || name.includes("tien gui") || name.includes("finhay") || 
+      name.includes("ngan hang") || name.includes("cash") || name.includes("deposit")) {
     return 'cash';
   }
   return 'stocks';
 }
 
 function getPortfolioAllocationAtAge(targetAge) {
-  const targetYear = AppState.currentYear + (targetAge - AppState.currentAge);
-  let totalFlow = 0;
-  let flowStocks = 0;
-  let flowBonds = 0;
-  let flowIns = 0;
-  let flowCash = 0;
-  let flowWeightedReturn = 0;
+  const startYr = Number(AppState.currentYear) || 2026;
+  const targetYear = startYr + (targetAge - (Number(AppState.currentAge) || 21));
+  if (targetYear < startYr) return null;
 
-  if (Array.isArray(AppState.tcGoals)) {
-    AppState.tcGoals.forEach(g => {
-      if (targetYear >= g.start && targetYear <= g.end) {
-        const mNeed = calculateMonthlyNeed(g);
-        const annualFlow = mNeed * 12;
-        if (annualFlow > 0) {
-          const validAllocs = Array.isArray(g.allocProducts)
-            ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
-            : [];
-          const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+  const goals = Array.isArray(AppState.tcGoals)
+    ? AppState.tcGoals.filter(g => g && g.type !== 'debt')
+    : [];
+  if (goals.length === 0) return null;
 
-          if (totalW > 0) {
-            validAllocs.forEach(ap => {
-              const normWeight = (Number(ap.weight) || 0) / totalW;
-              const prodCash = annualFlow * normWeight;
-              const rRate = Number(ap.returnRate) || 0;
-              const pType = classifyProductType(ap.prodName);
+  const balances = goals.map(g => (g.allocProducts || []).map(() => 0));
 
-              totalFlow += prodCash;
-              flowWeightedReturn += prodCash * rRate;
-              if (pType === 'stocks') flowStocks += prodCash;
-              else if (pType === 'bonds') flowBonds += prodCash;
-              else if (pType === 'ins') flowIns += prodCash;
-              else flowCash += prodCash;
-            });
-          } else if (g.type === 'invest' || g.type === 'retirement' || g.type === 'college') {
-            const rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-            let pType = 'stocks';
-            if (rRate >= 12) pType = 'stocks';
-            else if (rRate >= 8) pType = 'bonds';
-            else if (rRate >= 6) pType = 'ins';
-            else if (rRate > 0) pType = 'cash';
+  let finalStocks = 0, finalBonds = 0, finalIns = 0, finalCash = 0;
+  let finalWeightedReturn = 0;
 
-            totalFlow += annualFlow;
-            flowWeightedReturn += annualFlow * rRate;
-            if (pType === 'stocks') flowStocks += annualFlow;
-            else if (pType === 'bonds') flowBonds += annualFlow;
-            else if (pType === 'ins') flowIns += annualFlow;
-            else flowCash += annualFlow;
+  for (let yr = startYr; yr <= targetYear; yr++) {
+    let yrStocks = 0, yrBonds = 0, yrIns = 0, yrCash = 0;
+    let yrWeightedReturn = 0;
+
+    goals.forEach((g, gIdx) => {
+      const isRetire = (g.fixedType === 'retirement' || g.type === 'retirement' || String(g.name || "").toLowerCase().includes("hưu trí"));
+      const isActive = (yr >= g.start && yr <= g.end);
+      const isPast = (yr > g.end);
+
+      const mNeed = calculateMonthlyNeed(g);
+      const annualFlow = mNeed * 12;
+      const validAllocs = Array.isArray(g.allocProducts)
+        ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
+        : [];
+      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+
+      if (totalW > 0) {
+        validAllocs.forEach((ap, pIdx) => {
+          const normWeight = (Number(ap.weight) || 0) / totalW;
+          const rRate = Number(ap.returnRate) || 0;
+          const rFrac = rRate / 100;
+          const pType = classifyProductType(ap.prodName);
+
+          const prevBal = balances[gIdx][pIdx] || 0;
+          let curBal = 0;
+          if (isActive) {
+            curBal = prevBal * (1 + rFrac) + (annualFlow * normWeight);
+          } else if (isPast) {
+            if (isRetire) {
+              curBal = prevBal * (1 + rFrac);
+            } else {
+              curBal = 0;
+            }
+          } else {
+            curBal = 0;
           }
+          balances[gIdx][pIdx] = curBal;
+
+          if (yr === targetYear && curBal > 0) {
+            if (pType === 'stocks') yrStocks += curBal;
+            else if (pType === 'bonds') yrBonds += curBal;
+            else if (pType === 'ins') yrIns += curBal;
+            else yrCash += curBal;
+            yrWeightedReturn += curBal * rRate;
+          }
+        });
+      } else if (g.type === 'invest' || g.type === 'retirement' || g.type === 'college') {
+        const rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+        const rFrac = rRate / 100;
+        let pType = 'stocks';
+        if (rRate >= 12) pType = 'stocks';
+        else if (rRate >= 8) pType = 'bonds';
+        else if (rRate >= 6) pType = 'ins';
+        else if (rRate > 0) pType = 'cash';
+
+        const prevBal = balances[gIdx][0] || 0;
+        let curBal = 0;
+        if (isActive) {
+          curBal = prevBal * (1 + rFrac) + annualFlow;
+        } else if (isPast) {
+          if (isRetire) {
+            curBal = prevBal * (1 + rFrac);
+          } else {
+            curBal = 0;
+          }
+        } else {
+          curBal = 0;
+        }
+        balances[gIdx][0] = curBal;
+
+        if (yr === targetYear && curBal > 0) {
+          if (pType === 'stocks') yrStocks += curBal;
+          else if (pType === 'bonds') yrBonds += curBal;
+          else if (pType === 'ins') yrIns += curBal;
+          else yrCash += curBal;
+          yrWeightedReturn += curBal * rRate;
         }
       }
     });
+
+    if (yr === targetYear) {
+      finalStocks = yrStocks;
+      finalBonds = yrBonds;
+      finalIns = yrIns;
+      finalCash = yrCash;
+      finalWeightedReturn = yrWeightedReturn;
+    }
   }
 
-  if (totalFlow > 0) {
+  const totalBal = finalStocks + finalBonds + finalIns + finalCash;
+  if (totalBal > 0) {
     return {
-      stocks: (flowStocks / totalFlow) * 100,
-      bonds: (flowBonds / totalFlow) * 100,
-      ins: (flowIns / totalFlow) * 100,
-      cash: (flowCash / totalFlow) * 100,
-      returnNeed: flowWeightedReturn / totalFlow
+      stocks: (finalStocks / totalBal) * 100,
+      bonds: (finalBonds / totalBal) * 100,
+      ins: (finalIns / totalBal) * 100,
+      cash: (finalCash / totalBal) * 100,
+      returnNeed: finalWeightedReturn / totalBal
     };
   }
   return null;
 }
 
 function calculateAgeMilestones() {
-  const baseAge = AppState.currentAge;
+  const baseAge = Number(AppState.currentAge) || 21;
   const offsets = [0, 5, 10, 15, 20, 25];
 
   const defaultBenchmark = [
@@ -1230,31 +1288,30 @@ function calculateAgeMilestones() {
     { stocks: 20.82, bonds: 0.0, ins: 58.07, cash: 21.11, returnNeed: 8.51 }
   ];
 
-  const defaultSkills = [];
+  const defaultSkills = [
+    "Kỹ năng làm việc nhóm",
+    "Kỹ năng leader, kỹ năng xây dựng mô hình kinh doanh",
+    "Kỹ năng lãnh đạo",
+    "Kỹ năng quản lý doanh nghiệp",
+    "Kỹ năng tạo lập cộng đồng",
+    ""
+  ];
 
   return offsets.map((off, idx) => {
     const age = baseAge + off;
-    const year = AppState.currentYear + off;
+    const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-
-    const computedAlloc = getPortfolioAllocationAtAge(age);
     const benchmark = defaultBenchmark[idx] || defaultBenchmark[defaultBenchmark.length - 1];
-
-    const stocks = computedAlloc ? computedAlloc.stocks : benchmark.stocks;
-    const bonds = computedAlloc ? computedAlloc.bonds : benchmark.bonds;
-    const ins = computedAlloc ? computedAlloc.ins : benchmark.ins;
-    const cash = computedAlloc ? computedAlloc.cash : benchmark.cash;
-    const returnNeed = computedAlloc ? computedAlloc.returnNeed : benchmark.returnNeed;
 
     return {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks,
-      bonds,
-      ins,
-      cash,
-      returnNeed,
+      stocks: benchmark.stocks,
+      bonds: benchmark.bonds,
+      ins: benchmark.ins,
+      cash: benchmark.cash,
+      returnNeed: benchmark.returnNeed,
       skills: (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== "")
         ? AppState.skillsStore[idx]
         : (defaultSkills[idx] || "")
