@@ -1136,7 +1136,7 @@ function getMatrixIncomeNeed(yearOffset) {
   return sSum > 0 ? (sSum / rate) : 0;
 }
 
-function classifyProductType(rawName) {
+function detectAssetCategory(rawName, returnRate = 0, risk = 0) {
   let name = String(rawName || "").toLowerCase().trim();
   name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
   name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
@@ -1145,23 +1145,123 @@ function classifyProductType(rawName) {
   name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
   name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
   name = name.replace(/đ/g, 'd');
-  if (name.includes("co phieu") || name.includes("cp") || name.includes("etf") || 
-      name.includes("dcbc") || name.includes("dcds") || name.includes("stock") || 
-      name.includes("equity")) {
+
+  if (name.includes("co phieu") || name.includes("chung khoan") || name.includes("stock") || name.includes("equity") || name.includes("co phan")) {
     return 'stocks';
   }
-  if (name.includes("trai phieu") || name.includes("tp") || name.includes("dcbf") || 
-      name.includes("bond")) {
+  if (name.includes("trai phieu") || name.includes("bond") || name.includes("fixed income") || name.includes("tpdn") || name.includes("debenture")) {
     return 'bonds';
   }
-  if (name.includes("bao hiem") || name.includes("bh") || name.includes("insurance")) {
+  if (name.includes("bao hiem") || name.includes("bhnt") || name.includes("nhan tho") || name.includes("suc khoe") || name.includes("y te") || name.includes("insurance") || name.includes("life insurance")) {
     return 'ins';
   }
-  if (name.includes("tiet kiem") || name.includes("tien gui") || name.includes("finhay") || 
-      name.includes("ngan hang") || name.includes("cash") || name.includes("deposit")) {
+  if (name.includes("tien gui") || name.includes("tiet kiem") || name.includes("ngan hang") || name.includes("deposit") || name.includes("savings") || name.includes("tien mat")) {
     return 'cash';
   }
+
+  if (
+    name.includes("etf") || name.includes("dcbc") || name.includes("dcds") ||
+    name.includes("vesaf") || name.includes("vfmvf") || name.includes("vn30") ||
+    name.includes("vnindex") || name.includes("vn100") || name.includes("diamond") ||
+    name.includes("finlead") || name.includes("ssiam")
+  ) {
+    return 'stocks';
+  }
+
+  if (
+    name.includes("dcbf") || name.includes("vfmvfb") || name.includes("tcbond") ||
+    name.includes("ssibf") || name.includes("vbond")
+  ) {
+    return 'bonds';
+  }
+
+  if (
+    name.includes("manulife") || name.includes("prudential") || name.includes("dai-ichi") ||
+    name.includes("daiichi") || name.includes("chubb") || name.includes("fwd") ||
+    name.includes("sun life") || name.includes("sunlife") || name.includes("aia") ||
+    name.includes("generali") || name.includes("bao viet") || name.includes("mb ageas") ||
+    name.includes("hanwha") || name.includes("lien ket dau tu") || name.includes("lien ket don vi") ||
+    name.includes("tu ky")
+  ) {
+    return 'ins';
+  }
+
+  if (
+    name.includes("finhay") || name.includes("tikop") || name.includes("fmarket") ||
+    name.includes("chung chi tien gui") || name.includes("cctg") || name.includes("vi dien tu") ||
+    name.includes("momo") || name.includes("zalopay") || name.includes("thanh khoan") ||
+    name.includes("du phong")
+  ) {
+    return 'cash';
+  }
+
+  if (
+    name.includes("fpt") || name.includes("hpg") || name.includes("vnm") ||
+    name.includes("mwg") || name.includes("vic") || name.includes("vhm") ||
+    name.includes("ssi") || name.includes("vnd")
+  ) {
+    return 'stocks';
+  }
+
+  const r = Number(returnRate) || 0;
+  const k = Number(risk) || 0;
+  if (r >= 12 || k >= 12) return 'stocks';
+  if (r >= 7.5 || (k >= 4 && k < 12)) return 'bonds';
+  if (r >= 6.0 && k < 4) return 'ins';
+  if (r > 0 || k <= 2) return 'cash';
+
   return 'stocks';
+}
+
+function classifyProductType(rawName) {
+  return detectAssetCategory(rawName, 0, 0);
+}
+
+function getAssetCategoryRates() {
+  const prods = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const rates = {
+    stocks: { sum: 0, count: 0, defaultRate: 14.5 },
+    bonds: { sum: 0, count: 0, defaultRate: 9.0 },
+    ins: { sum: 0, count: 0, defaultRate: 7.0 },
+    cash: { sum: 0, count: 0, defaultRate: 5.5 }
+  };
+
+  prods.forEach(p => {
+    if (!p || !p.name) return;
+    const cat = detectAssetCategory(p.name, p.returnRate, p.risk);
+    const r = Number(p.returnRate);
+    if (!isNaN(r) && r > 0) {
+      rates[cat].sum += r;
+      rates[cat].count++;
+    }
+  });
+
+  return {
+    stocks: rates.stocks.count > 0 ? (rates.stocks.sum / rates.stocks.count) : rates.stocks.defaultRate,
+    bonds: rates.bonds.count > 0 ? (rates.bonds.sum / rates.bonds.count) : rates.bonds.defaultRate,
+    ins: rates.ins.count > 0 ? (rates.ins.sum / rates.ins.count) : rates.ins.defaultRate,
+    cash: rates.cash.count > 0 ? (rates.cash.sum / rates.cash.count) : rates.cash.defaultRate
+  };
+}
+
+function isDedicatedAssetGoal(g) {
+  if (!g || !g.name) return false;
+  let name = String(g.name).toLowerCase().trim();
+  name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+  name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+  name = name.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+  name = name.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+  name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+  name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+  name = name.replace(/đ/g, 'd');
+
+  return (
+    name.includes('bao hiem') || name.includes('tiet kiem') ||
+    name.includes('tien gui') || name.includes('du phong') ||
+    name.includes('trai phieu') || name.includes('co phieu') ||
+    name.includes('chung khoan') || name.includes('etf') ||
+    name.includes('quy ') || name.includes('finhay') || name.includes('tikop')
+  );
 }
 
 function getPortfolioAllocationAtAge(targetAge) {
@@ -1215,6 +1315,16 @@ function getPortfolioAllocationAtAge(targetAge) {
         else if (pType === 'ins') flowIns += prodFlow;
         else flowCash += prodFlow;
       });
+    } else if (isDedicatedAssetGoal(g)) {
+      let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+      const pType = detectAssetCategory(g.name, rRate, 0);
+      totalFlow += annualFlow;
+      weightedReturn += annualFlow * rRate;
+
+      if (pType === 'stocks') flowStocks += annualFlow;
+      else if (pType === 'bonds') flowBonds += annualFlow;
+      else if (pType === 'ins') flowIns += annualFlow;
+      else flowCash += annualFlow;
     }
   });
 
@@ -1269,7 +1379,10 @@ function getPortfolio30YrData() {
 
   const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
   const hasDynamicAlloc = activeGoals.some(g => {
-    return (Number(g.val) > 0 || Number(g.paid) > 0) && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName);
+    return (Number(g.val) > 0 || Number(g.paid) > 0) && (
+      (Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName)) ||
+      isDedicatedAssetGoal(g)
+    );
   });
 
   return DEFAULT_PORTFOLIO_30YR_BENCHMARK.map((b, i) => {
@@ -1595,7 +1708,9 @@ function closePortfolio30YrModal() {
 
 function calculateAgeMilestones() {
   const baseAge = Number(AppState.currentAge) || 21;
+  const startYr = Number(AppState.currentYear) || 2026;
   const offsets = [0, 5, 10, 15, 20, 25];
+  const catRates = getAssetCategoryRates();
 
   if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
     AppState.milestonesStore = {};
@@ -1608,17 +1723,85 @@ function calculateAgeMilestones() {
     AppState.milestonesStore = {};
   }
 
+  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const nonDebtGoals = Array.isArray(AppState.tcGoals)
+    ? AppState.tcGoals.filter(g => g && g.type !== 'debt')
+    : [];
+
   return offsets.map((off, idx) => {
     const age = baseAge + off;
-    const year = (Number(AppState.currentYear) || 2026) + off;
+    const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const benchmark = DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
 
-    const baseStocks = benchmark.stockTot !== undefined ? benchmark.stockTot : 0;
-    const baseBonds = benchmark.bondTot !== undefined ? benchmark.bondTot : 0;
-    const baseIns = benchmark.insTot !== undefined ? benchmark.insTot : 0;
-    const baseCash = benchmark.cashTot !== undefined ? benchmark.cashTot : 0;
-    const baseReturn = benchmark.ret !== undefined ? benchmark.ret : 0;
+    let baseStocks = benchmark.stockTot !== undefined ? benchmark.stockTot : 0;
+    let baseBonds = benchmark.bondTot !== undefined ? benchmark.bondTot : 0;
+    let baseIns = benchmark.insTot !== undefined ? benchmark.insTot : 0;
+    let baseCash = benchmark.cashTot !== undefined ? benchmark.cashTot : 0;
+    let baseReturn = benchmark.ret !== undefined ? benchmark.ret : 0;
+
+    let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
+    let totalFlow = 0;
+    let hasCustomFlow = false;
+
+    nonDebtGoals.forEach(g => {
+      const isActive = (year >= g.start && year <= g.end);
+      if (!isActive) return;
+
+      const mNeed = calculateMonthlyNeed(g);
+      const annualFlow = mNeed * 12;
+      if (annualFlow <= 0) return;
+
+      const validAllocs = Array.isArray(g.allocProducts)
+        ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
+        : [];
+      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+
+      if (totalW > 0) {
+        hasCustomFlow = true;
+        validAllocs.forEach(ap => {
+          const normWeight = (Number(ap.weight) || 0) / totalW;
+          const pFlow = annualFlow * normWeight;
+          const pType = detectAssetCategory(ap.prodName, ap.returnRate, ap.risk);
+          totalFlow += pFlow;
+
+          if (pType === 'stocks') flowStocks += pFlow;
+          else if (pType === 'bonds') flowBonds += pFlow;
+          else if (pType === 'ins') flowIns += pFlow;
+          else flowCash += pFlow;
+        });
+      } else {
+        if (isDedicatedAssetGoal(g)) {
+          hasCustomFlow = true;
+          const goalType = detectAssetCategory(g.name, g.rate || g.estimatedRate, 0);
+          totalFlow += annualFlow;
+          if (goalType === 'stocks') flowStocks += annualFlow;
+          else if (goalType === 'bonds') flowBonds += annualFlow;
+          else if (goalType === 'ins') flowIns += annualFlow;
+          else flowCash += annualFlow;
+        } else {
+          const bSR = (benchmark.stockTot || 0) / 100;
+          const bBR = (benchmark.bondTot || 0) / 100;
+          const bIR = (benchmark.insTot || 0) / 100;
+          const bCR = (benchmark.cashTot || 0) / 100;
+          flowStocks += annualFlow * bSR;
+          flowBonds += annualFlow * bBR;
+          flowIns += annualFlow * bIR;
+          flowCash += annualFlow * bCR;
+          totalFlow += annualFlow;
+        }
+      }
+    });
+
+    if (hasCustomFlow && totalFlow > 0) {
+      baseStocks = (flowStocks / totalFlow) * 100;
+      baseBonds = (flowBonds / totalFlow) * 100;
+      baseIns = (flowIns / totalFlow) * 100;
+      baseCash = (flowCash / totalFlow) * 100;
+      baseReturn = (baseStocks * catRates.stocks + baseBonds * catRates.bonds + baseIns * catRates.ins + baseCash * catRates.cash) / 100;
+    } else if (validProducts.length > 0) {
+      baseReturn = (baseStocks * catRates.stocks + baseBonds * catRates.bonds + baseIns * catRates.ins + baseCash * catRates.cash) / 100;
+    }
 
     const userStore = AppState.milestonesStore[idx] || {};
 
