@@ -1326,11 +1326,91 @@ function renderPortfolio30YrTable() {
   }
 }
 
+const DEFAULT_INTERMEDIATE_T2 = [{"off":0,"vfm":3.6,"finlead":2.1,"dcbc":38.4,"dcds":0,"dcbf":0,"tcb":23.4,"fe":41.4,"finhay":0,"insPure":0,"insInv":15.9,"cash":62.6,"tot":187.4},{"off":1,"vfm":7.7,"finlead":10.3,"dcbc":7.8,"dcds":0,"dcbf":0,"tcb":58.8,"fe":0,"finhay":0,"insPure":0,"insInv":17.9,"cash":31.4,"tot":134},{"off":2,"vfm":12.4,"finlead":19.7,"dcbc":47.5,"dcds":0,"dcbf":0,"tcb":98,"fe":0,"finhay":0,"insPure":0,"insInv":20,"cash":42,"tot":239.7},{"off":3,"vfm":17.6,"finlead":30.6,"dcbc":93.6,"dcds":0,"dcbf":0,"tcb":141.4,"fe":0,"finhay":0,"insPure":0,"insInv":22.4,"cash":53.3,"tot":358.8},{"off":4,"vfm":23.5,"finlead":28.9,"dcbc":147,"dcds":0,"dcbf":0,"tcb":45.1,"fe":0,"finhay":0,"insPure":0,"insInv":25.1,"cash":36,"tot":305.6},{"off":5,"vfm":30.2,"finlead":39,"dcbc":208.9,"dcds":0,"dcbf":0,"tcb":59.4,"fe":41.4,"finhay":0,"insPure":0,"insInv":28.1,"cash":83,"tot":490.1},{"off":6,"vfm":37.8,"finlead":50.6,"dcbc":280.8,"dcds":0,"dcbf":0,"tcb":75.3,"fe":86.9,"finhay":0,"insPure":0,"insInv":31.5,"cash":132.4,"tot":695.3},{"off":7,"vfm":46.3,"finlead":64,"dcbc":364.2,"dcds":0,"dcbf":0,"tcb":92.9,"fe":136.9,"finhay":0,"insPure":0,"insInv":35.3,"cash":184.2,"tot":923.8},{"off":8,"vfm":56,"finlead":0,"dcbc":460.9,"dcds":0,"dcbf":0,"tcb":0,"fe":192,"finhay":0,"insPure":0,"insInv":55.4,"cash":217.8,"tot":982},{"off":9,"vfm":66.9,"finlead":0,"dcbc":573.1,"dcds":0,"dcbf":0,"tcb":0,"fe":252.5,"finhay":0,"insPure":0,"insInv":78,"cash":286,"tot":1256.5},{"off":10,"vfm":79.2,"finlead":0,"dcbc":703.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":103.3,"cash":76.2,"tot":962},{"off":11,"vfm":93.1,"finlead":0,"dcbc":854.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":131.7,"cash":96,"tot":1174.9},{"off":12,"vfm":108.9,"finlead":0,"dcbc":1029.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":163.4,"cash":116.7,"tot":1418.3},{"off":13,"vfm":126.6,"finlead":0,"dcbc":1232.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":199,"cash":138.5,"tot":1696.5},{"off":14,"vfm":146.7,"finlead":0,"dcbc":1468,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":238.8,"cash":161.4,"tot":2014.9},{"off":15,"vfm":169.4,"finlead":0,"dcbc":221.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":283.4,"cash":185.4,"tot":859.5},{"off":16,"vfm":195.1,"finlead":0,"dcbc":260.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":333.4,"cash":210.6,"tot":999.3},{"off":17,"vfm":224.1,"finlead":0,"dcbc":305.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":389.3,"cash":237.1,"tot":1156},{"off":18,"vfm":163.2,"finlead":0,"dcbc":264.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":436,"cash":249,"tot":1112.6},{"off":19,"vfm":188.1,"finlead":0,"dcbc":310.3,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":488.4,"cash":261.4,"tot":1248.1},{"off":20,"vfm":122.5,"finlead":0,"dcbc":269.9,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":547,"cash":274.5,"tot":1213.9},{"off":21,"vfm":142.1,"finlead":0,"dcbc":316.8,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":612.6,"cash":288.2,"tot":1359.7},{"off":22,"vfm":70.6,"finlead":0,"dcbc":277.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":686.1,"cash":302.6,"tot":1336.7},{"off":23,"vfm":83.4,"finlead":0,"dcbc":325.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":768.4,"cash":317.8,"tot":1495},{"off":24,"vfm":4.2,"finlead":0,"dcbc":287.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":860.6,"cash":333.6,"tot":1486},{"off":25,"vfm":8.4,"finlead":0,"dcbc":337.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":963.9,"cash":350.3,"tot":1659.8},{"off":26,"vfm":-80.5,"finlead":0,"dcbc":301.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1079.6,"cash":367.8,"tot":1668},{"off":27,"vfm":-87.4,"finlead":0,"dcbc":352.9,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1209.1,"cash":386.2,"tot":1860.9},{"off":28,"vfm":-188.7,"finlead":0,"dcbc":319.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1354.2,"cash":405.5,"tot":1890.5},{"off":29,"vfm":-209.6,"finlead":0,"dcbc":374.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1516.7,"cash":425.8,"tot":2107.1}];
+
+const DEFAULT_INTERMEDIATE_T1 = [{"off":0,"g4_cash":5.3,"g4_finlead":2.1,"g4_tcb":3.2,"g5_tcb":20.2,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":41.4,"g7_fe":41.4,"g8_dcbc":34.8,"g9_vfm":3.6,"g9_dcbc":3.6,"g10_cash":15.9,"g10_insInv":15.9},{"off":1,"g4_cash":10.8,"g4_finlead":4.5,"g4_tcb":6.6,"g5_tcb":42.6,"g6_finlead":5.8,"g6_tcb":9.6,"g6_cash":3.9,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":7.7,"g9_dcbc":7.8,"g10_cash":16.7,"g10_insInv":17.9},{"off":2,"g4_cash":16.6,"g4_finlead":7.3,"g4_tcb":10.5,"g5_tcb":67.3,"g6_finlead":12.4,"g6_tcb":20.3,"g6_cash":8.1,"g7_cash":0,"g7_fe":0,"g8_dcbc":34.8,"g9_vfm":12.4,"g9_dcbc":12.7,"g10_cash":17.5,"g10_insInv":20},{"off":3,"g4_cash":22.6,"g4_finlead":10.5,"g4_tcb":14.7,"g5_tcb":94.6,"g6_finlead":20.1,"g6_tcb":32.1,"g6_cash":12.7,"g7_cash":0,"g7_fe":0,"g8_dcbc":75.2,"g9_vfm":17.6,"g9_dcbc":18.4,"g10_cash":18.5,"g10_insInv":22.4},{"off":4,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":28.9,"g6_tcb":45.1,"g6_cash":17.6,"g7_cash":0,"g7_fe":0,"g8_dcbc":122.8,"g9_vfm":23.5,"g9_dcbc":25.8,"g10_cash":19.4,"g10_insInv":25.1},{"off":5,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":39,"g6_tcb":59.4,"g6_cash":21.3,"g7_cash":41.4,"g7_fe":41.4,"g8_dcbc":176.3,"g9_vfm":30.2,"g9_dcbc":32.6,"g10_cash":20.4,"g10_insInv":28.1},{"off":6,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":50.6,"g6_tcb":75.3,"g6_cash":26.2,"g7_cash":84.8,"g7_fe":86.9,"g8_dcbc":239.4,"g9_vfm":37.8,"g9_dcbc":41.4,"g10_cash":21.4,"g10_insInv":31.5},{"off":7,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":64,"g6_tcb":92.9,"g6_cash":31.4,"g7_cash":130.4,"g7_fe":136.9,"g8_dcbc":312.5,"g9_vfm":46.3,"g9_dcbc":51.7,"g10_cash":22.4,"g10_insInv":35.3},{"off":8,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":178.3,"g7_fe":192,"g8_dcbc":397.3,"g9_vfm":56,"g9_dcbc":63.6,"g10_cash":39.5,"g10_insInv":55.4},{"off":9,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":228.6,"g7_fe":252.5,"g8_dcbc":495.7,"g9_vfm":66.9,"g9_dcbc":77.4,"g10_cash":57.4,"g10_insInv":78},{"off":10,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":609.8,"g9_vfm":79.2,"g9_dcbc":93.4,"g10_cash":76.2,"g10_insInv":103.3},{"off":11,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":742.1,"g9_vfm":93.1,"g9_dcbc":112,"g10_cash":96,"g10_insInv":131.7},{"off":12,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":895.7,"g9_vfm":108.9,"g9_dcbc":133.6,"g10_cash":116.7,"g10_insInv":163.4},{"off":13,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":1073.8,"g9_vfm":126.6,"g9_dcbc":158.6,"g10_cash":138.5,"g10_insInv":199},{"off":14,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":1280.4,"g9_vfm":146.7,"g9_dcbc":187.6,"g10_cash":161.4,"g10_insInv":238.8},{"off":15,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":169.4,"g9_dcbc":221.2,"g10_cash":185.4,"g10_insInv":283.4},{"off":16,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":195.1,"g9_dcbc":260.2,"g10_cash":210.6,"g10_insInv":333.4},{"off":17,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":224.1,"g9_dcbc":305.5,"g10_cash":237.1,"g10_insInv":389.3},{"off":18,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":163.2,"g9_dcbc":264.4,"g10_cash":249,"g10_insInv":436},{"off":19,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":188.1,"g9_dcbc":310.3,"g10_cash":261.4,"g10_insInv":488.4},{"off":20,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":122.5,"g9_dcbc":269.9,"g10_cash":274.5,"g10_insInv":547},{"off":21,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":142.1,"g9_dcbc":316.8,"g10_cash":288.2,"g10_insInv":612.6},{"off":22,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":70.6,"g9_dcbc":277.4,"g10_cash":302.6,"g10_insInv":686.1},{"off":23,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":83.4,"g9_dcbc":325.5,"g10_cash":317.8,"g10_insInv":768.4},{"off":24,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":4.2,"g9_dcbc":287.5,"g10_cash":333.6,"g10_insInv":860.6},{"off":25,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":8.4,"g9_dcbc":337.2,"g10_cash":350.3,"g10_insInv":963.9},{"off":26,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-80.5,"g9_dcbc":301.1,"g10_cash":367.8,"g10_insInv":1079.6},{"off":27,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-87.4,"g9_dcbc":352.9,"g10_cash":386.2,"g10_insInv":1209.1},{"off":28,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-188.7,"g9_dcbc":319.4,"g10_cash":405.5,"g10_insInv":1354.2},{"off":29,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-209.6,"g9_dcbc":374.1,"g10_cash":425.8,"g10_insInv":1516.7}];
+
+function switchPortfolioModalTab(tabIndex) {
+  for (let i = 1; i <= 3; i++) {
+    const btn = document.getElementById(`btn-p30-tab${i}`);
+    const pane = document.getElementById(`p30-pane-${i}`);
+    if (btn) {
+      if (i === tabIndex) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+    if (pane) {
+      pane.style.display = (i === tabIndex) ? 'block' : 'none';
+    }
+  }
+}
+
+function renderPortfolioT2Table() {
+  const tb = document.getElementById('tbody-portfolio-t2');
+  if (!tb) return;
+  const startYr = Number(AppState.currentYear) || 2026;
+  tb.innerHTML = DEFAULT_INTERMEDIATE_T2.map((item, idx) => {
+    const yr = startYr + idx;
+    const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
+    const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+    const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+    return `<tr class="${rowClass}" style="${rowStyle}">
+      <td class="text-center font-mono">${yr}</td>
+      <td class="text-right font-mono">${item.vfm !== 0 ? item.vfm.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.finlead !== 0 ? item.finlead.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.dcbc !== 0 ? item.dcbc.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.dcds !== 0 ? item.dcds.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.dcbf !== 0 ? item.dcbf.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.tcb !== 0 ? item.tcb.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.fe !== 0 ? item.fe.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.finhay !== 0 ? item.finhay.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.insPure !== 0 ? item.insPure.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.insInv !== 0 ? item.insInv.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.cash !== 0 ? item.cash.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${item.tot.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPortfolioT1Table() {
+  const tb = document.getElementById('tbody-portfolio-t1');
+  if (!tb) return;
+  const startYr = Number(AppState.currentYear) || 2026;
+  tb.innerHTML = DEFAULT_INTERMEDIATE_T1.map((item, idx) => {
+    const yr = startYr + idx;
+    const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
+    const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+    const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+    return `<tr class="${rowClass}" style="${rowStyle}">
+      <td class="text-center font-mono">${yr}</td>
+      <td class="text-right font-mono">${item.g4_cash !== 0 ? item.g4_cash.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g4_finlead !== 0 ? item.g4_finlead.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g4_tcb !== 0 ? item.g4_tcb.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g5_tcb !== 0 ? item.g5_tcb.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g6_finlead !== 0 ? item.g6_finlead.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g6_tcb !== 0 ? item.g6_tcb.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g6_cash !== 0 ? item.g6_cash.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
+      <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
 function openPortfolio30YrModal() {
   const modal = document.getElementById('portfolio-30yr-modal-overlay');
   if (modal) {
     modal.style.display = 'flex';
     renderPortfolio30YrTable();
+    renderPortfolioT2Table();
+    renderPortfolioT1Table();
+    switchPortfolioModalTab(1);
   }
 }
 
@@ -8523,6 +8603,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openPortfolio30YrModal = openPortfolio30YrModal;
   window.closePortfolio30YrModal = closePortfolio30YrModal;
   window.renderPortfolio30YrTable = renderPortfolio30YrTable;
+  window.renderPortfolioT2Table = renderPortfolioT2Table;
+  window.renderPortfolioT1Table = renderPortfolioT1Table;
+  window.switchPortfolioModalTab = switchPortfolioModalTab;
   window.getPortfolio30YrData = getPortfolio30YrData;
 
   if (typeof window.initU032Upload === 'function') {
