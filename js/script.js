@@ -1298,6 +1298,15 @@ function computeTcPart3Data() {
   const allClassKeys = ['etf', 'fund_stock', 'bonds', 'insurance', 'finhay', 'savings', 'other'];
   const activeClassKeys = allClassKeys.filter(k => (classGroups[k] && classGroups[k].length > 0) || productNames.some(pn => classifyProductClass(pn) === k));
 
+  AppState.part3InvestmentTracking = {
+    productNames,
+    classAvgRates,
+    activeClassKeys,
+    table1Goals: table1Rows,
+    table2Products: table2Rows,
+    table3Allocation: table3Rows
+  };
+
   return { table1Rows, table2Rows, table3Rows, classAvgRates, productNames, investGoals, activeClassKeys, classGroups };
 }
 
@@ -6632,6 +6641,25 @@ window.buildExportJsonPayload = function() {
       delete cleanState[k];
     }
   });
+
+  if (Array.isArray(cleanState.investProducts)) {
+    cleanState.investProducts = cleanState.investProducts.map(p => ({
+      name: String(p?.name || '').trim(),
+      returnRate: Number(p?.returnRate) || 0,
+      risk: Number(p?.risk) || 0
+    })).filter(p => p.name);
+  }
+
+  const p3 = computeTcPart3Data();
+  cleanState.part3InvestmentTracking = {
+    productNames: p3.productNames,
+    classAvgRates: p3.classAvgRates,
+    activeClassKeys: p3.activeClassKeys,
+    table1Goals: p3.table1Rows,
+    table2Products: p3.table2Rows,
+    table3Allocation: p3.table3Rows
+  };
+
   return {
     schemaVersion: "2.2.0",
     exportedAt: new Date().toISOString(),
@@ -6691,7 +6719,8 @@ window.validateAndPrepareJsonImport = function(rawText) {
   const knownKeys = [
     "currentYear", "currentAge", "birthYear", "expenses", "incomeList", "planList",
     "investProducts", "tcGoals", "planIncome", "planExpense", "monthlyDetails",
-    "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices"
+    "skillsList", "familyList", "jobList", "surveyP1Choices", "surveyP2Choices",
+    "part3InvestmentTracking"
   ];
   const hasAnyKnownKey = knownKeys.some(k => k in candidateData);
   if (!hasAnyKnownKey) {
@@ -7224,6 +7253,9 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   if (cleanImport.matrixOverrides && typeof cleanImport.matrixOverrides === 'object') {
     if (mode === 'replace') AppState.matrixOverrides = { ...cleanImport.matrixOverrides };
     else if (mode === 'update') Object.assign(AppState.matrixOverrides, cleanImport.matrixOverrides);
+  }
+  if (cleanImport.part3InvestmentTracking && typeof cleanImport.part3InvestmentTracking === 'object') {
+    AppState.part3InvestmentTracking = cleanImport.part3InvestmentTracking;
   }
 
   ensureFixedInvestmentGoals();
