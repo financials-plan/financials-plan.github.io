@@ -21,7 +21,7 @@ service cloud.firestore {
           && (!('username' in reqData) || (reqData.username is string && reqData.username.size() >= 2 && reqData.username.size() <= 64))
           && (!('normalizedUsername' in reqData) || (reqData.normalizedUsername is string && reqData.normalizedUsername.size() >= 2 && reqData.normalizedUsername.size() <= 64))
           && (!('uid' in reqData) || (reqData.uid is string && reqData.uid.size() >= 1 && reqData.uid.size() <= 128))
-          && request.resource.size < 50000;
+          && reqData.size() < 100;
     }
 
     function isValidUserProfileId(docId) {
@@ -35,12 +35,12 @@ service cloud.firestore {
           && data._lastUpdated.size() <= 64
           && (!('sessionToken' in data))
           && (!('owner_uid' in data) || (data.owner_uid is string && data.owner_uid.size() <= 128))
-          && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() >= 1 && data.ho_ten.size() <= 120))
-          && (!('username' in data) || (data.username is string && data.username.size() >= 2 && data.username.size() <= 64))
+          && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() <= 120))
+          && (!('username' in data) || (data.username is string && data.username.size() <= 64))
           && (!('currentYear' in data) || (data.currentYear is number && data.currentYear >= 1900 && data.currentYear <= 2200))
           && (!('currentAge' in data) || (data.currentAge is number && data.currentAge >= 0 && data.currentAge <= 150))
           && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 30))
-          && request.resource.size < 950000;
+          && data.size() < 100;
     }
 
     match /financial_accounts/{username} {

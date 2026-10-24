@@ -470,7 +470,7 @@ const FirestoreService = {
       try {
         const snap = await Promise.race([
           getDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
         if (snap && snap.exists()) {
           return {
@@ -536,7 +536,7 @@ const FirestoreService = {
       try {
         await Promise.race([
           setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 3000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
       } catch (writeErr) {
         console.warn("Lỗi ghi tài khoản lên Firestore (đã lưu bộ nhớ thiết bị):", writeErr);
@@ -614,7 +614,7 @@ const FirestoreService = {
       try {
         const snap = await Promise.race([
           getDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
         if (snap && snap.exists()) {
           target = snap.data();
@@ -742,7 +742,7 @@ const FirestoreService = {
         try {
           const snap = await Promise.race([
             getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
           ]);
           if (snap && snap.exists()) {
             target = snap.data();
@@ -865,7 +865,7 @@ const FirestoreService = {
       try {
         const snap = await Promise.race([
           getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
         if (snap && snap.exists()) {
           target = snap.data();
@@ -960,7 +960,7 @@ const FirestoreService = {
       try {
         const snap = await Promise.race([
           getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
         if (snap && snap.exists()) {
           target = snap.data();
@@ -1147,7 +1147,7 @@ const FirestoreService = {
       try {
         const snap = await Promise.race([
           getDoc(docRef),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 1500))
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
         ]);
         if (snap && snap.exists()) {
           const snapData = snap.data();
@@ -1198,7 +1198,7 @@ const FirestoreService = {
 
       await Promise.race([
         setDoc(docRef, payload, { merge: true }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 2000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
       ]);
       return {
         success: true,
@@ -1364,7 +1364,7 @@ const FirestoreService = {
       const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
       const docSnap = await Promise.race([
         getDoc(docRef),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 1500))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
       ]);
 
       if (docSnap && docSnap.exists()) {
