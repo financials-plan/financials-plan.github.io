@@ -1215,21 +1215,6 @@ function getPortfolioAllocationAtAge(targetAge) {
         else if (pType === 'ins') flowIns += prodFlow;
         else flowCash += prodFlow;
       });
-    } else {
-      let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-      let pType = 'stocks';
-      if (rRate >= 12) pType = 'stocks';
-      else if (rRate >= 8) pType = 'bonds';
-      else if (rRate >= 6) pType = 'ins';
-      else if (rRate > 0) pType = 'cash';
-
-      totalFlow += annualFlow;
-      weightedReturn += annualFlow * rRate;
-
-      if (pType === 'stocks') flowStocks += annualFlow;
-      else if (pType === 'bonds') flowBonds += annualFlow;
-      else if (pType === 'ins') flowIns += annualFlow;
-      else flowCash += annualFlow;
     }
   });
 
@@ -1294,7 +1279,7 @@ function getPortfolio30YrData() {
 
     if (hasDynamicAlloc) {
       const dyn = getPortfolioAllocationAtAge(age);
-      if (dyn) {
+      if (dyn && (dyn.stocks > 0 || dyn.bonds > 0 || dyn.ins > 0 || dyn.cash > 0)) {
         return {
           ...b,
           year: yr,
@@ -1611,9 +1596,15 @@ function closePortfolio30YrModal() {
 function calculateAgeMilestones() {
   const baseAge = Number(AppState.currentAge) || 21;
   const offsets = [0, 5, 10, 15, 20, 25];
-  const p30 = getPortfolio30YrData();
 
   if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
+    AppState.milestonesStore = {};
+  }
+
+  if (AppState.milestonesStore[0] && (Math.abs(Number(AppState.milestonesStore[0].stocks) - 6.8) < 0.1 || Math.abs(Number(AppState.milestonesStore[0].bonds) - 76.1) < 0.1)) {
+    AppState.milestonesStore = {};
+  }
+  if (AppState.milestonesStore[4] && Math.abs(Number(AppState.milestonesStore[4].stocks) - 100) < 0.1 && Math.abs(Number(AppState.milestonesStore[4].bonds)) < 0.1) {
     AppState.milestonesStore = {};
   }
 
@@ -1621,7 +1612,7 @@ function calculateAgeMilestones() {
     const age = baseAge + off;
     const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-    const benchmark = p30[off] || DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
+    const benchmark = DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
 
     const baseStocks = benchmark.stockTot !== undefined ? benchmark.stockTot : 0;
     const baseBonds = benchmark.bondTot !== undefined ? benchmark.bondTot : 0;
