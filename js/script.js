@@ -3664,38 +3664,46 @@ function renderYearEndBalanceSheet() {
   ensureYearEndBalanceSheet();
   const tbAssets = document.getElementById('tbody-bs-assets');
   if (tbAssets) {
-    tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => `
-      <tr>
-        <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
-        <td>
-          <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên loại tài sản..." oninput="updateBalanceSheetAssetField(${idx}, 'name', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
-        </td>
-        <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
-        </td>
-        <td class="text-center">
-          <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
-        </td>
-      </tr>
-    `).join('');
+    if (AppState.yearEndBalanceSheet.assets.length === 0) {
+      tbAssets.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có tài sản nào. Bấm nút <b>"+ Thêm tài sản"</b> để thêm tài sản đang nắm giữ.</td></tr>`;
+    } else {
+      tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => `
+        <tr>
+          <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
+          <td>
+            <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên loại tài sản..." oninput="updateBalanceSheetAssetField(${idx}, 'name', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
+          </td>
+          <td>
+            <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
   }
 
   const tbLiab = document.getElementById('tbody-bs-liabilities');
   if (tbLiab) {
-    tbLiab.innerHTML = AppState.yearEndBalanceSheet.liabilities.map((item, idx) => `
-      <tr>
-        <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
-        <td>
-          <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên khoản nợ / nghĩa vụ..." oninput="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)">
-        </td>
-        <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
-        </td>
-        <td class="text-center">
-          <button type="button" class="btn-table-del" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
-        </td>
-      </tr>
-    `).join('');
+    if (AppState.yearEndBalanceSheet.liabilities.length === 0) {
+      tbLiab.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có khoản nợ nào. Bấm nút <b>"+ Thêm khoản nợ"</b> để thêm khoản nợ vay.</td></tr>`;
+    } else {
+      tbLiab.innerHTML = AppState.yearEndBalanceSheet.liabilities.map((item, idx) => `
+        <tr>
+          <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
+          <td>
+            <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên khoản nợ / nghĩa vụ..." oninput="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)">
+          </td>
+          <td>
+            <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
+          </td>
+          <td class="text-center">
+            <button type="button" class="btn-table-del" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
   }
 
   updateBalanceSheetCalculations();

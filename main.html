@@ -1091,27 +1091,27 @@
               </div>
             </div>
 
-            <div class="month-recon-grid mb-4">
-              <div class="recon-block-card">
-                <div class="table-header-bar info-bar">
-                  <span><i class="fa-solid fa-chart-pie"></i> BÊN TÀI SẢN (CÁC LOẠI TÀI SẢN ĐANG NẮM GIỮ)</span>
+            <div class="side-tables-grid mb-4">
+              <div class="side-table-col">
+                <div class="table-header-bar success-bar">
+                  <span><i class="fa-solid fa-vault"></i> BÊN TÀI SẢN (CÁC LOẠI TÀI SẢN ĐANG NẮM GIỮ)</span>
                   <button type="button" class="btn-table-add" onclick="addBalanceSheetAssetRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm tài sản</span></button>
                 </div>
-                <div class="custom-table-responsive">
-                  <table class="custom-table">
+                <div class="table-scroll-x">
+                  <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-primary">
-                        <th style="width: 50px;">STT</th>
-                        <th>Loại tài sản đang nắm giữ</th>
-                        <th style="width: 160px;">Giá trị cuối kỳ (triệu)</th>
-                        <th style="width: 60px;">Xóa</th>
+                      <tr class="bg-header-sub">
+                        <th style="width: 50px; text-align: center;">STT</th>
+                        <th style="text-align: left;">Loại tài sản đang nắm giữ</th>
+                        <th style="width: 170px; text-align: right;">Giá trị cuối kỳ (triệu)</th>
+                        <th style="width: 50px; text-align: center;">Xóa</th>
                       </tr>
                     </thead>
                     <tbody id="tbody-bs-assets"></tbody>
                     <tfoot>
                       <tr class="bg-neutral-gray font-semibold">
                         <td colspan="2">Cộng tài sản đầu tư &amp; tích lũy</td>
-                        <td class="text-right font-mono font-bold text-primary" id="tfoot-bs-assets-subtotal">0.0</td>
+                        <td class="text-right font-mono font-bold text-success" id="tfoot-bs-assets-subtotal">0.0</td>
                         <td></td>
                       </tr>
                       <tr class="bg-neutral-gray">
@@ -1120,7 +1120,7 @@
                         <td></td>
                       </tr>
                       <tr class="bg-total-row">
-                        <td colspan="2" class="font-bold uppercase">TỔNG TÀI SẢN (A)</td>
+                        <td colspan="2" class="font-bold uppercase text-primary">TỔNG TÀI SẢN (A)</td>
                         <td class="text-right font-bold text-success font-mono font-size-lg" id="tfoot-bs-total-assets">0.0</td>
                         <td></td>
                       </tr>
@@ -1129,19 +1129,19 @@
                 </div>
               </div>
 
-              <div class="recon-block-card">
-                <div class="table-header-bar info-bar">
+              <div class="side-table-col">
+                <div class="table-header-bar danger-bar">
                   <span><i class="fa-solid fa-hand-holding-dollar"></i> BÊN NỢ &amp; NGHĨA VỤ (CÁC KHOẢN NỢ ĐANG VAY)</span>
                   <button type="button" class="btn-table-add" onclick="addBalanceSheetLiabilityRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm khoản nợ</span></button>
                 </div>
-                <div class="custom-table-responsive">
-                  <table class="custom-table">
+                <div class="table-scroll-x">
+                  <table class="excel-table-bordered">
                     <thead>
-                      <tr class="bg-header-primary">
-                        <th style="width: 50px;">STT</th>
-                        <th>Khoản nợ / Nghĩa vụ phải trả</th>
-                        <th style="width: 160px;">Số dư nợ cuối kỳ (triệu)</th>
-                        <th style="width: 60px;">Xóa</th>
+                      <tr class="bg-header-sub">
+                        <th style="width: 50px; text-align: center;">STT</th>
+                        <th style="text-align: left;">Khoản nợ / Nghĩa vụ phải trả</th>
+                        <th style="width: 170px; text-align: right;">Số dư nợ cuối kỳ (triệu)</th>
+                        <th style="width: 50px; text-align: center;">Xóa</th>
                       </tr>
                     </thead>
                     <tbody id="tbody-bs-liabilities"></tbody>
@@ -1157,7 +1157,7 @@
                         <td></td>
                       </tr>
                       <tr class="bg-total-row">
-                        <td colspan="2" class="font-bold uppercase">TỔNG NỢ &amp; NGHĨA VỤ (B)</td>
+                        <td colspan="2" class="font-bold uppercase text-danger">TỔNG NỢ &amp; NGHĨA VỤ (B)</td>
                         <td class="text-right font-bold text-danger font-mono font-size-lg" id="tfoot-bs-total-liab">0.0</td>
                         <td></td>
                       </tr>
@@ -1167,17 +1167,20 @@
               </div>
             </div>
 
-            <div class="card-glass p-3 mb-4 d-flex justify-between align-center flex-wrap gap-3">
-              <div>
-                <strong class="font-size-md uppercase"><i class="fa-solid fa-scale-balanced mr-2"></i> KẾT QUẢ CÂN ĐỐI TÀI CHÍNH CUỐI NĂM (TÀI SẢN TRỪ NỢ):</strong>
-                <div class="text-muted font-size-sm mt-1">Giá trị tài sản ròng phản ánh thực chất lượng tài sản tích lũy của bạn sau khi thanh toán toàn bộ các nghĩa vụ nợ.</div>
+            <div class="gform-summary-result mb-4" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="result-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="result-text">
+                  <strong class="font-size-md uppercase">KẾT QUẢ CÂN ĐỐI TÀI CHÍNH CUỐI NĂM (TÀI SẢN TRỪ NỢ):</strong>
+                  <div class="text-muted font-size-sm mt-1">Giá trị tài sản ròng phản ánh thực chất lượng tài sản tích lũy của bạn sau khi thanh toán toàn bộ các nghĩa vụ nợ.</div>
+                </div>
               </div>
-              <div class="d-flex align-center gap-3">
+              <div style="display: flex; align-items: center; gap: 24px; margin-left: auto;">
                 <div class="text-right">
                   <div class="text-muted font-size-xs uppercase">Tài sản ròng (A - B)</div>
                   <div class="font-size-xl font-bold font-mono" id="bs-net-worth-val">0.0 tr</div>
                 </div>
-                <div class="text-right pl-3 border-left">
+                <div class="text-right pl-3" style="border-left: 1px solid var(--border);">
                   <div class="text-muted font-size-xs uppercase">Tỷ lệ đòn bẩy (Nợ/Tài sản)</div>
                   <div class="font-size-md font-bold font-mono" id="bs-debt-ratio-val">0.0%</div>
                 </div>
