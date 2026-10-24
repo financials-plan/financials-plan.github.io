@@ -1281,10 +1281,35 @@ const DEFAULT_PORTFOLIO_30YR_BENCHMARK = [
 function getPortfolio30YrData() {
   const startYr = Number(AppState.currentYear) || 2026;
   const startAge = Number(AppState.currentAge) || 21;
+
+  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
+  const hasDynamicAlloc = activeGoals.some(g => {
+    return (Number(g.val) > 0 || Number(g.paid) > 0) && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName);
+  });
+
   return DEFAULT_PORTFOLIO_30YR_BENCHMARK.map((b, i) => {
     const yr = startYr + i;
     const age = startAge + i;
     const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
+
+    if (hasDynamicAlloc) {
+      const dyn = getPortfolioAllocationAtAge(age);
+      if (dyn) {
+        return {
+          ...b,
+          year: yr,
+          age: age,
+          isMilestone: isMilestone,
+          total: 100,
+          ret: dyn.returnNeed,
+          stockTot: dyn.stocks,
+          bondTot: dyn.bonds,
+          insTot: dyn.ins,
+          cashTot: dyn.cash
+        };
+      }
+    }
+
     return {
       ...b,
       year: yr,
@@ -1350,58 +1375,219 @@ function switchPortfolioModalTab(tabIndex) {
 
 function renderPortfolioT2Table() {
   const tb = document.getElementById('tbody-portfolio-t2');
+  const thead = document.getElementById('thead-portfolio-t2');
   if (!tb) return;
   const startYr = Number(AppState.currentYear) || 2026;
-  tb.innerHTML = DEFAULT_INTERMEDIATE_T2.map((item, idx) => {
-    const yr = startYr + idx;
-    const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
-    const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-    const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-    return `<tr class="${rowClass}" style="${rowStyle}">
-      <td class="text-center font-mono">${yr}</td>
-      <td class="text-right font-mono">${item.vfm !== 0 ? item.vfm.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.finlead !== 0 ? item.finlead.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.dcbc !== 0 ? item.dcbc.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.dcds !== 0 ? item.dcds.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.dcbf !== 0 ? item.dcbf.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.tcb !== 0 ? item.tcb.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.fe !== 0 ? item.fe.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.finhay !== 0 ? item.finhay.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.insPure !== 0 ? item.insPure.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.insInv !== 0 ? item.insInv.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.cash !== 0 ? item.cash.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${item.tot.toFixed(1)}</td>
-    </tr>`;
-  }).join('');
+
+  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type === 'invest' && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName));
+  const prods = Array.isArray(AppState.investProducts) && AppState.investProducts.length > 0 ? AppState.investProducts : [];
+
+  if (activeGoals.length > 0 && prods.length > 0 && thead) {
+    let subH = `<th style="width: 60px;">Năm</th>`;
+    prods.forEach(p => {
+      subH += `<th style="padding: 6px 8px;" title="${escapeHtml(p.name)} (${p.returnRate || 0}%/năm)">${escapeHtml(p.name)}</th>`;
+    });
+    subH += `<th style="width: 90px; background-color: #fef08a; color: #854d0e;">Tổng cộng</th>`;
+
+    thead.innerHTML = `
+      <tr class="bg-header-primary">
+        <th colspan="${prods.length + 2}" style="text-align: center; background-color: #0f766e; color: #fff; font-weight: 700;">Theo dõi sản phẩm đầu tư chi tiết (Dòng tiền theo năm - ĐVT: Triệu VNĐ)</th>
+      </tr>
+      <tr class="bg-header-sub" style="background-color: #f1f5f9; font-weight: 600;">${subH}</tr>
+    `;
+
+    let rowsHtml = '';
+    for (let i = 0; i < 30; i++) {
+      const yr = startYr + i;
+      const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
+      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+
+      const flows = {};
+      prods.forEach(p => { flows[p.name] = 0; });
+
+      activeGoals.forEach(g => {
+        if (yr >= g.start && yr <= g.end) {
+          const mNeed = calculateMonthlyNeed(g);
+          const annualFlow = mNeed * 12;
+          const validAllocs = g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName);
+          const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+          if (totalW > 0) {
+            validAllocs.forEach(ap => {
+              const normWeight = (Number(ap.weight) || 0) / totalW;
+              const pFlow = annualFlow * normWeight;
+              if (flows[ap.prodName] !== undefined) {
+                flows[ap.prodName] += pFlow;
+              } else {
+                flows[ap.prodName] = pFlow;
+              }
+            });
+          }
+        }
+      });
+
+      let cells = `<td class="text-center font-mono">${yr}</td>`;
+      let totalYr = 0;
+      prods.forEach(p => {
+        const val = flows[p.name] || 0;
+        totalYr += val;
+        cells += `<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`;
+      });
+      cells += `<td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${totalYr > 0 ? totalYr.toFixed(1) : '-'}</td>`;
+      rowsHtml += `<tr class="${rowClass}" style="${rowStyle}">${cells}</tr>`;
+    }
+    tb.innerHTML = rowsHtml;
+  } else {
+    if (thead) {
+      thead.innerHTML = `
+        <tr class="bg-header-primary">
+          <th colspan="13" style="text-align: center; background-color: #0f766e; color: #fff; font-weight: 700;">Theo dõi sản phẩm đầu tư chi tiết (Dòng tiền theo năm - ĐVT: Triệu VNĐ)</th>
+        </tr>
+        <tr class="bg-header-sub" style="background-color: #f1f5f9; font-weight: 600;">
+          <th style="width: 60px;">Năm</th>
+          <th style="width: 90px;">ETF-ETFVFM</th>
+          <th style="width: 90px;">ETF-FINLEAD</th>
+          <th style="width: 85px;">DCBC</th>
+          <th style="width: 70px;">DCDS</th>
+          <th style="width: 70px;">DCBF</th>
+          <th style="width: 100px;">TP Techcombank</th>
+          <th style="width: 95px;">TP FE Credit</th>
+          <th style="width: 70px;">Finhay</th>
+          <th style="width: 80px;">BH thuần túy</th>
+          <th style="width: 95px;">BH liên kết ĐT</th>
+          <th style="width: 90px;">Tiền gửi NH</th>
+          <th style="width: 90px; background-color: #fef08a; color: #854d0e;">Tổng cộng</th>
+        </tr>
+      `;
+    }
+    tb.innerHTML = DEFAULT_INTERMEDIATE_T2.map((item, idx) => {
+      const yr = startYr + idx;
+      const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
+      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+      return `<tr class="${rowClass}" style="${rowStyle}">
+        <td class="text-center font-mono">${yr}</td>
+        <td class="text-right font-mono">${item.vfm !== 0 ? item.vfm.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.finlead !== 0 ? item.finlead.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.dcbc !== 0 ? item.dcbc.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.dcds !== 0 ? item.dcds.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.dcbf !== 0 ? item.dcbf.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.tcb !== 0 ? item.tcb.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.fe !== 0 ? item.fe.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.finhay !== 0 ? item.finhay.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.insPure !== 0 ? item.insPure.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.insInv !== 0 ? item.insInv.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.cash !== 0 ? item.cash.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${item.tot.toFixed(1)}</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 function renderPortfolioT1Table() {
   const tb = document.getElementById('tbody-portfolio-t1');
+  const thead = document.getElementById('thead-portfolio-t1');
   if (!tb) return;
   const startYr = Number(AppState.currentYear) || 2026;
-  tb.innerHTML = DEFAULT_INTERMEDIATE_T1.map((item, idx) => {
-    const yr = startYr + idx;
-    const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
-    const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-    const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-    return `<tr class="${rowClass}" style="${rowStyle}">
-      <td class="text-center font-mono">${yr}</td>
-      <td class="text-right font-mono">${item.g4_cash !== 0 ? item.g4_cash.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g4_finlead !== 0 ? item.g4_finlead.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g4_tcb !== 0 ? item.g4_tcb.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g5_tcb !== 0 ? item.g5_tcb.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g6_finlead !== 0 ? item.g6_finlead.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g6_tcb !== 0 ? item.g6_tcb.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g6_cash !== 0 ? item.g6_cash.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
-      <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
-    </tr>`;
-  }).join('');
+
+  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type === 'invest' && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName));
+
+  if (activeGoals.length > 0 && thead) {
+    const goalColors = ['#0369a1', '#0284c7', '#0891b2', '#0d9488', '#059669', '#16a34a', '#4f46e5', '#7c3aed'];
+    let h1 = `<th style="width: 60px;" rowspan="2">Năm</th>`;
+    let h2 = '';
+    const colDefs = [];
+
+    activeGoals.forEach((g, gIdx) => {
+      const validAllocs = g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName);
+      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
+      const color = goalColors[gIdx % goalColors.length];
+      h1 += `<th colspan="${validAllocs.length}" style="text-align: center; background-color: ${color}; color: #fff; font-weight: 700; padding: 6px 8px;">${escapeHtml(g.name)}</th>`;
+      validAllocs.forEach(ap => {
+        h2 += `<th style="padding: 4px 6px; font-size: 11px;" title="${escapeHtml(ap.prodName)} (${ap.weight}%)">${escapeHtml(ap.prodName)}</th>`;
+        colDefs.push({
+          goal: g,
+          prodName: ap.prodName,
+          normWeight: totalW > 0 ? (Number(ap.weight) || 0) / totalW : 0
+        });
+      });
+    });
+
+    thead.innerHTML = `
+      <tr class="bg-header-primary">${h1}</tr>
+      <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">${h2}</tr>
+    `;
+
+    let rowsHtml = '';
+    for (let i = 0; i < 30; i++) {
+      const yr = startYr + i;
+      const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
+      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+
+      let cells = `<td class="text-center font-mono">${yr}</td>`;
+      colDefs.forEach(cd => {
+        const g = cd.goal;
+        if (yr >= g.start && yr <= g.end) {
+          const mNeed = calculateMonthlyNeed(g);
+          const annualFlow = mNeed * 12;
+          const val = annualFlow * cd.normWeight;
+          cells += `<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`;
+        } else {
+          cells += `<td class="text-right font-mono text-muted">-</td>`;
+        }
+      });
+      rowsHtml += `<tr class="${rowClass}" style="${rowStyle}">${cells}</tr>`;
+    }
+    tb.innerHTML = rowsHtml;
+  } else {
+    if (thead) {
+      thead.innerHTML = `
+        <tr class="bg-header-primary">
+          <th style="width: 60px;" rowspan="2">Năm</th>
+          <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT4: Du lịch Thái Lan</th>
+          <th colspan="1" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT5: Dự phòng</th>
+          <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT6: Đám cưới</th>
+          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT7: Khởi nghiệp</th>
+          <th colspan="1" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT8: Mua chung cư</th>
+          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Cho con học ĐH</th>
+          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Hưu trí</th>
+        </tr>
+        <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">
+          <th>Tiền gửi NH</th><th>ETF FINLEAD</th><th>TP Techcom</th>
+          <th>TP Techcom</th>
+          <th>ETF FINLEAD</th><th>TP Techcom</th><th>Tiền gửi NH</th>
+          <th>Tiền gửi NH</th><th>TP FE Credit</th>
+          <th>DCBC</th>
+          <th>ETF ETFVFM</th><th>DCBC</th>
+          <th>Tiền gửi NH</th><th>BH liên kết ĐT</th>
+        </tr>
+      `;
+    }
+    tb.innerHTML = DEFAULT_INTERMEDIATE_T1.map((item, idx) => {
+      const yr = startYr + idx;
+      const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
+      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
+      return `<tr class="${rowClass}" style="${rowStyle}">
+        <td class="text-center font-mono">${yr}</td>
+        <td class="text-right font-mono">${item.g4_cash !== 0 ? item.g4_cash.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g4_finlead !== 0 ? item.g4_finlead.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g4_tcb !== 0 ? item.g4_tcb.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g5_tcb !== 0 ? item.g5_tcb.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g6_finlead !== 0 ? item.g6_finlead.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g6_tcb !== 0 ? item.g6_tcb.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g6_cash !== 0 ? item.g6_cash.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
+      </tr>`;
+    }).join('');
+  }
 }
 
 function openPortfolio30YrModal() {
@@ -5789,6 +5975,12 @@ function recalculateAll() {
   renderDashboardAllCharts();
   updatePlanTotals();
   renderYearEndBalanceSheet();
+  const pModal = document.getElementById('portfolio-30yr-modal-overlay');
+  if (pModal && pModal.style.display !== 'none') {
+    renderPortfolio30YrTable();
+    renderPortfolioT2Table();
+    renderPortfolioT1Table();
+  }
 }
 
 function updateCloudStatus(status, text) {
