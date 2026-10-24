@@ -1179,12 +1179,9 @@ function computeTcPart3Data() {
       }
     });
   });
-  if (productNames.length === 0) {
-    productNames.push('Tiền gửi ngân hàng', 'Trái phiếu Techcombank', 'DCBC', 'ETF - ETFVFM');
-  }
 
   const classAvgRates = {
-    etf: 14.0, fund_stock: 13.5, bonds: 9.833, insurance: 8.0, finhay: 6.0, savings: 5.0, other: 3.0
+    etf: 0, fund_stock: 0, bonds: 0, insurance: 0, finhay: 0, savings: 0, other: 0
   };
   const classGroups = { etf: [], fund_stock: [], bonds: [], insurance: [], finhay: [], savings: [], other: [] };
   (AppState.investProducts || []).forEach(p => {
@@ -1192,6 +1189,19 @@ function computeTcPart3Data() {
     if (classGroups[cls] && Number(p.returnRate) > 0) {
       classGroups[cls].push(Number(p.returnRate));
     }
+  });
+  (investGoals || []).forEach(g => {
+    (g.allocProducts || []).forEach(ap => {
+      if (ap.prodName && Number(ap.returnRate) > 0) {
+        const cls = classifyProductClass(ap.prodName);
+        if (classGroups[cls]) {
+          const matchedProd = (AppState.investProducts || []).find(ip => ip.name === ap.prodName);
+          if (!matchedProd) {
+            classGroups[cls].push(Number(ap.returnRate));
+          }
+        }
+      }
+    });
   });
   Object.keys(classGroups).forEach(cls => {
     if (classGroups[cls].length > 0) {
@@ -1306,65 +1316,82 @@ function renderTcPart3Tables() {
   const { table1Rows, table2Rows, table3Rows, classAvgRates, productNames, investGoals } = data;
 
   const esc = (str) => typeof escapeHtml === 'function' ? escapeHtml(str) : String(str || '');
+  const fmtRate = (r) => (r && r > 0) ? `${Number(r).toFixed(1)}%` : '-';
 
-  let gh1 = `<th rowspan="2" style="min-width: 60px;">Năm</th><th rowspan="2" style="min-width: 55px;">Tuổi</th>`;
-  let gh2 = '';
-  investGoals.forEach(g => {
-    const validProds = (g.allocProducts || []).filter(ap => ap.prodName);
-    const span = Math.max(1, validProds.length);
-    gh1 += `<th colspan="${span}" class="text-center">${esc(g.name)}</th>`;
-    if (validProds.length > 0) {
-      validProds.forEach(ap => {
-        gh2 += `<th style="min-width: 100px;">${esc(ap.prodName)}</th>`;
-      });
-    } else {
-      gh2 += `<th style="min-width: 100px;">-</th>`;
-    }
-  });
-  gHead1.innerHTML = gh1;
-  gHead2.innerHTML = gh2;
-
-  gBody.innerHTML = table1Rows.map(row => {
-    let cells = '';
+  if (investGoals.length === 0) {
+    gHead1.innerHTML = `<th style="min-width: 60px;">Năm</th><th style="min-width: 55px;">Tuổi</th><th>Mục tiêu đầu tư</th>`;
+    gHead2.innerHTML = '';
+    gBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted p-4"><i class="fa-solid fa-circle-info mr-1"></i> Chưa có mục tiêu đầu tư tài chính nào được thiết lập.</td></tr>`;
+  } else {
+    let gh1 = `<th rowspan="2" style="min-width: 60px;">Năm</th><th rowspan="2" style="min-width: 55px;">Tuổi</th>`;
+    let gh2 = '';
     investGoals.forEach(g => {
-      const gId = g.id || g.name;
       const validProds = (g.allocProducts || []).filter(ap => ap.prodName);
+      const span = Math.max(1, validProds.length);
+      gh1 += `<th colspan="${span}" class="text-center">${esc(g.name)}</th>`;
       if (validProds.length > 0) {
         validProds.forEach(ap => {
-          const bal = row.goals[gId]?.products[ap.prodName]?.bal || 0;
-          cells += `<td class="text-right font-mono ${bal > 0 ? 'text-primary font-semibold' : 'text-muted'}">${bal > 0 ? bal.toFixed(1) : '-'}</td>`;
+          gh2 += `<th style="min-width: 100px;">${esc(ap.prodName)}</th>`;
         });
       } else {
-        cells += `<td class="text-center font-mono text-muted">-</td>`;
+        gh2 += `<th style="min-width: 100px;">-</th>`;
       }
     });
-    return `
+    gHead1.innerHTML = gh1;
+    gHead2.innerHTML = gh2;
+
+    gBody.innerHTML = table1Rows.map(row => {
+      let cells = '';
+      investGoals.forEach(g => {
+        const gId = g.id || g.name;
+        const validProds = (g.allocProducts || []).filter(ap => ap.prodName);
+        if (validProds.length > 0) {
+          validProds.forEach(ap => {
+            const bal = row.goals[gId]?.products[ap.prodName]?.bal || 0;
+            cells += `<td class="text-right font-mono ${bal > 0 ? 'text-primary font-semibold' : 'text-muted'}">${bal > 0 ? bal.toFixed(1) : '-'}</td>`;
+          });
+        } else {
+          cells += `<td class="text-center font-mono text-muted">-</td>`;
+        }
+      });
+      return `
+        <tr>
+          <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
+          <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
+          ${cells}
+        </tr>
+      `;
+    }).join('');
+  }
+
+  if (productNames.length === 0) {
+    pHead.innerHTML = `
+      <th style="min-width: 60px;">Năm</th>
+      <th style="min-width: 55px;">Tuổi</th>
+      <th>Sản phẩm đầu tư</th>
+      <th style="min-width: 120px;" class="col-highlight-gold">Tổng cộng</th>
+    `;
+    pBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted p-4"><i class="fa-solid fa-circle-info mr-1"></i> Chưa có sản phẩm đầu tư nào được thiết lập.</td></tr>`;
+  } else {
+    pHead.innerHTML = `
+      <th style="min-width: 60px;">Năm</th>
+      <th style="min-width: 55px;">Tuổi</th>
+      ${productNames.map(pn => `<th style="min-width: 110px;">${esc(pn)}</th>`).join('')}
+      <th style="min-width: 120px;" class="col-highlight-gold">Tổng cộng</th>
+    `;
+
+    pBody.innerHTML = table2Rows.map(row => `
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
         <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
-        ${cells}
+        ${productNames.map(pn => {
+          const val = row.products[pn] || 0;
+          return `<td class="text-right font-mono ${val > 0 ? 'font-semibold' : 'text-muted'}">${val > 0 ? val.toFixed(1) : '-'}</td>`;
+        }).join('')}
+        <td class="text-right font-mono font-bold val-gold">${row.total > 0 ? row.total.toFixed(1) : '-'}</td>
       </tr>
-    `;
-  }).join('');
-
-  pHead.innerHTML = `
-    <th style="min-width: 60px;">Năm</th>
-    <th style="min-width: 55px;">Tuổi</th>
-    ${productNames.map(pn => `<th style="min-width: 110px;">${esc(pn)}</th>`).join('')}
-    <th style="min-width: 120px;" class="col-highlight-gold">Tổng cộng</th>
-  `;
-
-  pBody.innerHTML = table2Rows.map(row => `
-    <tr>
-      <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
-      <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
-      ${productNames.map(pn => {
-        const val = row.products[pn] || 0;
-        return `<td class="text-right font-mono ${val > 0 ? 'font-semibold' : 'text-muted'}">${val > 0 ? val.toFixed(1) : '-'}</td>`;
-      }).join('')}
-      <td class="text-right font-mono font-bold val-gold">${row.total > 0 ? row.total.toFixed(1) : '-'}</td>
-    </tr>
-  `).join('');
+    `).join('');
+  }
 
   aHead1.innerHTML = `
     <th rowspan="2" style="min-width: 60px;">Năm</th>
@@ -1376,13 +1403,13 @@ function renderTcPart3Tables() {
   `;
 
   aHead2.innerHTML = `
-    <th>ETF<br><small>${classAvgRates.etf.toFixed(1)}%</small></th>
-    <th>Quỹ cổ phiếu<br><small>${classAvgRates.fund_stock.toFixed(1)}%</small></th>
-    <th>Trái phiếu<br><small>${classAvgRates.bonds.toFixed(1)}%</small></th>
-    <th>Bảo hiểm<br><small>${classAvgRates.insurance.toFixed(1)}%</small></th>
-    <th>Finhay<br><small>${classAvgRates.finhay.toFixed(1)}%</small></th>
-    <th>Tiết kiệm<br><small>${classAvgRates.savings.toFixed(1)}%</small></th>
-    <th>Khác<br><small>${classAvgRates.other.toFixed(1)}%</small></th>
+    <th>ETF<br><small>${fmtRate(classAvgRates.etf)}</small></th>
+    <th>Quỹ cổ phiếu<br><small>${fmtRate(classAvgRates.fund_stock)}</small></th>
+    <th>Trái phiếu<br><small>${fmtRate(classAvgRates.bonds)}</small></th>
+    <th>Bảo hiểm<br><small>${fmtRate(classAvgRates.insurance)}</small></th>
+    <th>Finhay<br><small>${fmtRate(classAvgRates.finhay)}</small></th>
+    <th>Tiết kiệm<br><small>${fmtRate(classAvgRates.savings)}</small></th>
+    <th>Khác<br><small>${fmtRate(classAvgRates.other)}</small></th>
     <th style="min-width: 85px;">Cổ phiếu</th>
     <th style="min-width: 85px;">Trái phiếu</th>
     <th style="min-width: 85px;">Bảo hiểm</th>
@@ -1390,23 +1417,28 @@ function renderTcPart3Tables() {
   `;
 
   const classKeys = ['etf', 'fund_stock', 'bonds', 'insurance', 'finhay', 'savings', 'other'];
+  const hasAnyInv = table3Rows.some(r => r.totalInvestment > 0);
 
-  aBody.innerHTML = table3Rows.map(row => `
-    <tr>
-      <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
-      <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
-      ${classKeys.map(k => {
-        const w = row.classWeights[k] || 0;
-        return `<td class="text-right font-mono ${w > 0 ? '' : 'text-muted'}">${w > 0 ? w.toFixed(1) + '%' : '-'}</td>`;
-      }).join('')}
-      <td class="text-right font-mono font-bold val-gold">${row.totalWeight > 0 ? row.totalWeight.toFixed(0) + '%' : '-'}</td>
-      <td class="text-right font-mono font-bold val-orange">${row.expectedPortfolioReturn > 0 ? row.expectedPortfolioReturn.toFixed(2) + '%' : '-'}</td>
-      <td class="text-right font-mono font-semibold">${row.stocks > 0 ? row.stocks.toFixed(1) + '%' : '-'}</td>
-      <td class="text-right font-mono font-semibold">${row.bonds > 0 ? row.bonds.toFixed(1) + '%' : '-'}</td>
-      <td class="text-right font-mono font-semibold">${row.ins > 0 ? row.ins.toFixed(1) + '%' : '-'}</td>
-      <td class="text-right font-mono font-semibold">${row.cash > 0 ? row.cash.toFixed(1) + '%' : '-'}</td>
-    </tr>
-  `).join('');
+  if (!hasAnyInv) {
+    aBody.innerHTML = `<tr><td colspan="15" class="text-center text-muted p-4"><i class="fa-solid fa-circle-info mr-1"></i> Chưa có dữ liệu phân bổ tài sản đầu tư.</td></tr>`;
+  } else {
+    aBody.innerHTML = table3Rows.map(row => `
+      <tr>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${row.year}</td>
+        <td class="text-center font-bold font-mono bg-neutral-gray">${row.age}</td>
+        ${classKeys.map(k => {
+          const w = row.classWeights[k] || 0;
+          return `<td class="text-right font-mono ${w > 0 ? '' : 'text-muted'}">${w > 0 ? w.toFixed(1) + '%' : '-'}</td>`;
+        }).join('')}
+        <td class="text-right font-mono font-bold val-gold">${row.totalWeight > 0 ? row.totalWeight.toFixed(0) + '%' : '-'}</td>
+        <td class="text-right font-mono font-bold val-orange">${row.expectedPortfolioReturn > 0 ? row.expectedPortfolioReturn.toFixed(2) + '%' : '-'}</td>
+        <td class="text-right font-mono font-semibold">${row.stocks > 0 ? row.stocks.toFixed(1) + '%' : '-'}</td>
+        <td class="text-right font-mono font-semibold">${row.bonds > 0 ? row.bonds.toFixed(1) + '%' : '-'}</td>
+        <td class="text-right font-mono font-semibold">${row.ins > 0 ? row.ins.toFixed(1) + '%' : '-'}</td>
+        <td class="text-right font-mono font-semibold">${row.cash > 0 ? row.cash.toFixed(1) + '%' : '-'}</td>
+      </tr>
+    `).join('');
+  }
 }
 
 window.renderTcPart3Tables = renderTcPart3Tables;
