@@ -1706,102 +1706,45 @@ function closePortfolio30YrModal() {
   }
 }
 
+const CAREER_MILESTONES_RECOMMENDED = [
+  { stocks: 23.6, bonds: 34.5, ins: 8.5, cash: 33.4, returnNeed: 8.94 },
+  { stocks: 56.8, bonds: 20.6, ins: 5.7, cash: 16.9, returnNeed: 11.06 },
+  { stocks: 81.3, bonds: 0.0, ins: 10.7, cash: 7.9, returnNeed: 12.28 },
+  { stocks: 45.5, bonds: 0.0, ins: 33.0, cash: 21.6, returnNeed: 9.95 },
+  { stocks: 32.3, bonds: 0.0, ins: 45.1, cash: 22.6, returnNeed: 9.15 },
+  { stocks: 20.8, bonds: 0.0, ins: 58.1, cash: 21.1, returnNeed: 8.51 }
+];
+
 function calculateAgeMilestones() {
   const baseAge = Number(AppState.currentAge) || 21;
   const startYr = Number(AppState.currentYear) || 2026;
   const offsets = [0, 5, 10, 15, 20, 25];
-  const catRates = getAssetCategoryRates();
 
   if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
     AppState.milestonesStore = {};
   }
 
-  if (AppState.milestonesStore[0] && (Math.abs(Number(AppState.milestonesStore[0].stocks) - 6.8) < 0.1 || Math.abs(Number(AppState.milestonesStore[0].bonds) - 76.1) < 0.1)) {
-    AppState.milestonesStore = {};
+  if (AppState.milestonesStore && Object.keys(AppState.milestonesStore).length > 0) {
+    const hasStale = Object.keys(AppState.milestonesStore).some(k => {
+      const row = AppState.milestonesStore[k];
+      return row && (
+        Math.abs(Number(row.stocks) - 6.8) < 0.1 ||
+        Math.abs(Number(row.stocks) - 100) < 0.1 ||
+        Math.abs(Number(row.bonds) - 76.1) < 0.1 ||
+        Math.abs(Number(row.stocks) - 41.1) < 0.1 ||
+        Math.abs(Number(row.ins) - 100) < 0.1
+      );
+    });
+    if (hasStale) {
+      AppState.milestonesStore = {};
+    }
   }
-  if (AppState.milestonesStore[4] && Math.abs(Number(AppState.milestonesStore[4].stocks) - 100) < 0.1 && Math.abs(Number(AppState.milestonesStore[4].bonds)) < 0.1) {
-    AppState.milestonesStore = {};
-  }
-
-  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
-  const nonDebtGoals = Array.isArray(AppState.tcGoals)
-    ? AppState.tcGoals.filter(g => g && g.type !== 'debt')
-    : [];
 
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-    const benchmark = DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
-
-    let baseStocks = benchmark.stockTot !== undefined ? benchmark.stockTot : 0;
-    let baseBonds = benchmark.bondTot !== undefined ? benchmark.bondTot : 0;
-    let baseIns = benchmark.insTot !== undefined ? benchmark.insTot : 0;
-    let baseCash = benchmark.cashTot !== undefined ? benchmark.cashTot : 0;
-    let baseReturn = benchmark.ret !== undefined ? benchmark.ret : 0;
-
-    let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
-    let totalFlow = 0;
-    let hasCustomFlow = false;
-
-    nonDebtGoals.forEach(g => {
-      const isActive = (year >= g.start && year <= g.end);
-      if (!isActive) return;
-
-      const mNeed = calculateMonthlyNeed(g);
-      const annualFlow = mNeed * 12;
-      if (annualFlow <= 0) return;
-
-      const validAllocs = Array.isArray(g.allocProducts)
-        ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
-        : [];
-      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
-
-      if (totalW > 0) {
-        hasCustomFlow = true;
-        validAllocs.forEach(ap => {
-          const normWeight = (Number(ap.weight) || 0) / totalW;
-          const pFlow = annualFlow * normWeight;
-          const pType = detectAssetCategory(ap.prodName, ap.returnRate, ap.risk);
-          totalFlow += pFlow;
-
-          if (pType === 'stocks') flowStocks += pFlow;
-          else if (pType === 'bonds') flowBonds += pFlow;
-          else if (pType === 'ins') flowIns += pFlow;
-          else flowCash += pFlow;
-        });
-      } else {
-        if (isDedicatedAssetGoal(g)) {
-          hasCustomFlow = true;
-          const goalType = detectAssetCategory(g.name, g.rate || g.estimatedRate, 0);
-          totalFlow += annualFlow;
-          if (goalType === 'stocks') flowStocks += annualFlow;
-          else if (goalType === 'bonds') flowBonds += annualFlow;
-          else if (goalType === 'ins') flowIns += annualFlow;
-          else flowCash += annualFlow;
-        } else {
-          const bSR = (benchmark.stockTot || 0) / 100;
-          const bBR = (benchmark.bondTot || 0) / 100;
-          const bIR = (benchmark.insTot || 0) / 100;
-          const bCR = (benchmark.cashTot || 0) / 100;
-          flowStocks += annualFlow * bSR;
-          flowBonds += annualFlow * bBR;
-          flowIns += annualFlow * bIR;
-          flowCash += annualFlow * bCR;
-          totalFlow += annualFlow;
-        }
-      }
-    });
-
-    if (hasCustomFlow && totalFlow > 0) {
-      baseStocks = (flowStocks / totalFlow) * 100;
-      baseBonds = (flowBonds / totalFlow) * 100;
-      baseIns = (flowIns / totalFlow) * 100;
-      baseCash = (flowCash / totalFlow) * 100;
-      baseReturn = (baseStocks * catRates.stocks + baseBonds * catRates.bonds + baseIns * catRates.ins + baseCash * catRates.cash) / 100;
-    } else if (validProducts.length > 0) {
-      baseReturn = (baseStocks * catRates.stocks + baseBonds * catRates.bonds + baseIns * catRates.ins + baseCash * catRates.cash) / 100;
-    }
+    const rec = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
 
     const userStore = AppState.milestonesStore[idx] || {};
 
@@ -1814,11 +1757,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : baseStocks,
-      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : baseBonds,
-      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : baseIns,
-      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : baseCash,
-      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : baseReturn,
+      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : rec.stocks,
+      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : rec.bonds,
+      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : rec.ins,
+      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : rec.cash,
+      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : rec.returnNeed,
       skills: skillVal
     };
   });
