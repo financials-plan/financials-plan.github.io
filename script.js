@@ -1622,13 +1622,12 @@ function calculateAgeMilestones() {
     const year = (Number(AppState.currentYear) || 2026) + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const benchmark = p30[off] || DEFAULT_PORTFOLIO_30YR_BENCHMARK[off] || {};
-    const dynamicAlloc = getPortfolioAllocationAtAge(age);
 
-    const baseStocks = (dynamicAlloc && dynamicAlloc.stocks !== undefined) ? dynamicAlloc.stocks : (benchmark.stockTot !== undefined ? benchmark.stockTot : 0);
-    const baseBonds = (dynamicAlloc && dynamicAlloc.bonds !== undefined) ? dynamicAlloc.bonds : (benchmark.bondTot !== undefined ? benchmark.bondTot : 0);
-    const baseIns = (dynamicAlloc && dynamicAlloc.ins !== undefined) ? dynamicAlloc.ins : (benchmark.insTot !== undefined ? benchmark.insTot : 0);
-    const baseCash = (dynamicAlloc && dynamicAlloc.cash !== undefined) ? dynamicAlloc.cash : (benchmark.cashTot !== undefined ? benchmark.cashTot : 0);
-    const baseReturn = (dynamicAlloc && dynamicAlloc.returnNeed !== undefined) ? dynamicAlloc.returnNeed : (benchmark.ret !== undefined ? benchmark.ret : 0);
+    const baseStocks = benchmark.stockTot !== undefined ? benchmark.stockTot : 0;
+    const baseBonds = benchmark.bondTot !== undefined ? benchmark.bondTot : 0;
+    const baseIns = benchmark.insTot !== undefined ? benchmark.insTot : 0;
+    const baseCash = benchmark.cashTot !== undefined ? benchmark.cashTot : 0;
+    const baseReturn = benchmark.ret !== undefined ? benchmark.ret : 0;
 
     const userStore = AppState.milestonesStore[idx] || {};
 
