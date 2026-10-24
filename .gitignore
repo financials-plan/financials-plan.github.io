@@ -23,6 +23,8 @@ desktop.ini
 # User Data & Test Samples (Never commit user data)
 sample.json
 test_sample.json
+sample_test.json
+*sample*.json
 *.sample.json
 data_sample*.json
 *.json.bak
