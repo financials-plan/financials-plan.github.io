@@ -6091,12 +6091,6 @@ function recalculateAll() {
   renderDashboardAllCharts();
   updatePlanTotals();
   renderYearEndBalanceSheet();
-  const pModal = document.getElementById('portfolio-30yr-modal-overlay');
-  if (pModal && pModal.style.display !== 'none') {
-    renderPortfolio30YrTable();
-    renderPortfolioT2Table();
-    renderPortfolioT1Table();
-  }
 }
 
 function updateCloudStatus(status, text) {
@@ -8941,14 +8935,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-  const portfolioOverlay = document.getElementById('portfolio-30yr-modal-overlay');
-  if (portfolioOverlay) {
-    portfolioOverlay.addEventListener('click', (e) => {
-      if (e.target === portfolioOverlay) {
-        closePortfolio30YrModal();
-      }
-    });
-  }
   const exitSaveOverlay = document.getElementById('exit-save-modal-overlay');
   if (exitSaveOverlay) {
     exitSaveOverlay.addEventListener('click', (e) => {
@@ -8959,10 +8945,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      const pModal = document.getElementById('portfolio-30yr-modal-overlay');
-      if (pModal && pModal.style.display !== 'none') {
-        closePortfolio30YrModal();
-      }
       const backupModal = document.getElementById('backup-modal-overlay');
       if (backupModal && backupModal.classList.contains('active')) {
         window.closeBackupManagerModal();
