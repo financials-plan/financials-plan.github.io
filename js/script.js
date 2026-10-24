@@ -2355,6 +2355,13 @@ window.updateInvestField = function(idx, field, val) {
     return;
   }
   AppState.investProducts[idx][field] = cleanVal;
+  if (oldName && field === 'name' && cleanVal && AppState.yearEndBalanceSheet?.assets) {
+    AppState.yearEndBalanceSheet.assets.forEach(a => {
+      if (a && a.source === 'keyword' && a.name === oldName) {
+        a.name = cleanVal;
+      }
+    });
+  }
   syncInvestProductsToGoals(oldName, field === 'name' ? cleanVal : null);
   renderSetupTables();
   renderTcGoalsFormTable();
@@ -3571,6 +3578,14 @@ function ensureYearEndBalanceSheet() {
   if (!Array.isArray(AppState.yearEndBalanceSheet.liabilities)) {
     AppState.yearEndBalanceSheet.liabilities = [];
   }
+  AppState.yearEndBalanceSheet.assets.forEach(a => {
+    if (a && typeof a === 'object') {
+      if (a.source !== 'keyword' && a.source !== 'custom') {
+        const isKw = (AppState.investProducts || []).some(p => p.name === a.name);
+        a.source = isKw ? 'keyword' : 'custom';
+      }
+    }
+  });
 }
 
 function getAnnualActualIncome() {
@@ -3665,22 +3680,58 @@ function renderYearEndBalanceSheet() {
   const tbAssets = document.getElementById('tbody-bs-assets');
   if (tbAssets) {
     if (AppState.yearEndBalanceSheet.assets.length === 0) {
-      tbAssets.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có tài sản nào. Bấm nút <b>"+ Thêm tài sản"</b> để thêm tài sản đang nắm giữ.</td></tr>`;
+      tbAssets.innerHTML = `<tr><td colspan="5" class="text-center text-muted" style="padding: 16px 12px; font-style: italic;">Chưa có tài sản nào. Bấm nút <b>"+ Từ khóa"</b> hoặc <b>"+ Tự thêm"</b> để thêm tài sản đang nắm giữ.</td></tr>`;
     } else {
-      tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => `
-        <tr>
-          <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
-          <td>
-            <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên loại tài sản..." oninput="updateBalanceSheetAssetField(${idx}, 'name', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
-          </td>
-          <td>
-            <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
-          </td>
-          <td class="text-center">
-            <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
-          </td>
-        </tr>
-      `).join('');
+      const investProds = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+      tbAssets.innerHTML = AppState.yearEndBalanceSheet.assets.map((item, idx) => {
+        const isCustom = item.source === 'custom';
+        let nameCellHtml = '';
+
+        if (isCustom) {
+          nameCellHtml = `
+            <input type="text" class="input-inline-cell font-bold" value="${escapeHtml(item.name || '')}" placeholder="Nhập tên tài sản tự do..." oninput="updateBalanceSheetAssetField(${idx}, 'name', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
+          `;
+        } else {
+          let hasMatchingProduct = false;
+          const optionsHtml = investProds.map(p => {
+            const isMatch = (p.name === item.name);
+            if (isMatch) hasMatchingProduct = true;
+            return `<option value="${escapeHtml(p.name)}" ${isMatch ? 'selected' : ''}>${escapeHtml(p.name)} (${p.returnRate || 0}%/năm)</option>`;
+          }).join('');
+
+          let extraOption = '';
+          if (!hasMatchingProduct && item.name) {
+            extraOption = `<option value="${escapeHtml(item.name)}" selected>${escapeHtml(item.name)} (Ngoài danh mục)</option>`;
+          }
+
+          nameCellHtml = `
+            <select class="select-inline-cell font-bold" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
+              ${investProds.length === 0 ? '<option value="">-- Chưa có sản phẩm trong Từ khóa --</option>' : ''}
+              ${extraOption}
+              ${optionsHtml}
+            </select>
+          `;
+        }
+
+        return `
+          <tr>
+            <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
+            <td>
+              <select class="select-inline-cell" style="font-size: 12px; font-weight: 600;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
+                <option value="keyword" ${!isCustom ? 'selected' : ''}>Từ khóa (SP đầu tư)</option>
+                <option value="custom" ${isCustom ? 'selected' : ''}>Tự thêm riêng</option>
+              </select>
+            </td>
+            <td>${nameCellHtml}</td>
+            <td>
+              <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
+            </td>
+            <td class="text-center">
+              <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
   }
 
@@ -3709,12 +3760,35 @@ function renderYearEndBalanceSheet() {
   updateBalanceSheetCalculations();
 }
 
-window.addBalanceSheetAssetRow = function() {
+window.addBalanceSheetAssetRow = function(sourceType = 'keyword') {
   ensureYearEndBalanceSheet();
+  const prods = AppState.investProducts || [];
+  let defaultName = "Tài sản mới";
+  if (sourceType === 'keyword' && prods.length > 0) {
+    defaultName = prods[0].name;
+  }
   AppState.yearEndBalanceSheet.assets.push({
-    name: "Tài sản mới",
+    name: defaultName,
+    source: sourceType === 'custom' ? 'custom' : 'keyword',
     val: 0.0
   });
+  renderYearEndBalanceSheet();
+  window.markUnsavedChanges();
+};
+
+window.updateBalanceSheetAssetSource = function(idx, newSource) {
+  ensureYearEndBalanceSheet();
+  const item = AppState.yearEndBalanceSheet.assets[idx];
+  if (!item) return;
+  const isCustom = (newSource === 'custom');
+  item.source = isCustom ? 'custom' : 'keyword';
+  if (!isCustom) {
+    const prods = AppState.investProducts || [];
+    const exists = prods.some(p => p.name === item.name);
+    if (!exists && prods.length > 0) {
+      item.name = prods[0].name;
+    }
+  }
   renderYearEndBalanceSheet();
   window.markUnsavedChanges();
 };
@@ -7299,14 +7373,25 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   if (cleanImport.yearEndBalanceSheet && typeof cleanImport.yearEndBalanceSheet === 'object') {
     ensureYearEndBalanceSheet();
     if (Array.isArray(cleanImport.yearEndBalanceSheet.assets)) {
+      const sanitizedAssets = cleanImport.yearEndBalanceSheet.assets.map(a => {
+        if (!a || typeof a !== 'object') return null;
+        const name = String(a.name || '').trim();
+        const val = Number(a.val) || 0;
+        let source = a.source;
+        if (source !== 'keyword' && source !== 'custom') {
+          const isKw = (AppState.investProducts || []).some(p => p.name === name);
+          source = isKw ? 'keyword' : 'custom';
+        }
+        return { name, source, val };
+      }).filter(Boolean);
+
       if (mode === 'replace') {
-        AppState.yearEndBalanceSheet.assets = cleanImport.yearEndBalanceSheet.assets.map(a => ({ name: String(a?.name || ''), val: Number(a?.val) || 0 }));
+        AppState.yearEndBalanceSheet.assets = sanitizedAssets;
       } else {
-        cleanImport.yearEndBalanceSheet.assets.forEach(a => {
-          if (!a || !a.name) return;
+        sanitizedAssets.forEach(a => {
           const idx = AppState.yearEndBalanceSheet.assets.findIndex(x => x.name === a.name);
-          if (idx === -1) AppState.yearEndBalanceSheet.assets.push({ name: String(a.name), val: Number(a.val) || 0 });
-          else if (mode === 'update') AppState.yearEndBalanceSheet.assets[idx] = { name: String(a.name), val: Number(a.val) || 0 };
+          if (idx === -1) AppState.yearEndBalanceSheet.assets.push({ ...a });
+          else if (mode === 'update') AppState.yearEndBalanceSheet.assets[idx] = { ...a };
         });
       }
     }

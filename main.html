@@ -1095,32 +1095,36 @@
               <div class="side-table-col">
                 <div class="table-header-bar success-bar">
                   <span><i class="fa-solid fa-vault"></i> BÊN TÀI SẢN (CÁC LOẠI TÀI SẢN ĐANG NẮM GIỮ)</span>
-                  <button type="button" class="btn-table-add" onclick="addBalanceSheetAssetRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm tài sản</span></button>
+                  <div style="display: flex; gap: 6px; align-items: center;">
+                    <button type="button" class="btn-table-add" onclick="addBalanceSheetAssetRow('keyword')" title="Thêm tài sản từ danh mục sản phẩm đầu tư"><i class="fa-solid fa-plus"></i><span class="btn-text">Từ khóa</span></button>
+                    <button type="button" class="btn-table-add" style="background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.4);" onclick="addBalanceSheetAssetRow('custom')" title="Tự thêm tài sản riêng chỉ có ở bảng này"><i class="fa-solid fa-pen"></i><span class="btn-text">Tự thêm</span></button>
+                  </div>
                 </div>
                 <div class="table-scroll-x">
                   <table class="excel-table-bordered">
                     <thead>
                       <tr class="bg-header-sub">
-                        <th style="width: 50px; text-align: center;">STT</th>
+                        <th style="width: 45px; text-align: center;">STT</th>
+                        <th style="width: 155px; text-align: left;">Nguồn tài sản</th>
                         <th style="text-align: left;">Loại tài sản đang nắm giữ</th>
                         <th style="width: 170px; text-align: right;">Giá trị cuối kỳ (triệu)</th>
-                        <th style="width: 50px; text-align: center;">Xóa</th>
+                        <th style="width: 45px; text-align: center;">Xóa</th>
                       </tr>
                     </thead>
                     <tbody id="tbody-bs-assets"></tbody>
                     <tfoot>
                       <tr class="bg-neutral-gray font-semibold">
-                        <td colspan="2">Cộng tài sản đầu tư &amp; tích lũy</td>
+                        <td colspan="3">Cộng tài sản đầu tư &amp; tích lũy</td>
                         <td class="text-right font-mono font-bold text-success" id="tfoot-bs-assets-subtotal">0.0</td>
                         <td></td>
                       </tr>
                       <tr class="bg-neutral-gray">
-                        <td colspan="2"><i class="fa-solid fa-user-tie text-muted mr-1"></i> Nguồn lực con người (Tổng thu nhập thực tế 1 năm)</td>
+                        <td colspan="3"><i class="fa-solid fa-user-tie text-muted mr-1"></i> Nguồn lực con người (Tổng thu nhập thực tế 1 năm)</td>
                         <td class="text-right font-mono font-bold text-success" id="bs-human-capital-income">0.0</td>
                         <td></td>
                       </tr>
                       <tr class="bg-total-row">
-                        <td colspan="2" class="font-bold uppercase text-primary">TỔNG TÀI SẢN (A)</td>
+                        <td colspan="3" class="font-bold uppercase text-primary">TỔNG TÀI SẢN (A)</td>
                         <td class="text-right font-bold text-success font-mono font-size-lg" id="tfoot-bs-total-assets">0.0</td>
                         <td></td>
                       </tr>
