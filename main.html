@@ -490,6 +490,60 @@
             </table>
           </div>
         </div>
+
+        <div class="dashboard-matrix-container mt-4" id="dash-invest-tracking-container">
+          <div class="tc-matrix-header-box mb-3">
+            <div class="sheet-title-text"><i class="fa-solid fa-layer-group"></i> THEO DÕI MỤC TIÊU TÀI CHÍNH VÀ ĐẦU TƯ CÁC LOẠI TÀI SẢN (30 NĂM)</div>
+            <div class="tc-matrix-desc">Hệ thống ma trận phân bổ dòng tiền, tích lũy giá trị tài sản qua 30 năm và liên kết trực tiếp với Lộ trình phân bổ tài sản.</div>
+          </div>
+
+          <div class="data-panel mb-4">
+            <div class="sheet-title-banner flex-between">
+              <span><i class="fa-solid fa-bullseye"></i> THEO DÕI MỤC TIÊU TÀI CHÍNH THỰC HIỆN TRONG TƯƠNG LAI CHI TIẾT</span>
+              <span class="text-sm font-normal text-muted">Đơn vị: triệu đồng</span>
+            </div>
+            <div class="table-scroll-x">
+              <table class="excel-table-bordered" id="table-tc-part3-goals">
+                <thead>
+                  <tr class="bg-header-primary" id="tr-tc-p3-ghead-1"></tr>
+                  <tr class="bg-header-sub" id="tr-tc-p3-ghead-2"></tr>
+                </thead>
+                <tbody id="tbody-tc-part3-goals"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="data-panel mb-4">
+            <div class="sheet-title-banner flex-between">
+              <span><i class="fa-solid fa-coins"></i> THEO DÕI SẢN PHẨM ĐẦU TƯ CHI TIẾT</span>
+              <span class="text-sm font-normal text-muted">Gom dòng tiền từ tất cả mục tiêu về từng sản phẩm tài chính cụ thể</span>
+            </div>
+            <div class="table-scroll-x">
+              <table class="excel-table-bordered" id="table-tc-part3-products">
+                <thead>
+                  <tr class="bg-header-primary" id="tr-tc-p3-phead"></tr>
+                </thead>
+                <tbody id="tbody-tc-part3-products"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="data-panel mb-4">
+            <div class="sheet-title-banner flex-between">
+              <span><i class="fa-solid fa-chart-pie"></i> THEO DÕI PHÂN BỔ TÀI SẢN ĐẦU TƯ (ASSET ALLOCATION)</span>
+              <span class="text-sm font-normal text-muted">Tỷ trọng lớp tài sản &amp; Lãi suất kỳ vọng bình quân danh mục (% E(R))</span>
+            </div>
+            <div class="table-scroll-x">
+              <table class="excel-table-bordered" id="table-tc-part3-allocation">
+                <thead>
+                  <tr class="bg-header-primary" id="tr-tc-p3-ahead-1"></tr>
+                  <tr class="bg-header-sub" id="tr-tc-p3-ahead-2"></tr>
+                </thead>
+                <tbody id="tbody-tc-part3-allocation"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       
@@ -645,7 +699,7 @@
               <i class="fa-solid fa-chart-line"></i> Phần 2: Ma trận nhu cầu tiết kiệm và thu nhập
             </button>
             <button type="button" class="btn-sub-nav" id="btn-tc-sec3" onclick="switchTcSection(3)">
-              <i class="fa-solid fa-pie-chart"></i> Phần 3: Theo dõi mục tiêu & Phân bổ tài sản
+              <i class="fa-solid fa-pie-chart"></i> Báo cáo Dashboard: Phân bổ &amp; Tích lũy tài sản
             </button>
           </div>
 
@@ -709,62 +763,8 @@
 
             <div class="d-flex-end mt-3">
               <button type="button" class="btn-next-step" onclick="switchTcSection(3)">
-                Xem Theo dõi mục tiêu & Phân bổ tài sản <i class="fa-solid fa-arrow-right"></i>
+                Xem Báo cáo Phân bổ &amp; Tích lũy tài sản trên Dashboard <i class="fa-solid fa-arrow-right"></i>
               </button>
-            </div>
-          </div>
-
-          <div id="tc-section-3" class="tc-section-pane">
-            <div class="tc-matrix-header-box mb-3">
-              <div class="sheet-title-text"><i class="fa-solid fa-layer-group"></i> PHẦN 3: THEO DÕI MỤC TIÊU TÀI CHÍNH VÀ ĐẦU TƯ CÁC LOẠI TÀI SẢN</div>
-              <div class="tc-matrix-desc">Hệ thống ma trận phân bổ dòng tiền, tích lũy giá trị tài sản qua 30 năm và liên kết trực tiếp với Lộ trình phân bổ tài sản.</div>
-            </div>
-
-            <div class="data-panel mb-4">
-              <div class="sheet-title-banner flex-between">
-                <span><i class="fa-solid fa-bullseye"></i> THEO DÕI MỤC TIÊU TÀI CHÍNH THỰC HIỆN TRONG TƯƠNG LAI CHI TIẾT</span>
-                <span class="text-sm font-normal text-muted">Đơn vị: triệu đồng</span>
-              </div>
-              <div class="table-scroll-x">
-                <table class="excel-table-bordered" id="table-tc-part3-goals">
-                  <thead>
-                    <tr class="bg-header-primary" id="tr-tc-p3-ghead-1"></tr>
-                    <tr class="bg-header-sub" id="tr-tc-p3-ghead-2"></tr>
-                  </thead>
-                  <tbody id="tbody-tc-part3-goals"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="data-panel mb-4">
-              <div class="sheet-title-banner flex-between">
-                <span><i class="fa-solid fa-coins"></i> THEO DÕI SẢN PHẨM ĐẦU TƯ CHI TIẾT</span>
-                <span class="text-sm font-normal text-muted">Gom dòng tiền từ tất cả mục tiêu về từng sản phẩm tài chính cụ thể</span>
-              </div>
-              <div class="table-scroll-x">
-                <table class="excel-table-bordered" id="table-tc-part3-products">
-                  <thead>
-                    <tr class="bg-header-primary" id="tr-tc-p3-phead"></tr>
-                  </thead>
-                  <tbody id="tbody-tc-part3-products"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="data-panel mb-4">
-              <div class="sheet-title-banner flex-between">
-                <span><i class="fa-solid fa-chart-pie"></i> THEO DÕI PHÂN BỔ TÀI SẢN ĐẦU TƯ (ASSET ALLOCATION)</span>
-                <span class="text-sm font-normal text-muted">Tỷ trọng lớp tài sản & Lãi suất kỳ vọng bình quân danh mục (% E(R))</span>
-              </div>
-              <div class="table-scroll-x">
-                <table class="excel-table-bordered" id="table-tc-part3-allocation">
-                  <thead>
-                    <tr class="bg-header-primary" id="tr-tc-p3-ahead-1"></tr>
-                    <tr class="bg-header-sub" id="tr-tc-p3-ahead-2"></tr>
-                  </thead>
-                  <tbody id="tbody-tc-part3-allocation"></tbody>
-                </table>
-              </div>
             </div>
           </div>
 

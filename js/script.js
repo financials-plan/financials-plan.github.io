@@ -1631,6 +1631,7 @@ window.switchTab = function(tabId) {
     if (tabId === 'tab-dashboard') {
       renderDashboardMatrices();
       renderDashboardAllCharts();
+      renderTcPart3Tables();
     }
     if (tabId === 'tab-candoi') {
       renderCareerTables();
@@ -1821,17 +1822,20 @@ window.switchMonthSection = function(secNum) {
 };
 
 window.switchTcSection = function(secNum) {
+  if (secNum === 3) {
+    window.switchTab('tab-dashboard');
+    setTimeout(() => {
+      document.getElementById('dash-invest-tracking-container')?.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+    return;
+  }
   document.getElementById('btn-tc-sec1')?.classList.toggle('active', secNum === 1);
   document.getElementById('btn-tc-sec2')?.classList.toggle('active', secNum === 2);
-  document.getElementById('btn-tc-sec3')?.classList.toggle('active', secNum === 3);
   document.getElementById('tc-section-1')?.classList.toggle('active', secNum === 1);
   document.getElementById('tc-section-2')?.classList.toggle('active', secNum === 2);
-  document.getElementById('tc-section-3')?.classList.toggle('active', secNum === 3);
   if (secNum === 2) {
     renderTcMatrixTable();
     setTimeout(renderTcMatrixChart, 60);
-  } else if (secNum === 3) {
-    renderTcPart3Tables();
   }
 };
 
@@ -5453,6 +5457,7 @@ function recalculateAll() {
   renderCareerChart();
   renderDashboardMatrices();
   renderDashboardAllCharts();
+  renderTcPart3Tables();
   updatePlanTotals();
 }
 
