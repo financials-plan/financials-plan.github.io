@@ -3706,7 +3706,7 @@ function renderYearEndBalanceSheet() {
 
           nameCellHtml = `
             <select class="select-inline-cell font-bold" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
-              ${investProds.length === 0 ? '<option value="">-- Chưa có sản phẩm trong Từ khóa --</option>' : ''}
+              ${investProds.length === 0 ? '<option value="">-- Chưa có sản phẩm đầu tư --</option>' : ''}
               ${extraOption}
               ${optionsHtml}
             </select>
@@ -3717,7 +3717,7 @@ function renderYearEndBalanceSheet() {
           <tr>
             <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
             <td>
-              <select class="select-inline-cell" style="font-size: 12px; font-weight: 600;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
+              <select class="select-inline-cell" style="font-size: 12px; font-weight: 600; min-width: 145px;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
                 <option value="keyword" ${!isCustom ? 'selected' : ''}>Sản phẩm đầu tư</option>
                 <option value="custom" ${isCustom ? 'selected' : ''}>Tài sản khác</option>
               </select>

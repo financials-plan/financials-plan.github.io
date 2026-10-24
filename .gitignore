@@ -20,20 +20,26 @@ desktop.ini
 *.sln
 *.sw?
 
+# User Data & Test Samples (Never commit user data)
+sample.json
+test_sample.json
+*.sample.json
+data_sample*.json
+*.json.bak
+
+# Temporary & Local Scratch
 scratch/
 temp/
 tmp/
 *.tmp
-
-.firebase/
-firebase-debug.log*
-firestore-debug.log*
-ui-debug.log*
-
-sample.json
-test_sample.json
 so-tai-chinh-standalone.html
 prompt/
 scripts/
 temp_excel_inspect/
+
+# Firebase Runtime Logs & Cache
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
 
