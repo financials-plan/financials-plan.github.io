@@ -246,6 +246,22 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.strictEqual(revokeRes.data.success, true);
   assert.strictEqual(revokeRes.data.code.isRevoked, true);
 
+  const createAdminRes = await makeRequest("POST", "/api/admin/create-admin", {
+    username: "super_admin_test",
+    password: "secure_pass_123",
+    recoveryEmail: "superadmin@example.com"
+  });
+  assert.strictEqual(createAdminRes.status, 201);
+  assert.strictEqual(createAdminRes.data.success, true);
+  assert.strictEqual(createAdminRes.data.user.role, "admin");
+  assert.strictEqual(createAdminRes.data.user.normalizedUsername, "super_admin_test");
+
+  const createDupRes = await makeRequest("POST", "/api/admin/create-admin", {
+    username: "super_admin_test",
+    password: "secure_pass_123"
+  });
+  assert.strictEqual(createDupRes.status, 409);
+
   const backupRes = await makeRequest("GET", "/api/admin/backup");
   assert.strictEqual(backupRes.status, 200);
   assert.strictEqual(backupRes.data.success, true);

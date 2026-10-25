@@ -492,6 +492,81 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === "POST" && (pathname === "/api/admin/create-admin" || pathname === "/api/admin/users/create")) {
+      const body = await parseJsonBody(req);
+      const secretKey = sanitizeInput(body.secretKey, 64);
+      const isAuth = isAdminAuthorized(req, url) || (secretKey && secretKey === (process.env.ADMIN_API_KEY || "qtv-secret-2026"));
+      if (!isAuth) {
+        sendJson(res, 403, { success: false, error: "Yêu cầu khóa bí mật Quản trị viên (secretKey hoặc x-admin-key)." });
+        return;
+      }
+      const rawUser = sanitizeInput(body.username, 32);
+      const password = sanitizeInput(body.password, 128);
+      const rawEmail = sanitizeInput(body.recoveryEmail, 120).toLowerCase();
+      const role = (body.role === "instructor" || body.role === "student") ? body.role : "admin";
+
+      if (!rawUser) {
+        sendJson(res, 400, { success: false, error: "Vui lòng nhập Username cho Quản trị viên." });
+        return;
+      }
+      if (rawUser.includes("@") || isEmailFormat(rawUser)) {
+        sendJson(res, 400, { success: false, error: "Email không được dùng làm Username." });
+        return;
+      }
+      const normUser = normalizeUsername(rawUser);
+      if (!normUser || normUser.length < 3 || normUser.length > 32) {
+        sendJson(res, 400, { success: false, error: "Username phải từ 3 đến 32 ký tự." });
+        return;
+      }
+      if (rawEmail && !isEmailFormat(rawEmail)) {
+        sendJson(res, 400, { success: false, error: "Email khôi phục không hợp lệ." });
+        return;
+      }
+      if (password.length < 6) {
+        sendJson(res, 400, { success: false, error: "Mật khẩu phải tối thiểu 6 ký tự." });
+        return;
+      }
+      if (accountsStore.has(normUser)) {
+        sendJson(res, 409, { success: false, error: "Username này đã tồn tại trên hệ thống." });
+        return;
+      }
+
+      const { hash, salt } = hashPassword(password);
+      const docId = `user_${normUser}`;
+      const maskedEmail = rawEmail ? maskEmailAddress(rawEmail) : "";
+
+      const newAdminAccount = {
+        docId,
+        username: rawUser,
+        normalizedUsername: normUser,
+        role,
+        recoveryEmail: rawEmail || null,
+        maskedEmail,
+        hasRecoveryEmail: Boolean(rawEmail),
+        passwordHash: hash,
+        passwordSalt: salt,
+        createdAt: new Date().toISOString()
+      };
+
+      accountsStore.set(normUser, newAdminAccount);
+
+      sendJson(res, 201, {
+        success: true,
+        message: `Khởi tạo tài khoản Quản trị viên (${role}) thành công!`,
+        user: {
+          docId,
+          username: rawUser,
+          displayUsername: rawUser,
+          normalizedUsername: normUser,
+          role,
+          maskedEmail,
+          hasRecoveryEmail: Boolean(rawEmail),
+          createdAt: newAdminAccount.createdAt
+        }
+      });
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/admin/codes") {
       const list = Array.from(adminCodesStore.values()).map(c => ({
         code: c.code,

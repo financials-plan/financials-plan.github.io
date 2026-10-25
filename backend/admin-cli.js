@@ -63,6 +63,7 @@ function printHelp() {
   console.log("Danh sach cac lenh ho tro:");
   console.log("  overview                     Xem tong quan toan bo he thong (User, Nhom, Ma, RAM, Uptime)");
   console.log("  users                        Liet ke danh sach tat ca tai khoan nguoi dung va vai tro");
+  console.log("  create-admin <u> <p> [email] Tao tai khoan Quan tri vien (Admin) moi");
   console.log("  set-role <user> <newRole>    Doi vai tro tai khoan ('admin', 'instructor', 'student')");
   console.log("  codes                        Liet ke toan bo Ma Quan tri (Admin Codes) va trang thai");
   console.log("  create-code <role> [uses] [d] Sinh Ma Quan tri moi (vd: create-code instructor 20 60)");
@@ -126,6 +127,33 @@ async function main() {
           })));
         } else {
           console.error("Loi:", res.data);
+        }
+        break;
+      }
+
+      case "create-admin": {
+        const username = args[1];
+        const password = args[2];
+        const recoveryEmail = args[3] || "";
+        if (!username || !password) {
+          console.error("Vui long nhap: node backend/admin-cli.js create-admin <username> <password> [recoveryEmail]");
+          process.exit(1);
+        }
+        const res = await requestApi("POST", "/api/admin/create-admin", {
+          username,
+          password,
+          recoveryEmail,
+          secretKey: ADMIN_API_KEY
+        });
+        if (res.status === 201 && res.data.success) {
+          console.log("\n[THANH CONG] Da tao tai khoan Quan tri vien (Admin) moi:");
+          console.log(`  Username:       ${res.data.user.username}`);
+          console.log(`  Normalized:     ${res.data.user.normalizedUsername}`);
+          console.log(`  Vai tro (Role): ${res.data.user.role}`);
+          console.log(`  Email:          ${res.data.user.maskedEmail || "(Khong co)"}`);
+          console.log(`  DocId:          ${res.data.user.docId}`);
+        } else {
+          console.error("\n[THAT BAI]", res.data.error || res.data);
         }
         break;
       }
