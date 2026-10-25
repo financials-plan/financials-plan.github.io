@@ -1589,15 +1589,17 @@ const FirestoreService = {
     return Object.values(local);
   },
 
-  async createClass(name, code, instructorUsername, maxMembers = 50, isPrivate = true) {
+  async createClass(name, code, instructorUsername, maxMembers = 40, isPrivate = true, description = "") {
     const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const parsedLimit = (maxMembers === 0 || maxMembers === "0" || maxMembers === "no-limit") ? 0 : (parseInt(maxMembers, 10) || 40);
     const newClass = {
       id: classId,
       name: String(name || "").trim(),
       code: String(code || "").trim().toUpperCase(),
+      description: String(description || "").trim(),
       instructorUsername: instructorUsername || (activeAuthContext ? activeAuthContext.normalizedUsername : "admin"),
       instructorName: (activeAuthContext ? activeAuthContext.displayUsername : instructorUsername) || "Giảng viên",
-      maxMembers: parseInt(maxMembers, 10) || 50,
+      maxMembers: parsedLimit,
       isPrivate: isPrivate !== false,
       status: "active",
       createdAt: new Date().toISOString(),
@@ -1622,7 +1624,7 @@ const FirestoreService = {
     if (!targetClass) {
       return { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." };
     }
-    if ((targetClass.members || []).length >= (targetClass.maxMembers || 50)) {
+    if (targetClass.maxMembers > 0 && (targetClass.members || []).length >= targetClass.maxMembers) {
       return { success: false, error: "Nhóm đã đạt số lượng thành viên tối đa." };
     }
     const existing = (targetClass.members || []).find(m => m.username === cleanUser);
@@ -1669,6 +1671,29 @@ const FirestoreService = {
     } else if (action === "remove") {
       targetClass.members = targetClass.members.filter(m => m.username !== studentUsername);
     }
+    classes[classId] = targetClass;
+    saveLocalClasses(classes);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+    }
+    return { success: true, class: targetClass };
+  },
+
+  async updateClass(classId, updates) {
+    const classes = getLocalClasses();
+    const targetClass = classes[classId];
+    if (!targetClass) {
+      return { success: false, error: "Không tìm thấy nhóm." };
+    }
+    if (updates.name) targetClass.name = String(updates.name).trim();
+    if (updates.code) targetClass.code = String(updates.code).trim().toUpperCase();
+    if (updates.maxMembers !== undefined) {
+      const rawM = updates.maxMembers;
+      targetClass.maxMembers = (rawM === 0 || rawM === "0" || rawM === "no-limit") ? 0 : parseInt(rawM, 10) || 0;
+    }
+    if (updates.isPrivate !== undefined) targetClass.isPrivate = Boolean(updates.isPrivate);
+    if (updates.description !== undefined) targetClass.description = String(updates.description).trim();
+    targetClass.updatedAt = new Date().toISOString();
     classes[classId] = targetClass;
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {

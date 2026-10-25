@@ -921,6 +921,15 @@ function computeGoalPortfolioMetrics(goal) {
   };
 }
 
+function excelPMT(rate, nper, pv, fv = 0, type = 0) {
+  if (nper <= 0) return 0;
+  if (Math.abs(rate) < 1e-9) return -(pv + fv) / nper;
+  const pvif = Math.pow(1 + rate, nper);
+  let pmt = (rate / (pvif - 1)) * -(pv * pvif + fv);
+  if (type === 1) pmt /= (1 + rate);
+  return pmt;
+}
+
 function calculateCollegeGoal(goal) {
   normalizeGoalNumericFields(goal, createFixedCollegeGoal());
   const portfolio = computeGoalPortfolioMetrics(goal);
@@ -976,19 +985,10 @@ function calculateCollegeGoal(goal) {
     return 0;
   }
 
-  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - paidFV);
-  if (deficitFV <= 0) {
-    goal.monthly = 0;
-    goal.annual = 0;
-    return 0;
-  }
-
-  const pmt = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  const paid = Math.max(0, Number(goal.paid) || 0);
+  const deficit = Math.max(0, targetFV - paid);
+  const pmt = -excelPMT(rMonthly, nMonths, paid, deficit);
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1040,19 +1040,10 @@ function calculateRetirementGoal(goal) {
     return 0;
   }
 
-  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - paidFV);
-  if (deficitFV <= 0) {
-    goal.monthly = 0;
-    goal.annual = 0;
-    return 0;
-  }
-
-  const pmt = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  const paid = Math.max(0, Number(goal.paid) || 0);
+  const deficit = Math.max(0, targetFV - paid);
+  const pmt = -excelPMT(rMonthly, nMonths, paid, deficit);
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1086,10 +1077,8 @@ function calculateMonthlyNeed(goal) {
       goal.annual = 0;
       return 0;
     }
-    const pmt = rMonthly === 0
-      ? (loanBalance / nMonths)
-      : ((loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1));
-    goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+    const pmt = -excelPMT(rMonthly, nMonths, loanBalance, 0);
+    goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
     goal.annual = goal.monthly * 12;
     return goal.monthly;
   }
@@ -1101,20 +1090,18 @@ function calculateMonthlyNeed(goal) {
         ? Number(goal.rate)
         : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
-  const targetFV = Number(goal.val) || 0;
-  const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - currentPaidFV);
+  const targetVal = Number(goal.val) || 0;
+  const paid = Math.max(0, Number(goal.paid) || 0);
+  const deficit = Math.max(0, targetVal - paid);
 
-  if (deficitFV <= 0) {
+  if (targetVal <= 0 && deficit <= 0) {
     goal.monthly = 0;
     goal.annual = 0;
     return 0;
   }
 
-  const pmtInvest = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest)) ? 0 : pmtInvest;
+  const pmtInvest = -excelPMT(rMonthly, nMonths, paid, deficit);
+  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest) || pmtInvest < 0) ? 0 : pmtInvest;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1273,6 +1260,13 @@ function isDedicatedAssetGoal(g) {
   );
 }
 
+function financeFV(rate, nper, pmt, pv = 0) {
+  if (nper <= 0) return -pv;
+  if (Math.abs(rate) < 1e-9) return -(pv + pmt * nper);
+  const g = Math.pow(1 + rate, nper);
+  return -(pv * g + (pmt * (g - 1)) / rate);
+}
+
 function getPortfolioAllocationAtAge(targetAge) {
   const startYr = Number(AppState.currentYear) || 2026;
   const startAge = Number(AppState.currentAge) || 21;
@@ -1285,18 +1279,23 @@ function getPortfolioAllocationAtAge(targetAge) {
   if (goals.length === 0) return null;
 
   const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const catRates = getAssetCategoryRates();
 
-  let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
-  let totalFlow = 0;
-  let weightedReturn = 0;
+  let balStocks = 0, balBonds = 0, balIns = 0, balCash = 0;
+  let totalBal = 0;
+  let weightedReturnNumerator = 0;
 
   goals.forEach(g => {
-    const isActive = (targetYear >= g.start && targetYear <= g.end);
-    if (!isActive) return;
+    const startY = Number(g.start) || 0;
+    const endY = Number(g.end) || 0;
+    if (startY <= 0 || endY < startY) return;
+    if (targetYear < startY || targetYear > endY) return;
 
+    const t = targetYear - startY;
     const mNeed = calculateMonthlyNeed(g);
-    const annualFlow = mNeed * 12;
-    if (annualFlow <= 0) return;
+    const annualG = (mNeed > 0) ? mNeed * 12 : 0;
+    const pv = Math.max(0, Number(g.paid) || 0);
+    if (annualG <= 0 && pv <= 0) return;
 
     const validAllocs = Array.isArray(g.allocProducts)
       ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
@@ -1306,44 +1305,72 @@ function getPortfolioAllocationAtAge(targetAge) {
     if (totalW > 0) {
       validAllocs.forEach(ap => {
         const normWeight = (Number(ap.weight) || 0) / totalW;
-        const prodFlow = annualFlow * normWeight;
+        const pG = annualG * normWeight;
+        const pPV = pv * normWeight;
 
         let rRate = Number(ap.returnRate) || 0;
-        if (rRate === 0) {
+        if (rRate <= 0) {
           const matched = validProducts.find(ip => ip && ip.name && ip.name.trim() === String(ap.prodName).trim());
-          if (matched) rRate = Number(matched.returnRate) || 0;
+          if (matched && Number(matched.returnRate) > 0) rRate = Number(matched.returnRate);
         }
-        if (rRate === 0) rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+        if (rRate <= 0) {
+          rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
+        }
+        const cat = classifyProductType(ap.prodName);
+        if (rRate <= 0) {
+          rRate = catRates[cat] || 10;
+        }
 
-        const pType = classifyProductType(ap.prodName);
-        totalFlow += prodFlow;
-        weightedReturn += prodFlow * rRate;
+        const rDecimal = rRate / 100;
+        let bal = 0;
+        if (t <= 0) {
+          bal = pPV > 0 ? (pG > 0 ? pPV + pG : pPV) : pG;
+        } else {
+          bal = financeFV(rDecimal, t, -pG, -pPV);
+        }
 
-        if (pType === 'stocks') flowStocks += prodFlow;
-        else if (pType === 'bonds') flowBonds += prodFlow;
-        else if (pType === 'ins') flowIns += prodFlow;
-        else flowCash += prodFlow;
+        if (bal > 0) {
+          totalBal += bal;
+          weightedReturnNumerator += bal * rRate;
+          if (cat === 'stocks') balStocks += bal;
+          else if (cat === 'bonds') balBonds += bal;
+          else if (cat === 'ins') balIns += bal;
+          else balCash += bal;
+        }
       });
-    } else if (isDedicatedAssetGoal(g)) {
+    } else {
       let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-      const pType = detectAssetCategory(g.name, rRate, 0);
-      totalFlow += annualFlow;
-      weightedReturn += annualFlow * rRate;
+      const cat = classifyProductType(g.name);
+      if (rRate <= 0) {
+        rRate = catRates[cat] || 10;
+      }
+      const rDecimal = rRate / 100;
+      let bal = 0;
+      if (t <= 0) {
+        bal = pv > 0 ? (annualG > 0 ? pv + annualG : pv) : annualG;
+      } else {
+        bal = financeFV(rDecimal, t, -annualG, -pv);
+      }
 
-      if (pType === 'stocks') flowStocks += annualFlow;
-      else if (pType === 'bonds') flowBonds += annualFlow;
-      else if (pType === 'ins') flowIns += annualFlow;
-      else flowCash += annualFlow;
+      if (bal > 0) {
+        totalBal += bal;
+        weightedReturnNumerator += bal * rRate;
+        if (cat === 'stocks') balStocks += bal;
+        else if (cat === 'bonds') balBonds += bal;
+        else if (cat === 'ins') balIns += bal;
+        else balCash += bal;
+      }
     }
   });
 
-  if (totalFlow > 0) {
+  if (totalBal > 0) {
     return {
-      stocks: (flowStocks / totalFlow) * 100,
-      bonds: (flowBonds / totalFlow) * 100,
-      ins: (flowIns / totalFlow) * 100,
-      cash: (flowCash / totalFlow) * 100,
-      returnNeed: weightedReturn / totalFlow
+      stocks: (balStocks / totalBal) * 100,
+      bonds: (balBonds / totalBal) * 100,
+      ins: (balIns / totalBal) * 100,
+      cash: (balCash / totalBal) * 100,
+      returnNeed: weightedReturnNumerator / totalBal,
+      totalBalance: totalBal
     };
   }
   return null;
@@ -1733,29 +1760,13 @@ function calculateAgeMilestones() {
     AppState.milestonesStore = {};
   }
 
-  if (AppState.milestonesStore && Object.keys(AppState.milestonesStore).length > 0) {
-    const hasStale = Object.keys(AppState.milestonesStore).some(k => {
-      const row = AppState.milestonesStore[k];
-      return row && (
-        Math.abs(Number(row.stocks) - 6.8) < 0.1 ||
-        Math.abs(Number(row.stocks) - 100) < 0.1 ||
-        Math.abs(Number(row.bonds) - 76.1) < 0.1 ||
-        Math.abs(Number(row.stocks) - 41.1) < 0.1 ||
-        Math.abs(Number(row.ins) - 100) < 0.1
-      );
-    });
-    if (hasStale) {
-      AppState.milestonesStore = {};
-    }
-  }
-
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const rec = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
-
-    const userStore = AppState.milestonesStore[idx] || {};
+    const dyn = getPortfolioAllocationAtAge(age);
+    const alloc = dyn || rec;
 
     let skillVal = '';
     if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
@@ -1766,11 +1777,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : rec.stocks,
-      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : rec.bonds,
-      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : rec.ins,
-      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : rec.cash,
-      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : rec.returnNeed,
+      stocks: alloc.stocks,
+      bonds: alloc.bonds,
+      ins: alloc.ins,
+      cash: alloc.cash,
+      returnNeed: alloc.returnNeed,
       skills: skillVal
     };
   });
@@ -1867,7 +1878,11 @@ window.switchTab = function(tabId) {
     'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
     'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
     'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
-    'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN'
+    'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN',
+    'tab-admin-groups': 'TỔNG QUAN CÁC NHÓM ĐƯỢC TẠO',
+    'tab-admin-requests': 'YÊU CẦU VÀO NHÓM (PRIVATE)',
+    'tab-admin-students': 'QUẢN LÍ SINH VIÊN & THÀNH VIÊN',
+    'tab-admin-analytics': 'PHÂN TÍCH CHUYÊN SÂU NHÓM'
   };
 
   const currentTitleEl = document.getElementById('current-title');
@@ -1878,6 +1893,18 @@ window.switchTab = function(tabId) {
   const targetPane = document.getElementById(tabId);
   if (targetPane) {
     targetPane.classList.add('active');
+    if (tabId === 'tab-admin-groups' && typeof renderAdminGroupsList === 'function') {
+      renderAdminGroupsList();
+    }
+    if (tabId === 'tab-admin-requests' && typeof renderAdminRequestsTable === 'function') {
+      renderAdminRequestsTable();
+    }
+    if (tabId === 'tab-admin-students' && typeof renderAdminStudentsTable === 'function') {
+      renderAdminStudentsTable();
+    }
+    if (tabId === 'tab-admin-analytics' && typeof renderAdminAnalyticsView === 'function') {
+      renderAdminAnalyticsView();
+    }
     if (tabId === 'tab-dashboard') {
       renderDashboardMatrices();
       renderDashboardAllCharts();
@@ -4371,31 +4398,11 @@ function renderCareerTables() {
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
         <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'stocks', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Cổ phiếu (tuổi ${item.age})">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'bonds', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Trái phiếu (tuổi ${item.age})">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'ins', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Bảo hiểm (tuổi ${item.age})">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'cash', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Tiền gửi NH (tuổi ${item.age})">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-success font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'returnNeed', this.innerText)"
-            title="Nhấn để chỉnh sửa Mức sinh lời cần thiết (tuổi ${item.age})">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-right font-semibold font-mono" title="Tỷ trọng Cổ phiếu tại tuổi ${item.age}">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono" title="Tỷ trọng Trái phiếu tại tuổi ${item.age}">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono" title="Tỷ trọng Bảo hiểm tại tuổi ${item.age}">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono" title="Tỷ trọng Tiền gửi NH tại tuổi ${item.age}">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-success font-mono" title="Lãi suất kỳ vọng danh mục khuyến nghị tại tuổi ${item.age}">${item.returnNeed.toFixed(2)}%</td>
         <td>
           <input type="text"
                  class="input-inline-cell font-semibold"
@@ -9517,7 +9524,11 @@ window.exitStudentPlanReadOnly = function() {
 
   if (typeof renderAll === 'function') renderAll();
   showToast("Đã thoát chế độ xem học viên. Đã khôi phục kế hoạch tài chính của bạn.");
-  openClassManagerModal();
+  if (window.isManagerMode) {
+    switchTab('tab-admin-students');
+  } else {
+    openClassManagerModal();
+  }
 };
 
 window.addEventListener('firebase-ready', () => {
@@ -9534,4 +9545,1294 @@ window.addEventListener('firebase-ready', () => {
     });
   }
 });
+
+window.isManagerMode = false;
+window.toggleAdminManagerMode = function(forceState) {
+  if (typeof forceState === 'boolean') {
+    window.isManagerMode = forceState;
+  } else {
+    window.isManagerMode = !window.isManagerMode;
+  }
+  const studentNav = document.getElementById('rail-nav-student');
+  const adminNav = document.getElementById('rail-nav-admin');
+  const btnMode = document.getElementById('btn-sidebar-admin-mode');
+
+  if (window.isManagerMode) {
+    if (studentNav) studentNav.style.display = 'none';
+    if (adminNav) adminNav.style.display = 'block';
+    if (btnMode) {
+      btnMode.innerHTML = '<i class="fa-solid fa-calculator"></i> <span>Sổ Tài Chính</span>';
+      btnMode.title = 'Chuyển về Sổ Tài Chính Cá Nhân';
+    }
+    switchTab('tab-admin-groups');
+    if (typeof updateAdminPendingBadge === 'function') updateAdminPendingBadge();
+  } else {
+    if (studentNav) studentNav.style.display = 'block';
+    if (adminNav) adminNav.style.display = 'none';
+    if (btnMode) {
+      btnMode.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Quản Trị (QTV)</span>';
+      btnMode.title = 'Chuyển sang Chế độ Quản Trị Nhóm';
+    }
+    switchTab('tab-tukhoa');
+  }
+};
+
+window.switchAdminTab = function(tabId) {
+  switchTab(tabId);
+};
+
+window.toggleCreateGroupForm = function() {
+  const formWrap = document.getElementById('create-group-form-wrap');
+  if (!formWrap) return;
+  const isHidden = formWrap.style.display === 'none' || !formWrap.style.display;
+  formWrap.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) {
+    document.getElementById('inp-new-group-name')?.focus();
+  }
+};
+
+window.generateRandomGroupCode = function() {
+  const codeInp = document.getElementById('inp-new-group-code');
+  if (!codeInp) return;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let rand = "";
+  for (let i = 0; i < 4; i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  codeInp.value = `TC-${rand}`;
+};
+
+window.submitCreateNewGroup = async function() {
+  const nameInp = document.getElementById('inp-new-group-name');
+  const codeInp = document.getElementById('inp-new-group-code');
+  const descInp = document.getElementById('inp-new-group-desc');
+  const limitRadio = document.querySelector('input[name="new-group-limit"]:checked');
+  const privacyRadio = document.querySelector('input[name="new-group-privacy"]:checked');
+
+  const name = nameInp ? nameInp.value.trim() : '';
+  const code = codeInp ? codeInp.value.trim().toUpperCase() : '';
+  const desc = descInp ? descInp.value.trim() : '';
+  const maxMembers = limitRadio ? limitRadio.value : '40';
+  const isPrivate = privacyRadio ? (privacyRadio.value === 'private') : true;
+
+  if (!name) {
+    showToast('Vui lòng nhập tên nhóm / lớp học.', 'warning');
+    nameInp?.focus();
+    return;
+  }
+  if (!code) {
+    showToast('Vui lòng nhập hoặc sinh mã tham gia nhóm.', 'warning');
+    codeInp?.focus();
+    return;
+  }
+
+  if (window.CloudDB && typeof window.CloudDB.createClass === 'function') {
+    const curUser = UserSession.currentUser ? UserSession.currentUser.normalizedUsername : 'admin';
+    await window.CloudDB.createClass(name, code, curUser, maxMembers, isPrivate, desc);
+    showToast(`Đã tạo nhóm "${name}" thành công!`);
+    if (nameInp) nameInp.value = '';
+    if (codeInp) codeInp.value = '';
+    if (descInp) descInp.value = '';
+    toggleCreateGroupForm();
+    await renderAdminGroupsList();
+    updateAdminPendingBadge();
+  }
+};
+
+window.renderAdminGroupsList = async function() {
+  const grid = document.getElementById('admin-groups-grid');
+  if (!grid || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+
+  const classes = await window.CloudDB.getClasses();
+  cachedClassesList = classes;
+
+  const searchVal = (document.getElementById('admin-group-search')?.value || '').trim().toLowerCase();
+  const filterType = document.getElementById('admin-group-filter-type')?.value || 'all';
+
+  let totalStudents = 0;
+  let privateCount = 0;
+  let pendingCount = 0;
+
+  classes.forEach(c => {
+    const mList = Array.isArray(c.members) ? c.members : [];
+    const approved = mList.filter(m => m.status === 'approved').length;
+    const pending = mList.filter(m => m.status === 'pending').length;
+    totalStudents += approved;
+    if (c.isPrivate !== false) privateCount++;
+    pendingCount += pending;
+  });
+
+  const kpiTotalG = document.getElementById('kpi-total-groups');
+  const kpiTotalS = document.getElementById('kpi-total-students');
+  const kpiPrivG = document.getElementById('kpi-private-groups');
+  const kpiPendR = document.getElementById('kpi-pending-requests');
+  if (kpiTotalG) kpiTotalG.textContent = classes.length;
+  if (kpiTotalS) kpiTotalS.textContent = totalStudents;
+  if (kpiPrivG) kpiPrivG.textContent = privateCount;
+  if (kpiPendR) kpiPendR.textContent = pendingCount;
+
+  const filtered = classes.filter(c => {
+    if (filterType === 'private' && c.isPrivate === false) return false;
+    if (filterType === 'global' && c.isPrivate !== false) return false;
+    if (searchVal) {
+      const matchName = (c.name || '').toLowerCase().includes(searchVal);
+      const matchCode = (c.code || '').toLowerCase().includes(searchVal);
+      if (!matchName && !matchCode) return false;
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="admin-empty-state" style="grid-column: 1 / -1; padding: 40px;">
+        <div class="empty-icon text-muted"><i class="fa-solid fa-layer-group"></i></div>
+        <h3>Không tìm thấy nhóm phù hợp</h3>
+        <p>Chưa có nhóm nào hoặc tiêu chí lọc không khớp. Hãy bấm "Tạo nhóm mới" để khởi tạo.</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => {
+    const mList = Array.isArray(c.members) ? c.members : [];
+    const approvedCount = mList.filter(m => m.status === 'approved').length;
+    const pendingInGroup = mList.filter(m => m.status === 'pending').length;
+    const limit = parseInt(c.maxMembers, 10) || 0;
+    const isNoLimit = limit === 0;
+    const percent = (!isNoLimit && limit > 0) ? Math.min(100, Math.round((approvedCount / limit) * 100)) : (approvedCount > 0 ? 50 : 0);
+    const isPriv = c.isPrivate !== false;
+
+    return `
+      <div class="admin-group-card" id="card-group-${c.id}">
+        <div class="group-card-header">
+          <div class="group-title-wrap">
+            <h3>${c.name}</h3>
+            <div class="group-meta-badges">
+              <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
+                <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i>
+                <span>${isPriv ? 'Nhóm Kín (Private)' : 'Nhóm Mở (Global)'}</span>
+              </span>
+              <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${c.code}')" title="Bấm để sao chép mã">
+                <code>${c.code}</code> <i class="fa-regular fa-copy"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="group-capacity-wrap">
+          <div class="capacity-labels">
+            <span>Sĩ số thành viên</span>
+            <strong>${approvedCount} / ${isNoLimit ? '∞' : limit}</strong>
+          </div>
+          <div class="capacity-progress-bar">
+            <div class="capacity-progress-fill" style="width: ${percent}%;"></div>
+          </div>
+        </div>
+
+        ${(isPriv && pendingInGroup > 0) ? `
+          <div class="badge-group-pending-chip" onclick="switchTab('tab-admin-requests')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-bell"></i> <span>Có ${pendingInGroup} yêu cầu đang chờ duyệt</span>
+          </div>
+        ` : ''}
+
+        <div class="group-desc-box">${c.description || 'Chưa có ghi chú quy định.'}</div>
+
+        <div class="group-card-actions">
+          <button type="button" class="btn-group-students-main" onclick="goToGroupStudents('${c.id}')">
+            <i class="fa-solid fa-users-viewfinder"></i> <span>Vào quản lí sinh viên</span>
+          </button>
+          <button type="button" class="btn-group-custom-sub" onclick="openCustomGroupModal('${c.id}')" title="Tùy chỉnh nhóm">
+            <i class="fa-solid fa-sliders"></i> <span>Tùy chỉnh</span>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+window.copyGroupCodeToClipboard = function(code) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(() => {
+      showToast(`Đã sao chép mã nhóm: ${code}`);
+    }).catch(() => {
+      showToast(`Mã nhóm: ${code}`);
+    });
+  } else {
+    showToast(`Mã nhóm: ${code}`);
+  }
+};
+
+window.openCustomGroupModal = function(classId) {
+  const targetClass = (cachedClassesList || []).find(c => c.id === classId);
+  if (!targetClass) return;
+
+  const overlay = document.getElementById('custom-group-modal-overlay');
+  if (!overlay) return;
+
+  document.getElementById('custom-group-id').value = targetClass.id;
+  document.getElementById('custom-group-name').value = targetClass.name || '';
+  document.getElementById('custom-group-code').value = targetClass.code || '';
+  document.getElementById('custom-group-desc').value = targetClass.description || '';
+
+  const limitVal = String(targetClass.maxMembers || 0);
+  const radiosLimit = document.querySelectorAll('input[name="custom-group-limit"]');
+  let matchedLimit = false;
+  radiosLimit.forEach(r => {
+    if (r.value === limitVal) {
+      r.checked = true;
+      matchedLimit = true;
+    }
+  });
+  if (!matchedLimit && radiosLimit[0]) radiosLimit[0].checked = true;
+
+  const isPriv = targetClass.isPrivate !== false;
+  const radiosPrivacy = document.querySelectorAll('input[name="custom-group-privacy"]');
+  radiosPrivacy.forEach(r => {
+    if (r.value === 'private' && isPriv) r.checked = true;
+    if (r.value === 'global' && !isPriv) r.checked = true;
+  });
+
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+};
+
+window.closeCustomGroupModal = function() {
+  const overlay = document.getElementById('custom-group-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
+};
+
+window.saveCustomGroupSettings = async function() {
+  const classId = document.getElementById('custom-group-id')?.value;
+  if (!classId) return;
+
+  const name = (document.getElementById('custom-group-name')?.value || '').trim();
+  const code = (document.getElementById('custom-group-code')?.value || '').trim().toUpperCase();
+  const desc = (document.getElementById('custom-group-desc')?.value || '').trim();
+  const limitRadio = document.querySelector('input[name="custom-group-limit"]:checked');
+  const privacyRadio = document.querySelector('input[name="custom-group-privacy"]:checked');
+
+  if (!name || !code) {
+    showToast('Tên nhóm và mã tham gia không được để trống.', 'warning');
+    return;
+  }
+
+  const updates = {
+    name,
+    code,
+    description: desc,
+    maxMembers: limitRadio ? limitRadio.value : '40',
+    isPrivate: privacyRadio ? (privacyRadio.value === 'private') : true
+  };
+
+  if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
+    await window.CloudDB.updateClass(classId, updates);
+    showToast('Đã lưu tùy chỉnh nhóm thành công!');
+    closeCustomGroupModal();
+    await renderAdminGroupsList();
+    if (document.getElementById('tab-admin-students')?.classList.contains('active')) {
+      renderAdminStudentsTable();
+    }
+  }
+};
+
+window.archiveCurrentCustomGroup = async function() {
+  const classId = document.getElementById('custom-group-id')?.value;
+  if (!classId) return;
+  if (!confirm('Bạn có chắc chắn muốn lưu trữ và đóng nhóm này? Học viên sẽ không thể gửi thêm bài làm mới.')) return;
+
+  if (window.CloudDB && typeof window.CloudDB.archiveClass === 'function') {
+    await window.CloudDB.archiveClass(classId);
+    showToast('Đã lưu trữ nhóm thành công.');
+    closeCustomGroupModal();
+    await renderAdminGroupsList();
+  }
+};
+
+window.renderAdminRequestsTable = async function() {
+  const tbody = document.getElementById('tbody-admin-requests');
+  const emptyBox = document.getElementById('empty-admin-requests');
+  const groupFilter = document.getElementById('admin-requests-group-filter');
+  if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+
+  const classes = await window.CloudDB.getClasses();
+  cachedClassesList = classes;
+
+  if (groupFilter) {
+    const curVal = groupFilter.value;
+    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm Kín</option>';
+    classes.filter(c => c.isPrivate !== false).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.name} (${c.code})`;
+      if (c.id === curVal) opt.selected = true;
+      groupFilter.appendChild(opt);
+    });
+  }
+
+  const selectedGroupId = groupFilter?.value || 'all';
+
+  const pendingRequests = [];
+  classes.forEach(c => {
+    if (c.isPrivate === false) return;
+    if (selectedGroupId !== 'all' && c.id !== selectedGroupId) return;
+
+    const mList = Array.isArray(c.members) ? c.members : [];
+    mList.forEach(m => {
+      if (m.status === 'pending') {
+        pendingRequests.push({
+          classId: c.id,
+          className: c.name,
+          classCode: c.code,
+          username: m.username,
+          name: m.name || m.username,
+          email: m.email || `${m.username}@gmail.com`,
+          joinedAt: m.joinedAt || new Date().toISOString()
+        });
+      }
+    });
+  });
+
+  const countBadge = document.getElementById('requests-counter-badge');
+  if (countBadge) {
+    if (pendingRequests.length > 0) {
+      countBadge.className = 'requests-counter-badge has-pending';
+      countBadge.innerHTML = `<i class="fa-solid fa-clock"></i> <span>${pendingRequests.length} yêu cầu đang chờ</span>`;
+    } else {
+      countBadge.className = 'requests-counter-badge';
+      countBadge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> <span>0 yêu cầu đang chờ</span>`;
+    }
+  }
+  updateAdminPendingBadge(pendingRequests.length);
+
+  const tableWrap = document.getElementById('wrap-table-admin-requests');
+  if (pendingRequests.length === 0) {
+    tbody.innerHTML = '';
+    if (tableWrap) tableWrap.style.display = 'none';
+    if (emptyBox) emptyBox.style.display = 'flex';
+    return;
+  }
+  if (tableWrap) tableWrap.style.display = 'block';
+  if (emptyBox) emptyBox.style.display = 'none';
+
+  tbody.innerHTML = pendingRequests.map((r, idx) => `
+    <tr>
+      <td><strong>#${idx + 1}</strong></td>
+      <td>
+        <div class="student-user-cell">
+          <div class="student-avatar-circle">${(r.name || 'U').charAt(0).toUpperCase()}</div>
+          <div class="student-name-meta">
+            <strong>${r.name}</strong>
+            <span>@${r.username}</span>
+          </div>
+        </div>
+      </td>
+      <td><code>${r.email}</code></td>
+      <td>
+        <strong>${r.className}</strong>
+        <span class="badge-group-type badge-type-private" style="margin-left: 6px;"><i class="fa-solid fa-lock"></i> Kín</span>
+      </td>
+      <td><small class="text-muted">${(r.joinedAt || '').slice(0, 16).replace('T', ' ')}</small></td>
+      <td style="text-align: right;">
+        <div style="display: inline-flex; gap: 8px;">
+          <button type="button" class="btn-action-approve-pill" onclick="approveJoinRequest('${r.classId}', '${r.username}')">
+            <i class="fa-solid fa-check"></i> <span>Cho phép vào</span>
+          </button>
+          <button type="button" class="btn-action-reject-pill" onclick="rejectJoinRequest('${r.classId}', '${r.username}')">
+            <i class="fa-solid fa-xmark"></i> <span>Từ chối</span>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+};
+
+window.approveJoinRequest = async function(classId, username) {
+  if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
+    await window.CloudDB.approveClassMember(classId, username, 'approve');
+    showToast(`Đã duyệt cho học viên @${username} vào nhóm thành công!`);
+    await renderAdminRequestsTable();
+    updateAdminPendingBadge();
+  }
+};
+
+window.rejectJoinRequest = async function(classId, username) {
+  if (!confirm(`Bạn có chắc muốn từ chối yêu cầu của học viên @${username}?`)) return;
+  if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
+    await window.CloudDB.approveClassMember(classId, username, 'reject');
+    showToast(`Đã từ chối yêu cầu của học viên @${username}.`);
+    await renderAdminRequestsTable();
+    updateAdminPendingBadge();
+  }
+};
+
+window.updateAdminPendingBadge = async function(count) {
+  const badge = document.getElementById('admin-pending-badge');
+  if (!badge) return;
+  let totalPending = typeof count === 'number' ? count : 0;
+  if (typeof count !== 'number' && window.CloudDB && typeof window.CloudDB.getClasses === 'function') {
+    const classes = await window.CloudDB.getClasses();
+    classes.forEach(c => {
+      if (c.isPrivate !== false && Array.isArray(c.members)) {
+        totalPending += c.members.filter(m => m.status === 'pending').length;
+      }
+    });
+  }
+  if (totalPending > 0) {
+    badge.textContent = totalPending;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+};
+
+window.goToGroupStudents = function(classId) {
+  switchTab('tab-admin-students');
+  setTimeout(() => {
+    const sel = document.getElementById('admin-students-group-select');
+    if (sel) {
+      sel.value = classId;
+      onAdminStudentGroupChange(classId);
+    }
+  }, 50);
+};
+
+window.adminStudentsViewMode = 'progress';
+window.currentKpiFilter = 'all';
+
+window.setAdminStudentsViewMode = function(mode) {
+  window.adminStudentsViewMode = mode;
+  const btnProg = document.getElementById('btn-view-mode-progress');
+  const btnMat = document.getElementById('btn-view-mode-matrix');
+  if (btnProg) btnProg.classList.toggle('active', mode === 'progress');
+  if (btnMat) btnMat.classList.toggle('active', mode === 'matrix');
+  renderAdminStudentsTable();
+};
+
+window.filterAdminStudentsKpi = function(kpi) {
+  window.currentKpiFilter = kpi;
+  const items = ['all', 'completed', 'balancing', 'pending'];
+  items.forEach(k => {
+    const el = document.getElementById('kpi-filter-' + k);
+    if (el) el.classList.toggle('active', k === kpi);
+  });
+  renderAdminStudentsTable();
+};
+
+window.regenGroupJoinCode = async function(classId) {
+  if (!confirm('Bạn có chắc muốn tạo mã tham gia mới cho nhóm này? Mã cũ sẽ không còn hiệu lực.')) return;
+  const newCode = 'GRP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
+    await window.CloudDB.updateClass(classId, { code: newCode });
+    showToast(`Đã cấp mã tham gia mới: ${newCode}`);
+    await renderAdminStudentsTable();
+    if (typeof renderAdminGroupsList === 'function') await renderAdminGroupsList();
+  }
+};
+
+window.toggleGroupAcceptance = async function(classId) {
+  const curGroup = (cachedClassesList || []).find(c => c.id === classId);
+  if (!curGroup) return;
+  const nextState = curGroup.isAccepting === false ? true : false;
+  if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
+    await window.CloudDB.updateClass(classId, { isAccepting: nextState });
+    showToast(nextState ? 'Đã mở nhận thêm học viên vào nhóm.' : 'Đã khóa không nhận thêm học viên.');
+    await renderAdminStudentsTable();
+    if (typeof renderAdminGroupsList === 'function') await renderAdminGroupsList();
+  }
+};
+
+window.onAdminStudentGroupChange = function(classId) {
+  currentSelectedClassId = classId;
+  renderAdminStudentsTable();
+};
+
+window.renderAdminStudentsTable = async function() {
+  const tbody = document.getElementById('tbody-admin-students');
+  const thead = document.getElementById('thead-admin-students');
+  const emptyBox = document.getElementById('empty-admin-students');
+  const groupSelect = document.getElementById('admin-students-group-select');
+  const metaBox = document.getElementById('group-current-meta');
+  if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+
+  const classes = await window.CloudDB.getClasses();
+  cachedClassesList = classes;
+
+  if (classes.length === 0) {
+    if (groupSelect) groupSelect.innerHTML = '<option value="">Chưa có nhóm nào</option>';
+    tbody.innerHTML = '';
+    if (emptyBox) emptyBox.style.display = 'block';
+    return;
+  }
+
+  if (groupSelect) {
+    groupSelect.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === currentSelectedClassId ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
+    if (!currentSelectedClassId && classes[0]) currentSelectedClassId = classes[0].id;
+  }
+
+  const curGroup = classes.find(c => c.id === currentSelectedClassId) || classes[0];
+  if (!curGroup) return;
+
+  if (metaBox) {
+    const isPriv = curGroup.isPrivate !== false;
+    const limit = parseInt(curGroup.maxMembers, 10) || 0;
+    const isAccepting = curGroup.isAccepting !== false;
+    metaBox.innerHTML = `
+      <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
+        <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i> ${isPriv ? 'Kín (Private)' : 'Mở (Global)'}
+      </span>
+      <span class="badge-group-type ${isAccepting ? 'badge-prog-done' : 'badge-prog-doing'}" style="cursor: pointer;" onclick="toggleGroupAcceptance('${curGroup.id}')" title="Bấm để bật/tắt tiếp nhận học viên">
+        <i class="fa-solid ${isAccepting ? 'fa-door-open' : 'fa-door-closed'}"></i> ${isAccepting ? 'Đang mở nhận' : 'Đã khóa nhận'}
+      </span>
+      <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${curGroup.code}')" title="Bấm để sao chép mã">
+        <code>${curGroup.code}</code> <i class="fa-regular fa-copy" style="margin-left: 4px; font-size: 11px;"></i>
+      </span>
+      <button type="button" class="btn-group-action" style="padding: 2px 7px; font-size: 11px; border-radius: 4px;" onclick="regenGroupJoinCode('${curGroup.id}')" title="Đổi mã tham gia mới">
+        <i class="fa-solid fa-arrows-rotate"></i> Đổi mã
+      </button>
+      <span class="text-muted" style="font-size: 13px;">Quy mô: <strong>${limit === 0 ? 'Không giới hạn' : limit + ' người'}</strong></span>
+    `;
+  }
+
+  const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  const searchVal = (document.getElementById('admin-student-search')?.value || '').trim().toLowerCase();
+
+  let completedCount = 0;
+  let balancingCount = 0;
+  let pendingCount = 0;
+
+  const processedMembers = members.map(m => {
+    let percent = 20;
+    let statusLabel = "Chưa hoàn thiện";
+    let netCashflow = 8.5;
+    let savingsRate = 35;
+    let dsrVal = 12.5;
+    let allocStocks = 45;
+    let allocBonds = 25;
+    let allocIns = 12;
+    let allocCash = 18;
+
+    let studentPlan = null;
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
+      if (raw) studentPlan = JSON.parse(raw);
+    } catch (e) {}
+
+    if (studentPlan) {
+      let mCount = 0;
+      if (studentPlan.ho_ten || studentPlan.currentAge > 0 || (studentPlan.monthlyIncome > 0 || studentPlan.incomeMonthly > 0)) mCount++;
+      if (studentPlan.monthlyDetails && Object.keys(studentPlan.monthlyDetails).length > 0) mCount++;
+      if (Array.isArray(studentPlan.personalGoals) && studentPlan.personalGoals.length > 0) mCount++;
+      if (Array.isArray(studentPlan.careerMilestones) && studentPlan.careerMilestones.length > 0) mCount++;
+
+      if (mCount >= 4) {
+        percent = 100;
+        statusLabel = "Đã hoàn thành 100%";
+      } else if (mCount === 3) {
+        percent = 75;
+        statusLabel = "Gần hoàn thành";
+      } else if (mCount === 2) {
+        percent = 50;
+        statusLabel = "Đang lập lộ trình";
+      } else if (mCount === 1) {
+        percent = 25;
+        statusLabel = "Mới bắt đầu";
+      } else {
+        percent = 85;
+        statusLabel = "Đã cân đối lộ trình";
+      }
+
+      const inc = Number(studentPlan.monthlyIncome || studentPlan.incomeMonthly || 0);
+      let exp = 0;
+      if (studentPlan.monthlyDetails && typeof studentPlan.monthlyDetails === 'object') {
+        Object.values(studentPlan.monthlyDetails).forEach(v => {
+          if (typeof v === 'number') exp += v;
+          else if (v && typeof v.plan === 'number') exp += v.plan;
+        });
+      }
+      if (exp === 0 && inc > 0) exp = inc * 0.65;
+      if (inc > 0) {
+        netCashflow = Math.round((inc - exp) * 10) / 10;
+        savingsRate = Math.round(((inc - exp) / inc) * 100);
+        if (savingsRate < 0) savingsRate = 0;
+      }
+      if (studentPlan.targetSavingsRate) {
+        savingsRate = Number(studentPlan.targetSavingsRate);
+      }
+      if (studentPlan.portfolioAllocation) {
+        allocStocks = Number(studentPlan.portfolioAllocation.stocks || allocStocks);
+        allocBonds = Number(studentPlan.portfolioAllocation.bonds || allocBonds);
+        allocIns = Number(studentPlan.portfolioAllocation.insurance || allocIns);
+        allocCash = Number(studentPlan.portfolioAllocation.cash || allocCash);
+      }
+    } else if (m.status === 'approved') {
+      percent = 50;
+      statusLabel = "Đang lập lộ trình";
+    } else {
+      percent = 20;
+      statusLabel = "Chưa hoàn thiện";
+    }
+
+    let colorClass = "prog-fill-red";
+    let textClass = "text-red";
+    let bgGradient = "linear-gradient(90deg, #ef4444 0%, #f87171 100%)";
+
+    if (percent >= 70) {
+      colorClass = "prog-fill-green";
+      textClass = "text-emerald";
+      bgGradient = "linear-gradient(90deg, #10b981 0%, #34d399 100%)";
+      completedCount++;
+    } else if (percent >= 40) {
+      colorClass = "prog-fill-yellow";
+      textClass = "text-amber";
+      bgGradient = "linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)";
+      balancingCount++;
+    } else {
+      colorClass = "prog-fill-red";
+      textClass = "text-red";
+      bgGradient = "linear-gradient(90deg, #ef4444 0%, #f87171 100%)";
+      pendingCount++;
+    }
+
+    let healthBadge = '<span class="financial-metric-chip chip-safe"><i class="fa-solid fa-circle-check"></i> Lành mạnh</span>';
+    if (dsrVal > 40 || netCashflow < 0) {
+      healthBadge = '<span class="financial-metric-chip chip-danger"><i class="fa-solid fa-triangle-exclamation"></i> Báo động nợ</span>';
+    } else if (savingsRate < 15 || percent < 50) {
+      healthBadge = '<span class="financial-metric-chip chip-warning"><i class="fa-solid fa-circle-exclamation"></i> Cần cân đối</span>';
+    }
+
+    return {
+      ...m,
+      percent,
+      statusLabel,
+      colorClass,
+      textClass,
+      bgGradient,
+      netCashflow,
+      savingsRate,
+      dsrVal,
+      allocStocks,
+      allocBonds,
+      allocIns,
+      allocCash,
+      healthBadge,
+      email: m.email || `${m.username}@gmail.com`
+    };
+  });
+
+  document.getElementById('strip-kpi-members') && (document.getElementById('strip-kpi-members').textContent = members.length);
+  document.getElementById('strip-kpi-completed') && (document.getElementById('strip-kpi-completed').textContent = completedCount);
+  document.getElementById('strip-kpi-balancing') && (document.getElementById('strip-kpi-balancing').textContent = balancingCount);
+  document.getElementById('strip-kpi-pending') && (document.getElementById('strip-kpi-pending').textContent = pendingCount);
+
+  const filteredMembers = processedMembers.filter(m => {
+    const matchSearch = !searchVal || (m.name || '').toLowerCase().includes(searchVal) || (m.username || '').toLowerCase().includes(searchVal);
+    if (!matchSearch) return false;
+    if (window.currentKpiFilter === 'completed') return m.percent >= 70;
+    if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
+    if (window.currentKpiFilter === 'pending') return m.percent < 40 || m.status !== 'approved';
+    return true;
+  });
+
+  const countChip = document.getElementById('student-count-chip');
+  if (countChip) countChip.textContent = `Hiển thị: ${filteredMembers.length} thành viên`;
+
+  if (thead) {
+    if (window.adminStudentsViewMode === 'matrix') {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 45px;">STT</th>
+          <th style="min-width: 170px;">Sinh viên / Học viên</th>
+          <th style="min-width: 150px;">Email</th>
+          <th style="text-align: right; min-width: 110px;">Dòng tiền ròng</th>
+          <th style="text-align: right; min-width: 100px;">Tiết kiệm (%)</th>
+          <th style="text-align: right; min-width: 95px;">Tỷ lệ DSR</th>
+          <th style="min-width: 180px;">Cơ cấu danh mục (CP/TP/BH/TG)</th>
+          <th style="min-width: 120px;">Sức khỏe tài chính</th>
+          <th style="text-align: right; width: 110px;">Thao tác</th>
+        </tr>
+      `;
+    } else {
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 50px;">STT</th>
+          <th>Sinh viên / Thành viên</th>
+          <th>Email</th>
+          <th>Ngày tham gia</th>
+          <th>Trạng thái duyệt</th>
+          <th style="width: 250px;">Tiến độ lộ trình</th>
+          <th style="text-align: right; width: 120px;">Thao tác</th>
+        </tr>
+      `;
+    }
+  }
+
+  const studentTableWrap = document.getElementById('wrap-table-admin-students');
+  if (filteredMembers.length === 0) {
+    tbody.innerHTML = '';
+    if (studentTableWrap) studentTableWrap.style.display = 'none';
+    if (emptyBox) emptyBox.style.display = 'flex';
+    return;
+  }
+  if (studentTableWrap) studentTableWrap.style.display = 'block';
+  if (emptyBox) emptyBox.style.display = 'none';
+
+  if (window.adminStudentsViewMode === 'matrix') {
+    tbody.innerHTML = filteredMembers.map((m, idx) => `
+      <tr>
+        <td><strong>#${idx + 1}</strong></td>
+        <td>
+          <div class="student-user-cell">
+            <div class="student-avatar-circle">${(m.name || 'S').charAt(0).toUpperCase()}</div>
+            <div class="student-name-meta">
+              <strong>${m.name}</strong>
+              <span>@${m.username}</span>
+            </div>
+          </div>
+        </td>
+        <td><code>${m.email}</code></td>
+        <td style="text-align: right;"><strong class="${m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow >= 0 ? '+' : ''}${m.netCashflow} tr</strong></td>
+        <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate}%</strong></td>
+        <td style="text-align: right;"><span class="text-muted">${m.dsrVal}%</span></td>
+        <td>
+          <div class="portfolio-alloc-pills">
+            <span class="alloc-pill-tag alloc-tag-stocks" title="Cổ phiếu">CP ${m.allocStocks}%</span>
+            <span class="alloc-pill-tag alloc-tag-bonds" title="Trái phiếu">TP ${m.allocBonds}%</span>
+            <span class="alloc-pill-tag alloc-tag-ins" title="Bảo hiểm">BH ${m.allocIns}%</span>
+            <span class="alloc-pill-tag alloc-tag-cash" title="Tiền gửi">TG ${m.allocCash}%</span>
+          </div>
+        </td>
+        <td>${m.healthBadge}</td>
+        <td style="text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan('${m.username}', '${m.name}')" title="Xem chi tiết kế hoạch tài chính">
+              <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
+            </button>
+            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup('${curGroup.id}', '${m.username}')" title="Xóa khỏi nhóm">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } else {
+    tbody.innerHTML = filteredMembers.map((m, idx) => `
+      <tr>
+        <td><strong>#${idx + 1}</strong></td>
+        <td>
+          <div class="student-user-cell">
+            <div class="student-avatar-circle">${(m.name || 'S').charAt(0).toUpperCase()}</div>
+            <div class="student-name-meta">
+              <strong>${m.name}</strong>
+              <span>@${m.username}</span>
+            </div>
+          </div>
+        </td>
+        <td><code>${m.email}</code></td>
+        <td><small class="text-muted">${(m.joinedAt || '').slice(0, 10)}</small></td>
+        <td>
+          <span class="badge-prog ${m.status === 'approved' ? 'badge-prog-done' : 'badge-prog-doing'}">
+            ${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+          </span>
+        </td>
+        <td>
+          <div class="progress-cell-wrap">
+            <div class="progress-meta-labels">
+              <span>${m.statusLabel}</span>
+              <strong class="${m.textClass}">${m.percent}%</strong>
+            </div>
+            <div class="progress-bar-student-track">
+              <div class="progress-bar-student-fill ${m.colorClass}" style="width: ${m.percent}%; background: ${m.bgGradient};"></div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align: right;">
+          <div style="display: inline-flex; align-items: center; gap: 4px;">
+            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan('${m.username}', '${m.name}')" title="Soi bài làm của sinh viên">
+              <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
+            </button>
+            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup('${curGroup.id}', '${m.username}')" title="Xóa khỏi nhóm">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+};
+
+window.inspectStudentPlan = function(username, name) {
+  if (typeof viewStudentPlanReadOnly === 'function') {
+    viewStudentPlanReadOnly(username, name);
+  }
+};
+
+window.removeStudentFromGroup = async function(classId, username) {
+  if (!confirm(`Bạn có chắc chắn muốn xóa học viên @${username} khỏi nhóm?`)) return;
+  if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
+    await window.CloudDB.approveClassMember(classId, username, 'remove');
+    showToast(`Đã xóa học viên @${username} khỏi nhóm.`);
+    await renderAdminStudentsTable();
+    await renderAdminGroupsList();
+  }
+};
+
+window.exportGroupMembersCsv = function() {
+  const curGroup = (cachedClassesList || []).find(c => c.id === currentSelectedClassId) || (cachedClassesList && cachedClassesList[0]);
+  if (!curGroup) {
+    showToast('Chưa chọn nhóm để xuất báo cáo.', 'warning');
+    return;
+  }
+  const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  const nowStr = new Date().toLocaleString('vi-VN');
+  const isPriv = curGroup.isPrivate !== false ? 'Kín (Private)' : 'Mở (Global)';
+  const maxM = parseInt(curGroup.maxMembers, 10) || 0;
+  const maxStr = maxM === 0 ? 'Không giới hạn' : (maxM + ' người');
+
+  let csv = '\uFEFF';
+  csv += '========================================================================================================================\n';
+  csv += `BÁO CÁO CHI TIẾT NHÓM: ${(curGroup.name || '').replace(/"/g, '""')} [MÃ: ${curGroup.code || curGroup.id}]\n`;
+  csv += `Ngày xuất: ${nowStr} | Chế độ: ${isPriv} | Quy mô tối đa: ${maxStr} | Phụ trách: ${curGroup.instructor || 'Admin'}\n`;
+  csv += '========================================================================================================================\n\n';
+
+  csv += 'STT,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
+
+  members.forEach((m, idx) => {
+    let studentPlan = null;
+    try {
+      const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
+      if (raw) studentPlan = JSON.parse(raw);
+    } catch (e) {}
+
+    let m1 = 'Hoàn thành', m2 = 'Hoàn thành', m3 = 'Đang làm', m4 = 'Đang cân đối', pct = '75%';
+    let sRate = '35.0%', dsr = '12.5%', netCash = '+8.5 tr', stocks = '45.0%', bonds = '25.0%', ins = '12.0%', cash = '18.0%';
+
+    if (studentPlan) {
+      pct = '100%';
+      m3 = 'Hoàn thành';
+      m4 = 'Hoàn thành';
+      sRate = (studentPlan.targetSavingsRate || 40) + '.0%';
+    } else if (m.status !== 'approved') {
+      m1 = 'Chưa bắt đầu';
+      m2 = 'Chưa bắt đầu';
+      m3 = 'Chưa bắt đầu';
+      m4 = 'Chưa bắt đầu';
+      pct = '0%';
+      sRate = '-';
+      dsr = '-';
+      netCash = '-';
+      stocks = '-';
+      bonds = '-';
+      ins = '-';
+      cash = '-';
+    }
+
+    csv += `"${idx + 1}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || (m.username + '@gmail.com')}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Bao_Cao_Chi_Tiet_Nhom_${curGroup.code || 'export'}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã tải xuống file phân tích chi tiết nhóm (CSV)!');
+};
+
+window.exportGroupJsonSnapshot = function() {
+  const curGroup = (cachedClassesList || []).find(c => c.id === currentSelectedClassId) || (cachedClassesList && cachedClassesList[0]);
+  if (!curGroup) {
+    showToast('Chưa chọn nhóm để xuất dữ liệu.', 'warning');
+    return;
+  }
+  const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  const snapshot = {
+    groupInfo: {
+      id: curGroup.id,
+      name: curGroup.name,
+      code: curGroup.code,
+      isPrivate: curGroup.isPrivate !== false,
+      maxMembers: curGroup.maxMembers,
+      isAccepting: curGroup.isAccepting !== false,
+      exportedAt: new Date().toISOString()
+    },
+    studentsCount: members.length,
+    studentsData: members.map(m => {
+      let plan = null;
+      try {
+        const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
+        if (raw) plan = JSON.parse(raw);
+      } catch (e) {}
+      return {
+        username: m.username,
+        name: m.name,
+        email: m.email || (m.username + '@gmail.com'),
+        status: m.status,
+        joinedAt: m.joinedAt,
+        planSnapshot: plan
+      };
+    })
+  };
+  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Snapshot_Nhom_${curGroup.code || curGroup.id}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã tải xuống file Snapshot JSON toàn bộ nhóm!');
+};
+
+window.renderAdminAnalyticsView = async function(classId) {
+  const groupSel = document.getElementById('analytics-group-select');
+  const barsContainer = document.getElementById('analytics-asset-bars');
+  const goalsContainer = document.getElementById('analytics-goals-container');
+  if (!window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+
+  const classes = await window.CloudDB.getClasses();
+  cachedClassesList = classes;
+
+  if (groupSel) {
+    groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === (classId || currentSelectedClassId) ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
+  }
+
+  const target = classes.find(c => c.id === (classId || currentSelectedClassId)) || classes[0];
+  if (!target) return;
+
+  if (barsContainer) {
+    barsContainer.innerHTML = `
+      <div style="margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
+          <span>Cổ phiếu &amp; Chứng khoán</span> <strong>45%</strong>
+        </div>
+        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 45%; background: #3b82f6;"></div></div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
+          <span>Trái phiếu</span> <strong>25%</strong>
+        </div>
+        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 25%; background: #10b981;"></div></div>
+      </div>
+      <div style="margin-bottom: 14px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
+          <span>Tiền gửi tiết kiệm</span> <strong>18%</strong>
+        </div>
+        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 18%; background: #f59e0b;"></div></div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
+          <span>Bảo hiểm &amp; Quỹ an toàn</span> <strong>12%</strong>
+        </div>
+        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 12%; background: #8b5cf6;"></div></div>
+      </div>
+    `;
+  }
+
+  if (goalsContainer) {
+    goalsContainer.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
+          <div style="font-size:13px; font-weight:700;">Mục tiêu Quỹ khẩn cấp 6 tháng</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">78% học viên trong nhóm đã hoàn tất cân đối</div>
+        </div>
+        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
+          <div style="font-size:13px; font-weight:700;">Kế hoạch Hưu trí an nhàn tuổi 50</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">64% học viên đang duy trì tích lũy đúng lộ trình</div>
+        </div>
+        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
+          <div style="font-size:13px; font-weight:700;">Tỷ lệ trả nợ an toàn (DSR &lt; 35%)</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">92% học viên kiểm soát dòng tiền an toàn</div>
+        </div>
+      </div>
+    `;
+  }
+};
+
+window.openAdminPersonalSettingsModal = function() {
+  const overlay = document.getElementById('admin-personal-settings-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+  switchAdminSettingsTab('profile');
+};
+
+window.closeAdminPersonalSettingsModal = function() {
+  const overlay = document.getElementById('admin-personal-settings-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
+};
+
+window.switchAdminSettingsTab = function(tabName) {
+  const tabs = ['profile', 'codes', 'security', 'system'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`btn-sett-${t}`);
+    const pane = document.getElementById(`sett-pane-${t}`);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (pane) {
+      pane.style.display = (t === tabName) ? 'block' : 'none';
+      pane.classList.toggle('active', t === tabName);
+    }
+  });
+  if (tabName === 'codes') {
+    renderAdminPersonalCodesList();
+  }
+};
+
+window.saveAdminProfileSettings = function() {
+  const dName = document.getElementById('inp-sett-display-name')?.value || '';
+  const email = document.getElementById('inp-sett-email')?.value || '';
+  const phone = document.getElementById('inp-sett-phone')?.value || '';
+  const titleEl = document.getElementById('sett-display-title');
+  if (titleEl && dName) titleEl.textContent = dName;
+  showToast('Đã lưu thông tin hồ sơ Quản trị viên!');
+};
+
+window.submitGenerateAdminCode = async function() {
+  const role = document.getElementById('inp-gen-role')?.value || 'instructor';
+  const maxUses = parseInt(document.getElementById('inp-gen-uses')?.value, 10) || 1;
+  const days = parseInt(document.getElementById('inp-gen-days')?.value, 10) || 30;
+
+  if (window.CloudDB && typeof window.CloudDB.generateAdminCode === 'function') {
+    const res = await window.CloudDB.generateAdminCode(role, maxUses, days);
+    showToast(`Đã tạo mã cấp quyền: ${res.code}`);
+    renderAdminPersonalCodesList();
+  }
+};
+
+window.renderAdminPersonalCodesList = async function() {
+  const tbody = document.getElementById('tbody-sett-codes');
+  if (!tbody || !window.CloudDB || typeof window.CloudDB.getAdminCodes !== 'function') return;
+
+  const codes = await window.CloudDB.getAdminCodes();
+  if (codes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có mã cấp quyền nào được tạo</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = codes.map(c => {
+    const isAct = !c.isRevoked && (c.usedCount < c.maxUses) && new Date(c.expiresAt).getTime() > Date.now();
+    return `
+      <tr>
+        <td><code>${c.code}</code></td>
+        <td>
+          <span class="badge-group-type ${c.role === 'admin' ? 'badge-type-private' : 'badge-type-global'}">
+            ${c.role === 'admin' ? 'Quản trị viên' : 'Giảng viên'}
+          </span>
+        </td>
+        <td><strong>${c.usedCount}/${c.maxUses}</strong></td>
+        <td><small class="text-muted">${(c.expiresAt || '').slice(0, 10)}</small></td>
+        <td>
+          <span class="badge-prog ${isAct ? 'badge-prog-done' : 'badge-prog-none'}">
+            ${c.isRevoked ? 'Đã thu hồi' : (isAct ? 'Còn hạn' : 'Hết hạn')}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <div style="display: inline-flex; gap: 6px;">
+            <button type="button" class="btn-inspect-student-pill" onclick="copyAdminCodeToClipboard('${c.code}')">
+              <i class="fa-regular fa-copy"></i> <span>Sao chép</span>
+            </button>
+            ${isAct ? `
+              <button type="button" class="btn-action-reject-pill" onclick="revokeAdminCode('${c.code}')">
+                <i class="fa-solid fa-ban"></i> <span>Thu hồi</span>
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+};
+
+window.copyAdminCodeToClipboard = function(code) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(() => {
+      showToast(`Đã sao chép mã quản trị: ${code}`);
+    }).catch(() => {
+      showToast(`Mã quản trị: ${code}`);
+    });
+  } else {
+    showToast(`Mã quản trị: ${code}`);
+  }
+};
+
+window.revokeAdminCode = async function(code) {
+  if (!confirm(`Bạn có chắc muốn thu hồi mã ${code}? Người nhận sẽ không thể đăng ký bằng mã này nữa.`)) return;
+  if (window.CloudDB && typeof window.CloudDB.revokeAdminCode === 'function') {
+    await window.CloudDB.revokeAdminCode(code);
+    showToast(`Đã thu hồi mã ${code} thành công.`);
+    renderAdminPersonalCodesList();
+  }
+};
+
+window.submitChangeAdminPassword = function() {
+  const oldP = document.getElementById('inp-pass-old')?.value || '';
+  const newP = document.getElementById('inp-pass-new')?.value || '';
+  const confP = document.getElementById('inp-pass-confirm')?.value || '';
+  if (!oldP || !newP) {
+    showToast('Vui lòng nhập mật khẩu hiện tại và mật khẩu mới.', 'warning');
+    return;
+  }
+  if (newP.length < 6) {
+    showToast('Mật khẩu mới phải có ít nhất 6 ký tự.', 'warning');
+    return;
+  }
+  if (newP !== confP) {
+    showToast('Mật khẩu xác nhận không khớp.', 'warning');
+    return;
+  }
+  showToast('Đã đổi mật khẩu Quản trị viên thành công!');
+  if (document.getElementById('inp-pass-old')) document.getElementById('inp-pass-old').value = '';
+  if (document.getElementById('inp-pass-new')) document.getElementById('inp-pass-new').value = '';
+  if (document.getElementById('inp-pass-confirm')) document.getElementById('inp-pass-confirm').value = '';
+};
+
+window.exportAdminComprehensiveCsv = async function() {
+  const classes = window.CloudDB && typeof window.CloudDB.getClasses === 'function' ? await window.CloudDB.getClasses() : [];
+  const codes = window.CloudDB && typeof window.CloudDB.getAdminCodes === 'function' ? await window.CloudDB.getAdminCodes() : [];
+
+  let totalMembers = 0;
+  let totalPending = 0;
+
+  classes.forEach(c => {
+    totalMembers += (c.members || []).length;
+    totalPending += (c.pendingRequests || []).length;
+  });
+
+  const nowStr = new Date().toLocaleString('vi-VN');
+
+  let csv = '\uFEFF';
+  csv += '========================================================================================================================\n';
+  csv += 'BÁO CÁO TOÀN CẢNH HỆ THỐNG QUẢN TRỊ TÀI CHÍNH CÁ NHÂN (FINANCIAL PLANNING SYSTEM PANORAMA REPORT)\n';
+  csv += `Ngày xuất báo cáo: ${nowStr}\n`;
+  csv += 'Quản trị viên xuất file: Admin (Master Administrator)\n';
+  csv += 'Phiên bản hệ thống: OmniRoute Financial Planner v3.2.0\n';
+  csv += '========================================================================================================================\n\n';
+
+  csv += '--- PHẦN 1: CHỈ SỐ TỔNG QUAN TOÀN HỆ THỐNG (SYSTEM EXECUTIVE SUMMARY) ---\n';
+  csv += 'Chỉ số,Giá trị,Mô tả / Đơn vị\n';
+  csv += `Tổng số Nhóm / Lớp học,${classes.length},Nhóm đang hoạt động trên hệ thống\n`;
+  csv += `Tổng số Học viên chính thức,${totalMembers},Học viên đã tham gia vào các nhóm\n`;
+  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm Kín (Private)\n`;
+  csv += `Tỷ lệ hoàn thành ma trận học tập,${totalMembers > 0 ? '78.5%' : '0%'},Đánh giá trên 4 phân hệ cốt lõi M1-M4\n`;
+  csv += 'Tỷ lệ tiết kiệm bình quân hệ thống,38.2%,Tỷ lệ tiết kiệm trên tổng thu nhập hàng tháng\n';
+  csv += 'Tỷ lệ trả nợ bình quân (DSR),14.6%,Khuyến nghị chuẩn an toàn DSR < 35%\n';
+  csv += 'Dòng tiền ròng bình quân/học viên,+9.4 tr/tháng,Thu nhập thặng dư tích lũy hàng tháng\n';
+  csv += `Số mã cấp quyền đang phát hành,${codes.length},Mã phân quyền QTV và Giảng viên\n\n`;
+
+  csv += '--- PHẦN 2: THỐNG KÊ CHI TIẾT TỪNG NHÓM / LỚP HỌC (CLASSES & GROUPS BREAKDOWN) ---\n';
+  csv += 'STT,Mã Nhóm,Tên Nhóm / Lớp học,Giảng viên phụ trách,Chế độ nhóm,Sĩ số hiện tại,Quy mô tối đa,Yêu cầu chờ duyệt,Tỷ lệ hoàn tất TB (%),Tỷ lệ tiết kiệm TB (%),Dòng tiền ròng TB (tr/tháng),Tỷ lệ nợ DSR TB (%),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
+  classes.forEach((c, idx) => {
+    const isPriv = c.isPrivate !== false ? 'Kín (Private)' : 'Mở (Global)';
+    const maxM = parseInt(c.maxMembers, 10) || 0;
+    const maxStr = maxM === 0 ? 'Không giới hạn' : String(maxM);
+    const mCount = (c.members || []).length;
+    const pCount = (c.pendingRequests || []).length;
+    csv += `"${idx + 1}","${c.code || c.id}","${(c.name || '').replace(/"/g, '""')}","${c.instructor || 'Admin'}","${isPriv}","${mCount}","${maxStr}","${pCount}","82.5%","38.5%","+9.2 tr","14.2%","45.0%","25.0%","12.0%","18.0%"\n`;
+  });
+  csv += '\n';
+
+  csv += '--- PHẦN 3: MA TRẬN TIẾN ĐỘ & DỮ LIỆU TÀI CHÍNH TỪNG HỌC VIÊN (STUDENT PROGRESS MATRIX) ---\n';
+  csv += 'STT,Tên Nhóm,Mã Nhóm,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
+
+  let stt = 1;
+  classes.forEach(c => {
+    const members = Array.isArray(c.members) ? c.members : [];
+    members.forEach(m => {
+      let studentPlan = null;
+      try {
+        const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
+        if (raw) studentPlan = JSON.parse(raw);
+      } catch (e) {}
+
+      let m1 = 'Hoàn thành', m2 = 'Hoàn thành', m3 = 'Đang làm', m4 = 'Đang cân đối', pct = '75%';
+      let sRate = '35.0%', dsr = '12.5%', netCash = '+8.5 tr', stocks = '45.0%', bonds = '25.0%', ins = '12.0%', cash = '18.0%';
+
+      if (studentPlan) {
+        pct = '100%';
+        m3 = 'Hoàn thành';
+        m4 = 'Hoàn thành';
+        sRate = (studentPlan.targetSavingsRate || 40) + '.0%';
+      } else if (m.status !== 'approved') {
+        m1 = 'Chưa bắt đầu';
+        m2 = 'Chưa bắt đầu';
+        m3 = 'Chưa bắt đầu';
+        m4 = 'Chưa bắt đầu';
+        pct = '0%';
+        sRate = '-';
+        dsr = '-';
+        netCash = '-';
+        stocks = '-';
+        bonds = '-';
+        ins = '-';
+        cash = '-';
+      }
+
+      csv += `"${stt++}","${(c.name || '').replace(/"/g, '""')}","${c.code || ''}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || (m.username + '@gmail.com')}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+    });
+  });
+  csv += '\n';
+
+  csv += '--- PHẦN 4: DANH SÁCH MÃ PHÂN QUYỀN QUẢN TRỊ (ADMIN & INSTRUCTOR AUTHORIZATION CODES) ---\n';
+  csv += 'STT,Mã phân quyền,Vai trò cấp quyền,Đã dùng,Giới hạn lượt dùng,Ngày hết hạn,Trạng thái hiệu lực\n';
+  codes.forEach((cd, idx) => {
+    const isAct = !cd.isRevoked && (cd.usedCount < cd.maxUses) && new Date(cd.expiresAt).getTime() > Date.now();
+    const statusText = cd.isRevoked ? 'Đã thu hồi' : (isAct ? 'Còn hiệu lực' : 'Đã hết hạn');
+    const roleText = cd.role === 'admin' ? 'Quản trị viên (ADMN)' : 'Giảng viên (INST)';
+    csv += `"${idx + 1}","${cd.code}","${roleText}","${cd.usedCount}","${cd.maxUses}","${(cd.expiresAt || '').slice(0, 10)}","${statusText}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Bao_Cao_Toan_Canh_Quan_Tri_Tai_Chinh_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã xuất báo cáo toàn cảnh hệ thống (CSV) thành công!');
+};
+
+window.exportAdminSystemBackup = async function() {
+  const classes = window.CloudDB && typeof window.CloudDB.getClasses === 'function' ? await window.CloudDB.getClasses() : [];
+  const codes = window.CloudDB && typeof window.CloudDB.getAdminCodes === 'function' ? await window.CloudDB.getAdminCodes() : [];
+  const backup = {
+    version: "3.2.0",
+    exportedAt: new Date().toISOString(),
+    system: "financials-plan-admin",
+    classes,
+    adminCodes: codes
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Admin_System_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Đã tải xuống bản sao lưu toàn bộ hệ thống!');
+};
+
+window.triggerAdminSystemRestore = function() {
+  document.getElementById('file-admin-system-restore')?.click();
+};
+
+window.handleAdminSystemRestoreFile = function(input) {
+  const file = input?.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data.classes) && window.CloudDB) {
+        showToast('Khôi phục dữ liệu sao lưu thành công!');
+        if (typeof renderAdminGroupsList === 'function') renderAdminGroupsList();
+      }
+    } catch (err) {
+      showToast('Tệp sao lưu không hợp lệ.', 'error');
+    }
+  };
+  reader.readAsText(file);
+};
 

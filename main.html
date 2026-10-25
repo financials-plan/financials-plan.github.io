@@ -53,54 +53,83 @@
           <span class="rail-active-indicator"></span>
         </div>
 
-        <div class="nav-section-label">TỔNG QUAN &amp; THIẾT LẬP</div>
-        <button class="nav-item active" id="btn-tab-tukhoa" data-tooltip="Từ khóa thiết lập" onclick="switchTab('tab-tukhoa')">
-          <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
-        </button>
-        <button class="nav-item" id="btn-tab-dashboard" data-tooltip="Dashboard phân tích" onclick="switchTab('tab-dashboard')">
-          <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
-        </button>
+        <div class="rail-nav-student" id="rail-nav-student">
+          <div class="nav-section-label">TỔNG QUAN &amp; THIẾT LẬP</div>
+          <button class="nav-item active" id="btn-tab-tukhoa" data-tooltip="Từ khóa thiết lập" onclick="switchTab('tab-tukhoa')">
+            <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
+          </button>
+          <button class="nav-item" id="btn-tab-dashboard" data-tooltip="Dashboard phân tích" onclick="switchTab('tab-dashboard')">
+            <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
+          </button>
 
-        <div class="nav-section-label">MỤC TIÊU &amp; LỘ TRÌNH</div>
-        <button class="nav-item" id="btn-tab-muctieu-bt" data-tooltip="Mục tiêu bản thân" onclick="switchTab('tab-muctieu-bt')">
-          <i class="fa-solid fa-bullseye"></i><span>Mục tiêu bản thân</span>
-        </button>
-        <button class="nav-item" id="btn-tab-muctieu-tc" data-tooltip="Mục tiêu tài chính" onclick="switchTab('tab-muctieu-tc')">
-          <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
-        </button>
-        <button class="nav-item two-lines" id="btn-tab-candoi" data-tooltip="Cân đối lộ trình" onclick="switchTab('tab-candoi')">
-          <i class="fa-solid fa-route"></i><span>Cân đối lộ trình</span>
-        </button>
-        <button class="nav-item two-lines" id="btn-tab-kehoach" data-tooltip="Kế hoạch thu chi" onclick="switchTab('tab-kehoach')">
-          <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
-        </button>
+          <div class="nav-section-label">MỤC TIÊU &amp; LỘ TRÌNH</div>
+          <button class="nav-item" id="btn-tab-muctieu-bt" data-tooltip="Mục tiêu bản thân" onclick="switchTab('tab-muctieu-bt')">
+            <i class="fa-solid fa-bullseye"></i><span>Mục tiêu bản thân</span>
+          </button>
+          <button class="nav-item" id="btn-tab-muctieu-tc" data-tooltip="Mục tiêu tài chính" onclick="switchTab('tab-muctieu-tc')">
+            <i class="fa-solid fa-vault"></i><span>Mục tiêu tài chính</span>
+          </button>
+          <button class="nav-item two-lines" id="btn-tab-candoi" data-tooltip="Cân đối lộ trình" onclick="switchTab('tab-candoi')">
+            <i class="fa-solid fa-route"></i><span>Cân đối lộ trình</span>
+          </button>
+          <button class="nav-item two-lines" id="btn-tab-kehoach" data-tooltip="Kế hoạch thu chi" onclick="switchTab('tab-kehoach')">
+            <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
+          </button>
 
-        <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
+          <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
 
-        <button type="button" class="rail-month-collapsed-btn" id="btn-month-collapsed" data-tooltip="Theo dõi 12 tháng" onclick="switchMonthTab(AppState.currentMonth || 1)">
-          <i class="fa-solid fa-calendar-days"></i>
-        </button>
-        <div class="month-nav-grid">
-          <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
-          <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
-          <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
-          <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
-          <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
-          <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
-          <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
-          <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
-          <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
-          <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
-          <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
-          <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+          <button type="button" class="rail-month-collapsed-btn" id="btn-month-collapsed" data-tooltip="Theo dõi 12 tháng" onclick="switchMonthTab(AppState.currentMonth || 1)">
+            <i class="fa-solid fa-calendar-days"></i>
+          </button>
+          <div class="month-nav-grid">
+            <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
+            <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
+            <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
+            <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
+            <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
+            <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
+            <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
+            <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
+            <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
+            <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
+            <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
+            <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+          </div>
+
+          <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
+          <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
+            <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
+          </button>
         </div>
 
-        <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
-        <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
-          <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
-        </button>
+        <div class="rail-nav-admin" id="rail-nav-admin" style="display: none;">
+          <div class="nav-section-label">TỔNG QUAN &amp; THIẾT LẬP</div>
+          <button class="nav-item active" id="btn-tab-admin-groups" data-tooltip="Lớp học đang quản lí" onclick="switchTab('tab-admin-groups')">
+            <i class="fa-solid fa-sliders"></i><span>Lớp học đang quản lí</span>
+          </button>
+          <button class="nav-item" id="btn-tab-admin-requests" data-tooltip="Yêu cầu vào nhóm" onclick="switchTab('tab-admin-requests')">
+            <i class="fa-solid fa-globe"></i><span>Yêu cầu vào nhóm</span>
+            <span class="badge-pending-count" id="admin-pending-badge" style="display: none;">0</span>
+          </button>
+
+          <div class="nav-section-label">QUẢN LÍ NHÓM</div>
+          <button class="nav-item" id="btn-tab-admin-students" data-tooltip="Dashboard tổng hợp nhóm" onclick="switchTab('tab-admin-students')">
+            <i class="fa-solid fa-chalkboard-user"></i><span>Dashboard tổng hợp nhóm</span>
+          </button>
+          <button class="nav-item" id="btn-tab-admin-analytics" data-tooltip="Phân tích chuyên sâu" onclick="switchTab('tab-admin-analytics')">
+            <i class="fa-solid fa-chart-pie"></i><span>Phân tích chuyên sâu</span>
+          </button>
+        </div>
       </div>
     </nav>
+    <div class="sidebar-admin-footer" id="sidebar-admin-footer">
+      <button type="button" class="btn-sidebar-admin-mode" id="btn-sidebar-admin-mode" onclick="toggleAdminManagerMode()" title="Chuyển đổi giao diện Quản Trị / Sổ tài chính">
+        <i class="fa-solid fa-shield-halved"></i> <span>Quản Trị (QTV)</span>
+      </button>
+      <button type="button" class="btn-sidebar-admin-settings" id="btn-sidebar-admin-settings" onclick="openAdminPersonalSettingsModal()" title="Cài đặt cá nhân">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
   </aside>
 
   <main class="main-content">
@@ -222,6 +251,315 @@
     </div>
 
     <section class="content-body">
+
+      <div id="tab-admin-groups" class="tab-pane">
+        <div class="admin-pane-container">
+          <div class="admin-hero-banner">
+            <div class="admin-hero-content">
+              <div class="admin-hero-badge"><i class="fa-solid fa-layer-group"></i> TRUNG TÂM QUẢN TRỊ NHÓM</div>
+              <h2 class="admin-hero-title">Tổng quan các nhóm được tạo</h2>
+              <p class="admin-hero-desc">Quản lý lớp học, phân quyền thành viên, thiết lập nhóm Kín/Mở và tùy chỉnh quy định đào tạo</p>
+            </div>
+            <div class="admin-hero-actions">
+              <button type="button" class="btn-create-group-hero" onclick="toggleCreateGroupForm()">
+                <i class="fa-solid fa-plus-circle"></i> <span>Tạo nhóm mới</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="admin-kpi-grid">
+            <div class="admin-kpi-card">
+              <div class="kpi-icon-wrap bg-violet-soft text-primary"><i class="fa-solid fa-chalkboard-user"></i></div>
+              <div class="kpi-info">
+                <span class="kpi-num" id="kpi-total-groups">0</span>
+                <span class="kpi-label">Tổng số nhóm</span>
+              </div>
+            </div>
+            <div class="admin-kpi-card">
+              <div class="kpi-icon-wrap bg-emerald-soft text-emerald"><i class="fa-solid fa-users"></i></div>
+              <div class="kpi-info">
+                <span class="kpi-num" id="kpi-total-students">0</span>
+                <span class="kpi-label">Tổng học viên</span>
+              </div>
+            </div>
+            <div class="admin-kpi-card">
+              <div class="kpi-icon-wrap bg-amber-soft text-amber"><i class="fa-solid fa-lock"></i></div>
+              <div class="kpi-info">
+                <span class="kpi-num" id="kpi-private-groups">0</span>
+                <span class="kpi-label">Nhóm Kín (Private)</span>
+              </div>
+            </div>
+            <div class="admin-kpi-card clickable-card" onclick="switchTab('tab-admin-requests')">
+              <div class="kpi-icon-wrap bg-rose-soft text-rose"><i class="fa-solid fa-user-clock"></i></div>
+              <div class="kpi-info">
+                <span class="kpi-num" id="kpi-pending-requests">0</span>
+                <span class="kpi-label">Yêu cầu chờ duyệt</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="create-group-form-wrap" class="create-group-form-card" style="display: none;">
+            <div class="form-card-header">
+              <div class="form-card-title-group">
+                <h3><i class="fa-solid fa-plus-circle text-primary"></i> Khởi tạo nhóm đào tạo mới</h3>
+                <p>Thiết lập tên lớp, mã mời, quy mô thành viên và phân loại chế độ Kín/Mở</p>
+              </div>
+              <button type="button" class="btn-close-form" onclick="toggleCreateGroupForm()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="form-card-body">
+              <div class="form-grid-2cols">
+                <div class="form-field-group">
+                  <label for="inp-new-group-name">Tên nhóm / Lớp học <span class="text-rose">*</span></label>
+                  <input type="text" id="inp-new-group-name" class="admin-input-styled" placeholder="Ví dụ: Lớp K49 - Quản Trị Tài Chính Cá Nhân" maxlength="64">
+                </div>
+                <div class="form-field-group">
+                  <label for="inp-new-group-code">Mã tham gia nhóm <span class="text-rose">*</span></label>
+                  <div class="input-with-action">
+                    <input type="text" id="inp-new-group-code" class="admin-input-styled uppercase-input" placeholder="TC-K49" maxlength="32">
+                    <button type="button" class="btn-input-action" onclick="generateRandomGroupCode()" title="Tự động sinh mã ngẫu nhiên">
+                      <i class="fa-solid fa-shuffle"></i> <span>Sinh mã</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label>Số lượng thành viên tham gia tối đa <span class="text-rose">*</span></label>
+                <div class="limit-selector-group">
+                  <label class="limit-radio-label">
+                    <input type="radio" name="new-group-limit" value="40" checked>
+                    <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>40</strong> thành viên</span>
+                  </label>
+                  <label class="limit-radio-label">
+                    <input type="radio" name="new-group-limit" value="60">
+                    <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>60</strong> thành viên</span>
+                  </label>
+                  <label class="limit-radio-label">
+                    <input type="radio" name="new-group-limit" value="100">
+                    <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>100</strong> thành viên</span>
+                  </label>
+                  <label class="limit-radio-label">
+                    <input type="radio" name="new-group-limit" value="0">
+                    <span class="limit-radio-card"><i class="fa-solid fa-infinity"></i> <strong>Không giới hạn</strong> (No limit)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label>Chế độ tham gia &amp; Bảo mật nhóm <span class="text-rose">*</span></label>
+                <div class="privacy-selector-group">
+                  <label class="privacy-radio-label">
+                    <input type="radio" name="new-group-privacy" value="private" checked>
+                    <span class="privacy-radio-card">
+                      <div class="privacy-card-icon"><i class="fa-solid fa-lock"></i></div>
+                      <div class="privacy-card-text">
+                        <strong>Nhóm Kín (Private)</strong>
+                        <span>Học viên nhập mã gửi yêu cầu, Quản trị viên duyệt mới được vào</span>
+                      </div>
+                    </span>
+                  </label>
+                  <label class="privacy-radio-label">
+                    <input type="radio" name="new-group-privacy" value="global">
+                    <span class="privacy-radio-card">
+                      <div class="privacy-card-icon"><i class="fa-solid fa-globe"></i></div>
+                      <div class="privacy-card-text">
+                        <strong>Nhóm Mở (Global)</strong>
+                        <span>Học viên nhập mã là tham gia trực tiếp ngay lập tức</span>
+                      </div>
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-field-group">
+                <label for="inp-new-group-desc">Mô tả &amp; Quy định nhóm (Tùy chọn)</label>
+                <textarea id="inp-new-group-desc" class="admin-textarea-styled" rows="2" placeholder="Ghi chú nội quy bài tập, hạn nộp kế hoạch tài chính hoặc lưu ý cho thành viên..."></textarea>
+              </div>
+
+              <div class="form-actions-row">
+                <button type="button" class="btn-cancel-form" onclick="toggleCreateGroupForm()">Hủy bỏ</button>
+                <button type="button" class="btn-submit-group" onclick="submitCreateNewGroup()">
+                  <i class="fa-solid fa-check-circle"></i> <span>Tạo nhóm ngay</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-toolbar-row">
+            <div class="search-box-wrap">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="admin-group-search" class="admin-search-input" placeholder="Tìm kiếm nhóm theo tên hoặc mã..." oninput="renderAdminGroupsList()">
+            </div>
+            <div class="filter-actions-wrap">
+              <select id="admin-group-filter-type" class="admin-select-styled" onchange="renderAdminGroupsList()">
+                <option value="all">Tất cả nhóm</option>
+                <option value="private">Chỉ nhóm Kín (Private)</option>
+                <option value="global">Chỉ nhóm Mở (Global)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="admin-groups-grid" class="admin-groups-grid"></div>
+        </div>
+      </div>
+
+      <div id="tab-admin-requests" class="tab-pane">
+        <div class="admin-pane-container">
+          <div class="requests-notice-banner">
+            <div class="notice-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="notice-text">
+              <h4>Quy trình duyệt yêu cầu thành viên</h4>
+              <p>Trang này <strong>chỉ áp dụng cho các Nhóm Kín (Private)</strong>. Sau khi học viên gửi yêu cầu nhập nhóm, Quản trị viên sẽ phê duyệt hoặc từ chối tại đây. Đối với các <strong>Nhóm Mở (Global)</strong>, học viên tham gia trực tiếp và không cần thao tác tại trang này.</p>
+            </div>
+          </div>
+
+          <div class="admin-toolbar-row">
+            <div class="class-filter-wrap">
+              <label for="admin-requests-group-filter"><i class="fa-solid fa-filter text-primary"></i> <span>Lọc theo nhóm:</span></label>
+              <select id="admin-requests-group-filter" class="admin-select-styled" onchange="renderAdminRequestsTable()">
+                <option value="all">Tất cả các nhóm Kín</option>
+              </select>
+            </div>
+            <div class="requests-counter-badge" id="requests-counter-badge">
+              <i class="fa-solid fa-clock"></i> <span>0 yêu cầu đang chờ</span>
+            </div>
+          </div>
+
+          <div class="admin-table-card">
+            <div class="table-responsive" id="wrap-table-admin-requests">
+              <table class="admin-custom-table" id="table-admin-requests">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Học viên xin vào</th>
+                    <th>Email liên hệ</th>
+                    <th>Nhóm yêu cầu</th>
+                    <th>Thời gian gửi</th>
+                    <th style="text-align: right; width: 220px;">Quyết định</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-admin-requests"></tbody>
+              </table>
+            </div>
+            <div id="empty-admin-requests" class="admin-empty-state" style="display: none;">
+              <div class="empty-icon text-emerald"><i class="fa-solid fa-circle-check"></i></div>
+              <h3>Không có yêu cầu nào đang chờ</h3>
+              <p>Tất cả các yêu cầu xin vào nhóm Kín đã được phê duyệt hoặc từ chối đầy đủ.</p>
+              <span class="empty-badge-tip"><i class="fa-solid fa-bell"></i> Hệ thống tự động báo chuông khi có học viên mới gửi yêu cầu</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-admin-students" class="tab-pane">
+        <div class="admin-pane-container">
+          <div class="students-mgmt-header-card">
+            <div class="mgmt-header-top">
+              <div class="group-picker-box">
+                <label for="admin-students-group-select"><i class="fa-solid fa-layer-group text-primary"></i> Đang xem nhóm:</label>
+                <select id="admin-students-group-select" class="admin-group-picker-dropdown" onchange="onAdminStudentGroupChange(this.value)"></select>
+              </div>
+              <div class="group-current-meta" id="group-current-meta"></div>
+              <div class="mgmt-header-actions">
+                <button type="button" class="btn-admin-action-outline" onclick="exportGroupMembersCsv()" title="Xuất báo cáo nhóm dạng CSV">
+                  <i class="fa-solid fa-file-excel"></i> <span>Xuất CSV</span>
+                </button>
+                <button type="button" class="btn-admin-action-outline" onclick="exportGroupJsonSnapshot()" title="Tải toàn bộ bài làm sinh viên của nhóm dạng JSON">
+                  <i class="fa-solid fa-file-code"></i> <span>Tải JSON bài làm</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="students-summary-strip" id="students-summary-strip">
+              <div class="strip-kpi-item" id="kpi-filter-all" onclick="filterAdminStudentsKpi('all')" style="cursor: pointer;" title="Xem tất cả">
+                <span class="strip-kpi-val" id="strip-kpi-members">0</span>
+                <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+              </div>
+              <div class="strip-kpi-divider"></div>
+              <div class="strip-kpi-item" id="kpi-filter-completed" onclick="filterAdminStudentsKpi('completed')" style="cursor: pointer;" title="Lọc sinh viên đã hoàn thành">
+                <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
+                <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+              </div>
+              <div class="strip-kpi-divider"></div>
+              <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="filterAdminStudentsKpi('balancing')" style="cursor: pointer;" title="Lọc sinh viên đang lập lộ trình">
+                <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
+                <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+              </div>
+              <div class="strip-kpi-divider"></div>
+              <div class="strip-kpi-item" id="kpi-filter-pending" onclick="filterAdminStudentsKpi('pending')" style="cursor: pointer;" title="Lọc sinh viên chưa hoàn thiện">
+                <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
+                <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-toolbar-row">
+            <div class="search-box-wrap" style="flex: 1;">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm sinh viên theo họ tên hoặc username..." oninput="renderAdminStudentsTable()">
+            </div>
+            <div class="admin-view-switcher">
+              <button type="button" class="view-switch-btn active" id="btn-view-mode-progress" onclick="setAdminStudentsViewMode('progress')" title="Chế độ xem tiến độ lộ trình">
+                <i class="fa-solid fa-bars-progress"></i> <span>Tiến độ</span>
+              </button>
+              <button type="button" class="view-switch-btn" id="btn-view-mode-matrix" onclick="setAdminStudentsViewMode('matrix')" title="Chế độ xem ma trận chỉ số tài chính toàn cảnh">
+                <i class="fa-solid fa-table-cells"></i> <span>Ma trận tài chính</span>
+              </button>
+            </div>
+            <div class="student-count-chip" id="student-count-chip">Hiển thị: 0 thành viên</div>
+          </div>
+
+          <div class="admin-table-card">
+            <div class="table-responsive" id="wrap-table-admin-students">
+              <table class="admin-custom-table" id="table-admin-students">
+                <thead id="thead-admin-students">
+                  <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Sinh viên / Thành viên</th>
+                    <th>Email</th>
+                    <th>Ngày tham gia</th>
+                    <th>Trạng thái</th>
+                    <th style="min-width: 220px;">Tiến độ lộ trình tài chính</th>
+                    <th style="text-align: right; width: 170px;">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-admin-students"></tbody>
+              </table>
+            </div>
+            <div id="empty-admin-students" class="admin-empty-state" style="display: none;">
+              <div class="empty-icon text-muted"><i class="fa-solid fa-user-group"></i></div>
+              <h3>Nhóm chưa có sinh viên nào</h3>
+              <p>Hãy chia sẻ Mã tham gia nhóm cho sinh viên để họ bắt đầu tham gia lớp học.</p>
+              <span class="empty-badge-tip"><i class="fa-solid fa-share-nodes"></i> Sao chép mã lớp ở phía trên để gửi cho học viên</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-admin-analytics" class="tab-pane">
+        <div class="admin-pane-container">
+          <div class="analytics-header-card">
+            <div class="analytics-title-group">
+              <h3><i class="fa-solid fa-chart-pie text-primary"></i> Phân tích tài chính chuyên sâu nhóm</h3>
+              <p>Tổng hợp chỉ số phân bổ tài sản, khẩu vị rủi ro và tỷ lệ đạt mục tiêu trung bình của nhóm</p>
+            </div>
+            <div class="analytics-group-selector">
+              <select id="analytics-group-select" class="admin-select-styled" onchange="renderAdminAnalyticsView(this.value)"></select>
+            </div>
+          </div>
+
+          <div class="analytics-grid-row">
+            <div class="analytics-card">
+              <h4>Cơ cấu phân bổ tài sản trung bình nhóm</h4>
+              <div id="analytics-asset-bars" class="analytics-bars-container"></div>
+            </div>
+            <div class="analytics-card">
+              <h4>Tỷ lệ hoàn thành mục tiêu tài chính</h4>
+              <div id="analytics-goals-container" class="analytics-goals-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       
       <div id="tab-tukhoa" class="tab-pane active">
@@ -2256,6 +2594,281 @@
         <button type="button" class="btn-modal-submit" onclick="submitStudentJoinClass()">
           <span>Gửi yêu cầu tham gia</span> <i class="fa-solid fa-paper-plane"></i>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-group-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="custom-group-title" style="display: none;">
+    <div class="modal-card custom-group-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="custom-group-title"><i class="fa-solid fa-sliders text-primary"></i> Tùy chỉnh nhóm đào tạo</h3>
+          <p>Điều chỉnh quy mô, đổi tên, thay đổi trạng thái Kín/Mở và cập nhật nội quy</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeCustomGroupModal()" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="custom-group-id">
+        <div class="form-field-group">
+          <label for="custom-group-name">Tên nhóm / Lớp học</label>
+          <input type="text" id="custom-group-name" class="admin-input-styled" maxlength="64">
+        </div>
+
+        <div class="form-field-group">
+          <label for="custom-group-code">Mã tham gia nhóm</label>
+          <input type="text" id="custom-group-code" class="admin-input-styled uppercase-input" maxlength="32">
+        </div>
+
+        <div class="form-field-group">
+          <label>Số lượng thành viên tối đa</label>
+          <div class="limit-selector-group">
+            <label class="limit-radio-label">
+              <input type="radio" name="custom-group-limit" value="40">
+              <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>40</strong></span>
+            </label>
+            <label class="limit-radio-label">
+              <input type="radio" name="custom-group-limit" value="60">
+              <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>60</strong></span>
+            </label>
+            <label class="limit-radio-label">
+              <input type="radio" name="custom-group-limit" value="100">
+              <span class="limit-radio-card"><i class="fa-solid fa-users"></i> <strong>100</strong></span>
+            </label>
+            <label class="limit-radio-label">
+              <input type="radio" name="custom-group-limit" value="0">
+              <span class="limit-radio-card"><i class="fa-solid fa-infinity"></i> <strong>No limit</strong></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-field-group">
+          <label>Chế độ nhóm</label>
+          <div class="privacy-selector-group">
+            <label class="privacy-radio-label">
+              <input type="radio" name="custom-group-privacy" value="private">
+              <span class="privacy-radio-card">
+                <i class="fa-solid fa-lock"></i> <strong>Nhóm Kín (Private)</strong> — Cần QTV duyệt
+              </span>
+            </label>
+            <label class="privacy-radio-label">
+              <input type="radio" name="custom-group-privacy" value="global">
+              <span class="privacy-radio-card">
+                <i class="fa-solid fa-globe"></i> <strong>Nhóm Mở (Global)</strong> — Vào tự do
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-field-group">
+          <label for="custom-group-desc">Quy định &amp; Ghi chú nhóm</label>
+          <textarea id="custom-group-desc" class="admin-textarea-styled" rows="2"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn-archive-group-danger" onclick="archiveCurrentCustomGroup()">
+          <i class="fa-solid fa-box-archive"></i> <span>Đóng / Lưu trữ nhóm</span>
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-modal-cancel" onclick="closeCustomGroupModal()">Hủy</button>
+          <button type="button" class="btn-modal-submit" onclick="saveCustomGroupSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> <span>Lưu thay đổi</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin-personal-settings-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-settings-title" style="display: none;">
+    <div class="modal-card admin-settings-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="admin-settings-title"><i class="fa-solid fa-gear text-primary"></i> Cài đặt cá nhân Quản trị viên</h3>
+          <p>Thiết lập hồ sơ admin thuần, cấp phát mã phân quyền, bảo mật và cấu hình hệ thống</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeAdminPersonalSettingsModal()" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="admin-settings-tabs-bar">
+        <button type="button" class="settings-tab-btn active" id="btn-sett-profile" onclick="switchAdminSettingsTab('profile')">
+          <i class="fa-solid fa-id-card"></i> <span>Hồ sơ Admin</span>
+        </button>
+        <button type="button" class="settings-tab-btn" id="btn-sett-codes" onclick="switchAdminSettingsTab('codes')">
+          <i class="fa-solid fa-key"></i> <span>Cung cấp &amp; Quản lý Mã</span>
+        </button>
+        <button type="button" class="settings-tab-btn" id="btn-sett-security" onclick="switchAdminSettingsTab('security')">
+          <i class="fa-solid fa-shield-halved"></i> <span>Bảo mật</span>
+        </button>
+        <button type="button" class="settings-tab-btn" id="btn-sett-system" onclick="switchAdminSettingsTab('system')">
+          <i class="fa-solid fa-sliders"></i> <span>Hệ thống</span>
+        </button>
+      </div>
+
+      <div class="modal-body admin-settings-modal-body">
+        <div id="sett-pane-profile" class="sett-pane active">
+          <div class="admin-profile-hero">
+            <div class="admin-avatar-big" id="sett-avatar-preview">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div class="admin-profile-meta">
+              <h3 id="sett-display-title">Quản trị viên</h3>
+              <div class="admin-role-badge-master">
+                <i class="fa-solid fa-certificate"></i> <span>Master Admin (Quản trị viên Tối cao)</span>
+              </div>
+              <p class="admin-profile-sub">Tài khoản này có toàn quyền tạo nhóm, duyệt thành viên và cung cấp mã quản trị cho người khác.</p>
+            </div>
+          </div>
+
+          <div class="form-grid-2cols" style="margin-top: 18px;">
+            <div class="form-field-group">
+              <label for="inp-sett-display-name">Tên hiển thị</label>
+              <input type="text" id="inp-sett-display-name" class="admin-input-styled" value="Quản trị viên (Admin)">
+            </div>
+            <div class="form-field-group">
+              <label for="inp-sett-username">Tên đăng nhập (Username)</label>
+              <input type="text" id="inp-sett-username" class="admin-input-styled readonly-input" value="admin" readonly>
+            </div>
+          </div>
+
+          <div class="form-grid-2cols">
+            <div class="form-field-group">
+              <label for="inp-sett-email">Email khôi phục &amp; liên hệ</label>
+              <input type="email" id="inp-sett-email" class="admin-input-styled" value="admin@financials-plan.io">
+            </div>
+            <div class="form-field-group">
+              <label for="inp-sett-phone">Số điện thoại liên hệ</label>
+              <input type="tel" id="inp-sett-phone" class="admin-input-styled" placeholder="09xx xxx xxx">
+            </div>
+          </div>
+
+          <div style="margin-top: 16px; text-align: right;">
+            <button type="button" class="btn-submit-group" onclick="saveAdminProfileSettings()">
+              <i class="fa-solid fa-floppy-disk"></i> <span>Lưu cập nhật hồ sơ</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="sett-pane-codes" class="sett-pane" style="display: none;">
+          <div class="codes-distributor-notice">
+            <i class="fa-solid fa-info-circle text-primary"></i>
+            <span>Bạn là Quản trị viên đầu tiên. Hãy tạo mã cấp quyền dưới đây và gửi mã cho các Giảng viên hoặc Quản trị viên phụ để họ đăng ký tài khoản.</span>
+          </div>
+
+          <div class="codes-generator-card">
+            <h4><i class="fa-solid fa-plus-circle text-primary"></i> Tạo mã cấp quyền mới</h4>
+            <div class="codes-generator-row">
+              <div class="form-field-group">
+                <label>Vai trò cấp</label>
+                <select id="inp-gen-role" class="admin-select-styled">
+                  <option value="instructor">Giảng viên / Quản lý nhóm (INST)</option>
+                  <option value="admin">Quản trị viên phụ (ADMN)</option>
+                </select>
+              </div>
+              <div class="form-field-group">
+                <label>Lượt dùng tối đa</label>
+                <select id="inp-gen-uses" class="admin-select-styled">
+                  <option value="1">1 lượt (Dùng 1 lần)</option>
+                  <option value="5">5 lượt</option>
+                  <option value="20" selected>20 lượt</option>
+                  <option value="100">100 lượt</option>
+                </select>
+              </div>
+              <div class="form-field-group">
+                <label>Thời hạn hiệu lực</label>
+                <select id="inp-gen-days" class="admin-select-styled">
+                  <option value="7">7 ngày</option>
+                  <option value="30">30 ngày</option>
+                  <option value="90" selected>90 ngày</option>
+                  <option value="365">1 năm</option>
+                </select>
+              </div>
+              <div class="form-field-group" style="align-self: flex-end;">
+                <button type="button" class="btn-submit-group" onclick="submitGenerateAdminCode()">
+                  <i class="fa-solid fa-bolt"></i> <span>Tạo mã ngay</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="codes-list-section" style="margin-top: 18px;">
+            <h4><i class="fa-solid fa-list-check text-primary"></i> Danh sách mã đã cấp phát</h4>
+            <div class="table-responsive">
+              <table class="admin-custom-table" id="table-sett-codes">
+                <thead>
+                  <tr>
+                    <th>Mã số</th>
+                    <th>Vai trò</th>
+                    <th>Lượt dùng</th>
+                    <th>Hạn dùng</th>
+                    <th>Trạng thái</th>
+                    <th style="text-align: right;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-sett-codes"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="sett-pane-security" class="sett-pane" style="display: none;">
+          <div class="security-card-box">
+            <h4><i class="fa-solid fa-key text-primary"></i> Đổi mật khẩu đăng nhập</h4>
+            <div class="form-field-group">
+              <label for="inp-pass-old">Mật khẩu hiện tại</label>
+              <input type="password" id="inp-pass-old" class="admin-input-styled" placeholder="Nhập mật khẩu đang dùng...">
+            </div>
+            <div class="form-grid-2cols">
+              <div class="form-field-group">
+                <label for="inp-pass-new">Mật khẩu mới</label>
+                <input type="password" id="inp-pass-new" class="admin-input-styled" placeholder="Tối thiểu 6 ký tự...">
+              </div>
+              <div class="form-field-group">
+                <label for="inp-pass-confirm">Xác nhận mật khẩu mới</label>
+                <input type="password" id="inp-pass-confirm" class="admin-input-styled" placeholder="Nhập lại mật khẩu mới...">
+              </div>
+            </div>
+            <div style="margin-top: 12px; text-align: right;">
+              <button type="button" class="btn-submit-group" onclick="submitChangeAdminPassword()">
+                <i class="fa-solid fa-lock"></i> <span>Cập nhật mật khẩu</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="sett-pane-system" class="sett-pane" style="display: none;">
+          <div class="system-pref-card">
+            <h4><i class="fa-solid fa-bell text-primary"></i> Tùy chọn thông báo</h4>
+            <div class="pref-toggle-row">
+              <div>
+                <strong>Thông báo khi có yêu cầu vào nhóm mới</strong>
+                <p>Hiển thị chuông và badge báo khi học viên gửi yêu cầu xin vào nhóm Kín</p>
+              </div>
+              <input type="checkbox" id="chk-notify-requests" checked style="width: 20px; height: 20px;">
+            </div>
+          </div>
+
+          <div class="system-pref-card" style="margin-top: 16px;">
+            <h4><i class="fa-solid fa-database text-primary"></i> Sao lưu &amp; Khôi phục toàn bộ hệ thống</h4>
+            <p>Tải về tệp sao lưu dữ liệu toàn bộ nhóm, danh sách học viên và mã quản trị để lưu trữ an toàn.</p>
+            <div style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
+              <button type="button" class="btn-admin-action-primary" onclick="exportAdminComprehensiveCsv()">
+                <i class="fa-solid fa-file-csv"></i> <span>Xuất báo cáo toàn diện (CSV)</span>
+              </button>
+              <button type="button" class="btn-admin-action-outline" onclick="exportAdminSystemBackup()">
+                <i class="fa-solid fa-download"></i> <span>Tải bản sao lưu (JSON)</span>
+              </button>
+              <button type="button" class="btn-admin-action-outline" onclick="triggerAdminSystemRestore()">
+                <i class="fa-solid fa-upload"></i> <span>Khôi phục từ tệp (JSON)</span>
+              </button>
+              <input type="file" id="file-admin-system-restore" accept=".json" style="display: none;" onchange="handleAdminSystemRestoreFile(this)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeAdminPersonalSettingsModal()">Đóng</button>
       </div>
     </div>
   </div>

@@ -8,7 +8,8 @@
     "start": "node backend/server.js",
     "serve": "npx serve -l 8899 .",
     "test": "node --test tests/unit.test.js",
-    "admin": "node backend/admin-cli.js"
+    "admin": "node backend/admin-cli.js",
+    "build:admin:standalone": "node scripts/build/generate-admin-standalone.js"
   },
   "repository": {
     "type": "git",

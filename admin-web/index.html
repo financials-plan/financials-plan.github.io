@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cổng Quản Trị Sinh Viên & Lớp Học - Financials Plan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="admin-header">
+    <div class="admin-brand">
+      <div class="admin-brand-icon">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <div class="admin-brand-text">
+        <h1>Cổng Quản Trị Sinh Viên</h1>
+        <span>Phân hệ Điều hành Lớp học & Kế hoạch Tài chính</span>
+      </div>
+    </div>
+    <div class="admin-header-actions">
+      <div class="trigger-badge badge-key" id="header-trigger-badge" style="display: none;"></div>
+      <div class="admin-user-pill">
+        <i class="fa-solid fa-user-shield text-emerald"></i>
+        <span id="admin-user-display">Chưa đăng nhập</span>
+      </div>
+      <button type="button" class="btn-group-action" id="btn-admin-logout" title="Đăng xuất">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="admin-container">
+    <div class="auth-gate-wrapper" id="auth-gate">
+      <div class="auth-card">
+        <div class="auth-card-header">
+          <div class="icon-wrap">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <h2>Xác thực Quản trị viên</h2>
+          <p>Nhập tài khoản hoặc kích hoạt nhanh bằng Khóa API Trigger</p>
+        </div>
+
+        <div class="auth-tab-bar">
+          <button type="button" class="auth-tab-btn active" id="tab-btn-login">Đăng nhập</button>
+          <button type="button" class="auth-tab-btn" id="tab-btn-register">Đăng ký Quản trị</button>
+        </div>
+
+        <form id="form-admin-login">
+          <div class="auth-form-group">
+            <label for="login-username">Tên đăng nhập</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="login-username" class="auth-input" placeholder="admin" required autocomplete="username">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="login-password">Mật khẩu</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="login-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="login-admin-key">Khóa API Quản trị đặc biệt (Tùy chọn)</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-bolt"></i>
+              <input type="text" id="login-admin-key" class="auth-input" placeholder="qtv-secret-2026 hoặc API Key">
+            </div>
+          </div>
+          <button type="submit" class="auth-btn-submit">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Vào Trang Quản Trị</span>
+          </button>
+        </form>
+
+        <form id="form-admin-register" style="display: none;">
+          <div class="auth-form-group">
+            <label for="reg-username">Tên đăng nhập mới</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-user-plus"></i>
+              <input type="text" id="reg-username" class="auth-input" placeholder="username..." required autocomplete="username">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="reg-password">Mật khẩu (tối thiểu 6 ký tự)</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="reg-password" class="auth-input" placeholder="••••••••" required autocomplete="new-password">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="reg-email">Email khôi phục</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-envelope"></i>
+              <input type="email" id="reg-email" class="auth-input" placeholder="admin@domain.com">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="reg-admin-code">Mã kích hoạt QTV (Định dạng XXXX-XXXX-XXXX)</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-ticket"></i>
+              <input type="text" id="reg-admin-code" class="auth-input" placeholder="ADMN-2026-X8Y9">
+            </div>
+          </div>
+          <div class="auth-form-group">
+            <label for="reg-admin-key">Khóa API Trigger (Tùy chọn)</label>
+            <div class="auth-input-wrap">
+              <i class="fa-solid fa-bolt"></i>
+              <input type="text" id="reg-admin-key" class="auth-input" placeholder="qtv-secret-2026">
+            </div>
+          </div>
+          <button type="submit" class="auth-btn-submit">
+            <i class="fa-solid fa-user-shield"></i> <span>Đăng Ký & Nhảy Vào Quản Trị</span>
+          </button>
+        </form>
+
+        <div class="auth-trigger-box">
+          <strong><i class="fa-solid fa-circle-info"></i> Thuật toán kích hoạt tự động:</strong>
+          <p>Nếu bạn truy cập đường dẫn có gắn tham số API như <code>?apiKey=qtv-secret-2026</code> hoặc <code>?adminCode=...</code>, hệ thống sẽ tự động xác thực và đưa bạn thẳng vào Trang Quản trị sinh viên mà không cần đăng nhập thủ công.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-workspace" style="display: none;">
+      <div class="admin-mgmt-card">
+        <div class="mgmt-header-row">
+          <div class="class-select-group">
+            <select id="admin-class-select" class="class-dropdown"></select>
+            <div class="class-meta-strip" id="class-current-meta"></div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-group-action" onclick="window.adminWebPortal.exportCsv()" title="Tải file CSV">
+              <i class="fa-solid fa-file-csv"></i> <span>Xuất CSV</span>
+            </button>
+            <button type="button" class="btn-group-action" onclick="window.adminWebPortal.exportJson()" title="Tải Snapshot JSON">
+              <i class="fa-solid fa-file-code"></i> <span>Tải JSON bài làm</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="students-summary-strip">
+          <div class="strip-kpi-item active" id="kpi-filter-all" onclick="window.adminWebPortal.filterKpi('all')">
+            <span class="strip-kpi-val" id="strip-kpi-members">0</span>
+            <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+          </div>
+          <div class="strip-kpi-divider"></div>
+          <div class="strip-kpi-item" id="kpi-filter-completed" onclick="window.adminWebPortal.filterKpi('completed')">
+            <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
+            <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+          </div>
+          <div class="strip-kpi-divider"></div>
+          <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="window.adminWebPortal.filterKpi('balancing')">
+            <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
+            <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+          </div>
+          <div class="strip-kpi-divider"></div>
+          <div class="strip-kpi-item" id="kpi-filter-pending" onclick="window.adminWebPortal.filterKpi('pending')">
+            <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
+            <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+          </div>
+        </div>
+
+        <div class="admin-toolbar-row">
+          <div class="search-box-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm sinh viên theo họ tên hoặc username...">
+          </div>
+          <div class="admin-view-switcher">
+            <button type="button" class="view-switch-btn active" id="btn-view-progress" onclick="window.adminWebPortal.setViewMode('progress')">
+              <i class="fa-solid fa-bars-progress"></i> <span>Tiến độ</span>
+            </button>
+            <button type="button" class="view-switch-btn" id="btn-view-matrix" onclick="window.adminWebPortal.setViewMode('matrix')">
+              <i class="fa-solid fa-table-cells"></i> <span>Ma trận tài chính</span>
+            </button>
+          </div>
+          <div class="student-count-chip" id="student-count-chip" style="font-size: 13px; font-weight: 700; color: var(--admin-muted);">Hiển thị: 0 thành viên</div>
+        </div>
+
+        <div class="admin-table-card">
+          <div class="table-responsive">
+            <table class="admin-custom-table">
+              <thead id="thead-students"></thead>
+              <tbody id="tbody-students"></tbody>
+            </table>
+          </div>
+          <div id="empty-students" style="display: none; padding: 40px; text-align: center; color: var(--admin-muted);">
+            <i class="fa-solid fa-user-slash" style="font-size: 36px; margin-bottom: 10px;"></i>
+            <p>Không tìm thấy sinh viên nào trong danh sách nhóm này.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="inspect-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: var(--admin-card-bg); border-radius: 14px; max-width: 650px; width: 100%; box-shadow: var(--admin-shadow); border: 1px solid var(--admin-border); overflow: hidden;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid var(--admin-border); display: flex; justify-content: space-between; align-items: center;">
+        <h3 id="inspect-modal-title" style="font-size: 15px; font-weight: 800;"></h3>
+        <button type="button" style="background: transparent; border: 0; font-size: 18px; cursor: pointer; color: var(--admin-muted);" onclick="window.adminWebPortal.closeInspectModal()">&times;</button>
+      </div>
+      <div id="inspect-modal-body" style="padding: 20px;"></div>
+      <div style="padding: 12px 20px; border-top: 1px solid var(--admin-border); text-align: right;">
+        <button type="button" class="btn-group-action" onclick="window.adminWebPortal.closeInspectModal()">Đóng cửa sổ</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

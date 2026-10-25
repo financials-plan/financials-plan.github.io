@@ -3,8 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isValidDocId(id) {
+      return id is string && id.size() >= 2 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_.-]+$');
+    }
+
     function isValidAccountUsername(username) {
-      return username.matches('^[a-z0-9_.]{2,64}$');
+      return username is string && username.size() >= 2 && username.size() <= 100 && username.matches('^[a-zA-Z0-9_.-]+$');
     }
 
     function isAccountUnchanged(reqData, resData) {
@@ -14,38 +18,92 @@ service cloud.firestore {
     }
 
     function hasValidAccountPayload(reqData) {
-      return (!('password' in reqData) || (reqData.password is string && reqData.password.size() <= 128))
-          && (!('mat_khau' in reqData) || (reqData.mat_khau is string && reqData.mat_khau.size() <= 128))
+      return reqData.size() <= 100
+          && (!('password' in reqData) || (reqData.password is string && reqData.password.size() <= 256))
+          && (!('mat_khau' in reqData) || (reqData.mat_khau is string && reqData.mat_khau.size() <= 256))
           && (!('salt' in reqData) || (reqData.salt is string && reqData.salt.size() <= 128))
           && (!('passHash' in reqData) || (reqData.passHash is string && reqData.passHash.size() <= 256))
-          && (!('username' in reqData) || (reqData.username is string && reqData.username.size() >= 2 && reqData.username.size() <= 64))
-          && (!('normalizedUsername' in reqData) || (reqData.normalizedUsername is string && reqData.normalizedUsername.size() >= 2 && reqData.normalizedUsername.size() <= 64))
+          && (!('username' in reqData) || (reqData.username is string && reqData.username.size() >= 2 && reqData.username.size() <= 100))
+          && (!('normalizedUsername' in reqData) || (reqData.normalizedUsername is string && reqData.normalizedUsername.size() >= 2 && reqData.normalizedUsername.size() <= 100))
           && (!('uid' in reqData) || (reqData.uid is string && reqData.uid.size() >= 1 && reqData.uid.size() <= 128))
-          && reqData.size() < 100;
+          && (!('role' in reqData) || (reqData.role is string && reqData.role.size() <= 32))
+          && (!('docId' in reqData) || (reqData.docId is string && reqData.docId.size() <= 128))
+          && (!('recoveryEmail' in reqData) || reqData.recoveryEmail == null || (reqData.recoveryEmail is string && reqData.recoveryEmail.size() <= 128))
+          && (!('maskedEmail' in reqData) || (reqData.maskedEmail is string && reqData.maskedEmail.size() <= 128))
+          && (!('createdAt' in reqData) || (reqData.createdAt is string && reqData.createdAt.size() <= 64) || reqData.createdAt is timestamp)
+          && (!('updatedAt' in reqData) || (reqData.updatedAt is string && reqData.updatedAt.size() <= 64) || reqData.updatedAt is timestamp)
+          && (!('lastLoginAt' in reqData) || (reqData.lastLoginAt is string && reqData.lastLoginAt.size() <= 64) || reqData.lastLoginAt is timestamp);
     }
 
-    function isValidUserProfileId(docId) {
-      return docId == 'khach_hang_mac_dinh'
-          || docId.matches('^user_[a-z0-9_.]{2,80}$');
+    function isFinancialUnchanged(reqData, resData) {
+      return (!('owner_uid' in resData) || ('owner_uid' in reqData && reqData.owner_uid == resData.owner_uid))
+          && (!('username' in resData) || ('username' in reqData && reqData.username == resData.username));
     }
 
     function hasValidFinancialPayload(data) {
-      return data.keys().hasAll(['_lastUpdated'])
-          && data._lastUpdated is string
-          && data._lastUpdated.size() <= 64
+      return data.size() <= 500
           && (!('sessionToken' in data))
+          && (!('customToken' in data))
+          && (!('password' in data))
+          && (!('passwordHash' in data))
+          && (!('_lastUpdated' in data) || (data._lastUpdated is string && data._lastUpdated.size() <= 100) || data._lastUpdated is timestamp)
+          && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 100) || data.updatedAt is timestamp)
+          && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100) || data.createdAt is timestamp)
           && (!('owner_uid' in data) || (data.owner_uid is string && data.owner_uid.size() <= 128))
-          && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() <= 120))
-          && (!('username' in data) || (data.username is string && data.username.size() <= 64))
+          && (!('username' in data) || (data.username is string && data.username.size() <= 128))
+          && (!('ho_ten' in data) || (data.ho_ten is string && data.ho_ten.size() <= 200))
           && (!('currentYear' in data) || (data.currentYear is number && data.currentYear >= 1900 && data.currentYear <= 2200))
           && (!('currentAge' in data) || (data.currentAge is number && data.currentAge >= 0 && data.currentAge <= 150))
-          && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 30))
-          && data.size() < 100;
+          && (!('tcGoals' in data) || data.tcGoals is list)
+          && (!('personalGoals' in data) || data.personalGoals is list)
+          && (!('planIncome' in data) || data.planIncome is list)
+          && (!('planExpense' in data) || data.planExpense is list)
+          && (!('actualIncome' in data) || data.actualIncome is list)
+          && (!('actualExpense' in data) || data.actualExpense is list)
+          && (!('careerMilestones' in data) || data.careerMilestones is list)
+          && (!('investProducts' in data) || data.investProducts is list)
+          && (!('portfolio' in data) || data.portfolio is list || data.portfolio is map)
+          && (!('monthlyDetails' in data) || data.monthlyDetails is map)
+          && (!('_backups' in data) || (data._backups is list && data._backups.size() <= 50))
+          && (!('_userMeta' in data) || data._userMeta is map);
+    }
+
+    function isValidClassPayload(data) {
+      return data.size() <= 300
+          && (!('id' in data) || (data.id is string && data.id.size() <= 128))
+          && (!('name' in data) || (data.name is string && data.name.size() <= 200))
+          && (!('code' in data) || (data.code is string && data.code.size() <= 64))
+          && (!('description' in data) || (data.description is string && data.description.size() <= 2000))
+          && (!('status' in data) || (data.status is string && data.status.size() <= 32))
+          && (!('instructorUsername' in data) || (data.instructorUsername is string && data.instructorUsername.size() <= 100))
+          && (!('instructorName' in data) || (data.instructorName is string && data.instructorName.size() <= 200))
+          && (!('maxMembers' in data) || data.maxMembers is number)
+          && (!('isPrivate' in data) || data.isPrivate is bool)
+          && (!('members' in data) || (data.members is list && data.members.size() <= 500))
+          && (!('submissions' in data) || data.submissions is list || data.submissions is map)
+          && (!('assignments' in data) || data.assignments is list || data.assignments is map);
+    }
+
+    function isValidAdminCode(code) {
+      return code is string && code.size() >= 4 && code.size() <= 64 && code.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function isValidAdminCodePayload(data) {
+      return data.size() <= 50
+          && (!('code' in data) || (data.code is string && data.code.size() <= 64))
+          && (!('role' in data) || (data.role is string && data.role.size() <= 32))
+          && (!('maxUses' in data) || data.maxUses is number)
+          && (!('usedCount' in data) || data.usedCount is number)
+          && (!('isRevoked' in data) || data.isRevoked is bool)
+          && (!('expiresAt' in data) || (data.expiresAt is string && data.expiresAt.size() <= 64) || data.expiresAt is timestamp)
+          && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64) || data.createdAt is timestamp)
+          && (!('lastUsedAt' in data) || (data.lastUsedAt is string && data.lastUsedAt.size() <= 64) || data.lastUsedAt is timestamp)
+          && (!('lastUsedBy' in data) || (data.lastUsedBy is string && data.lastUsedBy.size() <= 100));
     }
 
     match /financial_accounts/{username} {
       allow get: if isValidAccountUsername(username);
-      allow list: if false;
+      allow list: if true;
       allow create: if isValidAccountUsername(username)
                     && hasValidAccountPayload(request.resource.data)
                     && (!('normalizedUsername' in request.resource.data) || request.resource.data.normalizedUsername == username);
@@ -57,7 +115,7 @@ service cloud.firestore {
 
     match /accounts/{username} {
       allow get: if isValidAccountUsername(username);
-      allow list: if false;
+      allow list: if true;
       allow create: if isValidAccountUsername(username)
                     && hasValidAccountPayload(request.resource.data)
                     && (!('normalizedUsername' in request.resource.data) || request.resource.data.normalizedUsername == username);
@@ -68,32 +126,111 @@ service cloud.firestore {
     }
 
     match /financial_Authentication/{docId} {
-      allow get: if isValidUserProfileId(docId);
-      allow list: if false;
-      allow create, update: if isValidUserProfileId(docId)
-                            && hasValidFinancialPayload(request.resource.data);
+      allow get: if isValidDocId(docId);
+      allow list: if true;
+      allow create: if isValidDocId(docId)
+                    && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidDocId(docId)
+                    && hasValidFinancialPayload(request.resource.data)
+                    && isFinancialUnchanged(request.resource.data, resource.data);
       allow delete: if false;
+
+      match /{subcollection=**} {
+        allow get, list: if true;
+        allow create, update: if hasValidFinancialPayload(request.resource.data);
+        allow delete: if false;
+      }
     }
 
     match /financial_data/{docId} {
-      allow get: if isValidUserProfileId(docId);
-      allow list: if false;
-      allow create, update: if isValidUserProfileId(docId)
-                            && hasValidFinancialPayload(request.resource.data);
+      allow get: if isValidDocId(docId);
+      allow list: if true;
+      allow create: if isValidDocId(docId)
+                    && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidDocId(docId)
+                    && hasValidFinancialPayload(request.resource.data)
+                    && isFinancialUnchanged(request.resource.data, resource.data);
       allow delete: if false;
+
+      match /{subcollection=**} {
+        allow get, list: if true;
+        allow create, update: if hasValidFinancialPayload(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /student_plans/{planId} {
+      allow get: if isValidDocId(planId);
+      allow list: if true;
+      allow create: if isValidDocId(planId)
+                    && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidDocId(planId)
+                    && hasValidFinancialPayload(request.resource.data)
+                    && isFinancialUnchanged(request.resource.data, resource.data);
+      allow delete: if false;
+
+      match /{subcollection=**} {
+        allow get, list: if true;
+        allow create, update: if hasValidFinancialPayload(request.resource.data);
+        allow delete: if false;
+      }
+    }
+
+    match /user_states/{stateId} {
+      allow get: if isValidDocId(stateId);
+      allow list: if true;
+      allow create: if isValidDocId(stateId)
+                    && hasValidFinancialPayload(request.resource.data);
+      allow update: if isValidDocId(stateId)
+                    && hasValidFinancialPayload(request.resource.data)
+                    && isFinancialUnchanged(request.resource.data, resource.data);
+      allow delete: if false;
+
+      match /{subcollection=**} {
+        allow get, list: if true;
+        allow create, update: if hasValidFinancialPayload(request.resource.data);
+        allow delete: if false;
+      }
     }
 
     match /admin_codes/{code} {
-      allow get: if code.matches('^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
-      allow list: if false;
-      allow create, update: if code.matches('^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
+      allow get: if isValidAdminCode(code);
+      allow list: if true;
+      allow create: if isValidAdminCode(code)
+                    && isValidAdminCodePayload(request.resource.data);
+      allow update: if isValidAdminCode(code)
+                    && isValidAdminCodePayload(request.resource.data);
       allow delete: if false;
     }
 
     match /classes/{classId} {
-      allow get, list: if classId.matches('^cls_[a-zA-Z0-9_-]{2,80}$');
-      allow create, update: if classId.matches('^cls_[a-zA-Z0-9_-]{2,80}$');
+      allow get: if isValidDocId(classId);
+      allow list: if true;
+      allow create: if isValidDocId(classId)
+                    && isValidClassPayload(request.resource.data);
+      allow update: if isValidDocId(classId)
+                    && isValidClassPayload(request.resource.data)
+                    && (!('id' in resource.data) || !('id' in request.resource.data) || request.resource.data.id == resource.data.id);
       allow delete: if false;
+
+      match /submissions/{subId} {
+        allow read: if true;
+        allow create, update: if isValidDocId(subId)
+                              && hasValidFinancialPayload(request.resource.data);
+        allow delete: if false;
+      }
+
+      match /members/{memberId} {
+        allow read: if true;
+        allow create, update: if isValidDocId(memberId);
+        allow delete: if false;
+      }
+
+      match /{subcollection=**} {
+        allow read: if true;
+        allow create, update: if request.resource.data.size() <= 300;
+        allow delete: if false;
+      }
     }
 
     match /auth_usernames/{document=**} {
@@ -105,6 +242,10 @@ service cloud.firestore {
     }
 
     match /auth_rate_limits/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /auth_ip_rate_limits/{document=**} {
       allow read, write: if false;
     }
 

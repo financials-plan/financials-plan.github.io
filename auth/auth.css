@@ -763,6 +763,16 @@ body {
   color: var(--primary);
 }
 
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Prompt 062: Animated Eye Button (SVG eyelid & slash) */
 .auth-eye-btn {
   position: absolute;

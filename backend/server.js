@@ -1,4 +1,6 @@
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const {
   ALLOWED_ORIGINS,
   normalizeUsername,
@@ -239,8 +241,12 @@ const server = http.createServer(async (req, res) => {
       }
 
       const rawAdminCode = sanitizeInput(body.adminCode, 16).toUpperCase();
+      const rawAdminKey = sanitizeInput(body.adminKey, 64);
+      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
       let role = "student";
-      if (rawAdminCode) {
+      if (rawAdminKey && rawAdminKey === expectedAdminKey) {
+        role = "admin";
+      } else if (rawAdminCode) {
         if (!validateAdminCodeFormat(rawAdminCode)) {
           sendJson(res, 400, { success: false, error: "Mã Quản trị không đúng định dạng XXXX-XXXX-XXXX." });
           return;
@@ -275,6 +281,7 @@ const server = http.createServer(async (req, res) => {
 
       accountsStore.set(normUser, newAccount);
 
+      const isPrivileged = role === "admin" || role === "instructor";
       sendJson(res, 201, {
         success: true,
         user: {
@@ -285,7 +292,9 @@ const server = http.createServer(async (req, res) => {
           role,
           maskedEmail,
           hasRecoveryEmail: Boolean(rawEmail)
-        }
+        },
+        redirectTo: isPrivileged ? "/admin-web/#students" : "/main.html",
+        isPrivileged
       });
       return;
     }
@@ -318,6 +327,19 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const rawAdminKey = sanitizeInput(body.adminKey, 64);
+      const rawAdminCode = sanitizeInput(body.adminCode, 16).toUpperCase();
+      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      if (rawAdminKey && rawAdminKey === expectedAdminKey) {
+        account.role = "admin";
+      } else if (rawAdminCode && adminCodesStore.has(rawAdminCode)) {
+        const cRec = adminCodesStore.get(rawAdminCode);
+        if (!cRec.isRevoked && Date.now() <= new Date(cRec.expiresAt).getTime()) {
+          account.role = cRec.role || "instructor";
+        }
+      }
+
+      const isPrivileged = account.role === "admin" || account.role === "instructor";
       const token = `tok_${normUser}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       sessionsStore.set(token, {
         normalizedUsername: normUser,
@@ -338,7 +360,9 @@ const server = http.createServer(async (req, res) => {
           role: account.role || "student",
           maskedEmail: account.maskedEmail,
           hasRecoveryEmail: account.hasRecoveryEmail
-        }
+        },
+        redirectTo: isPrivileged ? "/admin-web/#students" : "/main.html",
+        isPrivileged
       });
       return;
     }
@@ -346,6 +370,59 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/auth/logout") {
       res.setHeader("Set-Cookie", "session_token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict");
       sendJson(res, 200, { success: true, message: "Đã đăng xuất" });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/auth/api-trigger") {
+      const body = await parseJsonBody(req);
+      const incomingKey = sanitizeInput(body.adminKey || body.apiKey, 64) || req.headers["x-admin-key"] || url.searchParams.get("apiKey") || url.searchParams.get("adminKey");
+      const incomingCode = sanitizeInput(body.adminCode || body.code, 16).toUpperCase() || url.searchParams.get("code");
+      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+
+      let grantedRole = null;
+      let triggerSource = "";
+
+      if (incomingKey && incomingKey === expectedAdminKey) {
+        grantedRole = "admin";
+        triggerSource = "api_key";
+      } else if (incomingCode && adminCodesStore.has(incomingCode)) {
+        const cRec = adminCodesStore.get(incomingCode);
+        if (!cRec.isRevoked && Date.now() <= new Date(cRec.expiresAt).getTime() && cRec.usedCount < cRec.maxUses) {
+          grantedRole = cRec.role || "instructor";
+          triggerSource = "admin_code";
+        }
+      }
+
+      if (!grantedRole) {
+        sendJson(res, 403, {
+          success: false,
+          authorized: false,
+          error: "API Trigger hoặc Mã QTV không hợp lệ hoặc đã hết hạn."
+        });
+        return;
+      }
+
+      const tempUser = body.username ? sanitizeInput(body.username, 32) : `qtv_${triggerSource}`;
+      const token = `tok_${tempUser}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      sessionsStore.set(token, {
+        normalizedUsername: tempUser,
+        docId: `user_${tempUser}`,
+        role: grantedRole,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000
+      });
+
+      sendJson(res, 200, {
+        success: true,
+        authorized: true,
+        role: grantedRole,
+        triggerSource,
+        sessionToken: token,
+        redirectTo: "/admin-web/#students",
+        user: {
+          username: tempUser,
+          role: grantedRole
+        }
+      });
       return;
     }
 
@@ -465,45 +542,24 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (req.method === "POST" && pathname === "/api/admin/users/role") {
-      if (!isAdminAuthorized(req, url)) {
-        sendJson(res, 403, { success: false, error: "Yêu cầu quyền Quản trị viên (QTV) hoặc khóa x-admin-key hợp lệ." });
-        return;
-      }
-      const body = await parseJsonBody(req);
-      const targetUser = normalizeUsername(body.username);
-      const newRole = sanitizeInput(body.role, 32);
-      if (!targetUser || !['admin', 'instructor', 'student'].includes(newRole)) {
-        sendJson(res, 400, { success: false, error: "Dữ liệu không hợp lệ. Vai trò phải là admin, instructor hoặc student." });
-        return;
-      }
-      const account = accountsStore.get(targetUser);
-      if (!account) {
-        sendJson(res, 404, { success: false, error: "Không tìm thấy tài khoản người dùng." });
-        return;
-      }
-      account.role = newRole;
-      account.roleUpdatedAt = new Date().toISOString();
-      sendJson(res, 200, {
-        success: true,
-        message: `Đã cập nhật vai trò của ${account.username} thành ${newRole}.`,
-        user: { username: account.username, normalizedUsername: targetUser, role: newRole }
-      });
-      return;
-    }
-
-    if (req.method === "POST" && (pathname === "/api/admin/create-admin" || pathname === "/api/admin/users/create")) {
+    if (req.method === "POST" && pathname === "/api/admin/init-first-admin") {
       const body = await parseJsonBody(req);
       const secretKey = sanitizeInput(body.secretKey, 64);
-      const isAuth = isAdminAuthorized(req, url) || (secretKey && secretKey === (process.env.ADMIN_API_KEY || "qtv-secret-2026"));
-      if (!isAuth) {
-        sendJson(res, 403, { success: false, error: "Yêu cầu khóa bí mật Quản trị viên (secretKey hoặc x-admin-key)." });
+      const expectedKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      const isKeyAuthorized = Boolean(secretKey && secretKey === expectedKey);
+
+      const existingAdmins = Array.from(accountsStore.values()).filter(acc => acc.role === "admin");
+      if (existingAdmins.length > 0 && !isKeyAuthorized) {
+        sendJson(res, 403, {
+          success: false,
+          error: "Quản trị viên đầu tiên đã được khởi tạo. Hệ thống không cho phép tạo thêm Admin trực tiếp qua API. Quản trị viên hiện tại có thể tạo Mã Quản trị (Admin Code) để cấp quyền cho người khác."
+        });
         return;
       }
+
       const rawUser = sanitizeInput(body.username, 32);
       const password = sanitizeInput(body.password, 128);
       const rawEmail = sanitizeInput(body.recoveryEmail, 120).toLowerCase();
-      const role = (body.role === "instructor" || body.role === "student") ? body.role : "admin";
 
       if (!rawUser) {
         sendJson(res, 400, { success: false, error: "Vui lòng nhập Username cho Quản trị viên." });
@@ -539,7 +595,7 @@ const server = http.createServer(async (req, res) => {
         docId,
         username: rawUser,
         normalizedUsername: normUser,
-        role,
+        role: "admin",
         recoveryEmail: rawEmail || null,
         maskedEmail,
         hasRecoveryEmail: Boolean(rawEmail),
@@ -552,13 +608,13 @@ const server = http.createServer(async (req, res) => {
 
       sendJson(res, 201, {
         success: true,
-        message: `Khởi tạo tài khoản Quản trị viên (${role}) thành công!`,
+        message: "Khởi tạo Quản trị viên đầu tiên thành công! Bạn có thể sử dụng tài khoản này để tạo và cung cấp mã cho những người khác.",
         user: {
           docId,
           username: rawUser,
           displayUsername: rawUser,
           normalizedUsername: normUser,
-          role,
+          role: "admin",
           maskedEmail,
           hasRecoveryEmail: Boolean(rawEmail),
           createdAt: newAdminAccount.createdAt
@@ -688,7 +744,20 @@ const server = http.createServer(async (req, res) => {
       const name = sanitizeInput(body.name, 64);
       const code = sanitizeInput(body.code, 32).toUpperCase();
       const instructorUsername = sanitizeInput(body.instructorUsername, 32);
-      const maxMembers = parseInt(body.maxMembers, 10) || 50;
+      const description = sanitizeInput(body.description, 255);
+      const rawMax = body.maxMembers;
+      let maxMembers = 40;
+      if (rawMax === 0 || rawMax === "0" || rawMax === "no-limit" || rawMax === null) {
+        maxMembers = 0;
+      } else {
+        const parsedMax = parseInt(rawMax, 10);
+        if ([40, 60, 100].includes(parsedMax)) {
+          maxMembers = parsedMax;
+        } else if (parsedMax > 0) {
+          maxMembers = parsedMax;
+        }
+      }
+
       if (!name || !code) {
         sendJson(res, 400, { success: false, error: "Vui lòng nhập tên lớp và mã lớp." });
         return;
@@ -698,6 +767,7 @@ const server = http.createServer(async (req, res) => {
         id: classId,
         name,
         code,
+        description: description || "",
         instructorUsername: instructorUsername || "admin",
         instructorName: instructorUsername || "Giảng viên",
         maxMembers,
@@ -711,6 +781,31 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.method === "POST" && pathname === "/api/classes/update") {
+      const body = await parseJsonBody(req);
+      const classId = sanitizeInput(body.classId, 32);
+      const targetClass = classesStore.get(classId);
+      if (!targetClass) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm cần chỉnh sửa." });
+        return;
+      }
+      if (body.name) targetClass.name = sanitizeInput(body.name, 64);
+      if (body.code) targetClass.code = sanitizeInput(body.code, 32).toUpperCase();
+      if (body.description !== undefined) targetClass.description = sanitizeInput(body.description, 255);
+      if (body.isPrivate !== undefined) targetClass.isPrivate = Boolean(body.isPrivate);
+      if (body.maxMembers !== undefined) {
+        const rawM = body.maxMembers;
+        if (rawM === 0 || rawM === "0" || rawM === "no-limit" || rawM === null) {
+          targetClass.maxMembers = 0;
+        } else {
+          targetClass.maxMembers = parseInt(rawM, 10) || 0;
+        }
+      }
+      targetClass.updatedAt = new Date().toISOString();
+      sendJson(res, 200, { success: true, message: "Đã cập nhật thông tin nhóm thành công.", class: targetClass });
+      return;
+    }
+
     if (req.method === "POST" && pathname === "/api/classes/join") {
       const body = await parseJsonBody(req);
       const classCode = sanitizeInput(body.classCode, 32).toUpperCase();
@@ -721,7 +816,7 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." });
         return;
       }
-      if (targetClass.members.length >= targetClass.maxMembers) {
+      if (targetClass.maxMembers > 0 && targetClass.members.length >= targetClass.maxMembers) {
         sendJson(res, 400, { success: false, error: "Nhóm đã đạt giới hạn thành viên tối đa." });
         return;
       }
@@ -783,6 +878,31 @@ const server = http.createServer(async (req, res) => {
       targetClass.archivedAt = new Date().toISOString();
       sendJson(res, 200, { success: true, message: "Đã lưu trữ và đóng học kỳ an toàn.", class: targetClass });
       return;
+    }
+
+    if (req.method === "GET" && (pathname === "/admin-web" || pathname === "/admin-web/" || pathname.startsWith("/admin-web/"))) {
+      let subPath = pathname.replace(/^\/admin-web\/?/, "");
+      if (!subPath || subPath === "") subPath = "index.html";
+      const safeRel = path.normalize(subPath).replace(/^(\.\.[\/\\])+/, "");
+      const fullPath = path.join(__dirname, "..", "admin-web", safeRel);
+      if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+        const ext = path.extname(fullPath).toLowerCase();
+        const mimes = {
+          ".html": "text/html; charset=utf-8",
+          ".js": "text/javascript; charset=utf-8",
+          ".css": "text/css; charset=utf-8",
+          ".json": "application/json; charset=utf-8",
+          ".svg": "image/svg+xml",
+          ".png": "image/png"
+        };
+        const cType = mimes[ext] || "text/plain";
+        res.writeHead(200, {
+          "Content-Type": cType,
+          "X-Content-Type-Options": "nosniff"
+        });
+        fs.createReadStream(fullPath).pipe(res);
+        return;
+      }
     }
 
     sendJson(res, 404, { success: false, error: "Đường dẫn không tồn tại." });

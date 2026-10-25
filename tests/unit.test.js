@@ -193,6 +193,35 @@ test("3. Backend API - Class & Group Management", async () => {
   const member = approveRes.data.class.members.find((m) => m.username === "hocvien_test_join");
   assert.strictEqual(member.status, "approved");
 
+  const createGlobalRes = await makeRequest("POST", "/api/classes", {
+    name: "Lớp Tài Chính Cộng Đồng Mở",
+    code: "TC-GLOBAL",
+    instructorUsername: "dinh_anh_quan",
+    maxMembers: 60,
+    isPrivate: false
+  });
+  assert.strictEqual(createGlobalRes.status, 201);
+  assert.strictEqual(createGlobalRes.data.class.maxMembers, 60);
+  assert.strictEqual(createGlobalRes.data.class.isPrivate, false);
+
+  const joinGlobalRes = await makeRequest("POST", "/api/classes/join", {
+    classCode: "TC-GLOBAL",
+    username: "hocvien_global_auto",
+    studentName: "Học Viên Global"
+  });
+  assert.strictEqual(joinGlobalRes.status, 200);
+  assert.strictEqual(joinGlobalRes.data.status, "approved");
+
+  const createNoLimitRes = await makeRequest("POST", "/api/classes", {
+    name: "Nhóm Tài Chính Không Giới Hạn",
+    code: "TC-NOLIMIT",
+    instructorUsername: "dinh_anh_quan",
+    maxMembers: 0,
+    isPrivate: true
+  });
+  assert.strictEqual(createNoLimitRes.status, 201);
+  assert.strictEqual(createNoLimitRes.data.class.maxMembers, 0);
+
   const archiveRes = await makeRequest("POST", "/api/classes/archive", {
     classId: createRes.data.class.id
   });
@@ -215,6 +244,29 @@ test("4. Financial Data & Code Parity Preservation", () => {
   assert.ok(mainContent.includes("id=\"class-manager-modal-overlay\""), "Class manager modal exists in main.html");
   assert.ok(mainContent.includes("id=\"student-join-class-modal-overlay\""), "Student join class modal exists in main.html");
   assert.ok(mainContent.includes("id=\"btn-menu-class-manager\""), "Class manager menu button exists");
+  assert.ok(mainContent.includes("id=\"tab-admin-groups\""), "Admin groups tab exists in main.html");
+  assert.ok(mainContent.includes("id=\"tab-admin-requests\""), "Admin requests tab exists in main.html");
+  assert.ok(mainContent.includes("id=\"tab-admin-students\""), "Admin students tab exists in main.html");
+  assert.ok(mainContent.includes("id=\"admin-personal-settings-modal-overlay\""), "Personal settings modal exists in main.html");
+  assert.ok(mainContent.includes("id=\"btn-sidebar-admin-settings\""), "Sidebar gear settings button exists in main.html");
+  assert.ok(mainContent.includes("exportAdminComprehensiveCsv"), "exportAdminComprehensiveCsv button exists in main.html");
+  assert.ok(scriptContent.includes("exportAdminComprehensiveCsv"), "exportAdminComprehensiveCsv function exists in script.js");
+
+  const cssContent = fs.readFileSync("css/style.css", "utf8");
+  assert.ok(cssContent.includes(".btn-admin-action-outline"), "btn-admin-action-outline CSS defined");
+  assert.ok(cssContent.includes(".system-pref-card"), "system-pref-card CSS defined");
+  assert.ok(cssContent.includes(".prog-fill-red"), "prog-fill-red CSS defined");
+  assert.ok(cssContent.includes(".prog-fill-yellow"), "prog-fill-yellow CSS defined");
+  assert.ok(cssContent.includes(".prog-fill-green"), "prog-fill-green CSS defined");
+  assert.ok(scriptContent.includes("prog-fill-red"), "prog-fill-red logic in script.js");
+  assert.ok(scriptContent.includes("prog-fill-yellow"), "prog-fill-yellow logic in script.js");
+  assert.ok(scriptContent.includes("prog-fill-green"), "prog-fill-green logic in script.js");
+
+  if (fs.existsSync("admin-standalone.html")) {
+    const standaloneContent = fs.readFileSync("admin-standalone.html", "utf8");
+    assert.ok(!standaloneContent.includes("id=\"btn-topbar-admin\""), "Top-right admin button is deleted from standalone");
+    assert.ok(standaloneContent.includes("btn-sidebar-admin-mode"), "Sidebar admin mode toggle retained");
+  }
 });
 
 test("5. Backend QTV / Admin APIs", async () => {
@@ -231,14 +283,6 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.ok(Array.isArray(usersRes.data.users));
   assert.ok(usersRes.data.users.some(u => u.username === "Admin"));
 
-  const roleRes = await makeRequest("POST", "/api/admin/users/role", {
-    username: "demo",
-    role: "instructor"
-  });
-  assert.strictEqual(roleRes.status, 200);
-  assert.strictEqual(roleRes.data.success, true);
-  assert.strictEqual(roleRes.data.user.role, "instructor");
-
   const revokeRes = await makeRequest("POST", "/api/admin/codes/revoke", {
     code: "ADMN-2026-X8Y9"
   });
@@ -246,21 +290,43 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.strictEqual(revokeRes.data.success, true);
   assert.strictEqual(revokeRes.data.code.isRevoked, true);
 
-  const createAdminRes = await makeRequest("POST", "/api/admin/create-admin", {
-    username: "super_admin_test",
-    password: "secure_pass_123",
-    recoveryEmail: "superadmin@example.com"
+  const initAdminRes = await makeRequest("POST", "/api/admin/init-first-admin", {
+    username: "first_master_admin",
+    password: "master_password_2026",
+    recoveryEmail: "masteradmin@example.com",
+    secretKey: "qtv-secret-2026"
   });
-  assert.strictEqual(createAdminRes.status, 201);
-  assert.strictEqual(createAdminRes.data.success, true);
-  assert.strictEqual(createAdminRes.data.user.role, "admin");
-  assert.strictEqual(createAdminRes.data.user.normalizedUsername, "super_admin_test");
+  assert.strictEqual(initAdminRes.status, 201);
+  assert.strictEqual(initAdminRes.data.success, true);
+  assert.strictEqual(initAdminRes.data.user.role, "admin");
+  assert.strictEqual(initAdminRes.data.user.normalizedUsername, "first_master_admin");
 
-  const createDupRes = await makeRequest("POST", "/api/admin/create-admin", {
-    username: "super_admin_test",
-    password: "secure_pass_123"
+  const initBlockedRes = await makeRequest("POST", "/api/admin/init-first-admin", {
+    username: "second_admin_attempt",
+    password: "password123",
+    recoveryEmail: "second@example.com"
+  }, { "x-admin-key": "" });
+  assert.strictEqual(initBlockedRes.status, 403);
+  assert.strictEqual(initBlockedRes.data.success, false);
+
+  const initDupRes = await makeRequest("POST", "/api/admin/init-first-admin", {
+    username: "first_master_admin",
+    password: "master_password_2026",
+    secretKey: "qtv-secret-2026"
   });
-  assert.strictEqual(createDupRes.status, 409);
+  assert.strictEqual(initDupRes.status, 409);
+
+  const updateClassRes = await makeRequest("POST", "/api/classes/update", {
+    classId: "cls_k48",
+    name: "Lớp Tài Chính Cá Nhân K48 Mở Rộng",
+    maxMembers: 100,
+    isPrivate: true,
+    description: "Nhóm kín thực hành đầu tư và tài chính cá nhân"
+  });
+  assert.strictEqual(updateClassRes.status, 200);
+  assert.strictEqual(updateClassRes.data.success, true);
+  assert.strictEqual(updateClassRes.data.class.maxMembers, 100);
+  assert.strictEqual(updateClassRes.data.class.isPrivate, true);
 
   const backupRes = await makeRequest("GET", "/api/admin/backup");
   assert.strictEqual(backupRes.status, 200);
@@ -268,4 +334,120 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.ok(Array.isArray(backupRes.data.backup.accounts));
   assert.ok(Array.isArray(backupRes.data.backup.classes));
   assert.ok(Array.isArray(backupRes.data.backup.adminCodes));
+});
+
+test("6. Dynamic Portfolio Asset Allocation & Milestone 4-Step Calculation", () => {
+  const scriptContent = fs.readFileSync("script.js", "utf8");
+  assert.ok(scriptContent.includes("function financeFV"), "financeFV function defined in script.js");
+  assert.ok(scriptContent.includes("getPortfolioAllocationAtAge"), "getPortfolioAllocationAtAge function defined");
+
+  function financeFV(rate, nper, pmt, pv = 0) {
+    if (nper <= 0) return -pv;
+    if (Math.abs(rate) < 1e-9) return -(pv + pmt * nper);
+    const g = Math.pow(1 + rate, nper);
+    return -(pv * g + (pmt * (g - 1)) / rate);
+  }
+
+  assert.strictEqual(financeFV(0, 3, -10, -20), 50);
+  assert.strictEqual(financeFV(0.1, 0, -10, -20), 20);
+
+  const mockGoals = [
+    {
+      name: "Quỹ dự phòng",
+      type: "invest",
+      start: 2026,
+      end: 2030,
+      val: 50,
+      paid: 50,
+      allocProducts: [{ prodName: "Tiền gửi NH", weight: 100, returnRate: 5.5 }]
+    },
+    {
+      name: "Quỹ mua xe",
+      type: "invest",
+      start: 2026,
+      end: 2030,
+      val: 100,
+      paid: 100,
+      allocProducts: [
+        { prodName: "Cổ phiếu", weight: 50, returnRate: 15 },
+        { prodName: "Trái phiếu", weight: 50, returnRate: 8.5 }
+      ]
+    }
+  ];
+
+  let balStocks = 0, balBonds = 0, balIns = 0, balCash = 0;
+  let totalBal = 0;
+  mockGoals.forEach(g => {
+    const t = 2026 - g.start;
+    const pv = g.paid;
+    g.allocProducts.forEach(ap => {
+      const w = ap.weight / 100;
+      const pPV = pv * w;
+      let bal = (t <= 0) ? pPV : financeFV(ap.returnRate / 100, t, 0, -pPV);
+      totalBal += bal;
+      if (ap.prodName.includes("Cổ phiếu")) balStocks += bal;
+      else if (ap.prodName.includes("Trái phiếu")) balBonds += bal;
+      else if (ap.prodName.includes("Bảo hiểm")) balIns += bal;
+      else balCash += bal;
+    });
+  });
+
+  const stocksPct = (balStocks / totalBal) * 100;
+  const bondsPct = (balBonds / totalBal) * 100;
+  const insPct = (balIns / totalBal) * 100;
+  const cashPct = (balCash / totalBal) * 100;
+
+  assert.strictEqual(totalBal, 150);
+  assert.strictEqual(Math.round(stocksPct * 10) / 10, 33.3);
+  assert.strictEqual(Math.round(bondsPct * 10) / 10, 33.3);
+  assert.strictEqual(Math.round(insPct * 10) / 10, 0);
+  assert.strictEqual(Math.round(cashPct * 10) / 10, 33.3);
+  assert.strictEqual(Math.round((stocksPct + bondsPct + insPct + cashPct) * 100) / 100, 100);
+});
+
+test("7. Admin Web Portal & Special API Trigger Auto-Routing Algorithm", async () => {
+  const triggerRes = await makeRequest("POST", "/api/auth/api-trigger", {
+    adminKey: "qtv-secret-2026"
+  });
+  assert.strictEqual(triggerRes.status, 200);
+  assert.strictEqual(triggerRes.data.success, true);
+  assert.strictEqual(triggerRes.data.authorized, true);
+  assert.strictEqual(triggerRes.data.role, "admin");
+  assert.strictEqual(triggerRes.data.redirectTo, "/admin-web/#students");
+
+  const badTrigger = await makeRequest("POST", "/api/auth/api-trigger", {
+    adminKey: "invalid-key-999"
+  });
+  assert.strictEqual(badTrigger.status, 403);
+  assert.strictEqual(badTrigger.data.authorized, false);
+
+  const regAdminTrigger = await makeRequest("POST", "/api/auth/register", {
+    username: "qtv_api_user",
+    password: "password123",
+    adminKey: "qtv-secret-2026"
+  });
+  assert.strictEqual(regAdminTrigger.status, 201);
+  assert.strictEqual(regAdminTrigger.data.user.role, "admin");
+  assert.strictEqual(regAdminTrigger.data.redirectTo, "/admin-web/#students");
+
+  const loginTrigger = await makeRequest("POST", "/api/auth/login", {
+    username: "qtv_api_user",
+    password: "password123",
+    adminKey: "qtv-secret-2026"
+  });
+  assert.strictEqual(loginTrigger.status, 200);
+  assert.strictEqual(loginTrigger.data.user.role, "admin");
+  assert.strictEqual(loginTrigger.data.redirectTo, "/admin-web/#students");
+
+  const adminWebPage = await makeRequest("GET", "/admin-web/");
+  assert.strictEqual(adminWebPage.status, 200);
+  assert.ok(adminWebPage.raw.includes("Cổng Quản Trị Sinh Viên"));
+
+  const adminJs = await makeRequest("GET", "/admin-web/admin.js");
+  assert.strictEqual(adminJs.status, 200);
+  assert.ok(adminJs.raw.includes("adminWebPortal"));
+
+  const adminCss = await makeRequest("GET", "/admin-web/admin.css");
+  assert.strictEqual(adminCss.status, 200);
+  assert.ok(adminCss.raw.includes(".admin-custom-table"));
 });

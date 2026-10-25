@@ -63,10 +63,9 @@ function printHelp() {
   console.log("Danh sach cac lenh ho tro:");
   console.log("  overview                     Xem tong quan toan bo he thong (User, Nhom, Ma, RAM, Uptime)");
   console.log("  users                        Liet ke danh sach tat ca tai khoan nguoi dung va vai tro");
-  console.log("  create-admin <u> <p> [email] Tao tai khoan Quan tri vien (Admin) moi");
-  console.log("  set-role <user> <newRole>    Doi vai tro tai khoan ('admin', 'instructor', 'student')");
+  console.log("  init-first-admin <u> <p> [e] Khoi tao tai khoan Quan tri vien (Admin) dau tien duy nhat");
   console.log("  codes                        Liet ke toan bo Ma Quan tri (Admin Codes) va trang thai");
-  console.log("  create-code <role> [uses] [d] Sinh Ma Quan tri moi (vd: create-code instructor 20 60)");
+  console.log("  create-code <role> [uses] [d] Sinh Ma Quan tri moi de cung cap cho nguoi khac");
   console.log("  revoke-code <code>           Thu hoi lap tuc mot Ma Quan tri");
   console.log("  classes                      Liet ke danh sach tat ca cac lop/nhom dao tao");
   console.log("  backup [filepath]            Xuat ban sao luu snapshot he thong ra file JSON");
@@ -131,43 +130,28 @@ async function main() {
         break;
       }
 
-      case "create-admin": {
+      case "init-first-admin": {
         const username = args[1];
         const password = args[2];
         const recoveryEmail = args[3] || "";
         if (!username || !password) {
-          console.error("Vui long nhap: node backend/admin-cli.js create-admin <username> <password> [recoveryEmail]");
+          console.error("Vui long nhap: node backend/admin-cli.js init-first-admin <username> <password> [recoveryEmail]");
           process.exit(1);
         }
-        const res = await requestApi("POST", "/api/admin/create-admin", {
+        const res = await requestApi("POST", "/api/admin/init-first-admin", {
           username,
           password,
           recoveryEmail,
           secretKey: ADMIN_API_KEY
         });
         if (res.status === 201 && res.data.success) {
-          console.log("\n[THANH CONG] Da tao tai khoan Quan tri vien (Admin) moi:");
+          console.log("\n[THANH CONG] Khoi tao tai khoan Quan tri vien (Admin) dau tien thanh cong:");
           console.log(`  Username:       ${res.data.user.username}`);
           console.log(`  Normalized:     ${res.data.user.normalizedUsername}`);
           console.log(`  Vai tro (Role): ${res.data.user.role}`);
           console.log(`  Email:          ${res.data.user.maskedEmail || "(Khong co)"}`);
           console.log(`  DocId:          ${res.data.user.docId}`);
-        } else {
-          console.error("\n[THAT BAI]", res.data.error || res.data);
-        }
-        break;
-      }
-
-      case "set-role": {
-        const username = args[1];
-        const newRole = args[2];
-        if (!username || !newRole) {
-          console.error("Vui long nhap: node backend/admin-cli.js set-role <username> <admin|instructor|student>");
-          process.exit(1);
-        }
-        const res = await requestApi("POST", "/api/admin/users/role", { username, role: newRole });
-        if (res.status === 200 && res.data.success) {
-          console.log(`\n[THANH CONG] ${res.data.message}`);
+          console.log("\nLuu y: Admin nay se su dung chuc nang Tao Ma de cung cap ma cho nhung nguoi khac.");
         } else {
           console.error("\n[THAT BAI]", res.data.error || res.data);
         }
