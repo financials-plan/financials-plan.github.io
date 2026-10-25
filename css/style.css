@@ -6132,6 +6132,7 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border-soft);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 .class-data-table tr:last-child td {
   border-bottom: 0;
@@ -6195,6 +6196,7 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
   font-size: 24px;
   font-weight: 800;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 .analytics-card-hint {
   font-size: 11px;
@@ -6249,6 +6251,16 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
   border-radius: 12px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
+}
+.class-tab-btn:focus-visible,
+.btn-action-view:focus-visible,
+.btn-action-approve:focus-visible,
+.btn-action-reject:focus-visible,
+.btn-create-class:focus-visible,
+.btn-generate-code:focus-visible,
+.btn-exit-student-preview:focus-visible {
+  outline: 2px solid var(--primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 

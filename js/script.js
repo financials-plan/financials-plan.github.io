@@ -6803,6 +6803,14 @@ document.addEventListener('keydown', (e) => {
     if (confirmModal && confirmModal.classList.contains('active') && !isConfirmProcessing) {
       window.closeConfirmModal();
     }
+    const classManagerModal = document.getElementById('class-manager-modal-overlay');
+    if (classManagerModal && classManagerModal.style.display !== 'none') {
+      window.closeClassManagerModal();
+    }
+    const studentJoinModal = document.getElementById('student-join-class-modal-overlay');
+    if (studentJoinModal && studentJoinModal.style.display !== 'none') {
+      window.closeStudentJoinClassModal();
+    }
   }
 });
 
@@ -6812,6 +6820,22 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmModal.addEventListener('click', (e) => {
       if (e.target === confirmModal && !isConfirmProcessing) {
         window.closeConfirmModal();
+      }
+    });
+  }
+  const classManagerOverlay = document.getElementById('class-manager-modal-overlay');
+  if (classManagerOverlay) {
+    classManagerOverlay.addEventListener('click', (e) => {
+      if (e.target === classManagerOverlay) {
+        window.closeClassManagerModal();
+      }
+    });
+  }
+  const studentJoinOverlay = document.getElementById('student-join-class-modal-overlay');
+  if (studentJoinOverlay) {
+    studentJoinOverlay.addEventListener('click', (e) => {
+      if (e.target === studentJoinOverlay) {
+        window.closeStudentJoinClassModal();
       }
     });
   }
