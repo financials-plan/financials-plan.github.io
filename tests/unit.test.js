@@ -265,7 +265,8 @@ test("4. Financial Data & Code Parity Preservation", () => {
   if (fs.existsSync("admin-standalone.html")) {
     const standaloneContent = fs.readFileSync("admin-standalone.html", "utf8");
     assert.ok(!standaloneContent.includes("id=\"btn-topbar-admin\""), "Top-right admin button is deleted from standalone");
-    assert.ok(standaloneContent.includes("btn-sidebar-admin-mode"), "Sidebar admin mode toggle retained");
+    assert.ok(!standaloneContent.includes("btn-sidebar-admin-mode"), "Sidebar admin mode switcher button is deleted from standalone");
+    assert.ok(standaloneContent.includes("btn-sidebar-admin-settings"), "Sidebar admin personal settings button is retained");
   }
 });
 

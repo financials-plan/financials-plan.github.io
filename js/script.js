@@ -9555,24 +9555,18 @@ window.toggleAdminManagerMode = function(forceState) {
   }
   const studentNav = document.getElementById('rail-nav-student');
   const adminNav = document.getElementById('rail-nav-admin');
-  const btnMode = document.getElementById('btn-sidebar-admin-mode');
+  const adminFooter = document.getElementById('sidebar-admin-footer');
 
   if (window.isManagerMode) {
     if (studentNav) studentNav.style.display = 'none';
     if (adminNav) adminNav.style.display = 'block';
-    if (btnMode) {
-      btnMode.innerHTML = '<i class="fa-solid fa-calculator"></i> <span>Sổ Tài Chính</span>';
-      btnMode.title = 'Chuyển về Sổ Tài Chính Cá Nhân';
-    }
+    if (adminFooter) adminFooter.style.display = 'flex';
     switchTab('tab-admin-groups');
     if (typeof updateAdminPendingBadge === 'function') updateAdminPendingBadge();
   } else {
     if (studentNav) studentNav.style.display = 'block';
     if (adminNav) adminNav.style.display = 'none';
-    if (btnMode) {
-      btnMode.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Quản Trị (QTV)</span>';
-      btnMode.title = 'Chuyển sang Chế độ Quản Trị Nhóm';
-    }
+    if (adminFooter) adminFooter.style.display = 'none';
     switchTab('tab-tukhoa');
   }
 };
