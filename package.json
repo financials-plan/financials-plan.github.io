@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "serve": "npx serve -l 8899 .",
-    "test": "node backend/server.js"
+    "test": "node --test tests/unit.test.js"
   },
   "repository": {
     "type": "git",

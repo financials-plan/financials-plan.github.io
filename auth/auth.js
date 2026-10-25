@@ -439,6 +439,19 @@ function getSignupValidationState() {
     });
   }
 
+  const adminCodeEl = document.getElementById("input-auth-reg-admin-code");
+  const adminCodeVal = adminCodeEl ? adminCodeEl.value.trim().toUpperCase() : "";
+  if (adminCodeVal && !/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(adminCodeVal)) {
+    errors.push({
+      key: "adminCode",
+      wrapId: "wrap-auth-reg-admin-code",
+      inputId: "input-auth-reg-admin-code",
+      errId: "err-auth-reg-admin-code",
+      label: "Mã Quản trị",
+      msg: "Mã Quản trị phải có định dạng XXXX-XXXX-XXXX (12 ký tự chữ và số)."
+    });
+  }
+
 
   if (passVal.length < 6) {
     errors.push({
@@ -494,7 +507,7 @@ function validateSignupFormRealtime() {
   const summaryList = document.getElementById("summary-error-list");
   const summaryCount = document.getElementById("summary-count-text");
 
-  const allFieldKeys = ["username", "email", "password", "confirm", "terms"];
+  const allFieldKeys = ["username", "email", "adminCode", "password", "confirm", "terms"];
   const errorMap = {};
   errors.forEach(err => { errorMap[err.key] = err; });
 
@@ -502,6 +515,7 @@ function validateSignupFormRealtime() {
     let wrapId, errId, inputId;
     if (k === "username") { wrapId = "wrap-auth-reg-username"; errId = "err-auth-reg-username"; inputId = "input-auth-reg-username"; }
     else if (k === "email") { wrapId = "wrap-auth-reg-email"; errId = "err-auth-reg-email"; inputId = "input-auth-reg-email"; }
+    else if (k === "adminCode") { wrapId = "wrap-auth-reg-admin-code"; errId = "err-auth-reg-admin-code"; inputId = "input-auth-reg-admin-code"; }
     else if (k === "password") { wrapId = "wrap-auth-reg-password"; errId = "err-auth-reg-password"; inputId = "input-auth-reg-password"; }
     else if (k === "confirm") { wrapId = "wrap-auth-reg-confirm"; errId = "err-auth-reg-confirm"; inputId = "input-auth-reg-confirm"; }
     else if (k === "terms") { wrapId = "wrap-auth-reg-terms"; errId = "err-auth-reg-terms"; inputId = "auth-terms-check"; }
@@ -525,6 +539,7 @@ function validateSignupFormRealtime() {
         let hasContent = false;
         if (k === "terms") hasContent = authTermsChecked;
         else if (k === "email") hasContent = Boolean(inp && inp.value.trim());
+        else if (k === "adminCode") hasContent = Boolean(inp && inp.value.trim());
         else hasContent = Boolean(inp && inp.value);
 
         if (hasContent) {
@@ -575,10 +590,22 @@ window.glideToField = function(wrapId, inputId) {
 };
 
 
+window.formatAuthAdminCode = function(input) {
+  if (!input) return;
+  let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (raw.length > 12) raw = raw.slice(0, 12);
+  let parts = [];
+  for (let i = 0; i < raw.length; i += 4) {
+    parts.push(raw.slice(i, i + 4));
+  }
+  input.value = parts.join("-");
+};
+
 function setupRealtimeValidation() {
   const regInputs = [
     "input-auth-reg-username",
     "input-auth-reg-email",
+    "input-auth-reg-admin-code",
     "input-auth-reg-password",
     "input-auth-reg-confirm"
   ];
@@ -852,6 +879,7 @@ window.submitAuthForm = async function() {
 
     const username = document.getElementById("input-auth-reg-username")?.value.trim() || "";
     const email = document.getElementById("input-auth-reg-email")?.value.trim() || "";
+    const adminCode = document.getElementById("input-auth-reg-admin-code")?.value.trim().toUpperCase() || "";
     const pass = document.getElementById("input-auth-reg-password")?.value || "";
 
 
@@ -875,7 +903,7 @@ window.submitAuthForm = async function() {
     }
 
     try {
-      const res = await window.CloudDB.registerAccount(username, pass, email);
+      const res = await window.CloudDB.registerAccount(username, pass, email, adminCode);
 
       if (!res.success || !res.user) {
         if (btnSubmit) {

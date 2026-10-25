@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Sổ Tay Hướng Dẫn Học Viên - Lập Kế Hoạch Tài Chính Cá Nhân</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 15mm 18mm 15mm;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 13px;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+  .page-break {
+    page-break-after: always;
+  }
+  .header-cover {
+    text-align: center;
+    padding: 40px 20px 20px 20px;
+    border-bottom: 3px solid #2563eb;
+    margin-bottom: 25px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 24px;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    font-weight: 800;
+  }
+  .cover-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 12px;
+  }
+  .cover-meta {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  h2 {
+    font-size: 16px;
+    color: #1e3a8a;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 14px;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+  li {
+    margin-bottom: 5px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px 0;
+    font-size: 12px;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .callout {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 12.5px;
+  }
+  .callout-title {
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+  }
+  .callout-warning {
+    background-color: #fffbeb;
+    border-left-color: #f59e0b;
+  }
+  .callout-warning .callout-title {
+    color: #b45309;
+  }
+  .callout-info {
+    background-color: #eff6ff;
+    border-left-color: #3b82f6;
+  }
+  .callout-info .callout-title {
+    color: #1d4ed8;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-success { background: #dcfce7; color: #15803d; }
+  .badge-warning { background: #fef3c7; color: #b45309; }
+  .badge-danger { background: #fee2e2; color: #b91c1c; }
+  .badge-neutral { background: #f1f5f9; color: #475569; }
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 10px;
+    color: #94a3b8;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 4px;
+  }
+  .step-number {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: #2563eb;
+    color: #ffffff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-right: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-cover">
+  <div class="cover-badge">Tài Liệu Hướng Dẫn Sử Dụng Hệ Thống</div>
+  <h1>XÂY DỰNG LỘ TRÌNH TÀI CHÍNH CÁ NHÂN</h1>
+  <div class="cover-subtitle">Cẩm Nang Toàn Diện Dành Cho Học Viên & Người Dùng Cá Nhân</div>
+  <div class="cover-meta">Phiên bản: 3.2.0 • Ngày ban hành: Tháng 10/2026 • Định dạng tài liệu chuẩn: A4</div>
+</div>
+
+<h2>1. GIỚI THIỆU TỔNG QUAN HỆ THỐNG</h2>
+<p>
+  Ứng dụng <strong>Xây Dựng Lộ Trình Tài Chính Cá Nhân</strong> là nền tảng quản lý tài chính toàn diện, trực quan và khoa học, được xây dựng nhằm hỗ trợ người dùng và học viên thiết lập bản đồ tài chính dài hạn trong 30 năm. Nền tảng kết hợp nhuần nhuyễn giữa hoạch định chi tiêu ngắn hạn, tích lũy quỹ dự phòng, bảo vệ tương lai qua bảo hiểm, thực hiện các mục tiêu trọng điểm (học tập của con cái, hưu trí an nhàn) và phân bổ danh mục đầu tư theo từng nhóm tuổi trưởng thành.
+</p>
+<p>
+  Hệ thống vận hành với kiến trúc tối ưu tốc độ tải trang, giao diện đáp ứng (responsive), hỗ trợ song song hai chế độ: <strong>Lưu trữ trực tuyến qua Cloud Firestore</strong> và <strong>Lưu trữ ngoại tuyến độc lập qua LocalStorage</strong>, đảm bảo bảo mật tuyệt đối dữ liệu người dùng mà không phụ thuộc vào kết nối mạng liên tục.
+</p>
+
+<h2>2. ĐĂNG KÝ VÀ QUẢN LÝ TÀI KHOẢN</h2>
+<p>
+  Để bảo vệ dữ liệu kế hoạch tài chính của riêng bạn và liên kết với lớp học, bạn cần có tài khoản cá nhân trên hệ thống.
+</p>
+<h3>2.1. Đăng ký tài khoản mới</h3>
+<ul>
+  <li>Truy cập đường dẫn ứng dụng và chọn mục <strong>Đăng ký tài khoản</strong>.</li>
+  <li>Nhập chính xác các thông tin cơ bản: <strong>Họ và tên</strong>, <strong>Email</strong> và <strong>Mật khẩu</strong> (tối thiểu 6 ký tự).</li>
+  <li>
+    <strong>Ô "Mã Quản trị (nếu có)"</strong>: Là trường tùy chọn. Nếu bạn là học viên thông thường, hãy <strong>để trống</strong> ô này. Hệ thống sẽ tự động kích hoạt tài khoản của bạn với vai trò <strong>Học viên (Student)</strong> theo nguyên tắc cấp quyền tối thiểu an toàn.
+  </li>
+  <li>Nhấn <strong>Tạo tài khoản</strong> để hoàn tất và tự động đăng nhập.</li>
+</ul>
+
+<div class="callout callout-info">
+  <div class="callout-title">Ghi chú về Mã Quản trị</div>
+  Trường "Mã Quản trị" chỉ dành riêng cho Giảng viên hoặc Quản trị viên đã được tổ chức cấp mã đặc quyền định dạng <code>XXXX-XXXX-XXXX</code>. Học viên không cần nhập mã này.
+</div>
+
+<h3>2.2. Đăng nhập và Khôi phục tài khoản</h3>
+<ul>
+  <li>Đăng nhập bằng địa chỉ Email và Mật khẩu đã tạo.</li>
+  <li>Nếu hệ thống mất kết nối mạng, ứng dụng vẫn tự động mở phiên làm việc cục bộ gần nhất của bạn.</li>
+  <li>Trong trường hợp quên mật khẩu hoặc cần đặt lại dữ liệu mẫu, bạn có thể sử dụng nút <strong>Khôi phục mặc định</strong> tại chân trang để đưa bảng tính về bộ số liệu chuẩn định lượng.</li>
+</ul>
+
+<h2>3. QUY TRÌNH THIẾT LẬP 4 KHỐI DỮ LIỆU TÀI CHÍNH</h2>
+<p>
+  Quy trình hoạch định tài chính gồm 4 bước liền mạch tương ứng với 4 khối dữ liệu cốt lõi:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 18%;">Khối Chức Năng</th>
+      <th style="width: 32%;">Ý Nghĩa Nghiệp Vụ</th>
+      <th style="width: 50%;">Các Chỉ Số & Thao Tác Cần Thực Hiện</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Khối Từ Khóa</strong></td>
+      <td>Thiết lập các tham số nền tảng của bản thân và giả định kinh tế vĩ mô.</td>
+      <td>
+        • <strong>Độ tuổi hiện tại</strong> (mặc định 21 tuổi).<br>
+        • <strong>Tuổi nghỉ hưu dự kiến</strong> (mặc định 60 tuổi).<br>
+        • <strong>Tỷ lệ lạm phát kỳ vọng</strong> (khuyến nghị 4.0% - 6.0%/năm).<br>
+        • <strong>Lãi suất phi rủi ro & Lãi suất đầu tư</strong> (tiền gửi, trái phiếu, cổ phiếu).
+      </td>
+    </tr>
+    <tr>
+      <td><strong>2. Khối Kế Hoạch</strong></td>
+      <td>Quản lý dòng tiền vào/ra hàng tháng và phân bổ quỹ dự phòng.</td>
+      <td>
+        • Khai báo các nguồn thu nhập ròng cố định và thụ động.<br>
+        • Thiết lập các khoản chi tiêu thiết yếu và chi tiêu linh hoạt.<br>
+        • Trích lập <strong>Quỹ khẩn cấp</strong> (3 - 6 tháng chi phí sinh hoạt).<br>
+        • Xác định dòng tiền thặng dư có thể mang đi tích lũy đầu tư mỗi tháng.
+      </td>
+    </tr>
+    <tr>
+      <td><strong>3. Khối Mục Tiêu</strong></td>
+      <td>Hoạch định các mục tiêu cuộc đời then chốt có chi phí lớn.</td>
+      <td>
+        • <strong>Mục tiêu "Cho con đi học đại học"</strong>: Dự tính học phí, sinh hoạt phí và số năm học để tính toán giá trị tương lai (FV) đã điều chỉnh lạm phát.<br>
+        • <strong>Mục tiêu "Hưu trí an nhàn"</strong>: Tính toán quỹ hưu trí cần có tại năm 60 tuổi dựa trên chi tiêu mong muốn và tuổi thọ kỳ vọng (80 tuổi).
+      </td>
+    </tr>
+    <tr>
+      <td><strong>4. Khối Lộ Trình</strong></td>
+      <td>Mô phỏng bức tranh tài chính 30 năm và danh mục phân bổ tài sản.</td>
+      <td>
+        • Theo dõi bảng dòng tiền lũy kế từ tuổi 21 đến tuổi 50.<br>
+        • Quan sát <strong>Cơ cấu danh mục đầu tư khuyến nghị</strong>: Cổ phiếu tăng trưởng, Trái phiếu an toàn, Bảo hiểm bảo vệ và Tiền gửi thanh khoản.
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<h2>4. THAM GIA LỚP HỌC VÀ NHÓM ĐÀO TẠO</h2>
+<p>
+  Nếu bạn tham gia các khóa đào tạo hoặc lớp học tài chính, giảng viên sẽ cung cấp cho bạn một <strong>Mã Lớp Học (Class Code)</strong>.
+</p>
+
+<h3>4.1. Cách nhập Mã Lớp Học</h3>
+<ol>
+  <li>Nhấp vào biểu tượng người dùng ở góc phải màn hình, chọn mục <strong>Tham gia lớp học</strong>.</li>
+  <li>Hộp thoại nhập mã sẽ hiện ra. Bạn nhập chính xác Mã Lớp (Ví dụ: <code>TC-2026-K48</code> hoặc <code>CLASS-8971</code>).</li>
+  <li>Nhấn nút <strong>Gửi yêu cầu tham gia</strong>.</li>
+</ol>
+
+<h3>4.2. Ý nghĩa các trạng thái duyệt học viên</h3>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Trạng Thái</th>
+      <th style="width: 20%;">Huy Hiệu (Badge)</th>
+      <th style="width: 55%;">Ý Nghĩa Và Quyền Lợi</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Chờ duyệt (Pending)</strong></td>
+      <td><span class="badge badge-warning">Chờ duyệt</span></td>
+      <td>Yêu cầu của bạn đã được gửi đến Giảng viên phụ trách lớp. Trong thời gian này, bạn tiếp tục thực hiện bài tập và kế hoạch của mình như bình thường.</td>
+    </tr>
+    <tr>
+      <td><strong>Đã duyệt (Approved)</strong></td>
+      <td><span class="badge badge-success">Thành viên chính thức</span></td>
+      <td>Giảng viên đã xác nhận bạn vào danh sách lớp. Giảng viên có thể xem xét kế hoạch ở chế độ chỉ đọc để chấm bài, sửa bài và đóng góp ý kiến tư vấn định kỳ.</td>
+    </tr>
+    <tr>
+      <td><strong>Đã từ chối (Rejected)</strong></td>
+      <td><span class="badge badge-danger">Từ chối</span></td>
+      <td>Mã lớp không hợp lệ hoặc bạn không thuộc danh sách lớp được duyệt. Bạn có thể gửi lại yêu cầu với mã mới.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>5. ĐỒNG BỘ DỮ LIỆU ĐÁM MÂY VÀ BẢO MẬT THÔNG TIN</h2>
+
+<h3>5.1. Cơ chế đồng bộ dữ liệu</h3>
+<ul>
+  <li><strong>Lưu lên Đám mây (Cloud Sync)</strong>: Mỗi khi bạn nhấn nút <strong>Lưu Kế Hoạch Lên Cloud</strong>, toàn bộ cấu trúc dữ liệu gồm 4 khối sẽ được mã hóa và gửi về cơ sở dữ liệu Cloud Firestore an toàn. Khi đổi máy tính hoặc mở điện thoại, dữ liệu của bạn sẽ tự động phục hồi.</li>
+  <li><strong>Cơ chế Ngoại tuyến (LocalStorage)</strong>: Khi đang làm việc mà mất mạng, mọi thay đổi trên các ô nhập liệu vẫn được lưu tự động tức thì vào bộ nhớ trình duyệt. Bạn sẽ không bao giờ bị mất số liệu đang tính toán dở dang.</li>
+</ul>
+
+<h3>5.2. Các lưu ý quan trọng về an toàn và bảo mật cá nhân</h3>
+<div class="callout callout-warning">
+  <div class="callout-title">Nguyên tắc bảo vệ dữ liệu cá nhân</div>
+  • Không chia sẻ mật khẩu tài khoản cho người khác.<br>
+  • Không đăng nhập tài khoản trên các máy tính công cộng mà quên đăng xuất sau khi sử dụng.<br>
+  • Toàn bộ số liệu tài chính của bạn chỉ có bạn và Giảng viên được phân công lớp học của bạn mới có quyền xem ở chế độ chỉ đọc. Không thành viên nào khác trong lớp có thể xem bài của bạn.
+</div>
+
+<h2>6. HỎI ĐÁP THƯỜNG GẶP (FAQ)</h2>
+<p><strong>Hỏi: Tại sao tôi chỉnh sửa số liệu mà trên máy khác không thấy cập nhật?</strong><br>
+<em>Trả lời:</em> Bạn hãy kiểm tra xem mình đã nhấn nút <strong>Lưu Kế Hoạch Lên Cloud</strong> chưa. Khi có thông báo "Đã lưu kế hoạch thành công", dữ liệu mới được đồng bộ lên máy chủ đám mây.</p>
+
+<p><strong>Hỏi: Tôi có thể tham gia nhiều lớp học cùng lúc không?</strong><br>
+<em>Trả lời:</em> Có. Ứng dụng hỗ trợ bạn ghi danh vào nhiều lớp học hoặc chuyên đề khác nhau. Danh sách lớp học và trạng thái duyệt sẽ hiển thị đầy đủ trong bảng quản lý lớp của bạn.</p>
+
+<div class="footer">
+  Tài liệu phân phối nội bộ • Hệ thống Lập Kế Hoạch Tài Chính Cá Nhân • Trang 1/2
+</div>
+
+</body>
+</html>

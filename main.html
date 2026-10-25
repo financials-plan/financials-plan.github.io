@@ -190,6 +190,12 @@
               <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
                 <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
               </a>
+              <button type="button" class="account-action-btn" id="btn-menu-class-manager" onclick="openClassManagerModal(); closeAccountMenu();" style="display: none;">
+                <i class="fa-solid fa-chalkboard-user text-primary"></i> <span>Quản lý Lớp học &amp; Giảng viên</span>
+              </button>
+              <button type="button" class="account-action-btn" id="btn-menu-join-class" onclick="openStudentJoinClassModal(); closeAccountMenu();">
+                <i class="fa-solid fa-graduation-cap text-primary"></i> <span>Tham gia Lớp học</span>
+              </button>
               <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
                 <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
               </button>
@@ -204,6 +210,16 @@
         </div>
       </div>
     </header>
+
+    <div id="student-preview-banner" class="student-preview-banner" style="display: none;">
+      <div class="student-preview-info">
+        <i class="fa-solid fa-eye text-primary"></i>
+        <span>ĐANG XEM BÀI HỌC VIÊN: <strong id="preview-student-name">Học viên</strong> (<code id="preview-student-user">@user</code>) — <em>CHẾ ĐỘ CHỈ ĐỌC (READ-ONLY)</em></span>
+      </div>
+      <button type="button" class="btn-exit-student-preview" onclick="exitStudentPlanReadOnly()">
+        <i class="fa-solid fa-arrow-left"></i> <span>Quay lại Quản lý Lớp học</span>
+      </button>
+    </div>
 
     <section class="content-body">
 
@@ -1937,8 +1953,315 @@
     </div>
   </div>
 
+  <div id="class-manager-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="class-manager-modal-title" style="display: none;">
+    <div class="modal-card class-manager-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="class-manager-modal-title"><i class="fa-solid fa-chalkboard-user text-primary"></i> Quản lý Lớp học &amp; Giảng viên</h3>
+          <p id="class-manager-modal-subtitle">Theo dõi tiến độ, duyệt thành viên, xem bài chỉ đọc và phân tích tài chính tổng hợp</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeClassManagerModal()" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="class-manager-tabs-nav" role="tablist">
+        <button type="button" class="class-tab-btn active" id="btn-class-tab-classes" onclick="switchClassTab('classes')">
+          <i class="fa-solid fa-users"></i> <span>Lớp học &amp; Duyệt học viên</span>
+        </button>
+        <button type="button" class="class-tab-btn" id="btn-class-tab-matrix" onclick="switchClassTab('matrix')">
+          <i class="fa-solid fa-table-cells"></i> <span>Ma trận Tiến độ Học tập</span>
+        </button>
+        <button type="button" class="class-tab-btn" id="btn-class-tab-analytics" onclick="switchClassTab('analytics')">
+          <i class="fa-solid fa-chart-pie"></i> <span>Dashboard Phân tích Lớp</span>
+        </button>
+        <button type="button" class="class-tab-btn" id="btn-class-tab-codes" onclick="switchClassTab('codes')" style="display: none;">
+          <i class="fa-solid fa-key"></i> <span>Mã Quản trị</span>
+        </button>
+      </div>
+
+      <div class="modal-body class-manager-modal-body">
+        <div id="class-panel-classes" class="class-tab-panel active">
+          <div class="class-toolbar-row">
+            <div class="class-select-group">
+              <label for="class-select-dropdown">Chọn lớp học:</label>
+              <select id="class-select-dropdown" class="class-select" onchange="onClassSelected(this.value)"></select>
+            </div>
+            <div class="class-actions-group">
+              <button type="button" class="btn-sub-action" onclick="toggleCreateClassForm(true)">
+                <i class="fa-solid fa-plus"></i> <span>Tạo lớp mới</span>
+              </button>
+              <button type="button" class="btn-sub-action" onclick="exportCurrentClassBackup()">
+                <i class="fa-solid fa-file-export"></i> <span>Sao lưu lớp</span>
+              </button>
+              <button type="button" class="btn-sub-action btn-danger-soft" onclick="archiveCurrentClass()">
+                <i class="fa-solid fa-box-archive"></i> <span>Đóng / Lưu trữ học kỳ</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="create-class-form-card" class="create-class-card" style="display: none;">
+            <h4><i class="fa-solid fa-circle-plus text-primary"></i> Tạo Nhóm / Lớp học mới</h4>
+            <div class="form-row-grid">
+              <div class="form-group">
+                <label for="input-new-class-name">Tên lớp học:</label>
+                <input type="text" id="input-new-class-name" placeholder="Ví dụ: Lớp Hoạch định K49..." class="auth-input">
+              </div>
+              <div class="form-group">
+                <label for="input-new-class-code">Mã lớp (duy nhất):</label>
+                <input type="text" id="input-new-class-code" placeholder="Ví dụ: TC-K49" class="auth-input" style="text-transform: uppercase;">
+              </div>
+              <div class="form-group">
+                <label for="input-new-class-limit">Sĩ số tối đa:</label>
+                <input type="number" id="input-new-class-limit" value="50" min="5" max="200" class="auth-input">
+              </div>
+            </div>
+            <div class="form-actions-inline">
+              <button type="button" class="btn-sub-action" onclick="toggleCreateClassForm(false)">Hủy</button>
+              <button type="button" class="btn-sub-action btn-primary-solid" onclick="submitCreateNewClass()">Tạo lớp</button>
+            </div>
+          </div>
+
+          <div class="class-info-card" id="current-class-info-card">
+            <div class="class-info-stat">
+              <span class="stat-lbl">Mã tham gia lớp</span>
+              <strong class="stat-val text-primary" id="card-class-code">---</strong>
+            </div>
+            <div class="class-info-stat">
+              <span class="stat-lbl">Giảng viên phụ trách</span>
+              <strong class="stat-val" id="card-class-instructor">---</strong>
+            </div>
+            <div class="class-info-stat">
+              <span class="stat-lbl">Sĩ số hiện tại</span>
+              <strong class="stat-val" id="card-class-count">0 / 50</strong>
+            </div>
+            <div class="class-info-stat">
+              <span class="stat-lbl">Trạng thái</span>
+              <span class="badge-status-active" id="card-class-status">Đang hoạt động</span>
+            </div>
+          </div>
+
+          <div class="class-section-title">
+            <i class="fa-solid fa-user-clock text-warning"></i>
+            <span>Yêu cầu tham gia lớp chờ duyệt (<span id="pending-members-count">0</span>)</span>
+          </div>
+          <div class="class-table-wrap">
+            <table class="class-data-table">
+              <thead>
+                <tr>
+                  <th>Học viên</th>
+                  <th>Username</th>
+                  <th>Ngày gửi</th>
+                  <th style="text-align: right;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="class-pending-members-tbody">
+                <tr><td colspan="4" class="empty-cell">Không có yêu cầu nào đang chờ duyệt</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="class-section-title" style="margin-top: 20px;">
+            <i class="fa-solid fa-user-check text-success"></i>
+            <span>Danh sách thành viên chính thức (<span id="approved-members-count">0</span>)</span>
+          </div>
+          <div class="class-table-wrap">
+            <table class="class-data-table">
+              <thead>
+                <tr>
+                  <th>Học viên</th>
+                  <th>Username</th>
+                  <th>Ngày tham gia</th>
+                  <th style="text-align: right;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="class-approved-members-tbody">
+                <tr><td colspan="4" class="empty-cell">Chưa có học viên nào</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="class-panel-matrix" class="class-tab-panel" style="display: none;">
+          <div class="matrix-legend-row">
+            <span class="matrix-legend-item"><span class="badge-prog badge-prog-done"><i class="fa-solid fa-check"></i> Hoàn thành</span></span>
+            <span class="matrix-legend-item"><span class="badge-prog badge-prog-doing"><i class="fa-solid fa-spinner"></i> Đang làm</span></span>
+            <span class="matrix-legend-item"><span class="badge-prog badge-prog-none"><i class="fa-solid fa-minus"></i> Chưa bắt đầu</span></span>
+          </div>
+          <div class="class-table-wrap">
+            <table class="class-data-table matrix-table">
+              <thead>
+                <tr>
+                  <th>Học viên</th>
+                  <th style="text-align: center;">Từ khóa</th>
+                  <th style="text-align: center;">Kế hoạch</th>
+                  <th style="text-align: center;">Mục tiêu</th>
+                  <th style="text-align: center;">Lộ trình</th>
+                  <th style="text-align: center;">Tiến độ</th>
+                  <th style="text-align: right;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="class-matrix-tbody">
+                <tr><td colspan="7" class="empty-cell">Đang tải ma trận tiến độ...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="class-panel-analytics" class="class-tab-panel" style="display: none;">
+          <div class="analytics-metrics-grid">
+            <div class="analytics-card">
+              <div class="analytics-card-lbl">Sĩ số &amp; Tỷ lệ hoàn thành</div>
+              <div class="analytics-card-val" id="ana-completion-rate">0%</div>
+              <small class="analytics-card-hint" id="ana-completion-hint">Dựa trên ma trận 4 phân hệ</small>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-card-lbl">Tỷ lệ tiết kiệm bình quân</div>
+              <div class="analytics-card-val text-success" id="ana-savings-rate">0%</div>
+              <small class="analytics-card-hint">Tỷ lệ tiết kiệm trên thu nhập</small>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-card-lbl">Dòng tiền ròng TB/tháng</div>
+              <div class="analytics-card-val text-primary" id="ana-net-cashflow">0 tr</div>
+              <small class="analytics-card-hint">Chênh lệch thu - chi thực tế</small>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-card-lbl">Tỷ lệ trả nợ TB (DSR)</div>
+              <div class="analytics-card-val text-warning" id="ana-dsr-ratio">0%</div>
+              <small class="analytics-card-hint">Khuyến nghị an toàn &lt; 35%</small>
+            </div>
+          </div>
+
+          <div class="class-section-title" style="margin-top: 24px;">
+            <i class="fa-solid fa-chart-pie text-primary"></i>
+            <span>Phân bổ danh mục đầu tư bình quân toàn lớp</span>
+          </div>
+          <div class="portfolio-breakdown-bar-wrap">
+            <div class="breakdown-bar">
+              <div class="bar-seg seg-stocks" id="seg-ana-stocks" style="width: 25%;" title="Cổ phiếu"></div>
+              <div class="bar-seg seg-bonds" id="seg-ana-bonds" style="width: 25%;" title="Trái phiếu"></div>
+              <div class="bar-seg seg-insurance" id="seg-ana-insurance" style="width: 25%;" title="Bảo hiểm"></div>
+              <div class="bar-seg seg-cash" id="seg-ana-cash" style="width: 25%;" title="Tiền gửi"></div>
+            </div>
+            <div class="breakdown-legend">
+              <span class="breakdown-item"><span class="dot-seg seg-stocks"></span> Cổ phiếu: <strong id="lbl-ana-stocks">25%</strong></span>
+              <span class="breakdown-item"><span class="dot-seg seg-bonds"></span> Trái phiếu: <strong id="lbl-ana-bonds">25%</strong></span>
+              <span class="breakdown-item"><span class="dot-seg seg-insurance"></span> Bảo hiểm: <strong id="lbl-ana-insurance">25%</strong></span>
+              <span class="breakdown-item"><span class="dot-seg seg-cash"></span> Tiền gửi: <strong id="lbl-ana-cash">25%</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="class-panel-codes" class="class-tab-panel" style="display: none;">
+          <div class="admin-codes-creator-row">
+            <div class="form-group">
+              <label for="select-new-code-role">Vai trò cấp:</label>
+              <select id="select-new-code-role" class="class-select">
+                <option value="instructor">Giảng viên / Quản lý lớp (Instructor)</option>
+                <option value="admin">Quản trị viên hệ thống (Admin)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="select-new-code-uses">Số lượt dùng:</label>
+              <select id="select-new-code-uses" class="class-select">
+                <option value="1">1 lượt (Dùng 1 lần)</option>
+                <option value="5">5 lượt</option>
+                <option value="20">20 lượt</option>
+                <option value="100">100 lượt</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="select-new-code-days">Thời hạn:</label>
+              <select id="select-new-code-days" class="class-select">
+                <option value="30">30 ngày</option>
+                <option value="90">90 ngày</option>
+                <option value="365">1 năm</option>
+              </select>
+            </div>
+            <button type="button" class="btn-sub-action btn-primary-solid" style="align-self: flex-end;" onclick="submitGenerateAdminCode()">
+              <i class="fa-solid fa-key"></i> <span>Sinh Mã Quản trị mới</span>
+            </button>
+          </div>
+
+          <div class="class-table-wrap" style="margin-top: 16px;">
+            <table class="class-data-table">
+              <thead>
+                <tr>
+                  <th>Mã Quản trị (XXXX-XXXX-XXXX)</th>
+                  <th>Vai trò</th>
+                  <th>Lượt dùng</th>
+                  <th>Hạn sử dụng</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="admin-codes-tbody">
+                <tr><td colspan="5" class="empty-cell">Đang tải danh sách mã quản trị...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeClassManagerModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="student-join-class-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="student-join-class-modal-title" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="student-join-class-modal-title"><i class="fa-solid fa-graduation-cap text-primary"></i> Tham gia Lớp học</h3>
+          <p>Nhập mã lớp do giảng viên cung cấp để tham gia lớp đào tạo</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeStudentJoinClassModal()" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-student-class-code">Mã lớp học (Class Code):</label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-hashtag input-icon-left"></i>
+            <input type="text" id="input-student-class-code" class="auth-input" placeholder="Ví dụ: TC-K48..." maxlength="16" style="text-transform: uppercase;">
+          </div>
+        </div>
+
+        <div id="student-join-feedback" style="display: none; margin-top: 10px; font-size: 13px;"></div>
+
+        <div class="class-section-title" style="margin-top: 20px;">
+          <i class="fa-solid fa-bookmark text-primary"></i>
+          <span>Lớp học của bạn</span>
+        </div>
+        <div class="class-table-wrap">
+          <table class="class-data-table">
+            <thead>
+              <tr>
+                <th>Lớp học</th>
+                <th>Mã lớp</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody id="student-enrolled-classes-tbody">
+              <tr><td colspan="3" class="empty-cell">Bạn chưa tham gia lớp nào</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeStudentJoinClassModal()">Đóng</button>
+        <button type="button" class="btn-modal-submit" onclick="submitStudentJoinClass()">
+          <span>Gửi yêu cầu tham gia</span> <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./backend/firestore-service.js"></script>
-  <script src="./js/script.js?v=3.1.3"></script>
+  <script src="./js/script.js?v=3.2.0"></script>
 
 </body>
 </html>

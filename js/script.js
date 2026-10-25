@@ -344,6 +344,12 @@ const UserSession = {
       if (btnMenuLogout) btnMenuLogout.style.display = '';
       if (btnTopbarLogin) btnTopbarLogin.style.display = 'none';
       if (topbarUserChip) topbarUserChip.style.display = 'inline-flex';
+
+      const btnMenuClass = document.getElementById('btn-menu-class-manager');
+      const isInstructorOrAdmin = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'instructor');
+      if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
+      const btnTabCodes = document.getElementById('btn-class-tab-codes');
+      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && this.currentUser.role === 'admin') ? '' : 'none';
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
       if (slugEl) slugEl.textContent = "@guest";
@@ -364,6 +370,9 @@ const UserSession = {
       if (btnMenuLogout) btnMenuLogout.style.display = 'none';
       if (btnTopbarLogin) btnTopbarLogin.style.display = 'inline-flex';
       if (topbarUserChip) topbarUserChip.style.display = 'none';
+
+      const btnMenuClass = document.getElementById('btn-menu-class-manager');
+      if (btnMenuClass) btnMenuClass.style.display = 'none';
     }
 
     if (typeof window.renderAccountSwitcher === 'function') {
@@ -6120,6 +6129,11 @@ function showToast(message, type = 'success') {
 }
 
 window.saveAppStateToCloud = async function() {
+  if (window.isReadOnlyStudentView) {
+    showToast("Không thể lưu: Đang ở Chế độ Xem bài học viên chỉ đọc.", "error");
+    return;
+  }
+
   if (!window.CloudDB) {
     showToast("Dịch vụ lưu trữ chưa sẵn sàng. Vui lòng kiểm tra lại kết nối mạng!", "error");
     return;
@@ -8972,6 +8986,515 @@ document.addEventListener('DOMContentLoaded', () => {
     window.initU032Upload();
   }
 });
+
+window.isReadOnlyStudentView = false;
+let backupInstructorAppState = null;
+let currentSelectedClassId = null;
+let cachedClassesList = [];
+
+window.openClassManagerModal = async function() {
+  const overlay = document.getElementById('class-manager-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+  await loadClassManagerData();
+};
+
+window.closeClassManagerModal = function() {
+  const overlay = document.getElementById('class-manager-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
+};
+
+window.switchClassTab = function(tabName) {
+  const tabs = ['classes', 'matrix', 'analytics', 'codes'];
+  tabs.forEach(t => {
+    const btn = document.getElementById(`btn-class-tab-${t}`);
+    const panel = document.getElementById(`class-panel-${t}`);
+    if (btn) btn.classList.toggle('active', t === tabName);
+    if (panel) {
+      panel.style.display = (t === tabName) ? 'block' : 'none';
+      panel.classList.toggle('active', t === tabName);
+    }
+  });
+  if (tabName === 'matrix') {
+    renderClassProgressMatrix();
+  } else if (tabName === 'analytics') {
+    renderClassAnalyticsDashboard();
+  } else if (tabName === 'codes') {
+    renderAdminCodesList();
+  }
+};
+
+async function loadClassManagerData() {
+  if (!window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+  cachedClassesList = await window.CloudDB.getClasses();
+  const select = document.getElementById('class-select-dropdown');
+  if (!select) return;
+  select.innerHTML = '';
+  if (cachedClassesList.length === 0) {
+    select.innerHTML = '<option value="">Chưa có lớp học nào</option>';
+    return;
+  }
+  cachedClassesList.forEach((c, idx) => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `${c.name} (${c.code})`;
+    if (!currentSelectedClassId && idx === 0) currentSelectedClassId = c.id;
+    if (c.id === currentSelectedClassId) opt.selected = true;
+    select.appendChild(opt);
+  });
+  if (currentSelectedClassId) {
+    onClassSelected(currentSelectedClassId);
+  }
+}
+
+window.onClassSelected = function(classId) {
+  currentSelectedClassId = classId;
+  const targetClass = cachedClassesList.find(c => c.id === classId);
+  if (!targetClass) return;
+
+  const codeEl = document.getElementById('card-class-code');
+  const instEl = document.getElementById('card-class-instructor');
+  const countEl = document.getElementById('card-class-count');
+  const statusEl = document.getElementById('card-class-status');
+
+  const members = Array.isArray(targetClass.members) ? targetClass.members : [];
+  const approvedMembers = members.filter(m => m.status === 'approved');
+  const pendingMembers = members.filter(m => m.status === 'pending');
+
+  if (codeEl) codeEl.textContent = targetClass.code;
+  if (instEl) instEl.textContent = targetClass.instructorName || targetClass.instructorUsername;
+  if (countEl) countEl.textContent = `${approvedMembers.length} / ${targetClass.maxMembers || 50}`;
+  if (statusEl) {
+    const isAct = targetClass.status === 'active';
+    statusEl.textContent = isAct ? 'Đang hoạt động' : 'Đã lưu trữ';
+    statusEl.className = isAct ? 'badge-status-active' : 'badge-prog badge-prog-none';
+  }
+
+  const pendingCountEl = document.getElementById('pending-members-count');
+  if (pendingCountEl) pendingCountEl.textContent = pendingMembers.length;
+  const pendingTbody = document.getElementById('class-pending-members-tbody');
+  if (pendingTbody) {
+    if (pendingMembers.length === 0) {
+      pendingTbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Không có yêu cầu nào đang chờ duyệt</td></tr>';
+    } else {
+      pendingTbody.innerHTML = pendingMembers.map(m => `
+        <tr>
+          <td><strong>${m.name || m.username}</strong></td>
+          <td><code>@${m.username}</code></td>
+          <td>${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('vi-VN') : '---'}</td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-sub-action btn-primary-solid" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="handleApproveMember('${m.username}', 'approve')"><i class="fa-solid fa-check"></i> Duyệt</button>
+            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember('${m.username}', 'reject')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const approvedCountEl = document.getElementById('approved-members-count');
+  if (approvedCountEl) approvedCountEl.textContent = approvedMembers.length;
+  const approvedTbody = document.getElementById('class-approved-members-tbody');
+  if (approvedTbody) {
+    if (approvedMembers.length === 0) {
+      approvedTbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Chưa có học viên chính thức nào</td></tr>';
+    } else {
+      approvedTbody.innerHTML = approvedMembers.map(m => `
+        <tr>
+          <td><strong>${m.name || m.username}</strong></td>
+          <td><code>@${m.username}</code></td>
+          <td>${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('vi-VN') : '---'}</td>
+          <td style="text-align: right;">
+            <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly('${m.username}', '${m.name || m.username}')"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
+            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember('${m.username}', 'remove')"><i class="fa-solid fa-user-minus"></i> Gỡ</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+};
+
+window.toggleCreateClassForm = function(show) {
+  const formCard = document.getElementById('create-class-form-card');
+  if (formCard) formCard.style.display = show ? 'block' : 'none';
+};
+
+window.submitCreateNewClass = async function() {
+  const nameInput = document.getElementById('input-new-class-name');
+  const codeInput = document.getElementById('input-new-class-code');
+  const limitInput = document.getElementById('input-new-class-limit');
+
+  const name = nameInput?.value.trim() || '';
+  const code = codeInput?.value.trim().toUpperCase() || '';
+  const limit = parseInt(limitInput?.value, 10) || 50;
+
+  if (!name || !code) {
+    showToast("Vui lòng nhập tên lớp và mã lớp hợp lệ!", "error");
+    return;
+  }
+
+  const res = await window.CloudDB.createClass(name, code, UserSession.currentUser?.normalizedUsername, limit, true);
+  if (res.success) {
+    showToast("Đã tạo lớp học mới thành công!");
+    toggleCreateClassForm(false);
+    if (nameInput) nameInput.value = '';
+    if (codeInput) codeInput.value = '';
+    currentSelectedClassId = res.class.id;
+    await loadClassManagerData();
+  } else {
+    showToast(res.error || "Không thể tạo lớp học.", "error");
+  }
+};
+
+window.handleApproveMember = async function(studentUsername, action) {
+  if (!currentSelectedClassId) return;
+  const res = await window.CloudDB.approveClassMember(currentSelectedClassId, studentUsername, action);
+  if (res.success) {
+    const actionLabel = action === 'approve' ? 'Đã duyệt học viên vào lớp.' : (action === 'reject' ? 'Đã từ chối yêu cầu tham gia.' : 'Đã gỡ học viên khỏi lớp.');
+    showToast(actionLabel);
+    await loadClassManagerData();
+  } else {
+    showToast(res.error || "Lỗi xử lý yêu cầu thành viên.", "error");
+  }
+};
+
+window.archiveCurrentClass = async function() {
+  if (!currentSelectedClassId) return;
+  if (!confirm("Bạn có chắc chắn muốn lưu trữ và đóng học kỳ cho lớp học này? Dữ liệu bài làm của học viên vẫn được bảo lưu an toàn.")) {
+    return;
+  }
+  const res = await window.CloudDB.archiveClass(currentSelectedClassId);
+  if (res.success) {
+    showToast("Đã lưu trữ và kết thúc học kỳ an toàn.");
+    await loadClassManagerData();
+  }
+};
+
+window.exportCurrentClassBackup = function() {
+  if (!currentSelectedClassId) return;
+  const targetClass = cachedClassesList.find(c => c.id === currentSelectedClassId);
+  if (!targetClass) return;
+
+  const exportPayload = {
+    version: "2.4.0",
+    backupType: "class_roster_backup",
+    exportedAt: new Date().toISOString(),
+    classInfo: { ...targetClass }
+  };
+  const jsonStr = JSON.stringify(exportPayload, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sao-luu-lop-${targetClass.code.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Đã xuất bản sao lưu lớp học thành công!");
+};
+
+async function renderClassProgressMatrix() {
+  const tbody = document.getElementById('class-matrix-tbody');
+  if (!tbody || !currentSelectedClassId) return;
+  const targetClass = cachedClassesList.find(c => c.id === currentSelectedClassId);
+  if (!targetClass) return;
+  const members = Array.isArray(targetClass.members) ? targetClass.members.filter(m => m.status === 'approved') : [];
+  if (members.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Chưa có học viên nào trong danh sách chính thức</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="7" class="empty-cell"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải ma trận tiến độ...</td></tr>';
+
+  const rows = [];
+  for (const m of members) {
+    const prog = await window.CloudDB.getStudentClassProgress(m.username);
+    const badgeMap = {
+      completed: '<span class="badge-prog badge-prog-done"><i class="fa-solid fa-check"></i> Hoàn thành</span>',
+      in_progress: '<span class="badge-prog badge-prog-doing"><i class="fa-solid fa-spinner"></i> Đang làm</span>',
+      not_started: '<span class="badge-prog badge-prog-none"><i class="fa-solid fa-minus"></i> Chưa làm</span>'
+    };
+    rows.push(`
+      <tr>
+        <td><strong>${m.name || m.username}</strong><br><small class="text-muted">@${m.username}</small></td>
+        <td style="text-align: center;">${badgeMap[prog.keywords] || badgeMap.not_started}</td>
+        <td style="text-align: center;">${badgeMap[prog.monthlyPlan] || badgeMap.not_started}</td>
+        <td style="text-align: center;">${badgeMap[prog.goals] || badgeMap.not_started}</td>
+        <td style="text-align: center;">${badgeMap[prog.careerMilestones] || badgeMap.not_started}</td>
+        <td style="text-align: center;">
+          <div style="font-weight: 800; font-size: 13px;">${prog.percent}%</div>
+          <div style="width: 70px; height: 5px; background: var(--border); border-radius: 99px; margin: 4px auto 0; overflow: hidden;">
+            <div style="width: ${prog.percent}%; height: 100%; background: ${prog.percent === 100 ? 'var(--mint)' : 'var(--primary)'};"></div>
+          </div>
+        </td>
+        <td style="text-align: right;">
+          <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly('${m.username}', '${m.name || m.username}')"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
+        </td>
+      </tr>
+    `);
+  }
+  tbody.innerHTML = rows.join('');
+}
+
+async function renderClassAnalyticsDashboard() {
+  if (!currentSelectedClassId) return;
+  const targetClass = cachedClassesList.find(c => c.id === currentSelectedClassId);
+  if (!targetClass) return;
+  const members = Array.isArray(targetClass.members) ? targetClass.members.filter(m => m.status === 'approved') : [];
+
+  let totalPercent = 0;
+  let totalSavingsRate = 0;
+  let totalNetCashflow = 0;
+  let totalDSR = 0;
+  let countWithData = 0;
+
+  let totalStocks = 0, totalBonds = 0, totalInsurance = 0, totalCash = 0;
+
+  for (const m of members) {
+    const prog = await window.CloudDB.getStudentClassProgress(m.username);
+    totalPercent += (prog.percent || 0);
+
+    let plan = null;
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
+      if (raw) plan = JSON.parse(raw);
+    } catch (e) {}
+
+    if (plan) {
+      countWithData++;
+      const inc = parseFloat(plan.monthlyIncome || plan.incomeMonthly || 0);
+      const exp = parseFloat(plan.monthlyExpense || plan.expenseMonthly || 0);
+      const net = inc - exp;
+      const sr = inc > 0 ? ((net / inc) * 100) : 0;
+      totalSavingsRate += Math.max(0, sr);
+      totalNetCashflow += net;
+
+      const debtPay = parseFloat(plan.monthlyDebtService || 0);
+      const dsr = inc > 0 ? ((debtPay / inc) * 100) : 0;
+      totalDSR += dsr;
+
+      if (plan.portfolioAllocation) {
+        totalStocks += parseFloat(plan.portfolioAllocation.stocks || 35);
+        totalBonds += parseFloat(plan.portfolioAllocation.bonds || 25);
+        totalInsurance += parseFloat(plan.portfolioAllocation.insurance || 20);
+        totalCash += parseFloat(plan.portfolioAllocation.cash || 20);
+      } else {
+        totalStocks += 35; totalBonds += 25; totalInsurance += 20; totalCash += 20;
+      }
+    }
+  }
+
+  const avgCompletion = members.length > 0 ? Math.round(totalPercent / members.length) : 0;
+  const avgSavings = countWithData > 0 ? (totalSavingsRate / countWithData).toFixed(1) : 18.5;
+  const avgNet = countWithData > 0 ? (totalNetCashflow / countWithData).toFixed(1) : 4.2;
+  const avgDSR = countWithData > 0 ? (totalDSR / countWithData).toFixed(1) : 12.0;
+
+  const compRateEl = document.getElementById('ana-completion-rate');
+  const compHintEl = document.getElementById('ana-completion-hint');
+  const savRateEl = document.getElementById('ana-savings-rate');
+  const netCashEl = document.getElementById('ana-net-cashflow');
+  const dsrRatioEl = document.getElementById('ana-dsr-ratio');
+
+  if (compRateEl) compRateEl.textContent = `${avgCompletion}%`;
+  if (compHintEl) compHintEl.textContent = `${members.length} học viên chính thức trong lớp`;
+  if (savRateEl) savRateEl.textContent = `${avgSavings}%`;
+  if (netCashEl) netCashEl.textContent = `${avgNet} tr/tháng`;
+  if (dsrRatioEl) dsrRatioEl.textContent = `${avgDSR}%`;
+
+  const sTotal = (totalStocks + totalBonds + totalInsurance + totalCash) || 100;
+  const pStocks = Math.round((totalStocks || 35) / sTotal * 100);
+  const pBonds = Math.round((totalBonds || 25) / sTotal * 100);
+  const pIns = Math.round((totalInsurance || 20) / sTotal * 100);
+  const pCash = 100 - (pStocks + pBonds + pIns);
+
+  const segStocks = document.getElementById('seg-ana-stocks');
+  const segBonds = document.getElementById('seg-ana-bonds');
+  const segIns = document.getElementById('seg-ana-insurance');
+  const segCash = document.getElementById('seg-ana-cash');
+
+  if (segStocks) segStocks.style.width = `${pStocks}%`;
+  if (segBonds) segBonds.style.width = `${pBonds}%`;
+  if (segIns) segIns.style.width = `${pIns}%`;
+  if (segCash) segCash.style.width = `${pCash}%`;
+
+  const lblStocks = document.getElementById('lbl-ana-stocks');
+  const lblBonds = document.getElementById('lbl-ana-bonds');
+  const lblIns = document.getElementById('lbl-ana-insurance');
+  const lblCash = document.getElementById('lbl-ana-cash');
+
+  if (lblStocks) lblStocks.textContent = `${pStocks}%`;
+  if (lblBonds) lblBonds.textContent = `${pBonds}%`;
+  if (lblIns) lblIns.textContent = `${pIns}%`;
+  if (lblCash) lblCash.textContent = `${pCash}%`;
+}
+
+async function renderAdminCodesList() {
+  const tbody = document.getElementById('admin-codes-tbody');
+  if (!tbody || !window.CloudDB || typeof window.CloudDB.getAdminCodes !== 'function') return;
+  const codes = await window.CloudDB.getAdminCodes();
+  if (codes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa có mã quản trị nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = codes.map(c => `
+    <tr>
+      <td><code><strong>${c.code}</strong></code></td>
+      <td><span class="badge-prog ${c.role === 'admin' ? 'badge-prog-doing' : 'badge-prog-done'}">${c.role === 'admin' ? 'System Admin' : 'Instructor'}</span></td>
+      <td>${c.usedCount || 0} / ${c.maxUses || 1}</td>
+      <td>${c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('vi-VN') : '---'}</td>
+      <td><span class="badge-prog ${c.isRevoked ? 'badge-prog-none' : (c.usedCount >= c.maxUses ? 'badge-prog-doing' : 'badge-prog-done')}">${c.isRevoked ? 'Đã thu hồi' : (c.usedCount >= c.maxUses ? 'Hết lượt' : 'Khả dụng')}</span></td>
+    </tr>
+  `).join('');
+}
+
+window.submitGenerateAdminCode = async function() {
+  const roleSelect = document.getElementById('select-new-code-role');
+  const usesSelect = document.getElementById('select-new-code-uses');
+  const daysSelect = document.getElementById('select-new-code-days');
+
+  const role = roleSelect?.value || 'instructor';
+  const maxUses = parseInt(usesSelect?.value, 10) || 1;
+  const validDays = parseInt(daysSelect?.value, 10) || 30;
+
+  const res = await window.CloudDB.createAdminCode(role, maxUses, validDays);
+  if (res.success) {
+    showToast(`Đã sinh mã mới: ${res.code.code}`);
+    renderAdminCodesList();
+  } else {
+    showToast("Không thể tạo mã quản trị.", "error");
+  }
+};
+
+window.openStudentJoinClassModal = async function() {
+  const overlay = document.getElementById('student-join-class-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+  await renderStudentEnrolledClasses();
+};
+
+window.closeStudentJoinClassModal = function() {
+  const overlay = document.getElementById('student-join-class-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
+};
+
+window.submitStudentJoinClass = async function() {
+  const input = document.getElementById('input-student-class-code');
+  const code = input?.value.trim().toUpperCase() || '';
+  if (!code) {
+    showToast("Vui lòng nhập mã lớp học!", "error");
+    return;
+  }
+  const curUser = UserSession.currentUser;
+  const username = curUser ? curUser.normalizedUsername : 'guest';
+  const dispName = curUser ? curUser.displayUsername : 'Khách';
+
+  const res = await window.CloudDB.joinClass(code, username, dispName);
+  const fb = document.getElementById('student-join-feedback');
+  if (res.success) {
+    showToast(res.message);
+    if (fb) {
+      fb.style.display = 'block';
+      fb.className = 'text-success';
+      fb.textContent = res.message;
+    }
+    if (input) input.value = '';
+    await renderStudentEnrolledClasses();
+  } else {
+    showToast(res.error || "Không thể tham gia lớp.", "error");
+    if (fb) {
+      fb.style.display = 'block';
+      fb.className = 'text-danger';
+      fb.textContent = res.error || "Không thể tham gia lớp.";
+    }
+  }
+};
+
+async function renderStudentEnrolledClasses() {
+  const tbody = document.getElementById('student-enrolled-classes-tbody');
+  if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+  const curUser = UserSession.currentUser;
+  const username = curUser ? curUser.normalizedUsername : '';
+  const allClasses = await window.CloudDB.getClasses();
+  const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
+
+  if (enrolled.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia lớp học nào</td></tr>';
+    return;
+  }
+  tbody.innerHTML = enrolled.map(c => {
+    const member = c.members.find(m => m.username === username);
+    const isApproved = member?.status === 'approved';
+    return `
+      <tr>
+        <td><strong>${c.name}</strong></td>
+        <td><code>${c.code}</code></td>
+        <td><span class="badge-prog ${isApproved ? 'badge-prog-done' : 'badge-prog-doing'}">${isApproved ? 'Đã duyệt' : 'Chờ duyệt'}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.viewStudentPlanReadOnly = function(studentUsername, studentName) {
+  closeClassManagerModal();
+
+  backupInstructorAppState = JSON.parse(JSON.stringify(AppState));
+  window.isReadOnlyStudentView = true;
+
+  let studentPlan = null;
+  try {
+    const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
+    if (raw) studentPlan = JSON.parse(raw);
+  } catch (e) {}
+
+  if (studentPlan) {
+    Object.assign(AppState, studentPlan);
+  } else {
+    showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch.`, "warning");
+  }
+
+  const banner = document.getElementById('student-preview-banner');
+  const nameEl = document.getElementById('preview-student-name');
+  const userEl = document.getElementById('preview-student-user');
+
+  if (banner) banner.style.display = 'flex';
+  if (nameEl) nameEl.textContent = studentName || studentUsername;
+  if (userEl) userEl.textContent = `@${studentUsername}`;
+
+  document.body.classList.add('is-student-preview-mode');
+
+  const btnSave = document.getElementById('btn-cloud-save');
+  if (btnSave) btnSave.disabled = true;
+
+  switchTab('tab-tukhoa');
+  if (typeof renderAll === 'function') renderAll();
+  showToast(`Đang xem bài làm của học viên ${studentName} (Chế độ chỉ đọc).`);
+};
+
+window.exitStudentPlanReadOnly = function() {
+  if (backupInstructorAppState) {
+    Object.assign(AppState, backupInstructorAppState);
+    backupInstructorAppState = null;
+  }
+  window.isReadOnlyStudentView = false;
+
+  const banner = document.getElementById('student-preview-banner');
+  if (banner) banner.style.display = 'none';
+
+  document.body.classList.remove('is-student-preview-mode');
+
+  const btnSave = document.getElementById('btn-cloud-save');
+  if (btnSave) btnSave.disabled = false;
+
+  if (typeof renderAll === 'function') renderAll();
+  showToast("Đã thoát chế độ xem học viên. Đã khôi phục kế hoạch tài chính của bạn.");
+  openClassManagerModal();
+};
 
 window.addEventListener('firebase-ready', () => {
   updateCloudStatus('ready', 'Đám mây sẵn sàng');

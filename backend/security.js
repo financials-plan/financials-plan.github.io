@@ -113,6 +113,21 @@ function applySecurityHeaders(res) {
   );
 }
 
+function validateAdminCodeFormat(code) {
+  if (!code || typeof code !== "string") return false;
+  return /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code.trim().toUpperCase());
+}
+
+function generateAdminCode() {
+  const charset = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const bytes = crypto.randomBytes(12);
+  let result = "";
+  for (let i = 0; i < 12; i++) {
+    result += charset[bytes[i] % charset.length];
+  }
+  return `${result.slice(0, 4)}-${result.slice(4, 8)}-${result.slice(8, 12)}`;
+}
+
 module.exports = {
   ALLOWED_ORIGINS,
   normalizeUsername,
@@ -123,5 +138,7 @@ module.exports = {
   hashPassword,
   verifyPassword,
   createRateLimiter,
-  applySecurityHeaders
+  applySecurityHeaders,
+  validateAdminCodeFormat,
+  generateAdminCode
 };

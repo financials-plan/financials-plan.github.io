@@ -149,6 +149,7 @@ function setActiveSessionFromUser(user, sessionToken = "") {
   const normUser = user.normalizedUsername || user.normalizedName || normalizeUsername(user.username || user.displayUsername || user.rawName);
   const displayUser = user.displayUsername || user.username || user.rawName || user.ho_ten || normUser;
   const docId = user.docId || `user_${normUser}`;
+  const userRole = user.role || (normUser === "admin" ? "admin" : (normUser === "dinh_anh_quan" ? "instructor" : "student"));
 
   activeAuthContext = Object.freeze({
     uid: String(user.uid),
@@ -158,6 +159,7 @@ function setActiveSessionFromUser(user, sessionToken = "") {
     ho_ten: displayUser,
     normalizedUsername: normUser,
     normalizedName: normUser,
+    role: userRole,
     docId,
     maskedEmail: user.maskedEmail || "",
     hasRecoveryEmail: Boolean(user.hasRecoveryEmail),
@@ -257,6 +259,7 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     ho_ten: "Admin",
     normalizedUsername: "admin",
     normalizedName: "admin",
+    role: "admin",
     docId: "user_admin",
     password: "admin123",
     mat_khau: "admin123",
@@ -279,6 +282,7 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     ho_ten: "Đinh Anh Quân",
     normalizedUsername: "dinh_anh_quan",
     normalizedName: "dinh_anh_quan",
+    role: "instructor",
     docId: "user_dinh_anh_quan",
     password: "dinh_anh_quan",
     mat_khau: "dinh_anh_quan",
@@ -301,6 +305,7 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     ho_ten: "HST",
     normalizedUsername: "hst",
     normalizedName: "hst",
+    role: "student",
     docId: "user_hst",
     password: "hst2026",
     mat_khau: "hst2026",
@@ -323,6 +328,7 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     ho_ten: "Demo User",
     normalizedUsername: "demo",
     normalizedName: "demo",
+    role: "student",
     docId: "user_demo",
     password: "lumen2026",
     mat_khau: "lumen2026",
@@ -338,6 +344,91 @@ const DEFAULT_SEEDED_ACCOUNTS = {
     lastLoginAt: "2026-01-01T00:00:00.000Z"
   }
 };
+
+const LOCAL_ADMIN_CODES_KEY = "FIN_APP_ADMIN_CODES_SECURE_V1";
+const LOCAL_CLASSES_KEY = "FIN_APP_CLASSES_SECURE_V1";
+const ADMIN_CODES_COLLECTION = "admin_codes";
+const CLASSES_COLLECTION = "classes";
+
+const DEFAULT_ADMIN_CODES = {
+  "ADMN-2026-X8Y9": { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 10, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+  "INST-2026-K48A": { code: "INST-2026-K48A", role: "instructor", maxUses: 20, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+  "INST-2026-K48B": { code: "INST-2026-K48B", role: "instructor", maxUses: 1, usedCount: 1, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+  "EXPD-2025-0001": { code: "EXPD-2025-0001", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2025-01-01T00:00:00.000Z", createdAt: "2024-01-01T00:00:00.000Z" },
+  "RVKD-2026-9999": { code: "RVKD-2026-9999", role: "instructor", maxUses: 5, usedCount: 0, isRevoked: true, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
+};
+
+const DEFAULT_CLASSES = {
+  "cls_k48": {
+    id: "cls_k48",
+    name: "Lớp Tài Chính Cá Nhân K48",
+    code: "TC-K48",
+    instructorUsername: "dinh_anh_quan",
+    instructorName: "Đinh Anh Quân",
+    maxMembers: 50,
+    isPrivate: true,
+    status: "active",
+    createdAt: "2026-10-01T00:00:00.000Z",
+    members: [
+      { username: "hst", name: "HST", status: "approved", joinedAt: "2026-10-05T00:00:00.000Z" },
+      { username: "demo", name: "Demo User", status: "pending", joinedAt: "2026-10-20T00:00:00.000Z" }
+    ]
+  }
+};
+
+function getLocalAdminCodes() {
+  let codes = {};
+  try {
+    const raw = localStorage.getItem(LOCAL_ADMIN_CODES_KEY);
+    codes = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    codes = {};
+  }
+  let modified = false;
+  Object.keys(DEFAULT_ADMIN_CODES).forEach(k => {
+    if (!codes[k]) {
+      codes[k] = { ...DEFAULT_ADMIN_CODES[k] };
+      modified = true;
+    }
+  });
+  if (modified) {
+    saveLocalAdminCodes(codes);
+  }
+  return codes;
+}
+
+function saveLocalAdminCodes(codes) {
+  try {
+    localStorage.setItem(LOCAL_ADMIN_CODES_KEY, JSON.stringify(codes || {}));
+  } catch (e) {}
+}
+
+function getLocalClasses() {
+  let classes = {};
+  try {
+    const raw = localStorage.getItem(LOCAL_CLASSES_KEY);
+    classes = raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    classes = {};
+  }
+  let modified = false;
+  Object.keys(DEFAULT_CLASSES).forEach(k => {
+    if (!classes[k]) {
+      classes[k] = JSON.parse(JSON.stringify(DEFAULT_CLASSES[k]));
+      modified = true;
+    }
+  });
+  if (modified) {
+    saveLocalClasses(classes);
+  }
+  return classes;
+}
+
+function saveLocalClasses(classes) {
+  try {
+    localStorage.setItem(LOCAL_CLASSES_KEY, JSON.stringify(classes || {}));
+  } catch (e) {}
+}
 
 function getLocalAuthAccounts() {
   let accounts = {};
@@ -423,10 +514,11 @@ const FirestoreService = {
     return null;
   },
 
-  async registerAccount(username, password, recoveryEmail = "") {
+  async registerAccount(username, password, recoveryEmail = "", adminCode = "") {
     const rawUsername = String(username || "").trim();
     const cleanPass = String(password || "");
     const cleanEmail = String(recoveryEmail || "").trim().toLowerCase();
+    const cleanAdminCode = String(adminCode || "").trim().toUpperCase();
 
     if (!rawUsername) {
       return { success: false, code: "INVALID_USERNAME", error: "Vui lòng nhập Username." };
@@ -462,6 +554,55 @@ const FirestoreService = {
         code: "WEAK_PASSWORD",
         error: "Mật khẩu phải có tối thiểu 6 ký tự."
       };
+    }
+
+    let assignedRole = "student";
+    if (cleanAdminCode) {
+      if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanAdminCode)) {
+        return {
+          success: false,
+          code: "INVALID_ADMIN_CODE_FORMAT",
+          error: "Mã Quản trị không đúng định dạng XXXX-XXXX-XXXX."
+        };
+      }
+
+      let codeRec = null;
+      if (isFirebaseReady && db) {
+        try {
+          const cSnap = await Promise.race([
+            getDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode)),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+          ]);
+          if (cSnap && cSnap.exists()) {
+            codeRec = cSnap.data();
+          }
+        } catch (e) {}
+      }
+
+      if (!codeRec) {
+        const localCodes = getLocalAdminCodes();
+        codeRec = localCodes[cleanAdminCode];
+      }
+
+      if (!codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
+        return {
+          success: false,
+          code: "INVALID_ADMIN_CODE",
+          error: "Mã Quản trị không hợp lệ, đã bị thu hồi hoặc đã hết lượt sử dụng."
+        };
+      }
+
+      assignedRole = codeRec.role || "instructor";
+      codeRec.usedCount = (codeRec.usedCount || 0) + 1;
+      codeRec.lastUsedAt = new Date().toISOString();
+      codeRec.lastUsedBy = normalizedUsername;
+
+      if (isFirebaseReady && db) {
+        setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }).catch(() => {});
+      }
+      const allLocalCodes = getLocalAdminCodes();
+      allLocalCodes[cleanAdminCode] = codeRec;
+      saveLocalAdminCodes(allLocalCodes);
     }
 
     const accounts = getLocalAuthAccounts();
@@ -519,6 +660,7 @@ const FirestoreService = {
       ho_ten: rawUsername,
       normalizedUsername,
       normalizedName: normalizedUsername,
+      role: assignedRole,
       password: cleanPass,
       mat_khau: cleanPass,
       recoveryEmail: cleanEmail || null,
@@ -1395,6 +1537,200 @@ const FirestoreService = {
         message: "Lỗi khi tải từ Cloud: " + error.message
       };
     }
+  },
+
+  validateAdminCodeFormat(code) {
+    if (!code || typeof code !== "string") return false;
+    return /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code.trim().toUpperCase());
+  },
+
+  generateAdminCode() {
+    const charset = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let bytes = new Uint8Array(12);
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < 12; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    let res = "";
+    for (let i = 0; i < 12; i++) {
+      res += charset[bytes[i] % charset.length];
+    }
+    return `${res.slice(0, 4)}-${res.slice(4, 8)}-${res.slice(8, 12)}`;
+  },
+
+  async getAdminCodes() {
+    const local = getLocalAdminCodes();
+    return Object.values(local);
+  },
+
+  async createAdminCode(role = "instructor", maxUses = 1, validDays = 30) {
+    const code = this.generateAdminCode();
+    const newCode = {
+      code,
+      role: (role === "admin") ? "admin" : "instructor",
+      maxUses: parseInt(maxUses, 10) || 1,
+      usedCount: 0,
+      isRevoked: false,
+      expiresAt: new Date(Date.now() + (parseInt(validDays, 10) || 30) * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, code), newCode, { merge: true }).catch(() => {});
+    }
+    const local = getLocalAdminCodes();
+    local[code] = newCode;
+    saveLocalAdminCodes(local);
+    return { success: true, code: newCode };
+  },
+
+  async getClasses() {
+    const local = getLocalClasses();
+    return Object.values(local);
+  },
+
+  async createClass(name, code, instructorUsername, maxMembers = 50, isPrivate = true) {
+    const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const newClass = {
+      id: classId,
+      name: String(name || "").trim(),
+      code: String(code || "").trim().toUpperCase(),
+      instructorUsername: instructorUsername || (activeAuthContext ? activeAuthContext.normalizedUsername : "admin"),
+      instructorName: (activeAuthContext ? activeAuthContext.displayUsername : instructorUsername) || "Giảng viên",
+      maxMembers: parseInt(maxMembers, 10) || 50,
+      isPrivate: isPrivate !== false,
+      status: "active",
+      createdAt: new Date().toISOString(),
+      members: []
+    };
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, classId), newClass, { merge: true }).catch(() => {});
+    }
+    const local = getLocalClasses();
+    local[classId] = newClass;
+    saveLocalClasses(local);
+    return { success: true, class: newClass };
+  },
+
+  async joinClass(classCode, username, studentName) {
+    const cleanCode = String(classCode || "").trim().toUpperCase();
+    const cleanUser = normalizeUsername(username || (activeAuthContext ? activeAuthContext.normalizedUsername : ""));
+    const dispName = studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser);
+
+    const classes = getLocalClasses();
+    const targetClass = Object.values(classes).find(c => c.code === cleanCode && c.status === "active");
+    if (!targetClass) {
+      return { success: false, error: "Không tìm thấy lớp học với mã này hoặc lớp đã kết thúc." };
+    }
+    if ((targetClass.members || []).length >= (targetClass.maxMembers || 50)) {
+      return { success: false, error: "Lớp học đã đạt sĩ số thành viên tối đa." };
+    }
+    const existing = (targetClass.members || []).find(m => m.username === cleanUser);
+    if (existing) {
+      return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia lớp này." };
+    }
+
+    const newMember = {
+      username: cleanUser,
+      name: dispName,
+      status: targetClass.isPrivate ? "pending" : "approved",
+      joinedAt: new Date().toISOString()
+    };
+    if (!Array.isArray(targetClass.members)) targetClass.members = [];
+    targetClass.members.push(newMember);
+
+    classes[targetClass.id] = targetClass;
+    saveLocalClasses(classes);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, targetClass.id), targetClass, { merge: true }).catch(() => {});
+    }
+    return {
+      success: true,
+      status: newMember.status,
+      message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia lớp. Vui lòng chờ giảng viên duyệt." : "Đã tham gia lớp học thành công!"
+    };
+  },
+
+  async approveClassMember(classId, studentUsername, action) {
+    const classes = getLocalClasses();
+    const targetClass = classes[classId];
+    if (!targetClass) {
+      return { success: false, error: "Không tìm thấy lớp học." };
+    }
+    if (!Array.isArray(targetClass.members)) targetClass.members = [];
+    const member = targetClass.members.find(m => m.username === studentUsername);
+    if (!member) {
+      return { success: false, error: "Không tìm thấy học viên trong lớp." };
+    }
+    if (action === "approve") {
+      member.status = "approved";
+    } else if (action === "reject") {
+      member.status = "rejected";
+    } else if (action === "remove") {
+      targetClass.members = targetClass.members.filter(m => m.username !== studentUsername);
+    }
+    classes[classId] = targetClass;
+    saveLocalClasses(classes);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+    }
+    return { success: true, class: targetClass };
+  },
+
+  async archiveClass(classId) {
+    const classes = getLocalClasses();
+    const targetClass = classes[classId];
+    if (!targetClass) {
+      return { success: false, error: "Không tìm thấy lớp học." };
+    }
+    targetClass.status = "archived";
+    targetClass.archivedAt = new Date().toISOString();
+    classes[classId] = targetClass;
+    saveLocalClasses(classes);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+    }
+    return { success: true, message: "Đã lưu trữ và kết thúc học kỳ an toàn.", class: targetClass };
+  },
+
+  async getStudentClassProgress(studentUsername) {
+    const norm = normalizeUsername(studentUsername);
+    let plan = null;
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + norm);
+      if (raw) plan = JSON.parse(raw);
+    } catch (e) {}
+
+    const progress = {
+      keywords: "not_started",
+      monthlyPlan: "not_started",
+      goals: "not_started",
+      careerMilestones: "not_started",
+      percent: 0
+    };
+
+    if (plan) {
+      if (plan.ho_ten || plan.currentAge > 0 || (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) {
+        progress.keywords = (plan.ho_ten && plan.currentAge > 0 && (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) ? "completed" : "in_progress";
+      }
+      if (plan.monthlyDetails && Object.keys(plan.monthlyDetails).length > 0) {
+        progress.monthlyPlan = "completed";
+      }
+      if (Array.isArray(plan.personalGoals) && plan.personalGoals.length >= 2) {
+        progress.goals = "completed";
+      } else if (Array.isArray(plan.personalGoals) && plan.personalGoals.length > 0) {
+        progress.goals = "in_progress";
+      }
+      if (Array.isArray(plan.careerMilestones) && plan.careerMilestones.length > 0) {
+        progress.careerMilestones = "completed";
+      }
+    }
+
+    const items = [progress.keywords, progress.monthlyPlan, progress.goals, progress.careerMilestones];
+    const completed = items.filter(s => s === "completed").length;
+    const inProgress = items.filter(s => s === "in_progress").length;
+    progress.percent = Math.round(((completed * 1.0) + (inProgress * 0.5)) / 4 * 100);
+    return progress;
   }
 };
 

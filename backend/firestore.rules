@@ -83,6 +83,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /admin_codes/{code} {
+      allow get: if code.matches('^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
+      allow list: if false;
+      allow create, update: if code.matches('^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$');
+      allow delete: if false;
+    }
+
+    match /classes/{classId} {
+      allow get, list: if classId.matches('^cls_[a-zA-Z0-9_-]{2,80}$');
+      allow create, update: if classId.matches('^cls_[a-zA-Z0-9_-]{2,80}$');
+      allow delete: if false;
+    }
+
     match /auth_usernames/{document=**} {
       allow read, write: if false;
     }

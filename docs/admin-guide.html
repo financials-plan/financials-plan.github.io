@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Sổ Tay Hướng Dẫn Quản Trị Viên & Giảng Viên</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 15mm 18mm 15mm;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.6;
+    font-size: 12.5px;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+  .page-break {
+    page-break-after: always;
+  }
+  .header-cover {
+    text-align: center;
+    padding: 35px 20px 20px 20px;
+    border-bottom: 3px solid #0f766e;
+    margin-bottom: 25px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #f0fdfa;
+    color: #0f766e;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    border: 1px solid #99f6e4;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 22px;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    font-weight: 800;
+  }
+  .cover-subtitle {
+    font-size: 13.5px;
+    color: #475569;
+    margin-bottom: 12px;
+  }
+  .cover-meta {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  h2 {
+    font-size: 15px;
+    color: #115e59;
+    border-bottom: 1.5px solid #ccfbf1;
+    padding-bottom: 5px;
+    margin-top: 22px;
+    margin-bottom: 10px;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 13.5px;
+    color: #1e293b;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 11.5px;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 7px 9px;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 600;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .callout {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+  }
+  .callout-title {
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+  }
+  .callout-warning {
+    background-color: #fffbeb;
+    border-left-color: #f59e0b;
+  }
+  .callout-warning .callout-title {
+    color: #b45309;
+  }
+  .callout-danger {
+    background-color: #fef2f2;
+    border-left-color: #ef4444;
+  }
+  .callout-danger .callout-title {
+    color: #b91c1c;
+  }
+  .callout-info {
+    background-color: #eff6ff;
+    border-left-color: #3b82f6;
+  }
+  .callout-info .callout-title {
+    color: #1d4ed8;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .badge-success { background: #dcfce7; color: #15803d; }
+  .badge-warning { background: #fef3c7; color: #b45309; }
+  .badge-danger { background: #fee2e2; color: #b91c1c; }
+  .badge-neutral { background: #f1f5f9; color: #475569; }
+  code {
+    font-family: Consolas, "Courier New", monospace;
+    background: #f1f5f9;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: #0f172a;
+    font-size: 11px;
+  }
+  .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 10px;
+    color: #94a3b8;
+    text-align: center;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-cover">
+  <div class="cover-badge">Tài Liệu Quản Trị Hệ Thống Chuyên Biệt</div>
+  <h1>QUẢN TRỊ VIÊN & GIẢNG VIÊN ĐÀO TẠO</h1>
+  <div class="cover-subtitle">Hướng Dẫn Vận Hành Phân Quyền, Quản Lý Lớp Học, Ma Trận Tiến Độ & Chế Độ Thanh Tra Kế Hoạch</div>
+  <div class="cover-meta">Hệ thống: Lập Kế Hoạch Tài Chính Cá Nhân • Bản hành chính thức: 3.2.0 • Mật độ bảo mật: Cao</div>
+</div>
+
+<h2>1. KIẾN TRÚC PHÂN QUYỀN VÀ MÔ HÌNH VAI TRÒ</h2>
+<p>
+  Hệ thống vận hành theo mô hình phân quyền dựa trên vai trò (Role-Based Access Control - RBAC) kết hợp nguyên tắc đặc quyền tối thiểu (Least Privilege). Cơ chế kiểm tra quyền hạn được thực thi nghiêm ngặt tại cả tầng giao diện người dùng (Client UI), tầng ứng dụng backend và tầng quy tắc bảo mật cơ sở dữ liệu (Firestore Security Rules):
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width: 15%;">Vai Trò (Role)</th>
+      <th style="width: 25%;">Đối Tượng Áp Dụng</th>
+      <th style="width: 40%;">Phạm Vi Quyền Hạn Thực Thi</th>
+      <th style="width: 20%;">Cơ Chế Cấp Quyền</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>admin</code><br><strong>Quản trị viên</strong></td>
+      <td>Quản trị viên kỹ thuật, Trưởng khoa / Trưởng ban tổ chức.</td>
+      <td>
+        • Toàn quyền quản trị hệ thống.<br>
+        • Tạo, theo dõi, thu hồi Mã Quản trị (Admin Codes).<br>
+        • Quản lý tất cả lớp học, đóng/lưu trữ lớp học.<br>
+        • Xem toàn bộ tiến độ và dữ liệu học viên (chỉ đọc).
+      </td>
+      <td>Nhập Mã Quản trị cấp độ Admin lúc đăng ký hoặc cấp qua quản trị DB.</td>
+    </tr>
+    <tr>
+      <td><code>instructor</code><br><strong>Giảng viên</strong></td>
+      <td>Giảng viên phụ trách môn học, Chuyên gia huấn luyện.</td>
+      <td>
+        • Tạo và quản lý các lớp học do mình phụ trách.<br>
+        • Duyệt hoặc từ chối học viên tham gia lớp.<br>
+        • Xem ma trận tiến độ học tập của các lớp phụ trách.<br>
+        • Kích hoạt chế độ kiểm tra bài học viên (chỉ đọc).<br>
+        • Xem Dashboard phân tích thống kê lớp học.
+      </td>
+      <td>Nhập Mã Quản trị cấp độ Giảng viên lúc đăng ký tài khoản.</td>
+    </tr>
+    <tr>
+      <td><code>student</code><br><strong>Học viên</strong></td>
+      <td>Học sinh, sinh viên, người lập kế hoạch cá nhân.</td>
+      <td>
+        • Toàn quyền thao tác 4 khối dữ liệu kế hoạch cá nhân.<br>
+        • Gửi yêu cầu gia nhập lớp học bằng Mã Lớp.<br>
+        • Tuyệt đối không thể xem dữ liệu học viên khác.
+      </td>
+      <td>Mặc định khi đăng ký tài khoản không nhập mã quản trị.</td>
+    </tr>
+    <tr>
+      <td><code>guest</code><br><strong>Khách</strong></td>
+      <td>Người dùng chưa đăng nhập hệ thống.</td>
+      <td>Trải nghiệm tính toán trên trình duyệt tạm thời.</td>
+      <td>Truy cập tự do.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-danger">
+  <div class="callout-title">Ngăn chặn tự nâng quyền trái phép</div>
+  Mọi hành vi chỉnh sửa mã nguồn giao diện, LocalStorage, Token hoặc giả mạo Payload gửi lên máy chủ nhằm nâng vai trò thành <code>admin</code> hay <code>instructor</code> đều bị ngăn chặn và từ chối xử lý tại Firestore Security Rules và Backend Controller.
+</div>
+
+<h2>2. QUY TRÌNH QUẢN LÝ VÀ CẤP PHÁT MÃ QUẢN TRỊ (ADMIN CODES)</h2>
+
+<h3>2.1. Định dạng chuẩn và Tiêu chuẩn mật mã</h3>
+<p>
+  Tất cả Mã Quản trị hợp lệ phải tuân thủ nghiêm ngặt định dạng gồm 12 ký tự ngẫu nhiên chia làm 3 nhóm 4 ký tự nối nhau bằng 2 dấu gạch ngang: <code>XXXX-XXXX-XXXX</code> (Biểu thức chính quy: <code>^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$</code>).
+</p>
+<p>
+  Mã được sinh hoàn toàn ngẫu nhiên bằng bộ tạo số ngẫu nhiên mật mã (CSPRNG - <code>crypto.randomBytes</code> trên Node.js hoặc <code>crypto.getRandomValues</code> trên trình duyệt) từ bảng ký tự an toàn loại bỏ các ký tự dễ nhầm lẫn: <code>23456789ABCDEFGHJKLMNPQRSTUVWXYZ</code>.
+</p>
+
+<h3>2.2. Vòng đời và Cơ chế kiểm tra mã</h3>
+<ul>
+  <li><strong>Hạn mức sử dụng (Max Uses / Quota)</strong>: Mỗi mã có chỉ số lần sử dụng tối đa. Khi số lần sử dụng thực tế đạt tới hạn mức, mã chuyển sang trạng thái hết lượt và từ chối các lượt đăng ký tiếp theo.</li>
+  <li><strong>Thời hạn sử dụng (Expiration Date)</strong>: Sau thời điểm hết hạn (ISO date), mã tự động mất hiệu lực.</li>
+  <li><strong>Thu hồi lập tức (Revocation)</strong>: Quản trị viên hệ thống có thể thu hồi (Revoke) bất kỳ mã nào ngay lập tức qua bảng quản trị.</li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>3. VẬN HÀNH QUẢN LÝ NHÓM / LỚP HỌC</h2>
+
+<h3>3.1. Tạo lớp học mới và Phân bổ Mã lớp</h3>
+<ol>
+  <li>Tại màn hình <strong>Quản Lý Lớp Học & Đào Tạo</strong>, chọn thẻ <strong>Lớp học & Duyệt học viên</strong>.</li>
+  <li>Điền tên lớp học (Ví dụ: <em>K48 - Hoạch Định Tài Chính Doanh Nhân</em>).</li>
+  <li>Hệ thống tự động sinh <strong>Mã Lớp Học</strong> độc nhất (Ví dụ: <code>CLASS-5921</code>). Giảng viên gửi mã này cho học viên trong lớp.</li>
+</ol>
+
+<h3>3.2. Quy trình duyệt học viên</h3>
+<p>
+  Khi học viên nhập mã lớp, tên học viên sẽ xuất hiện trong danh sách lớp ở trạng thái <span class="badge badge-warning">Chờ duyệt</span>. Giảng viên nhấp nút <strong>Duyệt</strong> để chấp thuận hoặc nút <strong>Từ chối</strong> nếu học viên không thuộc danh sách lớp.
+</p>
+
+<h3>3.3. Đóng / Lưu trữ lớp học cuối kỳ (Archive Class)</h3>
+<p>
+  Khi kỳ học hoặc khóa huấn luyện kết thúc, Giảng viên hoặc Quản trị viên nhấn nút <strong>Lưu trữ (Archive)</strong> lớp học. Thao tác này sẽ đóng băng danh sách thành viên và ghi nhận trạng thái cuối cùng phục vụ việc đánh giá, đối soát và lưu trữ dữ liệu đào tạo.
+</p>
+
+<h2>4. MA TRẬN TIẾN ĐỘ VÀ CHẾ ĐỘ XEM BÀI CHỈ ĐỌC</h2>
+
+<h3>4.1. Ma trận theo dõi tiến độ học tập (Progress Matrix)</h3>
+<p>
+  Ma trận tiến độ cung cấp cái nhìn trực quan theo thời gian thực về mức độ hoàn thiện của từng học viên trên 4 module thực tế:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Module Thực Tế</th>
+      <th style="width: 30%;">Tiêu Chí Đánh Giá Hoàn Thành</th>
+      <th style="width: 45%;">Huy Hiệu Trực Quan Hiển Thị</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Từ Khóa</strong></td>
+      <td>Đã khai báo đủ tuổi, kỳ vọng lạm phát và lợi suất đầu tư.</td>
+      <td><span class="badge badge-success">Hoàn thành</span> (Xanh) hoặc <span class="badge badge-neutral">Chưa làm</span> (Xám)</td>
+    </tr>
+    <tr>
+      <td><strong>2. Kế Hoạch</strong></td>
+      <td>Đã nhập cơ cấu thu nhập, chi phí và trích lập quỹ khẩn cấp.</td>
+      <td><span class="badge badge-success">Hoàn thành</span> (Xanh) hoặc <span class="badge badge-warning">Đang làm</span> (Vàng)</td>
+    </tr>
+    <tr>
+      <td><strong>3. Mục Tiêu</strong></td>
+      <td>Đã kích hoạt mục tiêu con học đại học hoặc quỹ hưu trí.</td>
+      <td><span class="badge badge-success">Hoàn thành</span> (Xanh) hoặc <span class="badge badge-warning">Đang làm</span> (Vàng)</td>
+    </tr>
+    <tr>
+      <td><strong>4. Lộ Trình</strong></td>
+      <td>Đã mô phỏng được dòng tiền 30 năm và cơ cấu danh mục.</td>
+      <td><span class="badge badge-success">Hoàn thành</span> (Xanh) hoặc <span class="badge badge-neutral">Chưa làm</span> (Xám)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2. Chế độ kiểm tra bài học viên chỉ đọc (Read-only Inspection Mode)</h3>
+<p>
+  Khi Giảng viên nhấp nút <strong>Xem bài</strong> bên cạnh tên một học viên trong ma trận:
+</p>
+<ul>
+  <li>
+    <strong>Bảo vệ phiên làm việc của Giảng viên</strong>: Toàn bộ dữ liệu kế hoạch tài chính riêng của Giảng viên đang mở sẽ được sao lưu an toàn trong một biến bộ nhớ tạm (Session Memory Cache).
+  </li>
+  <li>
+    <strong>Khóa ghi đè dữ liệu (Lock Mechanism)</strong>:
+    Giao diện hiển thị thanh banner màu cam cố định ở đỉnh màn hình thông báo rõ thông tin học viên đang xem. Nút "Lưu Kế Hoạch" bị vô hiệu hóa hoàn toàn, ngăn chặn việc vô tình ghi đè dữ liệu học viên hoặc làm hỏng dữ liệu đám mây.
+  </li>
+  <li>
+    <strong>Khôi phục phiên làm việc</strong>: Khi nhấn nút <strong>Quay lại Quản lý Lớp học</strong> trên banner, hệ thống lập tức khôi phục 100% dữ liệu kế hoạch ban đầu của Giảng viên mà không cần tải lại trang.
+  </li>
+</ul>
+
+<div class="callout callout-info">
+  <div class="callout-title">Dashboard Phân Tích Lớp Học (Class Analytics)</div>
+  Thẻ Dashboard tổng hợp tự động tính toán: (1) Tỷ lệ hoàn thành kế hoạch trung bình của lớp, (2) Cơ cấu danh mục đầu tư bình quân (Tỷ lệ Cổ phiếu, Trái phiếu, Bảo hiểm, Tiền gửi), (3) Phân bố nhóm tuổi học viên, giúp Giảng viên đánh giá nhanh chất lượng học tập toàn khóa.
+</div>
+
+<h2>5. QUY TRÌNH SAO LƯU VÀ CHUYỂN GIAO HỆ THỐNG</h2>
+
+<h3>5.1. Sao lưu định kỳ và Khôi phục khi có sự cố</h3>
+<p>
+  Quản trị viên kỹ thuật định kỳ xuất dữ liệu từ các bộ sưu tập Firestore (<code>users</code>, <code>plans</code>, <code>classes</code>, <code>admin_codes</code>) thành định dạng JSON dự phòng. Khi phát sinh sự cố mất dữ liệu do người dùng thao tác nhầm, bản ghi có thể được phục hồi thông qua API khôi phục hoặc công cụ quản trị Firebase Console.
+</p>
+
+<h3>5.2. Chuyển giao quyền quản trị Firebase (Data Ownership Transfer)</h3>
+<p>
+  Khi có sự thay đổi nhân sự phụ trách hoặc chuyển giao đơn vị quản lý, Quản trị viên tham khảo chỉ dẫn chi tiết được ghi trong tệp <code>firebase-config.js</code>. Các bước thực hiện bao gồm:
+</p>
+<ol>
+  <li>Truy cập <strong>Firebase Console &gt; Project Settings &gt; Users and Permissions</strong>.</li>
+  <li>Mời tài khoản Google của Quản trị viên mới với vai trò <strong>Owner (Chủ sở hữu)</strong>.</li>
+  <li>Sau khi tài khoản mới xác nhận quyền Chủ sở hữu, tiến hành hạ quyền hoặc loại bỏ tài khoản người tiền nhiệm, đảm bảo tính liên tục và bảo mật cho toàn bộ hệ thống.</li>
+</ol>
+
+<div class="footer">
+  Tài liệu phân phối nội bộ • Dành riêng cho Quản trị viên & Giảng viên • Trang 1/2
+</div>
+
+</body>
+</html>

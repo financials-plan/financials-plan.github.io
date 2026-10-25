@@ -9,7 +9,9 @@ const {
   hashPassword,
   verifyPassword,
   createRateLimiter,
-  applySecurityHeaders
+  applySecurityHeaders,
+  validateAdminCodeFormat,
+  generateAdminCode
 } = require("./security");
 
 const PORT = process.env.PORT || 8787;
@@ -20,13 +22,15 @@ const authLimiter = createRateLimiter(15 * 60 * 1000, 15);
 
 const accountsStore = new Map();
 const sessionsStore = new Map();
+const adminCodesStore = new Map();
+const classesStore = new Map();
 
-function seedInitialAccounts() {
+function seedInitialData() {
   const seeds = [
-    { u: "admin", name: "Admin", p: "admin123", email: "admin@financials-plan.io" },
-    { u: "dinh_anh_quan", name: "Đinh Anh Quân", p: "dinh_anh_quan", email: "dinh_anh_quan@gmail.com" },
-    { u: "hst", name: "HST", p: "hst2026", email: "hst@gmail.com" },
-    { u: "demo", name: "Demo User", p: "lumen2026", email: "demo@financials-plan.io" }
+    { u: "admin", name: "Admin", p: "admin123", email: "admin@financials-plan.io", role: "admin" },
+    { u: "dinh_anh_quan", name: "Đinh Anh Quân", p: "dinh_anh_quan", email: "dinh_anh_quan@gmail.com", role: "instructor" },
+    { u: "hst", name: "HST", p: "hst2026", email: "hst@gmail.com", role: "student" },
+    { u: "demo", name: "Demo User", p: "lumen2026", email: "demo@financials-plan.io", role: "student" }
   ];
   seeds.forEach(s => {
     const hp = hashPassword(s.p);
@@ -35,6 +39,7 @@ function seedInitialAccounts() {
       username: s.name,
       normalizedUsername: s.u,
       docId: "user_" + s.u,
+      role: s.role,
       passwordHash: hp.hash,
       passwordSalt: hp.salt,
       recoveryEmail: s.email,
@@ -43,8 +48,33 @@ function seedInitialAccounts() {
       createdAt: new Date().toISOString()
     });
   });
+
+  const sampleCodes = [
+    { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 10, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+    { code: "INST-2026-K48A", role: "instructor", maxUses: 20, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+    { code: "INST-2026-K48B", role: "instructor", maxUses: 1, usedCount: 1, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+    { code: "EXPD-2025-0001", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2025-01-01T00:00:00.000Z", createdAt: "2024-01-01T00:00:00.000Z" },
+    { code: "RVKD-2026-9999", role: "instructor", maxUses: 5, usedCount: 0, isRevoked: true, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
+  ];
+  sampleCodes.forEach(c => adminCodesStore.set(c.code, { ...c }));
+
+  classesStore.set("cls_k48", {
+    id: "cls_k48",
+    name: "Lớp Tài Chính Cá Nhân K48",
+    code: "TC-K48",
+    instructorUsername: "dinh_anh_quan",
+    instructorName: "Đinh Anh Quân",
+    maxMembers: 50,
+    isPrivate: true,
+    status: "active",
+    createdAt: "2026-10-01T00:00:00.000Z",
+    members: [
+      { username: "hst", name: "HST", status: "approved", joinedAt: "2026-10-05T00:00:00.000Z" },
+      { username: "demo", name: "Demo User", status: "pending", joinedAt: "2026-10-20T00:00:00.000Z" }
+    ]
+  });
 }
-seedInitialAccounts();
+seedInitialData();
 
 function sendJson(res, statusCode, data) {
   applySecurityHeaders(res);
@@ -186,6 +216,24 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      const rawAdminCode = sanitizeInput(body.adminCode, 16).toUpperCase();
+      let role = "student";
+      if (rawAdminCode) {
+        if (!validateAdminCodeFormat(rawAdminCode)) {
+          sendJson(res, 400, { success: false, error: "Mã Quản trị không đúng định dạng XXXX-XXXX-XXXX." });
+          return;
+        }
+        const codeRec = adminCodesStore.get(rawAdminCode);
+        if (!codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || codeRec.usedCount >= codeRec.maxUses) {
+          sendJson(res, 403, { success: false, error: "Mã Quản trị không hợp lệ, đã bị thu hồi hoặc đã hết lượt sử dụng." });
+          return;
+        }
+        role = codeRec.role || "instructor";
+        codeRec.usedCount += 1;
+        codeRec.lastUsedAt = new Date().toISOString();
+        codeRec.lastUsedBy = normUser;
+      }
+
       const { hash, salt } = hashPassword(password);
       const docId = `user_${normUser}`;
       const maskedEmail = rawEmail ? maskEmailAddress(rawEmail) : "";
@@ -194,6 +242,7 @@ const server = http.createServer(async (req, res) => {
         docId,
         username: rawUser,
         normalizedUsername: normUser,
+        role,
         recoveryEmail: rawEmail || null,
         maskedEmail,
         hasRecoveryEmail: Boolean(rawEmail),
@@ -211,6 +260,7 @@ const server = http.createServer(async (req, res) => {
           username: rawUser,
           displayUsername: rawUser,
           normalizedUsername: normUser,
+          role,
           maskedEmail,
           hasRecoveryEmail: Boolean(rawEmail)
         }
@@ -250,6 +300,7 @@ const server = http.createServer(async (req, res) => {
       sessionsStore.set(token, {
         normalizedUsername: normUser,
         docId: account.docId,
+        role: account.role || "student",
         expiresAt: Date.now() + 24 * 60 * 60 * 1000
       });
 
@@ -262,6 +313,7 @@ const server = http.createServer(async (req, res) => {
           username: account.username,
           displayUsername: account.username,
           normalizedUsername: account.normalizedUsername,
+          role: account.role || "student",
           maskedEmail: account.maskedEmail,
           hasRecoveryEmail: account.hasRecoveryEmail
         }
@@ -311,6 +363,148 @@ const server = http.createServer(async (req, res) => {
         maskedEmail: found.maskedEmail,
         message: `Đã gửi hướng dẫn khôi phục mật khẩu đến ${found.maskedEmail}.`
       });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/admin/codes") {
+      const list = Array.from(adminCodesStore.values()).map(c => ({
+        code: c.code,
+        role: c.role,
+        maxUses: c.maxUses,
+        usedCount: c.usedCount,
+        isRevoked: c.isRevoked,
+        expiresAt: c.expiresAt,
+        createdAt: c.createdAt
+      }));
+      sendJson(res, 200, { success: true, codes: list });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/admin/codes") {
+      const body = await parseJsonBody(req);
+      const role = sanitizeInput(body.role, 32) || "instructor";
+      const maxUses = parseInt(body.maxUses, 10) || 1;
+      const days = parseInt(body.validDays, 10) || 30;
+      const code = generateAdminCode();
+      const newCodeObj = {
+        code,
+        role: (role === "admin") ? "admin" : "instructor",
+        maxUses,
+        usedCount: 0,
+        isRevoked: false,
+        expiresAt: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString()
+      };
+      adminCodesStore.set(code, newCodeObj);
+      sendJson(res, 201, { success: true, code: newCodeObj });
+      return;
+    }
+
+    if (req.method === "GET" && pathname === "/api/classes") {
+      const list = Array.from(classesStore.values());
+      sendJson(res, 200, { success: true, classes: list });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/classes") {
+      const body = await parseJsonBody(req);
+      const name = sanitizeInput(body.name, 64);
+      const code = sanitizeInput(body.code, 32).toUpperCase();
+      const instructorUsername = sanitizeInput(body.instructorUsername, 32);
+      const maxMembers = parseInt(body.maxMembers, 10) || 50;
+      if (!name || !code) {
+        sendJson(res, 400, { success: false, error: "Vui lòng nhập tên lớp và mã lớp." });
+        return;
+      }
+      const classId = "cls_" + Date.now().toString(36);
+      const newClass = {
+        id: classId,
+        name,
+        code,
+        instructorUsername: instructorUsername || "admin",
+        instructorName: instructorUsername || "Giảng viên",
+        maxMembers,
+        isPrivate: body.isPrivate !== false,
+        status: "active",
+        createdAt: new Date().toISOString(),
+        members: []
+      };
+      classesStore.set(classId, newClass);
+      sendJson(res, 201, { success: true, class: newClass });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/classes/join") {
+      const body = await parseJsonBody(req);
+      const classCode = sanitizeInput(body.classCode, 32).toUpperCase();
+      const username = sanitizeInput(body.username, 32);
+      const studentName = sanitizeInput(body.studentName, 64) || username;
+      const targetClass = Array.from(classesStore.values()).find(c => c.code === classCode && c.status === "active");
+      if (!targetClass) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy lớp học với mã này hoặc lớp đã kết thúc." });
+        return;
+      }
+      if (targetClass.members.length >= targetClass.maxMembers) {
+        sendJson(res, 400, { success: false, error: "Lớp học đã đạt giới hạn sĩ số thành viên tối đa." });
+        return;
+      }
+      const existing = targetClass.members.find(m => m.username === username);
+      if (existing) {
+        sendJson(res, 400, { success: false, error: "Bạn đã gửi yêu cầu hoặc đã ở trong lớp này." });
+        return;
+      }
+      const newMember = {
+        username,
+        name: studentName,
+        status: targetClass.isPrivate ? "pending" : "approved",
+        joinedAt: new Date().toISOString()
+      };
+      targetClass.members.push(newMember);
+      sendJson(res, 200, {
+        success: true,
+        status: newMember.status,
+        message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia lớp, vui lòng chờ giảng viên duyệt." : "Đã tham gia lớp thành công."
+      });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/classes/approve") {
+      const body = await parseJsonBody(req);
+      const classId = sanitizeInput(body.classId, 32);
+      const studentUsername = sanitizeInput(body.studentUsername, 32);
+      const action = sanitizeInput(body.action, 16);
+      const targetClass = classesStore.get(classId);
+      if (!targetClass) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy lớp học." });
+        return;
+      }
+      const member = targetClass.members.find(m => m.username === studentUsername);
+      if (!member) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy học viên trong danh sách lớp." });
+        return;
+      }
+      if (action === "approve") {
+        member.status = "approved";
+      } else if (action === "reject") {
+        member.status = "rejected";
+      } else if (action === "remove") {
+        targetClass.members = targetClass.members.filter(m => m.username !== studentUsername);
+      }
+      sendJson(res, 200, { success: true, class: targetClass });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/classes/archive") {
+      const body = await parseJsonBody(req);
+      const classId = sanitizeInput(body.classId, 32);
+      const targetClass = classesStore.get(classId);
+      if (!targetClass) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy lớp học." });
+        return;
+      }
+      targetClass.status = "archived";
+      targetClass.archivedAt = new Date().toISOString();
+      sendJson(res, 200, { success: true, message: "Đã lưu trữ và đóng học kỳ an toàn.", class: targetClass });
       return;
     }
 
