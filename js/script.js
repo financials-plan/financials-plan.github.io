@@ -10503,47 +10503,127 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   if (barsContainer) {
     barsContainer.innerHTML = `
-      <div style="margin-bottom: 14px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
-          <span>Cổ phiếu &amp; Chứng khoán</span> <strong>45%</strong>
-        </div>
-        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 45%; background: #3b82f6;"></div></div>
+      <div class="analytics-stacked-bar" title="Cơ cấu phân bổ tổng thể danh mục">
+        <div class="stacked-bar-seg seg-stocks" style="width: 45%;" title="Cổ phiếu: 45%"></div>
+        <div class="stacked-bar-seg seg-bonds" style="width: 25%;" title="Trái phiếu: 25%"></div>
+        <div class="stacked-bar-seg seg-cash" style="width: 18%;" title="Tiền gửi: 18%"></div>
+        <div class="stacked-bar-seg seg-ins" style="width: 12%;" title="Bảo hiểm: 12%"></div>
       </div>
-      <div style="margin-bottom: 14px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
-          <span>Trái phiếu</span> <strong>25%</strong>
+
+      <div class="analytics-asset-item">
+        <div class="asset-icon-box" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="asset-info-col">
+          <div class="asset-name-row">
+            <strong>Cổ phiếu &amp; Chứng khoán doanh nghiệp</strong>
+            <span class="asset-pct-badge" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">45%</span>
+          </div>
+          <span class="asset-subtext">Kênh sinh lời tăng trưởng dài hạn</span>
+          <div class="capacity-progress-bar">
+            <div class="capacity-progress-fill" style="width: 45%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
+          </div>
         </div>
-        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 25%; background: #10b981;"></div></div>
       </div>
-      <div style="margin-bottom: 14px;">
-        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
-          <span>Tiền gửi tiết kiệm</span> <strong>18%</strong>
+
+      <div class="analytics-asset-item">
+        <div class="asset-icon-box" style="background: rgba(16, 185, 129, 0.12); color: #059669;"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="asset-info-col">
+          <div class="asset-name-row">
+            <strong>Trái phiếu &amp; Công cụ thu nhập cố định</strong>
+            <span class="asset-pct-badge" style="background: rgba(16, 185, 129, 0.12); color: #059669;">25%</span>
+          </div>
+          <span class="asset-subtext">Thu nhập ổn định, rủi ro trung bình</span>
+          <div class="capacity-progress-bar">
+            <div class="capacity-progress-fill" style="width: 25%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+          </div>
         </div>
-        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 18%; background: #f59e0b;"></div></div>
       </div>
-      <div>
-        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:4px;">
-          <span>Bảo hiểm &amp; Quỹ an toàn</span> <strong>12%</strong>
+
+      <div class="analytics-asset-item">
+        <div class="asset-icon-box" style="background: rgba(245, 158, 11, 0.12); color: #d97706;"><i class="fa-solid fa-piggy-bank"></i></div>
+        <div class="asset-info-col">
+          <div class="asset-name-row">
+            <strong>Tiền gửi tiết kiệm &amp; Tương đương tiền</strong>
+            <span class="asset-pct-badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706;">18%</span>
+          </div>
+          <span class="asset-subtext">Thanh khoản linh hoạt, tích lũy an toàn</span>
+          <div class="capacity-progress-bar">
+            <div class="capacity-progress-fill" style="width: 18%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+          </div>
         </div>
-        <div class="capacity-progress-bar"><div class="capacity-progress-fill" style="width: 12%; background: #8b5cf6;"></div></div>
+      </div>
+
+      <div class="analytics-asset-item">
+        <div class="asset-icon-box" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;"><i class="fa-solid fa-shield-heart"></i></div>
+        <div class="asset-info-col">
+          <div class="asset-name-row">
+            <strong>Bảo hiểm nhân thọ &amp; Quỹ an toàn</strong>
+            <span class="asset-pct-badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">12%</span>
+          </div>
+          <span class="asset-subtext">Bảo vệ sinh mạng và phòng ngừa rủi ro y tế</span>
+          <div class="capacity-progress-bar">
+            <div class="capacity-progress-fill" style="width: 12%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div>
+          </div>
+        </div>
       </div>
     `;
   }
 
   if (goalsContainer) {
     goalsContainer.innerHTML = `
-      <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
-          <div style="font-size:13px; font-weight:700;">Mục tiêu Quỹ khẩn cấp 6 tháng</div>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">78% học viên trong nhóm đã hoàn tất cân đối</div>
+      <div class="analytics-goal-benchmark-card">
+        <div class="goal-benchmark-icon" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
+          <i class="fa-solid fa-life-ring"></i>
         </div>
-        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
-          <div style="font-size:13px; font-weight:700;">Kế hoạch Hưu trí an nhàn tuổi 50</div>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">64% học viên đang duy trì tích lũy đúng lộ trình</div>
+        <div class="goal-benchmark-content">
+          <div class="goal-benchmark-title">
+            <span>Mục tiêu Quỹ khẩn cấp 6 tháng</span>
+            <span class="badge-prog badge-prog-done" style="font-size: 11px; padding: 2px 8px;">Đạt chuẩn</span>
+          </div>
+          <div class="goal-benchmark-desc">78% học viên trong nhóm đã hoàn tất trích lập quỹ dự phòng thanh khoản cao tối thiểu 6 tháng sinh hoạt phí.</div>
+          <div class="goal-progress-wrap">
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 78%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+            </div>
+            <span class="goal-pct-num text-emerald">78%</span>
+          </div>
         </div>
-        <div style="padding:12px; border-radius:10px; background:var(--bg-app-2, var(--bg-card)); border:1px solid var(--border-soft);">
-          <div style="font-size:13px; font-weight:700;">Tỷ lệ trả nợ an toàn (DSR &lt; 35%)</div>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">92% học viên kiểm soát dòng tiền an toàn</div>
+      </div>
+
+      <div class="analytics-goal-benchmark-card">
+        <div class="goal-benchmark-icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">
+          <i class="fa-solid fa-umbrella-beach"></i>
+        </div>
+        <div class="goal-benchmark-content">
+          <div class="goal-benchmark-title">
+            <span>Kế hoạch Hưu trí an nhàn tuổi 50</span>
+            <span class="badge-prog badge-prog-doing" style="font-size: 11px; padding: 2px 8px;">Đang tích lũy</span>
+          </div>
+          <div class="goal-benchmark-desc">64% học viên đang duy trì tích lũy theo đúng công thức lãi kép cho giai đoạn hưu trí an nhàn.</div>
+          <div class="goal-progress-wrap">
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 64%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
+            </div>
+            <span class="goal-pct-num" style="color: #2563eb;">64%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-goal-benchmark-card">
+        <div class="goal-benchmark-icon" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">
+          <i class="fa-solid fa-scale-balanced"></i>
+        </div>
+        <div class="goal-benchmark-content">
+          <div class="goal-benchmark-title">
+            <span>Tỷ lệ trả nợ an toàn (DSR &lt; 35%)</span>
+            <span class="badge-prog badge-prog-done" style="font-size: 11px; padding: 2px 8px;">An toàn cao</span>
+          </div>
+          <div class="goal-benchmark-desc">92% học viên kiểm soát dòng tiền trả nợ hàng tháng nằm trong ngưỡng chịu đựng lành mạnh.</div>
+          <div class="goal-progress-wrap">
+            <div class="goal-track">
+              <div class="goal-fill" style="width: 92%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div>
+            </div>
+            <span class="goal-pct-num" style="color: #7c3aed;">92%</span>
+          </div>
         </div>
       </div>
     `;

@@ -471,24 +471,33 @@
             </div>
 
             <div class="students-summary-strip" id="students-summary-strip">
-              <div class="strip-kpi-item" id="kpi-filter-all" onclick="filterAdminStudentsKpi('all')" style="cursor: pointer;" title="Xem tất cả">
-                <span class="strip-kpi-val" id="strip-kpi-members">0</span>
-                <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+              <div class="strip-kpi-item active" id="kpi-filter-all" onclick="filterAdminStudentsKpi('all')" title="Xem tất cả">
+                <div class="strip-kpi-icon-badge kpi-badge-indigo"><i class="fa-solid fa-users"></i></div>
+                <div class="strip-kpi-content">
+                  <span class="strip-kpi-val" id="strip-kpi-members">0</span>
+                  <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+                </div>
               </div>
-              <div class="strip-kpi-divider"></div>
-              <div class="strip-kpi-item" id="kpi-filter-completed" onclick="filterAdminStudentsKpi('completed')" style="cursor: pointer;" title="Lọc sinh viên đã hoàn thành">
-                <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
-                <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+              <div class="strip-kpi-item" id="kpi-filter-completed" onclick="filterAdminStudentsKpi('completed')" title="Lọc sinh viên đã hoàn thành">
+                <div class="strip-kpi-icon-badge kpi-badge-emerald"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="strip-kpi-content">
+                  <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
+                  <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+                </div>
               </div>
-              <div class="strip-kpi-divider"></div>
-              <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="filterAdminStudentsKpi('balancing')" style="cursor: pointer;" title="Lọc sinh viên đang lập lộ trình">
-                <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
-                <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+              <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="filterAdminStudentsKpi('balancing')" title="Lọc sinh viên đang lập lộ trình">
+                <div class="strip-kpi-icon-badge kpi-badge-amber"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="strip-kpi-content">
+                  <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
+                  <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+                </div>
               </div>
-              <div class="strip-kpi-divider"></div>
-              <div class="strip-kpi-item" id="kpi-filter-pending" onclick="filterAdminStudentsKpi('pending')" style="cursor: pointer;" title="Lọc sinh viên chưa hoàn thiện">
-                <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
-                <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+              <div class="strip-kpi-item" id="kpi-filter-pending" onclick="filterAdminStudentsKpi('pending')" title="Lọc sinh viên chưa hoàn thiện">
+                <div class="strip-kpi-icon-badge kpi-badge-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="strip-kpi-content">
+                  <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
+                  <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+                </div>
               </div>
             </div>
           </div>
@@ -540,21 +549,36 @@
         <div class="admin-pane-container">
           <div class="analytics-header-card">
             <div class="analytics-title-group">
-              <h3><i class="fa-solid fa-chart-pie text-primary"></i> Phân tích tài chính chuyên sâu nhóm</h3>
-              <p>Tổng hợp chỉ số phân bổ tài sản, khẩu vị rủi ro và tỷ lệ đạt mục tiêu trung bình của nhóm</p>
+              <div class="analytics-icon-badge"><i class="fa-solid fa-chart-pie"></i></div>
+              <div class="analytics-title-text">
+                <h3>Phân tích tài chính chuyên sâu nhóm</h3>
+                <p>Tổng hợp chỉ số phân bổ tài sản, khẩu vị rủi ro và tỷ lệ đạt mục tiêu trung bình của nhóm</p>
+              </div>
             </div>
             <div class="analytics-group-selector">
-              <select id="analytics-group-select" class="admin-select-styled" onchange="renderAdminAnalyticsView(this.value)"></select>
+              <select id="analytics-group-select" class="admin-group-picker-dropdown" onchange="renderAdminAnalyticsView(this.value)"></select>
             </div>
           </div>
 
           <div class="analytics-grid-row">
             <div class="analytics-card">
-              <h4>Cơ cấu phân bổ tài sản trung bình nhóm</h4>
+              <div class="analytics-card-header">
+                <div class="card-header-icon icon-blue"><i class="fa-solid fa-chart-pie"></i></div>
+                <div>
+                  <h4>Cơ cấu phân bổ tài sản trung bình nhóm</h4>
+                  <span>Dựa trên mục tiêu tài chính của tất cả thành viên trong nhóm</span>
+                </div>
+              </div>
               <div id="analytics-asset-bars" class="analytics-bars-container"></div>
             </div>
             <div class="analytics-card">
-              <h4>Tỷ lệ hoàn thành mục tiêu tài chính</h4>
+              <div class="analytics-card-header">
+                <div class="card-header-icon icon-emerald"><i class="fa-solid fa-bullseye"></i></div>
+                <div>
+                  <h4>Tỷ lệ hoàn thành mục tiêu tài chính</h4>
+                  <span>Đánh giá mức độ khả thi và khả năng tích lũy mục tiêu trọng yếu</span>
+                </div>
+              </div>
               <div id="analytics-goals-container" class="analytics-goals-container"></div>
             </div>
           </div>

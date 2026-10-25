@@ -376,49 +376,77 @@ body {
 }
 
 .students-summary-strip {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
   background: var(--admin-bg);
   border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  padding: 12px 18px;
+  border-radius: 14px;
+  padding: 16px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .strip-kpi-item {
   display: flex;
-  flex-direction: column;
-  padding: 6px 12px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--admin-card-bg);
+  border: 1px solid var(--admin-border-soft);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .strip-kpi-item:hover {
-  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--admin-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .strip-kpi-item.active {
-  background: var(--admin-primary-light);
-  outline: 1.5px solid var(--admin-primary);
+  background: var(--admin-card-bg);
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2), 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.strip-kpi-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.kpi-badge-indigo { background: rgba(79, 70, 229, 0.1); color: #4f46e5; }
+.kpi-badge-emerald { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+.kpi-badge-amber { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.kpi-badge-red { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+.strip-kpi-content {
+  display: flex;
+  flex-direction: column;
 }
 
 .strip-kpi-val {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .strip-kpi-lbl {
   font-size: 12px;
+  font-weight: 600;
   color: var(--admin-muted);
+  margin-top: 2px;
 }
 
 .strip-kpi-divider {
-  width: 1px;
-  height: 32px;
-  background: var(--admin-border);
+  display: none;
 }
 
 .admin-toolbar-row {
@@ -632,37 +660,49 @@ body {
 .alloc-tag-cash { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
 
 .btn-inspect-student-pill {
-  background: var(--admin-primary-light);
-  color: var(--admin-primary);
-  border: 1px solid rgba(2, 132, 199, 0.2);
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--admin-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
   transition: all 0.15s ease;
 }
 
 .btn-inspect-student-pill:hover {
-  background: var(--admin-primary);
-  color: #fff;
+  background: #0369a1;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1px);
 }
 
 .btn-remove-student-pill {
-  background: transparent;
-  color: var(--admin-muted);
-  border: 0;
-  padding: 6px;
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-remove-student-pill:hover {
-  color: var(--admin-danger);
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+  transform: translateY(-1px);
 }
 
 .text-emerald { color: #10b981; }

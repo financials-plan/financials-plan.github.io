@@ -139,24 +139,33 @@
         </div>
 
         <div class="students-summary-strip">
-          <div class="strip-kpi-item active" id="kpi-filter-all" onclick="window.adminWebPortal.filterKpi('all')">
-            <span class="strip-kpi-val" id="strip-kpi-members">0</span>
-            <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+          <div class="strip-kpi-item active" id="kpi-filter-all" onclick="window.adminWebPortal.filterKpi('all')" title="Xem tất cả">
+            <div class="strip-kpi-icon-badge kpi-badge-indigo"><i class="fa-solid fa-users"></i></div>
+            <div class="strip-kpi-content">
+              <span class="strip-kpi-val" id="strip-kpi-members">0</span>
+              <span class="strip-kpi-lbl">Thành viên trong nhóm</span>
+            </div>
           </div>
-          <div class="strip-kpi-divider"></div>
-          <div class="strip-kpi-item" id="kpi-filter-completed" onclick="window.adminWebPortal.filterKpi('completed')">
-            <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
-            <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+          <div class="strip-kpi-item" id="kpi-filter-completed" onclick="window.adminWebPortal.filterKpi('completed')" title="Lọc sinh viên đã hoàn thành">
+            <div class="strip-kpi-icon-badge kpi-badge-emerald"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="strip-kpi-content">
+              <span class="strip-kpi-val text-emerald" id="strip-kpi-completed">0</span>
+              <span class="strip-kpi-lbl">Đã hoàn thành 100%</span>
+            </div>
           </div>
-          <div class="strip-kpi-divider"></div>
-          <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="window.adminWebPortal.filterKpi('balancing')">
-            <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
-            <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+          <div class="strip-kpi-item" id="kpi-filter-balancing" onclick="window.adminWebPortal.filterKpi('balancing')" title="Lọc sinh viên đang lập lộ trình">
+            <div class="strip-kpi-icon-badge kpi-badge-amber"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <div class="strip-kpi-content">
+              <span class="strip-kpi-val text-amber" id="strip-kpi-balancing">0</span>
+              <span class="strip-kpi-lbl">Đang lập lộ trình</span>
+            </div>
           </div>
-          <div class="strip-kpi-divider"></div>
-          <div class="strip-kpi-item" id="kpi-filter-pending" onclick="window.adminWebPortal.filterKpi('pending')">
-            <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
-            <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+          <div class="strip-kpi-item" id="kpi-filter-pending" onclick="window.adminWebPortal.filterKpi('pending')" title="Lọc sinh viên chưa hoàn thiện">
+            <div class="strip-kpi-icon-badge kpi-badge-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="strip-kpi-content">
+              <span class="strip-kpi-val text-red" id="strip-kpi-pending">0</span>
+              <span class="strip-kpi-lbl">Chưa hoàn thiện</span>
+            </div>
           </div>
         </div>
 
