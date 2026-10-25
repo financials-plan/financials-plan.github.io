@@ -22,7 +22,7 @@ after((done) => {
   server.close(done);
 });
 
-function makeRequest(method, path, body = null) {
+function makeRequest(method, path, body = null, customHeaders = {}) {
   return new Promise((resolve, reject) => {
     const payload = body ? JSON.stringify(body) : null;
     const req = http.request(
@@ -33,6 +33,8 @@ function makeRequest(method, path, body = null) {
         method,
         headers: {
           "Content-Type": "application/json",
+          "x-admin-key": "qtv-secret-2026",
+          ...customHeaders,
           ...(payload ? { "Content-Length": Buffer.byteLength(payload) } : {})
         }
       },
@@ -213,4 +215,41 @@ test("4. Financial Data & Code Parity Preservation", () => {
   assert.ok(mainContent.includes("id=\"class-manager-modal-overlay\""), "Class manager modal exists in main.html");
   assert.ok(mainContent.includes("id=\"student-join-class-modal-overlay\""), "Student join class modal exists in main.html");
   assert.ok(mainContent.includes("id=\"btn-menu-class-manager\""), "Class manager menu button exists");
+});
+
+test("5. Backend QTV / Admin APIs", async () => {
+  const ovRes = await makeRequest("GET", "/api/admin/overview");
+  assert.strictEqual(ovRes.status, 200);
+  assert.strictEqual(ovRes.data.success, true);
+  assert.ok(ovRes.data.overview.users.total >= 4);
+  assert.ok(ovRes.data.overview.classes.total >= 1);
+  assert.ok(ovRes.data.overview.adminCodes.total >= 5);
+
+  const usersRes = await makeRequest("GET", "/api/admin/users");
+  assert.strictEqual(usersRes.status, 200);
+  assert.strictEqual(usersRes.data.success, true);
+  assert.ok(Array.isArray(usersRes.data.users));
+  assert.ok(usersRes.data.users.some(u => u.username === "Admin"));
+
+  const roleRes = await makeRequest("POST", "/api/admin/users/role", {
+    username: "demo",
+    role: "instructor"
+  });
+  assert.strictEqual(roleRes.status, 200);
+  assert.strictEqual(roleRes.data.success, true);
+  assert.strictEqual(roleRes.data.user.role, "instructor");
+
+  const revokeRes = await makeRequest("POST", "/api/admin/codes/revoke", {
+    code: "ADMN-2026-X8Y9"
+  });
+  assert.strictEqual(revokeRes.status, 200);
+  assert.strictEqual(revokeRes.data.success, true);
+  assert.strictEqual(revokeRes.data.code.isRevoked, true);
+
+  const backupRes = await makeRequest("GET", "/api/admin/backup");
+  assert.strictEqual(backupRes.status, 200);
+  assert.strictEqual(backupRes.data.success, true);
+  assert.ok(Array.isArray(backupRes.data.backup.accounts));
+  assert.ok(Array.isArray(backupRes.data.backup.classes));
+  assert.ok(Array.isArray(backupRes.data.backup.adminCodes));
 });
