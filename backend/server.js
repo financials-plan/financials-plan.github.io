@@ -441,16 +441,16 @@ const server = http.createServer(async (req, res) => {
       const studentName = sanitizeInput(body.studentName, 64) || username;
       const targetClass = Array.from(classesStore.values()).find(c => c.code === classCode && c.status === "active");
       if (!targetClass) {
-        sendJson(res, 404, { success: false, error: "Không tìm thấy lớp học với mã này hoặc lớp đã kết thúc." });
+        sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." });
         return;
       }
       if (targetClass.members.length >= targetClass.maxMembers) {
-        sendJson(res, 400, { success: false, error: "Lớp học đã đạt giới hạn sĩ số thành viên tối đa." });
+        sendJson(res, 400, { success: false, error: "Nhóm đã đạt giới hạn thành viên tối đa." });
         return;
       }
       const existing = targetClass.members.find(m => m.username === username);
       if (existing) {
-        sendJson(res, 400, { success: false, error: "Bạn đã gửi yêu cầu hoặc đã ở trong lớp này." });
+        sendJson(res, 400, { success: false, error: "Bạn đã gửi yêu cầu hoặc đã ở trong nhóm này." });
         return;
       }
       const newMember = {
@@ -463,7 +463,7 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, {
         success: true,
         status: newMember.status,
-        message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia lớp, vui lòng chờ giảng viên duyệt." : "Đã tham gia lớp thành công."
+        message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia nhóm, vui lòng chờ duyệt." : "Đã tham gia nhóm thành công."
       });
       return;
     }

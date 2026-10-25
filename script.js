@@ -9411,7 +9411,7 @@ window.submitStudentJoinClass = async function() {
   const input = document.getElementById('input-student-class-code');
   const code = input?.value.trim().toUpperCase() || '';
   if (!code) {
-    showToast("Vui lòng nhập mã lớp học!", "error");
+    showToast("Vui lòng nhập mã nhóm!", "error");
     return;
   }
   const curUser = UserSession.currentUser;
@@ -9430,11 +9430,11 @@ window.submitStudentJoinClass = async function() {
     if (input) input.value = '';
     await renderStudentEnrolledClasses();
   } else {
-    showToast(res.error || "Không thể tham gia lớp.", "error");
+    showToast(res.error || "Không thể tham gia nhóm.", "error");
     if (fb) {
       fb.style.display = 'block';
       fb.className = 'text-danger';
-      fb.textContent = res.error || "Không thể tham gia lớp.";
+      fb.textContent = res.error || "Không thể tham gia nhóm.";
     }
   }
 };
@@ -9448,7 +9448,7 @@ async function renderStudentEnrolledClasses() {
   const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
 
   if (enrolled.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia lớp học nào</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>';
     return;
   }
   tbody.innerHTML = enrolled.map(c => {

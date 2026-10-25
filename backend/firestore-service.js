@@ -1620,14 +1620,14 @@ const FirestoreService = {
     const classes = getLocalClasses();
     const targetClass = Object.values(classes).find(c => c.code === cleanCode && c.status === "active");
     if (!targetClass) {
-      return { success: false, error: "Không tìm thấy lớp học với mã này hoặc lớp đã kết thúc." };
+      return { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." };
     }
     if ((targetClass.members || []).length >= (targetClass.maxMembers || 50)) {
-      return { success: false, error: "Lớp học đã đạt sĩ số thành viên tối đa." };
+      return { success: false, error: "Nhóm đã đạt số lượng thành viên tối đa." };
     }
     const existing = (targetClass.members || []).find(m => m.username === cleanUser);
     if (existing) {
-      return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia lớp này." };
+      return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia nhóm này." };
     }
 
     const newMember = {
@@ -1647,7 +1647,7 @@ const FirestoreService = {
     return {
       success: true,
       status: newMember.status,
-      message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia lớp. Vui lòng chờ giảng viên duyệt." : "Đã tham gia lớp học thành công!"
+      message: targetClass.isPrivate ? "Đã gửi yêu cầu tham gia nhóm. Vui lòng chờ người phụ trách duyệt." : "Đã tham gia nhóm thành công!"
     };
   },
 

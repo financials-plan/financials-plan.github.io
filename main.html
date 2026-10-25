@@ -194,7 +194,7 @@
                 <i class="fa-solid fa-chalkboard-user text-primary"></i> <span>Quản lý Lớp học &amp; Giảng viên</span>
               </button>
               <button type="button" class="account-action-btn" id="btn-menu-join-class" onclick="openStudentJoinClassModal(); closeAccountMenu();">
-                <i class="fa-solid fa-graduation-cap text-primary"></i> <span>Tham gia Lớp học</span>
+                <i class="fa-solid fa-users text-primary"></i> <span>Tham gia Nhóm</span>
               </button>
               <button type="button" class="account-action-btn" onclick="openUnifiedDataModal('import'); closeAccountMenu();">
                 <i class="fa-solid fa-file-import text-primary"></i> <span>Nhập / Xuất dữ liệu &amp; Sao lưu</span>
@@ -2212,8 +2212,8 @@
     <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
         <div class="modal-title-group">
-          <h3 id="student-join-class-modal-title"><i class="fa-solid fa-graduation-cap text-primary"></i> Tham gia Lớp học</h3>
-          <p>Nhập mã lớp do giảng viên cung cấp để tham gia lớp đào tạo</p>
+          <h3 id="student-join-class-modal-title"><i class="fa-solid fa-users text-primary"></i> Tham gia Nhóm</h3>
+          <p>Nhập mã nhóm do người quản lý hoặc giảng viên cung cấp để tham gia</p>
         </div>
         <button type="button" class="btn-modal-close" onclick="closeStudentJoinClassModal()" aria-label="Đóng">
           <i class="fa-solid fa-xmark"></i>
@@ -2222,7 +2222,7 @@
 
       <div class="modal-body">
         <div class="form-group">
-          <label for="input-student-class-code">Mã lớp học (Class Code):</label>
+          <label for="input-student-class-code">Mã nhóm (Mã tham gia):</label>
           <div class="input-with-icon">
             <i class="fa-solid fa-hashtag input-icon-left"></i>
             <input type="text" id="input-student-class-code" class="auth-input" placeholder="Ví dụ: TC-K48..." maxlength="16" style="text-transform: uppercase;">
@@ -2233,19 +2233,19 @@
 
         <div class="class-section-title" style="margin-top: 20px;">
           <i class="fa-solid fa-bookmark text-primary"></i>
-          <span>Lớp học của bạn</span>
+          <span>Nhóm của bạn</span>
         </div>
         <div class="class-table-wrap">
           <table class="class-data-table">
             <thead>
               <tr>
-                <th>Lớp học</th>
-                <th>Mã lớp</th>
+                <th>Nhóm</th>
+                <th>Mã nhóm</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody id="student-enrolled-classes-tbody">
-              <tr><td colspan="3" class="empty-cell">Bạn chưa tham gia lớp nào</td></tr>
+              <tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>
             </tbody>
           </table>
         </div>
