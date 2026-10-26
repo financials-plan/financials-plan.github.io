@@ -36,6 +36,14 @@ service cloud.firestore {
       }
     }
 
+    match /group_codes/{code} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
     match /student_plans/{planId} {
       allow read, write: if true;
 
@@ -61,6 +69,14 @@ service cloud.firestore {
     }
 
     match /financial_accounts/{username} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
+    match /users/{username} {
       allow read, write: if true;
 
       match /{subcollection=**} {

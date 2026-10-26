@@ -425,28 +425,109 @@ function normalizeMaxMembers(raw, fallback = 40) {
 }
 
 async function findClassesByCode(cleanCode) {
-  const snap = await withTimeout(getDocs(query(
-    collection(db, CLASSES_COLLECTION),
-    where("code", "==", cleanCode),
-    limit(10)
-  )));
+  const code = String(cleanCode || "").trim().toUpperCase();
+  if (!code) return [];
   const list = [];
-  snap.forEach(d => {
-    const data = { ...d.data(), id: d.id };
-    if (isRealClassRecord(data)) list.push(data);
+  const seenIds = new Set();
+
+  const addIfValid = (data) => {
+    if (isRealClassRecord(data) && !seenIds.has(data.id)) {
+      seenIds.add(data.id);
+      list.push(data);
+    }
+  };
+
+  if (isFirebaseReady && db) {
+    try {
+      const gcSnap = await withTimeout(getDoc(doc(db, "group_codes", code)), 4000).catch(() => null);
+      if (gcSnap && gcSnap.exists()) {
+        const gc = gcSnap.data();
+        if (gc && gc.classId) {
+          const cSnap = await withTimeout(getDoc(doc(db, CLASSES_COLLECTION, gc.classId)), 4000).catch(() => null);
+          if (cSnap && cSnap.exists()) addIfValid({ ...cSnap.data(), id: cSnap.id });
+          const gSnap = await withTimeout(getDoc(doc(db, GROUPS_COLLECTION, gc.classId)), 4000).catch(() => null);
+          if (gSnap && gSnap.exists()) addIfValid({ ...gSnap.data(), id: gSnap.id });
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const snap = await withTimeout(getDocs(query(
+        collection(db, CLASSES_COLLECTION),
+        where("code", "==", code),
+        limit(10)
+      )), 5000).catch(() => null);
+      if (snap) {
+        snap.forEach(d => addIfValid({ ...d.data(), id: d.id }));
+      }
+    } catch (e) {}
+
+    try {
+      const gSnap = await withTimeout(getDocs(query(
+        collection(db, GROUPS_COLLECTION),
+        where("code", "==", code),
+        limit(10)
+      )), 5000).catch(() => null);
+      if (gSnap) {
+        gSnap.forEach(d => addIfValid({ ...d.data(), id: d.id }));
+      }
+    } catch (e) {}
+
+    const aggRefs = [
+      doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
+      doc(db, CLASSES_COLLECTION, "groups"),
+      doc(db, GROUPS_COLLECTION, "groups"),
+      doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
+      doc(db, CLASSES_COLLECTION, "class")
+    ];
+    for (const aRef of aggRefs) {
+      try {
+        const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
+        if (aSnap && aSnap.exists()) {
+          const aData = aSnap.data();
+          if (aData && aData.classes && typeof aData.classes === "object") {
+            for (const cid of Object.keys(aData.classes)) {
+              const c = aData.classes[cid];
+              if (c && c.code === code) addIfValid(c);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }
+
+  const local = getLocalClasses();
+  Object.values(local).forEach(c => {
+    if (c && c.code === code) addIfValid(c);
   });
+
   return list;
 }
 
 async function syncClassesStoreToFirestore(classId, classData, isDeleted = false) {
   if (!isFirebaseReady || !db) throw new Error("Firebase chưa được cấu hình.");
   const ref = doc(db, CLASSES_COLLECTION, classId);
+  const local = getLocalClasses();
   if (!isDeleted) {
-    await withTimeout(setDoc(ref, classData));
-    const local = getLocalClasses();
+    if (classData) local[classId] = classData;
+    saveLocalClasses(local);
+
+    await withTimeout(setDoc(ref, classData, { merge: true }));
     const payload = { id: "groups", updatedAt: new Date().toISOString(), classes: local || {} };
     const classPayload = { id: "class", updatedAt: new Date().toISOString(), classes: local || {} };
+    const codePayload = {
+      id: classData.code,
+      classId,
+      code: classData.code,
+      name: classData.name,
+      instructorUsername: classData.instructorUsername,
+      instructorName: classData.instructorName,
+      status: classData.status,
+      updatedAt: new Date().toISOString()
+    };
     await withTimeout(Promise.allSettled([
+      setDoc(doc(db, GROUPS_COLLECTION, classId), classData, { merge: true }),
+      setDoc(doc(db, "group_codes", classData.code), codePayload, { merge: true }),
       setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "groups"), payload, { merge: true }),
       setDoc(doc(db, CLASSES_COLLECTION, "groups"), payload, { merge: true }),
       setDoc(doc(db, GROUPS_COLLECTION, "groups"), payload, { merge: true }),
@@ -455,12 +536,15 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
     ])).catch(() => {});
     return;
   }
-  await withTimeout(deleteDoc(ref));
+  delete local[classId];
+  saveLocalClasses(local);
+  await withTimeout(deleteDoc(ref)).catch(() => {});
   const legacyAggregates = [
     doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
     doc(db, CLASSES_COLLECTION, "groups"),
     doc(db, CLASSES_COLLECTION, "class"),
-    doc(db, GROUPS_COLLECTION, "groups")
+    doc(db, GROUPS_COLLECTION, "groups"),
+    doc(db, FINANCIAL_AUTH_COLLECTION, "class")
   ];
   await withTimeout(Promise.allSettled([
     deleteDoc(doc(db, GROUPS_COLLECTION, classId)),
@@ -863,8 +947,26 @@ const FirestoreService = {
 
     if (isFirebaseReady && db) {
       try {
+        const userProfile = {
+          uid: newRecord.uid,
+          username: normalizedUsername,
+          displayName: rawUsername,
+          role: assignedRole,
+          recoveryEmail: cleanEmail || null,
+          maskedEmail,
+          hasRecoveryEmail: Boolean(cleanEmail),
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          lastLoginAt: nowIso,
+          schemaVersion: 3,
+          groups: {}
+        };
         await Promise.race([
-          setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord),
+          Promise.allSettled([
+            setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord, { merge: true }),
+            setDoc(doc(db, "users", normalizedUsername), userProfile, { merge: true }),
+            setDoc(doc(db, "accounts", normalizedUsername), newRecord, { merge: true })
+          ]),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
       } catch (writeErr) {
@@ -949,6 +1051,19 @@ const FirestoreService = {
           target = snap.data();
           accounts[normalizedUsername] = target;
           saveLocalAuthAccounts(accounts);
+        } else {
+          const uSnap = await getDoc(doc(db, "users", normalizedUsername)).catch(() => null);
+          const accSnap = await getDoc(doc(db, "accounts", normalizedUsername)).catch(() => null);
+          if (accSnap && accSnap.exists()) {
+            target = accSnap.data();
+            accounts[normalizedUsername] = target;
+            saveLocalAuthAccounts(accounts);
+          } else if (uSnap && uSnap.exists()) {
+            const uData = uSnap.data();
+            target = { ...uData, normalizedUsername };
+            accounts[normalizedUsername] = target;
+            saveLocalAuthAccounts(accounts);
+          }
         }
       } catch (fsErr) {
         console.warn("Lỗi tải tài khoản từ Firestore, thử tiếp từ bộ nhớ thiết bị:", fsErr);
@@ -989,6 +1104,8 @@ const FirestoreService = {
     const checkHash = await computePasswordHash(cleanPass, target.salt);
     const isPassValid = (checkHash === target.passHash) ||
                         (target.altPassHash && checkHash === target.altPassHash) ||
+                        (target.password && target.password === cleanPass) ||
+                        (target.mat_khau && target.mat_khau === cleanPass) ||
                         (cleanPass === "administrator" && (normalizedUsername === "admin" || normalizedUsername === "administrator")) ||
                         (cleanPass === "lumen2026");
     if (!isPassValid) {
@@ -1008,12 +1125,17 @@ const FirestoreService = {
     target.updatedAt = target.lastLoginAt;
 
     if (isFirebaseReady && db) {
-      setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), {
+      const stampPayload = {
         password: cleanPass,
         mat_khau: cleanPass,
         lastLoginAt: target.lastLoginAt,
         updatedAt: target.updatedAt
-      }, { merge: true }).catch(() => {});
+      };
+      Promise.allSettled([
+        setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), stampPayload, { merge: true }),
+        setDoc(doc(db, "accounts", normalizedUsername), stampPayload, { merge: true }),
+        setDoc(doc(db, "users", normalizedUsername), { lastLoginAt: target.lastLoginAt, updatedAt: target.updatedAt }, { merge: true })
+      ]).catch(() => {});
     }
 
     accounts[normalizedUsername] = target;
@@ -1540,17 +1662,23 @@ const FirestoreService = {
           const classes = getLocalClasses();
           const studentUser = cleanData.username || access.normalizedUsername;
           if (studentUser) {
+            const subData = {
+              username: studentUser,
+              name: cleanData.ho_ten || studentUser,
+              updatedAt: new Date().toISOString(),
+              plan: cleanData
+            };
+            await setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }).catch(() => {});
             for (const cid of Object.keys(classes)) {
               const c = classes[cid];
               const isMember = (c.members || []).some(m => m.username === studentUser);
               if (isMember) {
                 const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", studentUser);
-                await setDoc(subRef, {
-                  username: studentUser,
-                  name: cleanData.ho_ten || studentUser,
-                  updatedAt: new Date().toISOString(),
-                  plan: cleanData
-                }, { merge: true }).catch(() => {});
+                const gSubRef = doc(db, GROUPS_COLLECTION, cid, "submissions", studentUser);
+                await Promise.allSettled([
+                  setDoc(subRef, subData, { merge: true }),
+                  setDoc(gSubRef, subData, { merge: true })
+                ]).catch(() => {});
               }
             }
           }
@@ -1917,22 +2045,54 @@ const FirestoreService = {
       return Object.values(local);
     }
 
-    let snap = null;
+    const remote = {};
+
     try {
-      snap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)));
-    } catch (err) {
-      console.warn("Không tải được danh sách lớp từ Firestore, tạm hiển thị bộ nhớ đệm của thiết bị:", err);
-      return Object.values(local);
+      const snap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)), 8000).catch(() => null);
+      if (snap) {
+        snap.forEach(d => {
+          const data = { ...d.data(), id: d.id };
+          if (isRealClassRecord(data)) remote[d.id] = data;
+        });
+      }
+    } catch (err) {}
+
+    try {
+      const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 8000).catch(() => null);
+      if (gSnap) {
+        gSnap.forEach(d => {
+          const data = { ...d.data(), id: d.id };
+          if (isRealClassRecord(data)) remote[d.id] = { ...(remote[d.id] || {}), ...data };
+        });
+      }
+    } catch (err) {}
+
+    const aggRefs = [
+      doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
+      doc(db, CLASSES_COLLECTION, "groups"),
+      doc(db, GROUPS_COLLECTION, "groups"),
+      doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
+      doc(db, CLASSES_COLLECTION, "class")
+    ];
+    for (const aRef of aggRefs) {
+      try {
+        const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
+        if (aSnap && aSnap.exists()) {
+          const aData = aSnap.data();
+          if (aData && aData.classes && typeof aData.classes === "object") {
+            Object.keys(aData.classes).forEach(cid => {
+              const c = aData.classes[cid];
+              if (isRealClassRecord(c) && !remote[cid]) {
+                remote[cid] = c;
+              }
+            });
+          }
+        }
+      } catch (e) {}
     }
 
-    const remote = {};
-    snap.forEach(d => {
-      const data = { ...d.data(), id: d.id };
-      if (isRealClassRecord(data)) remote[d.id] = data;
-    });
-
     const me = activeAuthContext ? activeAuthContext.normalizedUsername : "";
-    const cache = { ...remote };
+    const cache = { ...local, ...remote };
     const failed = [];
     const localOnly = Object.values(local).filter(c =>
       isRealClassRecord(c) && !remote[c.id] && me && c.instructorUsername === me
@@ -2151,32 +2311,55 @@ const FirestoreService = {
 
   async loadUserData(targetDocId) {
     if (!targetDocId) return { success: false, error: "Thiếu ID tài liệu." };
-    const normDocId = targetDocId.startsWith("user_") ? targetDocId : ("user_" + normalizeUsername(targetDocId));
+    const cleanUser = targetDocId.replace(/^user_/, "").trim();
+    const normUser = normalizeUsername(cleanUser);
+    const normDocId = "user_" + normUser;
     let res = await this.loadData(normDocId);
-    if (!res || !res.success || !res.data) {
-      if (isFirebaseReady && db) {
-        try {
-          const directRef = doc(db, FINANCIAL_AUTH_COLLECTION, normDocId);
-          const snap = await getDoc(directRef).catch(() => null);
-          if (snap && snap.exists()) {
-            return { success: true, data: snap.data(), message: "Đã tải dữ liệu từ Cloud Firestore!" };
-          }
-          const cleanUser = normDocId.replace(/^user_/, "");
-          const classes = getLocalClasses();
-          for (const cid of Object.keys(classes)) {
-            const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", cleanUser);
-            const subSnap = await getDoc(subRef).catch(() => null);
-            if (subSnap && subSnap.exists()) {
-              const subData = subSnap.data();
-              if (subData && subData.plan) {
-                return { success: true, data: subData.plan, message: "Đã tải bài làm học viên từ lớp!" };
-              }
+    if (res && res.success && res.data) {
+      return res;
+    }
+    if (isFirebaseReady && db) {
+      try {
+        const directRef = doc(db, FINANCIAL_AUTH_COLLECTION, normDocId);
+        const snap = await getDoc(directRef).catch(() => null);
+        if (snap && snap.exists()) {
+          const d = snap.data();
+          return { success: true, data: d.plan || d, message: "Đã tải dữ liệu từ Cloud Firestore!" };
+        }
+        const spRef = doc(db, "student_plans", normUser);
+        const spSnap = await getDoc(spRef).catch(() => null);
+        if (spSnap && spSnap.exists()) {
+          const spData = spSnap.data();
+          return { success: true, data: spData.plan || spData, message: "Đã tải bài làm học viên từ Cloud!" };
+        }
+        const classes = getLocalClasses();
+        for (const cid of Object.keys(classes)) {
+          const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", normUser);
+          const subSnap = await getDoc(subRef).catch(() => null);
+          if (subSnap && subSnap.exists()) {
+            const subData = subSnap.data();
+            if (subData && subData.plan) {
+              return { success: true, data: subData.plan, message: "Đã tải bài làm học viên từ lớp!" };
             }
           }
-        } catch (e) {}
-      }
+          const gSubRef = doc(db, GROUPS_COLLECTION, cid, "submissions", normUser);
+          const gSubSnap = await getDoc(gSubRef).catch(() => null);
+          if (gSubSnap && gSubSnap.exists()) {
+            const gSubData = gSubSnap.data();
+            if (gSubData && gSubData.plan) {
+              return { success: true, data: gSubData.plan, message: "Đã tải bài làm học viên từ nhóm!" };
+            }
+          }
+        }
+      } catch (e) {}
     }
-    return res;
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + normUser);
+      if (raw) {
+        return { success: true, data: JSON.parse(raw), localOnly: true, message: "Đã tải bài làm từ bộ nhớ thiết bị." };
+      }
+    } catch (e) {}
+    return res || { success: false, notFound: true, message: "Không tìm thấy dữ liệu bài làm của học viên." };
   },
 
   async saveUserData(targetDocId, data) {
@@ -2251,6 +2434,202 @@ const FirestoreService = {
     const inProgress = items.filter(s => s === "in_progress").length;
     progress.percent = Math.round(((completed * 1.0) + (inProgress * 0.5)) / 4 * 100);
     return progress;
+  },
+
+  async rebuildLegacyData(onProgress) {
+    const report = {
+      totalAccounts: 0,
+      accountsMigrated: 0,
+      totalClasses: 0,
+      classesMigrated: 0,
+      submissionsSynced: 0,
+      errors: []
+    };
+    if (!isFirebaseReady || !db) {
+      return { success: false, error: "Firebase chưa sẵn sàng.", report };
+    }
+
+    try {
+      const accountsToSync = { ...DEFAULT_SEEDED_ACCOUNTS, ...getLocalAuthAccounts() };
+
+      try {
+        const snap = await withTimeout(getDocs(collection(db, ACCOUNTS_COLLECTION)), 15000).catch(() => null);
+        if (snap) {
+          snap.forEach(d => {
+            const acc = d.data();
+            if (acc && (acc.username || acc.normalizedUsername)) {
+              const u = normalizeUsername(acc.normalizedUsername || acc.username);
+              accountsToSync[u] = { ...acc, normalizedUsername: u };
+            }
+          });
+        }
+      } catch (e) {}
+
+      try {
+        const userSnap = await withTimeout(getDocs(collection(db, "users")), 15000).catch(() => null);
+        if (userSnap) {
+          userSnap.forEach(d => {
+            const uData = d.data();
+            const u = normalizeUsername(d.id || uData.username);
+            if (u) {
+              accountsToSync[u] = { ...(accountsToSync[u] || {}), ...uData, normalizedUsername: u };
+            }
+          });
+        }
+      } catch (e) {}
+
+      report.totalAccounts = Object.keys(accountsToSync).length;
+      let accIdx = 0;
+      for (const u of Object.keys(accountsToSync)) {
+        accIdx++;
+        try {
+          const acc = accountsToSync[u];
+          const norm = normalizeUsername(u);
+          const dispName = acc.displayUsername || acc.username || norm;
+          const role = acc.role || (norm === "admin" ? "admin" : (norm === "dinh_anh_quan" ? "instructor" : "student"));
+          const salt = acc.salt || ("salt_" + norm + "_" + Date.now().toString(36));
+          const passHash = acc.passHash || (acc.password ? await computePasswordHash(acc.password, salt) : "");
+          const altPassHash = acc.altPassHash || (acc.password ? await computePasswordHash(acc.password, "legacy_static_salt_2026") : "");
+
+          const fullAccount = {
+            uid: acc.uid || ("uid_" + norm),
+            username: dispName,
+            displayUsername: dispName,
+            rawName: dispName,
+            ho_ten: dispName,
+            normalizedUsername: norm,
+            normalizedName: norm,
+            role,
+            docId: "user_" + norm,
+            salt,
+            passHash,
+            altPassHash,
+            recoveryEmail: acc.recoveryEmail || "",
+            maskedEmail: acc.maskedEmail || (acc.recoveryEmail ? maskEmailAddress(acc.recoveryEmail) : ""),
+            hasRecoveryEmail: Boolean(acc.hasRecoveryEmail || acc.recoveryEmail),
+            createdAt: acc.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            lastLoginAt: acc.lastLoginAt || new Date().toISOString(),
+            schemaVersion: 3
+          };
+          if (acc.password) {
+            fullAccount.password = acc.password;
+            fullAccount.mat_khau = acc.password;
+          }
+
+          const userProfile = {
+            uid: fullAccount.uid,
+            username: norm,
+            displayName: dispName,
+            role,
+            recoveryEmail: fullAccount.recoveryEmail,
+            maskedEmail: fullAccount.maskedEmail,
+            hasRecoveryEmail: fullAccount.hasRecoveryEmail,
+            createdAt: fullAccount.createdAt,
+            updatedAt: fullAccount.updatedAt,
+            lastLoginAt: fullAccount.lastLoginAt,
+            schemaVersion: 3,
+            groups: acc.groups || {}
+          };
+
+          await Promise.allSettled([
+            setDoc(doc(db, ACCOUNTS_COLLECTION, norm), fullAccount, { merge: true }),
+            setDoc(doc(db, "users", norm), userProfile, { merge: true }),
+            setDoc(doc(db, "accounts", norm), fullAccount, { merge: true })
+          ]);
+          report.accountsMigrated++;
+          if (typeof onProgress === "function") {
+            onProgress({ type: "account", index: accIdx, total: report.totalAccounts, username: norm });
+          }
+        } catch (err) {
+          report.errors.push(`Account ${u}: ${err.message}`);
+        }
+      }
+
+      const classesToSync = { ...getLocalClasses() };
+      try {
+        const cSnap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)), 15000).catch(() => null);
+        if (cSnap) {
+          cSnap.forEach(d => {
+            const c = d.data();
+            if (isRealClassRecord(c)) classesToSync[c.id] = c;
+          });
+        }
+      } catch (e) {}
+
+      try {
+        const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 15000).catch(() => null);
+        if (gSnap) {
+          gSnap.forEach(d => {
+            const c = d.data();
+            if (isRealClassRecord(c)) classesToSync[c.id] = { ...(classesToSync[c.id] || {}), ...c };
+          });
+        }
+      } catch (e) {}
+
+      report.totalClasses = Object.keys(classesToSync).length;
+      let cIdx = 0;
+      for (const cid of Object.keys(classesToSync)) {
+        cIdx++;
+        try {
+          const cls = classesToSync[cid];
+          await syncClassesStoreToFirestore(cid, cls, false);
+          report.classesMigrated++;
+
+          if (Array.isArray(cls.members)) {
+            for (const m of cls.members) {
+              const u = normalizeUsername(m.username);
+              if (u) {
+                let plan = null;
+                const pSnap = await getDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + u)).catch(() => null);
+                if (pSnap && pSnap.exists()) {
+                  plan = pSnap.data();
+                } else {
+                  const spSnap = await getDoc(doc(db, "student_plans", u)).catch(() => null);
+                  if (spSnap && spSnap.exists()) plan = spSnap.data();
+                }
+                if (!plan) {
+                  try {
+                    const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + u);
+                    if (raw) plan = JSON.parse(raw);
+                  } catch (e) {}
+                }
+                if (plan) {
+                  const subPayload = {
+                    username: u,
+                    name: m.name || u,
+                    updatedAt: new Date().toISOString(),
+                    plan
+                  };
+                  await Promise.allSettled([
+                    setDoc(doc(db, CLASSES_COLLECTION, cid, "submissions", u), subPayload, { merge: true }),
+                    setDoc(doc(db, GROUPS_COLLECTION, cid, "submissions", u), subPayload, { merge: true }),
+                    setDoc(doc(db, "student_plans", u), subPayload, { merge: true })
+                  ]);
+                  report.submissionsSynced++;
+                }
+              }
+            }
+          }
+          if (typeof onProgress === "function") {
+            onProgress({ type: "class", index: cIdx, total: report.totalClasses, classId: cid, code: cls.code });
+          }
+        } catch (err) {
+          report.errors.push(`Class ${cid}: ${err.message}`);
+        }
+      }
+
+      saveLocalClasses(classesToSync);
+      saveLocalAuthAccounts(accountsToSync);
+
+      return {
+        success: true,
+        report,
+        message: `Rebuild hoàn tất: ${report.accountsMigrated}/${report.totalAccounts} tài khoản, ${report.classesMigrated}/${report.totalClasses} nhóm, ${report.submissionsSynced} bài làm học viên.`
+      };
+    } catch (err) {
+      return { success: false, error: describeCloudError(err), report };
+    }
   }
 };
 
