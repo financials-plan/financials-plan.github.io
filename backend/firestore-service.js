@@ -6,7 +6,13 @@ import {
   getDoc,
   deleteDoc,
   collection,
-  getDocs
+  getDocs,
+  updateDoc,
+  deleteField,
+  query,
+  where,
+  limit,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth,
@@ -369,54 +375,130 @@ const CLASSES_COLLECTION = "classes";
 const GROUPS_COLLECTION = "groups";
 const FINANCIAL_AUTH_COLLECTION = firestoreSettings.collectionName || "financial_Authentication";
 
-async function syncClassesStoreToFirestore(classes, updatedClassId = null, isDeleted = false) {
-  if (!isFirebaseReady || !db) return;
-  try {
-    const payload = { id: "groups", updatedAt: new Date().toISOString(), classes: classes || {} };
-    const classPayload = { id: "class", updatedAt: new Date().toISOString(), classes: classes || {} };
-    const writes = [
+const CLOUD_TIMEOUT_MS = 12000;
+const LEGACY_AGGREGATE_DOC_IDS = ["groups", "class", "class_index"];
+
+function withTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
+  let timer = null;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(Object.assign(new Error("Firestore timeout"), { code: "timeout" })), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+function describeCloudError(err) {
+  const code = String((err && err.code) || "");
+  if (code.includes("permission-denied")) {
+    return "Firestore từ chối quyền truy cập. Hãy kiểm tra Firestore Rules đã được deploy đúng bản trong backend/firestore.rules chưa.";
+  }
+  if (code === "timeout" || code.includes("unavailable") || code.includes("deadline-exceeded")) {
+    return "Không kết nối được tới Cloud Firestore. Vui lòng kiểm tra mạng và thử lại.";
+  }
+  return (err && err.message) ? err.message : "Lỗi không xác định khi kết nối Cloud Firestore.";
+}
+
+function isRealClassRecord(data) {
+  return Boolean(data && typeof data === "object"
+    && typeof data.id === "string" && !LEGACY_AGGREGATE_DOC_IDS.includes(data.id)
+    && typeof data.code === "string" && data.code);
+}
+
+function cacheClassLocally(cls) {
+  const local = getLocalClasses();
+  local[cls.id] = cls;
+  saveLocalClasses(local);
+}
+
+function removeClassFromLocalCache(classId) {
+  const local = getLocalClasses();
+  if (local[classId]) {
+    delete local[classId];
+    saveLocalClasses(local);
+  }
+}
+
+function normalizeMaxMembers(raw, fallback = 40) {
+  if (raw === 0 || raw === "0" || raw === "no-limit") return 0;
+  return parseInt(raw, 10) || fallback;
+}
+
+async function findClassesByCode(cleanCode) {
+  const snap = await withTimeout(getDocs(query(
+    collection(db, CLASSES_COLLECTION),
+    where("code", "==", cleanCode),
+    limit(10)
+  )));
+  const list = [];
+  snap.forEach(d => {
+    const data = { ...d.data(), id: d.id };
+    if (isRealClassRecord(data)) list.push(data);
+  });
+  return list;
+}
+
+async function syncClassesStoreToFirestore(classId, classData, isDeleted = false) {
+  if (!isFirebaseReady || !db) throw new Error("Firebase chưa được cấu hình.");
+  const ref = doc(db, CLASSES_COLLECTION, classId);
+  if (!isDeleted) {
+    await withTimeout(setDoc(ref, classData));
+    const local = getLocalClasses();
+    const payload = { id: "groups", updatedAt: new Date().toISOString(), classes: local || {} };
+    const classPayload = { id: "class", updatedAt: new Date().toISOString(), classes: local || {} };
+    await withTimeout(Promise.allSettled([
       setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "groups"), payload, { merge: true }),
       setDoc(doc(db, CLASSES_COLLECTION, "groups"), payload, { merge: true }),
       setDoc(doc(db, GROUPS_COLLECTION, "groups"), payload, { merge: true }),
       setDoc(doc(db, CLASSES_COLLECTION, "class"), classPayload, { merge: true }),
       setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "class"), classPayload, { merge: true })
-    ];
+    ])).catch(() => {});
+    return;
+  }
+  await withTimeout(deleteDoc(ref));
+  const legacyAggregates = [
+    doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
+    doc(db, CLASSES_COLLECTION, "groups"),
+    doc(db, CLASSES_COLLECTION, "class"),
+    doc(db, GROUPS_COLLECTION, "groups")
+  ];
+  await withTimeout(Promise.allSettled([
+    deleteDoc(doc(db, GROUPS_COLLECTION, classId)),
+    ...legacyAggregates.map(r => updateDoc(r, { [`classes.${classId}`]: deleteField() }))
+  ])).catch(() => {});
+}
 
-    if (updatedClassId) {
-      if (isDeleted) {
-        writes.push(deleteDoc(doc(db, CLASSES_COLLECTION, updatedClassId)));
-        writes.push(deleteDoc(doc(db, GROUPS_COLLECTION, updatedClassId)));
-      } else if (classes && classes[updatedClassId]) {
-        const item = classes[updatedClassId];
-        writes.push(setDoc(doc(db, CLASSES_COLLECTION, updatedClassId), item, { merge: true }));
-        writes.push(setDoc(doc(db, GROUPS_COLLECTION, updatedClassId), item, { merge: true }));
-        if (item.code) {
-          const cCode = String(item.code).trim().toUpperCase();
-          writes.push(setDoc(doc(db, CLASSES_COLLECTION, "code_" + cCode), item, { merge: true }));
-          writes.push(setDoc(doc(db, GROUPS_COLLECTION, "code_" + cCode), item, { merge: true }));
-          writes.push(setDoc(doc(db, CLASSES_COLLECTION, cCode), item, { merge: true }));
-          writes.push(setDoc(doc(db, GROUPS_COLLECTION, cCode), item, { merge: true }));
-        }
+async function mutateClassInCloud(classId, mutator) {
+  if (!isFirebaseReady || !db) {
+    const local = getLocalClasses();
+    const cls = local[classId];
+    if (!cls) return { success: false, error: "Không tìm thấy nhóm." };
+    const out = mutator(cls);
+    if (out && out.success === false) return out;
+    cls.updatedAt = new Date().toISOString();
+    local[classId] = cls;
+    saveLocalClasses(local);
+    return { success: true, class: cls };
+  }
+  const ref = doc(db, CLASSES_COLLECTION, classId);
+  try {
+    const res = await withTimeout(runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) {
+        return { success: false, error: "Không tìm thấy nhóm trên Cloud (có thể nhóm chưa được đồng bộ hoặc đã bị xóa)." };
       }
-    }
-
-    if (classes && typeof classes === "object") {
-      Object.keys(classes).forEach(cid => {
-        const cItem = classes[cid];
-        if (cItem && cItem.id && cItem.id !== updatedClassId) {
-          writes.push(setDoc(doc(db, CLASSES_COLLECTION, cItem.id), cItem, { merge: true }));
-          writes.push(setDoc(doc(db, GROUPS_COLLECTION, cItem.id), cItem, { merge: true }));
-          if (cItem.code) {
-            const cCode = String(cItem.code).trim().toUpperCase();
-            writes.push(setDoc(doc(db, CLASSES_COLLECTION, "code_" + cCode), cItem, { merge: true }));
-            writes.push(setDoc(doc(db, GROUPS_COLLECTION, "code_" + cCode), cItem, { merge: true }));
-          }
-        }
-      });
-    }
-
-    await Promise.allSettled(writes);
-  } catch (e) {}
+      const cls = { ...snap.data(), id: snap.id };
+      const out = mutator(cls);
+      if (out && out.success === false) return out;
+      cls.updatedAt = new Date().toISOString();
+      tx.set(ref, cls);
+      return { success: true, class: cls };
+    }), 15000);
+    if (res.success) cacheClassLocally(res.class);
+    return res;
+  } catch (err) {
+    return { success: false, error: "Chưa lưu được thay đổi lên Cloud: " + describeCloudError(err) };
+  }
 }
 
 const DEFAULT_ADMIN_CODES = {
@@ -1831,107 +1913,103 @@ const FirestoreService = {
 
   async getClasses() {
     const local = getLocalClasses();
-    if (isFirebaseReady && db) {
+    if (!isFirebaseReady || !db) {
+      return Object.values(local);
+    }
+
+    let snap = null;
+    try {
+      snap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)));
+    } catch (err) {
+      console.warn("Không tải được danh sách lớp từ Firestore, tạm hiển thị bộ nhớ đệm của thiết bị:", err);
+      return Object.values(local);
+    }
+
+    const remote = {};
+    snap.forEach(d => {
+      const data = { ...d.data(), id: d.id };
+      if (isRealClassRecord(data)) remote[d.id] = data;
+    });
+
+    const me = activeAuthContext ? activeAuthContext.normalizedUsername : "";
+    const cache = { ...remote };
+    const failed = [];
+    const localOnly = Object.values(local).filter(c =>
+      isRealClassRecord(c) && !remote[c.id] && me && c.instructorUsername === me
+    );
+    for (const c of localOnly) {
+      const clash = Object.values(remote).some(r => r.code === c.code && r.status === "active");
+      if (clash) continue;
+      const clean = { ...c };
+      delete clean._localOnly;
       try {
-        const groupDocRefs = [
-          doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
-          doc(db, CLASSES_COLLECTION, "groups"),
-          doc(db, GROUPS_COLLECTION, "groups"),
-          doc(db, CLASSES_COLLECTION, "class"),
-          doc(db, FINANCIAL_AUTH_COLLECTION, "class")
-        ];
-
-        for (const gRef of groupDocRefs) {
-          try {
-            const gDoc = await Promise.race([
-              getDoc(gRef),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
-            ]).catch(() => null);
-
-            if (gDoc && gDoc.exists && gDoc.exists()) {
-              const gData = gDoc.data();
-              if (gData && gData.classes && typeof gData.classes === "object") {
-                Object.keys(gData.classes).forEach(cid => {
-                  local[cid] = { ...local[cid], ...gData.classes[cid] };
-                });
-              }
-            }
-          } catch (e) {}
-        }
-
-        const snap = await Promise.race([
-          getDocs(collection(db, CLASSES_COLLECTION)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-        ]).catch(() => null);
-
-        if (snap && !snap.empty) {
-          snap.forEach(d => {
-            const data = d.data();
-            if (data && data.id && data.id !== "class" && data.id !== "class_index" && data.id !== "groups") {
-              local[data.id] = { ...local[data.id], ...data };
-            } else if (data && data.classes && typeof data.classes === "object") {
-              Object.keys(data.classes).forEach(cid => {
-                local[cid] = { ...local[cid], ...data.classes[cid] };
-              });
-            }
-          });
-        }
-
-        const grpSnap = await Promise.race([
-          getDocs(collection(db, GROUPS_COLLECTION)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-        ]).catch(() => null);
-
-        if (grpSnap && !grpSnap.empty) {
-          grpSnap.forEach(d => {
-            const data = d.data();
-            if (data && data.id && data.id !== "class" && data.id !== "groups") {
-              local[data.id] = { ...local[data.id], ...data };
-            } else if (data && data.classes && typeof data.classes === "object") {
-              Object.keys(data.classes).forEach(cid => {
-                local[cid] = { ...local[cid], ...data.classes[cid] };
-              });
-            }
-          });
-        }
-
-        saveLocalClasses(local);
+        await syncClassesStoreToFirestore(clean.id, clean);
+        cache[clean.id] = clean;
       } catch (err) {
-        console.warn("Lỗi tải lớp từ Firestore, sử dụng bộ nhớ thiết bị:", err);
+        console.warn(`Không đẩy được lớp "${c.name}" (${c.code}) lên Firestore:`, err);
+        cache[c.id] = { ...c, _localOnly: true };
+        failed.push(c);
       }
     }
-    return Object.values(local);
+    if (failed.length && typeof window !== "undefined" && typeof window.showToast === "function") {
+      window.showToast(`${failed.length} lớp chỉ đang lưu trên máy này, chưa lên được Cloud — thiết bị khác sẽ chưa nhập được mã.`, "error");
+    }
+
+    saveLocalClasses(cache);
+    return Object.values(cache);
   },
 
   async createClass(name, code, instructorUsername, maxMembers = 40, isPrivate = true, description = "") {
-    const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    const parsedLimit = (maxMembers === 0 || maxMembers === "0" || maxMembers === "no-limit") ? 0 : (parseInt(maxMembers, 10) || 40);
+    const cleanName = String(name || "").trim();
     const cleanCode = String(code || "").trim().toUpperCase();
+    if (!cleanName || !cleanCode) {
+      return { success: false, error: "Vui lòng nhập tên lớp và mã lớp." };
+    }
+    const now = new Date().toISOString();
+    const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const newClass = {
       id: classId,
-      name: String(name || "").trim(),
+      name: cleanName,
       code: cleanCode,
       description: String(description || "").trim(),
       instructorUsername: instructorUsername || (activeAuthContext ? activeAuthContext.normalizedUsername : "admin"),
       instructorName: (activeAuthContext ? activeAuthContext.displayUsername : instructorUsername) || "Giảng viên",
-      maxMembers: parsedLimit,
+      maxMembers: normalizeMaxMembers(maxMembers, 40),
       isPrivate: isPrivate !== false,
+      isAccepting: true,
       status: "active",
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       members: []
     };
-    const local = getLocalClasses();
-    local[classId] = newClass;
-    saveLocalClasses(local);
-    await syncClassesStoreToFirestore(local, classId, false);
+
+    if (!isFirebaseReady || !db) {
+      cacheClassLocally(newClass);
+      return { success: true, class: newClass, localOnly: true };
+    }
+
+    try {
+      const dupes = (await findClassesByCode(cleanCode)).filter(c => c.status === "active");
+      if (dupes.length) {
+        return { success: false, error: `Mã "${cleanCode}" đang được nhóm "${dupes[0].name}" sử dụng. Vui lòng chọn mã khác.` };
+      }
+      await syncClassesStoreToFirestore(classId, newClass);
+    } catch (err) {
+      return { success: false, error: "Chưa tạo được lớp trên Cloud: " + describeCloudError(err) };
+    }
+
+    cacheClassLocally(newClass);
     return { success: true, class: newClass };
   },
 
-  async joinClass(classCode, username, studentName) {
-    const cleanCode = String(classCode || "").trim().toUpperCase();
-    const cleanCodeNoDash = cleanCode.replace(/[^A-Z0-9]/g, "");
+  async joinClass(code, username, studentName) {
+    const cleanCode = String(code || "").trim().toUpperCase();
     const cleanUser = normalizeUsername(username || (activeAuthContext ? activeAuthContext.normalizedUsername : ""));
-    const dispName = studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser) || "Học viên";
+    const dispName = studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser);
+
+    if (!cleanCode) {
+      return { success: false, error: "Vui lòng nhập mã nhóm." };
+    }
 
     if (/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanCode) || cleanCode.startsWith("INST-") || cleanCode.startsWith("ADMN-")) {
       const actRes = await this.activateAdminCode(cleanCode, cleanUser);
@@ -1945,226 +2023,129 @@ const FirestoreService = {
       }
     }
 
-    const matchesTargetCode = (c) => {
-      if (!c) return false;
-      const cCode = String(c.code || "").trim().toUpperCase();
-      const cId = String(c.id || "").trim();
-      const cCodeNoDash = cCode.replace(/[^A-Z0-9]/g, "");
-      const isCodeMatch = (cCode === cleanCode) || (cId === cleanCode) || (cCodeNoDash && cCodeNoDash === cleanCodeNoDash);
-      return isCodeMatch && c.status !== "archived";
+    const notFound = { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." };
+
+    const addMember = (cls) => {
+      if (!cls || cls.status !== "active" || cls.code !== cleanCode) return notFound;
+      if (cls.isAccepting === false) {
+        return { success: false, error: "Nhóm này hiện đã khóa, không nhận thêm thành viên." };
+      }
+      const members = Array.isArray(cls.members) ? cls.members.slice() : [];
+      if (members.some(m => m.username === cleanUser)) {
+        return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia nhóm này." };
+      }
+      const seatsTaken = members.filter(m => m.status !== "rejected").length;
+      if (cls.maxMembers > 0 && seatsTaken >= cls.maxMembers) {
+        return { success: false, error: "Nhóm đã đạt số lượng thành viên tối đa." };
+      }
+      const newMember = {
+        username: cleanUser,
+        name: dispName,
+        status: cls.isPrivate ? "pending" : "approved",
+        joinedAt: new Date().toISOString()
+      };
+      members.push(newMember);
+      cls.members = members;
+      return {
+        success: true,
+        class: cls,
+        status: newMember.status,
+        message: cls.isPrivate ? `Đã gửi yêu cầu tham gia nhóm "${cls.name}". Vui lòng chờ người phụ trách duyệt.` : `Đã tham gia nhóm "${cls.name}" thành công!`
+      };
     };
 
-    let classes = getLocalClasses();
-    let targetClass = Object.values(classes).find(matchesTargetCode);
-
-    if (!targetClass && isFirebaseReady && db) {
-      try {
-        const directDocTargets = [
-          doc(db, CLASSES_COLLECTION, "code_" + cleanCode),
-          doc(db, GROUPS_COLLECTION, "code_" + cleanCode),
-          doc(db, CLASSES_COLLECTION, cleanCode),
-          doc(db, GROUPS_COLLECTION, cleanCode),
-          doc(db, CLASSES_COLLECTION, "groups"),
-          doc(db, GROUPS_COLLECTION, "groups"),
-          doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
-          doc(db, CLASSES_COLLECTION, "class"),
-          doc(db, FINANCIAL_AUTH_COLLECTION, "class")
-        ];
-
-        for (const targetRef of directDocTargets) {
-          if (targetClass) break;
-          try {
-            const dSnap = await Promise.race([
-              getDoc(targetRef),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
-            ]).catch(() => null);
-
-            if (dSnap && dSnap.exists && dSnap.exists()) {
-              const dData = dSnap.data();
-              if (dData) {
-                if (dData.classes && typeof dData.classes === "object") {
-                  Object.keys(dData.classes).forEach(cid => {
-                    classes[cid] = { ...classes[cid], ...dData.classes[cid] };
-                  });
-                  targetClass = Object.values(classes).find(matchesTargetCode);
-                }
-                if (!targetClass && dData.id && dData.code) {
-                  classes[dData.id] = { ...classes[dData.id], ...dData };
-                  if (matchesTargetCode(dData)) {
-                    targetClass = dData;
-                  }
-                }
-              }
-            }
-          } catch (e) {}
-        }
-      } catch (e) {}
+    if (!isFirebaseReady || !db) {
+      const local = getLocalClasses();
+      const target = Object.values(local).find(c => c.code === cleanCode && c.status === "active");
+      if (!target) return notFound;
+      const res = addMember(target);
+      if (res.success) {
+        local[target.id] = target;
+        saveLocalClasses(local);
+      }
+      return res;
     }
 
-    if (!targetClass && isFirebaseReady && db) {
-      try {
-        const snap = await Promise.race([
-          getDocs(collection(db, CLASSES_COLLECTION)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-        ]).catch(() => null);
-
-        if (snap && !snap.empty) {
-          snap.forEach(d => {
-            const data = d.data();
-            if (data && data.id && data.id !== "class" && data.id !== "class_index" && data.id !== "groups") {
-              classes[data.id] = { ...classes[data.id], ...data };
-            } else if (data && data.classes && typeof data.classes === "object") {
-              Object.keys(data.classes).forEach(cid => {
-                classes[cid] = { ...classes[cid], ...data.classes[cid] };
-              });
-            }
-          });
-          targetClass = Object.values(classes).find(matchesTargetCode);
-        }
-      } catch (e) {}
+    let candidates = [];
+    try {
+      candidates = await findClassesByCode(cleanCode);
+    } catch (err) {
+      return { success: false, error: "Không kiểm tra được mã nhóm: " + describeCloudError(err) };
     }
+    const target = candidates.find(c => c.status === "active");
+    if (!target) return notFound;
 
-    if (!targetClass && isFirebaseReady && db) {
-      try {
-        const grpSnap = await Promise.race([
-          getDocs(collection(db, GROUPS_COLLECTION)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-        ]).catch(() => null);
-
-        if (grpSnap && !grpSnap.empty) {
-          grpSnap.forEach(d => {
-            const data = d.data();
-            if (data && data.id && data.id !== "class" && data.id !== "groups") {
-              classes[data.id] = { ...classes[data.id], ...data };
-            } else if (data && data.classes && typeof data.classes === "object") {
-              Object.keys(data.classes).forEach(cid => {
-                classes[cid] = { ...classes[cid], ...data.classes[cid] };
-              });
-            }
-          });
-          targetClass = Object.values(classes).find(matchesTargetCode);
-        }
-      } catch (e) {}
-    }
-
-    if (classes) {
-      saveLocalClasses(classes);
-    }
-
-    if (!targetClass) {
-      return { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." };
-    }
-    if (targetClass.maxMembers > 0 && (targetClass.members || []).length >= targetClass.maxMembers) {
-      return { success: false, error: "Nhóm đã đạt số lượng thành viên tối đa." };
-    }
-    const existing = (targetClass.members || []).find(m => m.username === cleanUser);
-    if (existing) {
-      return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia nhóm này." };
-    }
-
-    const newMember = {
-      username: cleanUser,
-      name: dispName,
-      status: targetClass.isPrivate ? "pending" : "approved",
-      joinedAt: new Date().toISOString()
-    };
-    if (!Array.isArray(targetClass.members)) targetClass.members = [];
-    targetClass.members.push(newMember);
-
-    classes[targetClass.id] = targetClass;
-    saveLocalClasses(classes);
-    await syncClassesStoreToFirestore(classes, targetClass.id, false);
-
-    if (isFirebaseReady && db) {
-      try {
-        const mRef = doc(db, CLASSES_COLLECTION, targetClass.id, "members", cleanUser);
-        const mGrpRef = doc(db, GROUPS_COLLECTION, targetClass.id, "members", cleanUser);
-        await Promise.allSettled([
-          setDoc(mRef, newMember, { merge: true }),
-          setDoc(mGrpRef, newMember, { merge: true }),
-          setDoc(doc(db, CLASSES_COLLECTION, "code_" + targetClass.code), targetClass, { merge: true }),
-          setDoc(doc(db, GROUPS_COLLECTION, "code_" + targetClass.code), targetClass, { merge: true }),
-          setDoc(doc(db, CLASSES_COLLECTION, targetClass.id), targetClass, { merge: true }),
-          setDoc(doc(db, GROUPS_COLLECTION, targetClass.id), targetClass, { merge: true })
-        ]);
-      } catch (e) {}
-    }
-
-    return {
-      success: true,
-      class: targetClass,
-      status: newMember.status,
-      message: targetClass.isPrivate ? `Đã gửi yêu cầu tham gia nhóm "${targetClass.name}". Vui lòng chờ người phụ trách duyệt.` : `Đã tham gia nhóm "${targetClass.name}" thành công!`
-    };
+    let result = null;
+    const res = await mutateClassInCloud(target.id, (cls) => {
+      result = addMember(cls);
+      return result;
+    });
+    if (!res.success) return res;
+    return result;
   },
 
   async approveClassMember(classId, studentUsername, action) {
-    const classes = getLocalClasses();
-    const targetClass = classes[classId];
-    if (!targetClass) {
-      return { success: false, error: "Không tìm thấy lớp học." };
-    }
-    if (!Array.isArray(targetClass.members)) targetClass.members = [];
-    const member = targetClass.members.find(m => m.username === studentUsername);
-    if (!member) {
-      return { success: false, error: "Không tìm thấy học viên trong lớp." };
-    }
-    if (action === "approve") {
-      member.status = "approved";
-    } else if (action === "reject") {
-      member.status = "rejected";
-    } else if (action === "remove") {
-      targetClass.members = targetClass.members.filter(m => m.username !== studentUsername);
-    }
-    classes[classId] = targetClass;
-    saveLocalClasses(classes);
-    await syncClassesStoreToFirestore(classes, classId, false);
-    return { success: true, class: targetClass };
+    return mutateClassInCloud(classId, (cls) => {
+      if (!Array.isArray(cls.members)) cls.members = [];
+      const member = cls.members.find(m => m.username === studentUsername);
+      if (!member) {
+        return { success: false, error: "Không tìm thấy học viên trong lớp." };
+      }
+      if (action === "approve") {
+        member.status = "approved";
+      } else if (action === "reject") {
+        member.status = "rejected";
+      } else if (action === "remove") {
+        cls.members = cls.members.filter(m => m.username !== studentUsername);
+      }
+      return null;
+    });
   },
 
-  async updateClass(classId, updates) {
-    const classes = getLocalClasses();
-    const targetClass = classes[classId];
-    if (!targetClass) {
-      return { success: false, error: "Không tìm thấy nhóm." };
+  async updateClass(classId, updates = {}) {
+    const newCode = updates.code ? String(updates.code).trim().toUpperCase() : "";
+    if (newCode && isFirebaseReady && db) {
+      try {
+        const clash = (await findClassesByCode(newCode)).find(c => c.status === "active" && c.id !== classId);
+        if (clash) {
+          return { success: false, error: `Mã "${newCode}" đang được nhóm "${clash.name}" sử dụng. Vui lòng chọn mã khác.` };
+        }
+      } catch (err) {
+        return { success: false, error: "Không kiểm tra được mã mới: " + describeCloudError(err) };
+      }
     }
-    if (updates.name) targetClass.name = String(updates.name).trim();
-    if (updates.code) targetClass.code = String(updates.code).trim().toUpperCase();
-    if (updates.maxMembers !== undefined) {
-      const rawM = updates.maxMembers;
-      targetClass.maxMembers = (rawM === 0 || rawM === "0" || rawM === "no-limit") ? 0 : parseInt(rawM, 10) || 0;
-    }
-    if (updates.isPrivate !== undefined) targetClass.isPrivate = Boolean(updates.isPrivate);
-    if (updates.description !== undefined) targetClass.description = String(updates.description).trim();
-    targetClass.updatedAt = new Date().toISOString();
-    classes[classId] = targetClass;
-    saveLocalClasses(classes);
-    await syncClassesStoreToFirestore(classes, classId, false);
-    return { success: true, class: targetClass };
+    return mutateClassInCloud(classId, (cls) => {
+      if (updates.name) cls.name = String(updates.name).trim();
+      if (newCode) cls.code = newCode;
+      if (updates.maxMembers !== undefined) cls.maxMembers = normalizeMaxMembers(updates.maxMembers, 0);
+      if (updates.isPrivate !== undefined) cls.isPrivate = Boolean(updates.isPrivate);
+      if (updates.isAccepting !== undefined) cls.isAccepting = Boolean(updates.isAccepting);
+      if (updates.description !== undefined) cls.description = String(updates.description).trim();
+      return null;
+    });
   },
 
   async archiveClass(classId) {
-    const classes = getLocalClasses();
-    const targetClass = classes[classId];
-    if (!targetClass) {
-      return { success: false, error: "Không tìm thấy lớp học." };
-    }
-    targetClass.status = "archived";
-    targetClass.archivedAt = new Date().toISOString();
-    classes[classId] = targetClass;
-    saveLocalClasses(classes);
-    await syncClassesStoreToFirestore(classes, classId, false);
-    return { success: true, message: "Đã lưu trữ và kết thúc học kỳ an toàn.", class: targetClass };
+    const res = await mutateClassInCloud(classId, (cls) => {
+      cls.status = "archived";
+      cls.archivedAt = new Date().toISOString();
+      return null;
+    });
+    if (res.success) res.message = "Đã lưu trữ và kết thúc học kỳ an toàn.";
+    return res;
   },
 
   async deleteClass(classId) {
-    const classes = getLocalClasses();
-    if (!classes[classId]) {
+    if (isFirebaseReady && db) {
+      try {
+        await syncClassesStoreToFirestore(classId, null, true);
+      } catch (err) {
+        return { success: false, error: "Chưa xóa được nhóm trên Cloud: " + describeCloudError(err) };
+      }
+    } else if (!getLocalClasses()[classId]) {
       return { success: false, error: "Không tìm thấy lớp học." };
     }
-    delete classes[classId];
-    saveLocalClasses(classes);
-    await syncClassesStoreToFirestore(classes, classId, true);
+    removeClassFromLocalCache(classId);
     return { success: true, message: "Đã xóa nhóm thành công." };
   },
 

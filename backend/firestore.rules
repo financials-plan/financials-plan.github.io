@@ -19,6 +19,10 @@ service cloud.firestore {
       allow read, write: if true;
       allow delete: if isValidDocId(classId);
 
+      match /submissions/{studentUsername} {
+        allow read, write: if true;
+      }
+
       match /{subcollection=**} {
         allow read, write: if true;
       }

@@ -22428,6 +22428,8 @@ window.archiveCurrentClass = async function() {
   if (res.success) {
     showToast("Đã lưu trữ và kết thúc học kỳ an toàn.");
     await loadClassManagerData();
+  } else {
+    showToast(res.error || "Không thể lưu trữ lớp học.", "error");
   }
 };
 
@@ -22983,7 +22985,11 @@ window.submitCreateNewGroup = async function() {
 
   if (window.CloudDB && typeof window.CloudDB.createClass === 'function') {
     const curUser = UserSession.currentUser ? UserSession.currentUser.normalizedUsername : 'admin';
-    await window.CloudDB.createClass(name, code, curUser, maxMembers, isPrivate, desc);
+    const cloudRes = await window.CloudDB.createClass(name, code, curUser, maxMembers, isPrivate, desc);
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(`Đã tạo nhóm "${name}" thành công!`);
     if (nameInp) nameInp.value = '';
     if (codeInp) codeInp.value = '';
@@ -23182,7 +23188,11 @@ window.saveCustomGroupSettings = async function() {
   };
 
   if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
-    await window.CloudDB.updateClass(classId, updates);
+    const cloudRes = await window.CloudDB.updateClass(classId, updates);
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast('Đã lưu tùy chỉnh nhóm thành công!');
     closeCustomGroupModal();
     await renderAdminGroupsList();
@@ -23198,7 +23208,11 @@ window.archiveCurrentCustomGroup = async function() {
   if (!confirm('Bạn có chắc chắn muốn lưu trữ và đóng nhóm này? Học viên sẽ không thể gửi thêm bài làm mới.')) return;
 
   if (window.CloudDB && typeof window.CloudDB.archiveClass === 'function') {
-    await window.CloudDB.archiveClass(classId);
+    const cloudRes = await window.CloudDB.archiveClass(classId);
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast('Đã lưu trữ nhóm thành công.');
     closeCustomGroupModal();
     await renderAdminGroupsList();
@@ -23211,7 +23225,11 @@ window.deleteCurrentCustomGroup = async function() {
   if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhóm này không? Toàn bộ danh sách thành viên trong nhóm sẽ bị xóa.')) return;
 
   if (window.CloudDB && typeof window.CloudDB.deleteClass === 'function') {
-    await window.CloudDB.deleteClass(classId);
+    const cloudRes = await window.CloudDB.deleteClass(classId);
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast('Đã xóa nhóm thành công.');
     closeCustomGroupModal();
     if (currentSelectedClassId === classId) {
@@ -23327,7 +23345,11 @@ window.renderAdminRequestsTable = async function() {
 
 window.approveJoinRequest = async function(classId, username) {
   if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
-    await window.CloudDB.approveClassMember(classId, username, 'approve');
+    const cloudRes = await window.CloudDB.approveClassMember(classId, username, 'approve');
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(`Đã duyệt cho học viên @${username} vào nhóm thành công!`);
     await renderAdminRequestsTable();
     updateAdminPendingBadge();
@@ -23337,7 +23359,11 @@ window.approveJoinRequest = async function(classId, username) {
 window.rejectJoinRequest = async function(classId, username) {
   if (!confirm(`Bạn có chắc muốn từ chối yêu cầu của học viên @${username}?`)) return;
   if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
-    await window.CloudDB.approveClassMember(classId, username, 'reject');
+    const cloudRes = await window.CloudDB.approveClassMember(classId, username, 'reject');
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(`Đã từ chối yêu cầu của học viên @${username}.`);
     await renderAdminRequestsTable();
     updateAdminPendingBadge();
@@ -23401,7 +23427,11 @@ window.regenGroupJoinCode = async function(classId) {
   if (!confirm('Bạn có chắc muốn tạo mã tham gia mới cho nhóm này? Mã cũ sẽ không còn hiệu lực.')) return;
   const newCode = 'GRP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
   if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
-    await window.CloudDB.updateClass(classId, { code: newCode });
+    const cloudRes = await window.CloudDB.updateClass(classId, { code: newCode });
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(`Đã cấp mã tham gia mới: ${newCode}`);
     await renderAdminStudentsTable();
     if (typeof renderAdminGroupsList === 'function') await renderAdminGroupsList();
@@ -23413,7 +23443,11 @@ window.toggleGroupAcceptance = async function(classId) {
   if (!curGroup) return;
   const nextState = curGroup.isAccepting === false ? true : false;
   if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
-    await window.CloudDB.updateClass(classId, { isAccepting: nextState });
+    const cloudRes = await window.CloudDB.updateClass(classId, { isAccepting: nextState });
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(nextState ? 'Đã mở nhận thêm học viên vào nhóm.' : 'Đã khóa không nhận thêm học viên.');
     await renderAdminStudentsTable();
     if (typeof renderAdminGroupsList === 'function') await renderAdminGroupsList();
@@ -23749,7 +23783,11 @@ window.inspectStudentPlan = function(username, name) {
 window.removeStudentFromGroup = async function(classId, username) {
   if (!confirm(`Bạn có chắc chắn muốn xóa học viên @${username} khỏi nhóm?`)) return;
   if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
-    await window.CloudDB.approveClassMember(classId, username, 'remove');
+    const cloudRes = await window.CloudDB.approveClassMember(classId, username, 'remove');
+    if (!cloudRes || !cloudRes.success) {
+      showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
+      return;
+    }
     showToast(`Đã xóa học viên @${username} khỏi nhóm.`);
     await renderAdminStudentsTable();
     await renderAdminGroupsList();
