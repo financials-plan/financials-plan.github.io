@@ -626,7 +626,7 @@ function createFixedCollegeGoal() {
     id: "fixed_college",
     fixedType: "college",
     isFixed: true,
-    name: "Cho con đi học đại học",
+    name: "Quỹ dự phòng Tài chính",
     type: "invest",
     start: 0,
     end: 0,
@@ -750,7 +750,9 @@ function ensureFixedInvestmentGoals() {
     retireGoal.id = "fixed_retirement";
     retireGoal.fixedType = "retirement";
     retireGoal.isFixed = true;
-    retireGoal.name = "Hưu trí";
+    if (!retireGoal.name || typeof retireGoal.name !== "string" || retireGoal.name.trim() === "") {
+      retireGoal.name = "Hưu trí";
+    }
     retireGoal.type = "invest";
     normalizeGoalNumericFields(retireGoal, tpl);
   }
@@ -768,7 +770,9 @@ function ensureFixedInvestmentGoals() {
     collegeGoal.id = "fixed_college";
     collegeGoal.fixedType = "college";
     collegeGoal.isFixed = true;
-    collegeGoal.name = "Cho con đi học đại học";
+    if (!collegeGoal.name || typeof collegeGoal.name !== "string" || collegeGoal.name.trim() === "") {
+      collegeGoal.name = "Quỹ dự phòng Tài chính";
+    }
     collegeGoal.type = "invest";
     normalizeGoalNumericFields(collegeGoal, tpl);
   }
@@ -5117,9 +5121,12 @@ function renderTcGoalsFormTable() {
       <tr>
         <td>
           ${isFixed
-            ? `<div class="font-bold" style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 8px;">
-                 <span>${escapeHtml(g.name)}</span>
-                 <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
+            ? `<div style="display:flex;align-items:center;gap:6px;width:100%;">
+                 <input type="text" class="cell-blue font-bold" style="flex:1;min-width:0;" value="${escapeHtml(g.name)}"
+                   placeholder="Nhập tên mục tiêu..."
+                   oninput="onGoalFieldInput(${idx}, 'name', this.value)"
+                   onchange="onGoalFieldChange(${idx}, 'name', this.value)">
+                 <span class="badge-fixed-goal" title="Mục tiêu cố định (Bảo toàn công thức tính chuẩn)"><i class="fa-solid fa-lock"></i> Cố định</span>
                </div>`
             : `<input type="text" class="cell-blue font-bold" value="${escapeHtml(g.name)}"
                  placeholder="VD: Mua nhà, Mua xe..."
@@ -5174,8 +5181,14 @@ function renderTcGoalsFormTable() {
 window.onGoalFieldInput = function(idx, field, val) {
   const g = AppState.tcGoals[idx];
   if (!g) return;
-  if (isFixedInvestmentGoal(g) && (field === 'name' || field === 'type')) {
+  if (isFixedInvestmentGoal(g) && field === 'type') {
     return;
+  }
+  if (field === 'name') {
+    const colTitle = document.getElementById('fixed-goal-title-college');
+    const retTitle = document.getElementById('fixed-goal-title-retirement');
+    if (isCollegeFixedGoal(g) && colTitle) colTitle.textContent = val || 'Cho con đi học đại học';
+    if (isRetirementFixedGoal(g) && retTitle) retTitle.textContent = val || 'Hưu trí';
   }
   if (field === 'val') {
     if (isCollegeFixedGoal(g)) {
@@ -5203,7 +5216,7 @@ window.onGoalFieldInput = function(idx, field, val) {
 window.onGoalFieldChange = function(idx, field, val) {
   const g = AppState.tcGoals[idx];
   if (!g) return;
-  if (isFixedInvestmentGoal(g) && (field === 'name' || field === 'type')) {
+  if (isFixedInvestmentGoal(g) && field === 'type') {
     renderTcGoalsFormTable();
     return;
   }
@@ -5354,7 +5367,7 @@ function createCardHtmlCollege(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="college">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college">Cho con đi học đại học</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Quỹ dự phòng Tài chính')}</strong></span>
         <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
       </div>
       <div class="tc-card-table-scroll">
@@ -5450,7 +5463,7 @@ function createCardHtmlRetirement(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="retirement">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-retirement">Hưu trí</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-retirement" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Hưu trí')}</strong></span>
         <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
       </div>
       <div class="tc-card-table-scroll">
@@ -5810,12 +5823,14 @@ window.updateGoalCardField = function(goalId, field, rawText) {
   if (!g) return;
 
   if (field === 'name') {
-    if (isFixedInvestmentGoal(g)) {
-      showToast(`Mục tiêu cố định "${g.name}" không được phép đổi tên!`, "error");
-      syncGoalsToCards();
-      return;
+    const trimmed = typeof rawText === 'string' ? rawText.trim() : '';
+    if (trimmed) {
+      g.name = trimmed;
+    } else {
+      g.name = isCollegeFixedGoal(g) ? 'Cho con đi học đại học' : (isRetirementFixedGoal(g) ? 'Hưu trí' : 'Mục tiêu');
     }
-    g.name = (typeof rawText === 'string' ? rawText.trim() : '') || 'Mục tiêu';
+    renderTcGoalsFormTable();
+    renderTcMatrixTable();
   } else {
     const clean = (typeof rawText === 'string') ? rawText.trim().replace(/,/g, '.').replace(/[^0-9.-]/g, '') : rawText;
     const numVal = parseFloat(clean);
@@ -7731,7 +7746,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Quỹ dự phòng Tài chính"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -7853,13 +7868,13 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         if (!g || typeof g !== 'object') return;
         if (isCollegeFixedGoal(g)) {
           if (mode === 'update' && currentCollege) {
-            Object.assign(currentCollege, g, { id: 'fixed_college', name: 'Cho con đi học đại học', type: 'invest', isFixed: true, fixedType: 'college' });
+            Object.assign(currentCollege, g, { id: 'fixed_college', name: g.name || currentCollege.name || 'Quỹ dự phòng Tài chính', type: 'invest', isFixed: true, fixedType: 'college' });
           }
           return;
         }
         if (isRetirementFixedGoal(g)) {
           if (mode === 'update' && currentRetire) {
-            Object.assign(currentRetire, g, { id: 'fixed_retirement', name: 'Hưu trí', type: 'invest', isFixed: true, fixedType: 'retirement' });
+            Object.assign(currentRetire, g, { id: 'fixed_retirement', name: g.name || currentRetire.name || 'Hưu trí', type: 'invest', isFixed: true, fixedType: 'retirement' });
           }
           return;
         }
