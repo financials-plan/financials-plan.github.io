@@ -8933,10 +8933,29 @@ window.hasAppStateData = function() {
   return false;
 };
 
+let autoCloudSyncTimer = null;
+function triggerAutoCloudSync() {
+  if (window.isReadOnlyStudentView) return;
+  if (!UserSession.currentUser || !window.CloudDB) return;
+  if (autoCloudSyncTimer) clearTimeout(autoCloudSyncTimer);
+  autoCloudSyncTimer = setTimeout(async () => {
+    try {
+      const userDocId = UserSession.currentUser.docId;
+      const res = await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
+      if (res && res.success) {
+        window.hasUnsavedChanges = false;
+        window.hasSavedInSession = true;
+        updateCloudStatus('ready', 'Đã tự động đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
+      }
+    } catch (e) {}
+  }, 1500);
+}
+
 window.markUnsavedChanges = function() {
   window.hasUnsavedChanges = true;
   window.allowExitWithoutSave = false;
-  updateCloudStatus('ready', 'Chưa lưu dữ liệu');
+  updateCloudStatus('ready', 'Đang chờ đồng bộ...');
+  triggerAutoCloudSync();
 };
 
 window.openExitSaveModal = function(onProceedCallback = null) {
@@ -9816,6 +9835,14 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
       }
     } catch (e) {}
   }
+  if (!studentPlan && window.CloudDB && typeof window.CloudDB.loadData === 'function') {
+    try {
+      const cloudRes = await window.CloudDB.loadData('user_' + studentUsername);
+      if (cloudRes && cloudRes.success && cloudRes.data) {
+        studentPlan = cloudRes.data;
+      }
+    } catch (e) {}
+  }
   if (!studentPlan) {
     try {
       const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
@@ -9824,7 +9851,24 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   }
 
   if (studentPlan) {
-    Object.assign(AppState, studentPlan);
+    Object.keys(studentPlan).forEach(k => {
+      if (!k.startsWith('_')) {
+        AppState[k] = studentPlan[k];
+      }
+    });
+    ensureFixedInvestmentGoals();
+    syncInvestProductsToGoals();
+
+    const yEl = document.getElementById('input-year');
+    const aEl = document.getElementById('input-age');
+    const nameElInput = document.getElementById('input-fullname');
+    if (yEl && AppState.currentYear) yEl.innerText = AppState.currentYear;
+    if (aEl && AppState.currentAge) aEl.innerText = AppState.currentAge;
+    if (nameElInput && AppState.ho_ten) nameElInput.innerText = AppState.ho_ten;
+
+    if (typeof recalculateAll === 'function') recalculateAll();
+    if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
+    if (typeof renderAll === 'function') renderAll();
   } else {
     showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch.`, "warning");
   }
@@ -9843,6 +9887,8 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   if (btnSave) btnSave.disabled = true;
 
   switchTab('tab-tukhoa');
+  if (typeof recalculateAll === 'function') recalculateAll();
+  if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
   if (typeof renderAll === 'function') renderAll();
   showToast(`Đang xem bài làm của học viên ${studentName} (Chế độ chỉ đọc).`);
 };
@@ -9862,6 +9908,18 @@ window.exitStudentPlanReadOnly = function() {
   const btnSave = document.getElementById('btn-cloud-save');
   if (btnSave) btnSave.disabled = false;
 
+  ensureFixedInvestmentGoals();
+  syncInvestProductsToGoals();
+
+  const yEl = document.getElementById('input-year');
+  const aEl = document.getElementById('input-age');
+  const nameElInput = document.getElementById('input-fullname');
+  if (yEl && AppState.currentYear) yEl.innerText = AppState.currentYear;
+  if (aEl && AppState.currentAge) aEl.innerText = AppState.currentAge;
+  if (nameElInput && AppState.ho_ten) nameElInput.innerText = AppState.ho_ten;
+
+  if (typeof recalculateAll === 'function') recalculateAll();
+  if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
   if (typeof renderAll === 'function') renderAll();
   showToast("Đã thoát chế độ xem học viên. Đã khôi phục kế hoạch tài chính của bạn.");
   if (window.isManagerMode) {

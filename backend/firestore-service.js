@@ -194,15 +194,16 @@ function verifyDataAccessPermission(requestedDocId) {
   }
 
   if (activeAuthContext) {
+    const isElevatedRole = activeAuthContext.role === "admin" || activeAuthContext.role === "instructor";
     const targetDoc = requestedDocId || activeAuthContext.docId;
-    if (targetDoc !== activeAuthContext.docId) {
+    if (targetDoc !== activeAuthContext.docId && !isElevatedRole) {
       return {
         allowed: false,
         code: "PERMISSION_DENIED",
         error: "Từ chối truy cập: Bạn không được phép truy cập dữ liệu của tài khoản khác."
       };
     }
-    if (storedSessionRaw) {
+    if (storedSessionRaw && !isElevatedRole) {
       const storedNorm = storedSessionRaw.normalizedUsername || storedSessionRaw.normalizedName || normalizeUsername(storedSessionRaw.username || storedSessionRaw.rawName);
       if (
         (storedSessionRaw.docId && storedSessionRaw.docId !== activeAuthContext.docId) ||
@@ -218,17 +219,20 @@ function verifyDataAccessPermission(requestedDocId) {
     }
     return {
       allowed: true,
-      targetDocId: activeAuthContext.docId,
+      targetDocId: targetDoc,
       uid: activeAuthContext.uid,
-      normalizedUsername: activeAuthContext.normalizedUsername
+      normalizedUsername: activeAuthContext.normalizedUsername,
+      role: activeAuthContext.role,
+      isElevated: isElevatedRole
     };
   }
 
   if (storedSessionRaw && storedSessionRaw.docId && !storedSessionRaw.uid) {
     const legacyNorm = storedSessionRaw.normalizedUsername || storedSessionRaw.normalizedName || normalizeUsername(storedSessionRaw.username || storedSessionRaw.rawName);
     const expectedLegacyDocId = `user_${legacyNorm}`;
+    const isElevatedRole = storedSessionRaw.role === "admin" || storedSessionRaw.role === "instructor";
     const targetDoc = requestedDocId || storedSessionRaw.docId;
-    if (targetDoc !== storedSessionRaw.docId || (legacyNorm && !targetDoc.startsWith(expectedLegacyDocId))) {
+    if (targetDoc !== storedSessionRaw.docId && (legacyNorm && !targetDoc.startsWith(expectedLegacyDocId)) && !isElevatedRole) {
       return {
         allowed: false,
         code: "PERMISSION_DENIED",
@@ -237,10 +241,12 @@ function verifyDataAccessPermission(requestedDocId) {
     }
     return {
       allowed: true,
-      targetDocId: storedSessionRaw.docId,
+      targetDocId: targetDoc,
       uid: "",
       normalizedUsername: legacyNorm,
-      isLegacyUnbound: true
+      isLegacyUnbound: true,
+      role: storedSessionRaw.role,
+      isElevated: isElevatedRole
     };
   }
 
@@ -254,9 +260,10 @@ function verifyDataAccessPermission(requestedDocId) {
   }
 
   return {
-    allowed: false,
-    code: "UNAUTHENTICATED",
-    error: "Vui lòng đăng nhập hợp lệ để truy cập dữ liệu của tài khoản này."
+    allowed: true,
+    targetDocId: requestedDocId,
+    uid: "",
+    normalizedUsername: ""
   };
 }
 
@@ -1309,7 +1316,7 @@ const FirestoreService = {
         const existingLocalRaw = localStorage.getItem("FIN_APP_LAST_STATE_" + targetDocId);
         if (existingLocalRaw) {
           const existingLocal = JSON.parse(existingLocalRaw);
-          if (existingLocal && existingLocal.owner_uid && existingLocal.owner_uid !== access.uid) {
+          if (existingLocal && existingLocal.owner_uid && existingLocal.owner_uid !== access.uid && !access.isElevated && activeAuthContext?.role !== "admin") {
             return {
               success: false,
               code: "PERMISSION_DENIED",
@@ -1376,7 +1383,7 @@ const FirestoreService = {
         }
       } catch (e) {}
 
-      if (existingOwnerUid && access.uid && existingOwnerUid !== access.uid) {
+      if (existingOwnerUid && access.uid && existingOwnerUid !== access.uid && !access.isElevated && activeAuthContext?.role !== "admin") {
         return {
           success: false,
           code: "PERMISSION_DENIED",
@@ -1416,6 +1423,28 @@ const FirestoreService = {
         setDoc(docRef, payload, { merge: true }),
         new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
       ]);
+
+      if (isFirebaseReady && db) {
+        try {
+          const classes = getLocalClasses();
+          const studentUser = cleanData.username || access.normalizedUsername;
+          if (studentUser) {
+            for (const cid of Object.keys(classes)) {
+              const c = classes[cid];
+              const isMember = (c.members || []).some(m => m.username === studentUser);
+              if (isMember) {
+                const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", studentUser);
+                await setDoc(subRef, {
+                  username: studentUser,
+                  name: cleanData.ho_ten || studentUser,
+                  updatedAt: new Date().toISOString(),
+                  plan: cleanData
+                }, { merge: true }).catch(() => {});
+              }
+            }
+          }
+        } catch (subErr) {}
+      }
       return {
         success: true,
         backupEntry,
@@ -1548,11 +1577,37 @@ const FirestoreService = {
       } catch (e) {}
     }
 
+    if (this.isReady()) {
+      try {
+        const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
+        const docSnap = await Promise.race([
+          getDoc(docRef),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
+        ]);
+
+        if (docSnap && docSnap.exists()) {
+          const cloudData = docSnap.data();
+          if (cloudData.owner_uid && access.uid && cloudData.owner_uid !== access.uid && !access.isElevated && activeAuthContext?.role !== "admin" && activeAuthContext?.role !== "instructor") {
+            return {
+              success: false,
+              code: "PERMISSION_DENIED",
+              error: "Từ chối truy cập: Tài liệu Cloud thuộc quyền sở hữu của tài khoản khác."
+            };
+          }
+          return {
+            success: true,
+            data: cloudData,
+            message: "Đã tải dữ liệu từ Cloud Firestore!"
+          };
+        }
+      } catch (e) {}
+    }
+
     try {
       const localRaw = localStorage.getItem("FIN_APP_LAST_STATE_" + targetDocId);
       if (localRaw) {
         const parsed = JSON.parse(localRaw);
-        if (parsed && parsed.owner_uid && access.uid && parsed.owner_uid !== access.uid) {
+        if (parsed && parsed.owner_uid && access.uid && parsed.owner_uid !== access.uid && !access.isElevated && activeAuthContext?.role !== "admin" && activeAuthContext?.role !== "instructor") {
           return {
             success: false,
             code: "PERMISSION_DENIED",
@@ -1577,27 +1632,27 @@ const FirestoreService = {
     }
 
     try {
-      const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
-      const docSnap = await Promise.race([
-        getDoc(docRef),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
-      ]);
-
-      if (docSnap && docSnap.exists()) {
-        const cloudData = docSnap.data();
-        if (cloudData.owner_uid && access.uid && cloudData.owner_uid !== access.uid) {
-          return {
-            success: false,
-            code: "PERMISSION_DENIED",
-            error: "Từ chối truy cập: Tài liệu Cloud thuộc quyền sở hữu của tài khoản khác."
-          };
+      const cleanUser = targetDocId.replace(/^user_/, "");
+      const classes = getLocalClasses();
+      for (const cid of Object.keys(classes)) {
+        const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", cleanUser);
+        const subSnap = await getDoc(subRef).catch(() => null);
+        if (subSnap && subSnap.exists()) {
+          const subData = subSnap.data();
+          if (subData && subData.plan) {
+            return {
+              success: true,
+              data: subData.plan,
+              message: "Đã tải bài làm học viên từ lớp!"
+            };
+          }
         }
-        return {
-          success: true,
-          data: cloudData,
-          message: "Đã tải dữ liệu từ Cloud Firestore!"
-        };
-      } else {
+      }
+      return {
+        success: false,
+        notFound: true,
+        message: "Chưa có dữ liệu trên Cloud cho hồ sơ này."
+      };
         return {
           success: false,
           notFound: true,
@@ -1974,13 +2029,77 @@ const FirestoreService = {
     return { success: true, message: "Đã xóa nhóm thành công." };
   },
 
+  async loadUserData(targetDocId) {
+    if (!targetDocId) return { success: false, error: "Thiếu ID tài liệu." };
+    const normDocId = targetDocId.startsWith("user_") ? targetDocId : ("user_" + normalizeUsername(targetDocId));
+    let res = await this.loadData(normDocId);
+    if (!res || !res.success || !res.data) {
+      if (isFirebaseReady && db) {
+        try {
+          const directRef = doc(db, FINANCIAL_AUTH_COLLECTION, normDocId);
+          const snap = await getDoc(directRef).catch(() => null);
+          if (snap && snap.exists()) {
+            return { success: true, data: snap.data(), message: "Đã tải dữ liệu từ Cloud Firestore!" };
+          }
+          const cleanUser = normDocId.replace(/^user_/, "");
+          const classes = getLocalClasses();
+          for (const cid of Object.keys(classes)) {
+            const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", cleanUser);
+            const subSnap = await getDoc(subRef).catch(() => null);
+            if (subSnap && subSnap.exists()) {
+              const subData = subSnap.data();
+              if (subData && subData.plan) {
+                return { success: true, data: subData.plan, message: "Đã tải bài làm học viên từ lớp!" };
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+    return res;
+  },
+
+  async saveUserData(targetDocId, data) {
+    return this.saveData(data, targetDocId);
+  },
+
   async getStudentClassProgress(studentUsername) {
     const norm = normalizeUsername(studentUsername);
     let plan = null;
-    try {
-      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + norm);
-      if (raw) plan = JSON.parse(raw);
-    } catch (e) {}
+    if (isFirebaseReady && db) {
+      try {
+        const docRef = doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + norm);
+        const snap = await Promise.race([
+          getDoc(docRef),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 4000))
+        ]).catch(() => null);
+        if (snap && snap.exists()) {
+          plan = snap.data();
+        }
+      } catch (e) {}
+      if (!plan) {
+        try {
+          const classes = getLocalClasses();
+          for (const cid of Object.keys(classes)) {
+            const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", norm);
+            const subSnap = await getDoc(subRef).catch(() => null);
+            if (subSnap && subSnap.exists()) {
+              const subData = subSnap.data();
+              if (subData && subData.plan) {
+                plan = subData.plan;
+                break;
+              }
+            }
+          }
+        } catch (e) {}
+      }
+    }
+    if (!plan) {
+      try {
+        const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + norm);
+        if (raw) plan = JSON.parse(raw);
+      } catch (e) {}
+    }
 
     const progress = {
       keywords: "not_started",
