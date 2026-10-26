@@ -921,15 +921,6 @@ function computeGoalPortfolioMetrics(goal) {
   };
 }
 
-function excelPMT(rate, nper, pv, fv = 0, type = 0) {
-  if (nper <= 0) return 0;
-  if (Math.abs(rate) < 1e-9) return -(pv + fv) / nper;
-  const pvif = Math.pow(1 + rate, nper);
-  let pmt = (rate / (pvif - 1)) * -(pv * pvif + fv);
-  if (type === 1) pmt /= (1 + rate);
-  return pmt;
-}
-
 function calculateCollegeGoal(goal) {
   normalizeGoalNumericFields(goal, createFixedCollegeGoal());
   const portfolio = computeGoalPortfolioMetrics(goal);
@@ -985,10 +976,19 @@ function calculateCollegeGoal(goal) {
     return 0;
   }
 
-  const paid = Math.max(0, Number(goal.paid) || 0);
-  const deficit = Math.max(0, targetFV - paid);
-  const pmt = -excelPMT(rMonthly, nMonths, paid, deficit);
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
+  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - paidFV);
+  if (deficitFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const pmt = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1040,10 +1040,19 @@ function calculateRetirementGoal(goal) {
     return 0;
   }
 
-  const paid = Math.max(0, Number(goal.paid) || 0);
-  const deficit = Math.max(0, targetFV - paid);
-  const pmt = -excelPMT(rMonthly, nMonths, paid, deficit);
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
+  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - paidFV);
+  if (deficitFV <= 0) {
+    goal.monthly = 0;
+    goal.annual = 0;
+    return 0;
+  }
+
+  const pmt = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+
+  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1077,8 +1086,10 @@ function calculateMonthlyNeed(goal) {
       goal.annual = 0;
       return 0;
     }
-    const pmt = -excelPMT(rMonthly, nMonths, loanBalance, 0);
-    goal.monthly = (isNaN(pmt) || !isFinite(pmt) || pmt < 0) ? 0 : pmt;
+    const pmt = rMonthly === 0
+      ? (loanBalance / nMonths)
+      : ((loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1));
+    goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
     goal.annual = goal.monthly * 12;
     return goal.monthly;
   }
@@ -1090,18 +1101,20 @@ function calculateMonthlyNeed(goal) {
         ? Number(goal.rate)
         : (Number(goal.estimatedRate) || 0));
   const rMonthly = (rAnnualPct / 100) / 12;
-  const targetVal = Number(goal.val) || 0;
-  const paid = Math.max(0, Number(goal.paid) || 0);
-  const deficit = Math.max(0, targetVal - paid);
+  const targetFV = Number(goal.val) || 0;
+  const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
+  const deficitFV = Math.max(0, targetFV - currentPaidFV);
 
-  if (targetVal <= 0 && deficit <= 0) {
+  if (deficitFV <= 0) {
     goal.monthly = 0;
     goal.annual = 0;
     return 0;
   }
 
-  const pmtInvest = -excelPMT(rMonthly, nMonths, paid, deficit);
-  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest) || pmtInvest < 0) ? 0 : pmtInvest;
+  const pmtInvest = rMonthly === 0
+    ? (deficitFV / nMonths)
+    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
+  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest)) ? 0 : pmtInvest;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1260,13 +1273,6 @@ function isDedicatedAssetGoal(g) {
   );
 }
 
-function financeFV(rate, nper, pmt, pv = 0) {
-  if (nper <= 0) return -pv;
-  if (Math.abs(rate) < 1e-9) return -(pv + pmt * nper);
-  const g = Math.pow(1 + rate, nper);
-  return -(pv * g + (pmt * (g - 1)) / rate);
-}
-
 function getPortfolioAllocationAtAge(targetAge) {
   const startYr = Number(AppState.currentYear) || 2026;
   const startAge = Number(AppState.currentAge) || 21;
@@ -1279,23 +1285,18 @@ function getPortfolioAllocationAtAge(targetAge) {
   if (goals.length === 0) return null;
 
   const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
-  const catRates = getAssetCategoryRates();
 
-  let balStocks = 0, balBonds = 0, balIns = 0, balCash = 0;
-  let totalBal = 0;
-  let weightedReturnNumerator = 0;
+  let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
+  let totalFlow = 0;
+  let weightedReturn = 0;
 
   goals.forEach(g => {
-    const startY = Number(g.start) || 0;
-    const endY = Number(g.end) || 0;
-    if (startY <= 0 || endY < startY) return;
-    if (targetYear < startY || targetYear > endY) return;
+    const isActive = (targetYear >= g.start && targetYear <= g.end);
+    if (!isActive) return;
 
-    const t = targetYear - startY;
     const mNeed = calculateMonthlyNeed(g);
-    const annualG = (mNeed > 0) ? mNeed * 12 : 0;
-    const pv = Math.max(0, Number(g.paid) || 0);
-    if (annualG <= 0 && pv <= 0) return;
+    const annualFlow = mNeed * 12;
+    if (annualFlow <= 0) return;
 
     const validAllocs = Array.isArray(g.allocProducts)
       ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
@@ -1305,72 +1306,44 @@ function getPortfolioAllocationAtAge(targetAge) {
     if (totalW > 0) {
       validAllocs.forEach(ap => {
         const normWeight = (Number(ap.weight) || 0) / totalW;
-        const pG = annualG * normWeight;
-        const pPV = pv * normWeight;
+        const prodFlow = annualFlow * normWeight;
 
         let rRate = Number(ap.returnRate) || 0;
-        if (rRate <= 0) {
+        if (rRate === 0) {
           const matched = validProducts.find(ip => ip && ip.name && ip.name.trim() === String(ap.prodName).trim());
-          if (matched && Number(matched.returnRate) > 0) rRate = Number(matched.returnRate);
+          if (matched) rRate = Number(matched.returnRate) || 0;
         }
-        if (rRate <= 0) {
-          rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-        }
-        const cat = classifyProductType(ap.prodName);
-        if (rRate <= 0) {
-          rRate = catRates[cat] || 10;
-        }
+        if (rRate === 0) rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
 
-        const rDecimal = rRate / 100;
-        let bal = 0;
-        if (t <= 0) {
-          bal = pPV > 0 ? (pG > 0 ? pPV + pG : pPV) : pG;
-        } else {
-          bal = financeFV(rDecimal, t, -pG, -pPV);
-        }
+        const pType = classifyProductType(ap.prodName);
+        totalFlow += prodFlow;
+        weightedReturn += prodFlow * rRate;
 
-        if (bal > 0) {
-          totalBal += bal;
-          weightedReturnNumerator += bal * rRate;
-          if (cat === 'stocks') balStocks += bal;
-          else if (cat === 'bonds') balBonds += bal;
-          else if (cat === 'ins') balIns += bal;
-          else balCash += bal;
-        }
+        if (pType === 'stocks') flowStocks += prodFlow;
+        else if (pType === 'bonds') flowBonds += prodFlow;
+        else if (pType === 'ins') flowIns += prodFlow;
+        else flowCash += prodFlow;
       });
-    } else {
+    } else if (isDedicatedAssetGoal(g)) {
       let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-      const cat = classifyProductType(g.name);
-      if (rRate <= 0) {
-        rRate = catRates[cat] || 10;
-      }
-      const rDecimal = rRate / 100;
-      let bal = 0;
-      if (t <= 0) {
-        bal = pv > 0 ? (annualG > 0 ? pv + annualG : pv) : annualG;
-      } else {
-        bal = financeFV(rDecimal, t, -annualG, -pv);
-      }
+      const pType = detectAssetCategory(g.name, rRate, 0);
+      totalFlow += annualFlow;
+      weightedReturn += annualFlow * rRate;
 
-      if (bal > 0) {
-        totalBal += bal;
-        weightedReturnNumerator += bal * rRate;
-        if (cat === 'stocks') balStocks += bal;
-        else if (cat === 'bonds') balBonds += bal;
-        else if (cat === 'ins') balIns += bal;
-        else balCash += bal;
-      }
+      if (pType === 'stocks') flowStocks += annualFlow;
+      else if (pType === 'bonds') flowBonds += annualFlow;
+      else if (pType === 'ins') flowIns += annualFlow;
+      else flowCash += annualFlow;
     }
   });
 
-  if (totalBal > 0) {
+  if (totalFlow > 0) {
     return {
-      stocks: (balStocks / totalBal) * 100,
-      bonds: (balBonds / totalBal) * 100,
-      ins: (balIns / totalBal) * 100,
-      cash: (balCash / totalBal) * 100,
-      returnNeed: weightedReturnNumerator / totalBal,
-      totalBalance: totalBal
+      stocks: (flowStocks / totalFlow) * 100,
+      bonds: (flowBonds / totalFlow) * 100,
+      ins: (flowIns / totalFlow) * 100,
+      cash: (flowCash / totalFlow) * 100,
+      returnNeed: weightedReturn / totalFlow
     };
   }
   return null;
@@ -1743,12 +1716,12 @@ function closePortfolio30YrModal() {
 }
 
 const CAREER_MILESTONES_RECOMMENDED = [
-  { stocks: 23.6, bonds: 34.5, ins: 8.5, cash: 33.4, returnNeed: 8.94 },
-  { stocks: 56.8, bonds: 20.6, ins: 5.7, cash: 16.9, returnNeed: 11.06 },
-  { stocks: 81.3, bonds: 0.0, ins: 10.7, cash: 7.9, returnNeed: 12.28 },
-  { stocks: 45.5, bonds: 0.0, ins: 33.0, cash: 21.6, returnNeed: 9.95 },
-  { stocks: 32.3, bonds: 0.0, ins: 45.1, cash: 22.6, returnNeed: 9.15 },
-  { stocks: 20.8, bonds: 0.0, ins: 58.1, cash: 21.1, returnNeed: 8.51 }
+  { stocks: 6.8, bonds: 76.1, ins: 0.0, cash: 17.1, returnNeed: 8.43 },
+  { stocks: 51.1, bonds: 29.3, ins: 0.0, cash: 19.6, returnNeed: 11.23 },
+  { stocks: 88.5, bonds: 0.0, ins: 5.8, cash: 5.6, returnNeed: 13.96 },
+  { stocks: 19.9, bonds: 0.0, ins: 44.3, cash: 35.8, returnNeed: 7.83 },
+  { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 },
+  { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 }
 ];
 
 function calculateAgeMilestones() {
@@ -1765,8 +1738,8 @@ function calculateAgeMilestones() {
     const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
     const rec = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
-    const dyn = getPortfolioAllocationAtAge(age);
-    const alloc = dyn || rec;
+
+    const userStore = AppState.milestonesStore[idx] || {};
 
     let skillVal = '';
     if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
@@ -1777,11 +1750,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: alloc.stocks,
-      bonds: alloc.bonds,
-      ins: alloc.ins,
-      cash: alloc.cash,
-      returnNeed: alloc.returnNeed,
+      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : rec.stocks,
+      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : rec.bonds,
+      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : rec.ins,
+      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : rec.cash,
+      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : rec.returnNeed,
       skills: skillVal
     };
   });
@@ -4398,11 +4371,31 @@ function renderCareerTables() {
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
         <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold font-mono" title="Tỷ trọng Cổ phiếu tại tuổi ${item.age}">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono" title="Tỷ trọng Trái phiếu tại tuổi ${item.age}">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono" title="Tỷ trọng Bảo hiểm tại tuổi ${item.age}">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono" title="Tỷ trọng Tiền gửi NH tại tuổi ${item.age}">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-success font-mono" title="Lãi suất kỳ vọng danh mục khuyến nghị tại tuổi ${item.age}">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'stocks', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Cổ phiếu (tuổi ${item.age})">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'bonds', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Trái phiếu (tuổi ${item.age})">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'ins', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Bảo hiểm (tuổi ${item.age})">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'cash', this.innerText)"
+            title="Nhấn để chỉnh sửa tỷ trọng Tiền gửi NH (tuổi ${item.age})">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-success font-mono cell-blue"
+            contenteditable="true" spellcheck="false"
+            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
+            onblur="updateCareerMilestoneField(${idx}, 'returnNeed', this.innerText)"
+            title="Nhấn để chỉnh sửa Mức sinh lời cần thiết (tuổi ${item.age})">${item.returnNeed.toFixed(2)}%</td>
         <td>
           <input type="text"
                  class="input-inline-cell font-semibold"

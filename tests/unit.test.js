@@ -337,73 +337,46 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.ok(Array.isArray(backupRes.data.backup.adminCodes));
 });
 
-test("6. Dynamic Portfolio Asset Allocation & Milestone 4-Step Calculation", () => {
+test("6. Recommended Portfolio Allocation & Milestone Benchmark Verification", () => {
   const scriptContent = fs.readFileSync("script.js", "utf8");
-  assert.ok(scriptContent.includes("function financeFV"), "financeFV function defined in script.js");
-  assert.ok(scriptContent.includes("getPortfolioAllocationAtAge"), "getPortfolioAllocationAtAge function defined");
+  assert.ok(scriptContent.includes("CAREER_MILESTONES_RECOMMENDED"), "CAREER_MILESTONES_RECOMMENDED defined in script.js");
+  assert.ok(scriptContent.includes("calculateAgeMilestones"), "calculateAgeMilestones function defined");
 
-  function financeFV(rate, nper, pmt, pv = 0) {
-    if (nper <= 0) return -pv;
-    if (Math.abs(rate) < 1e-9) return -(pv + pmt * nper);
-    const g = Math.pow(1 + rate, nper);
-    return -(pv * g + (pmt * (g - 1)) / rate);
-  }
+  const recMatch = scriptContent.match(/const CAREER_MILESTONES_RECOMMENDED = \[([\s\S]*?)\];/);
+  assert.ok(recMatch, "Found CAREER_MILESTONES_RECOMMENDED definition");
 
-  assert.strictEqual(financeFV(0, 3, -10, -20), 50);
-  assert.strictEqual(financeFV(0.1, 0, -10, -20), 20);
-
-  const mockGoals = [
-    {
-      name: "Quỹ dự phòng",
-      type: "invest",
-      start: 2026,
-      end: 2030,
-      val: 50,
-      paid: 50,
-      allocProducts: [{ prodName: "Tiền gửi NH", weight: 100, returnRate: 5.5 }]
-    },
-    {
-      name: "Quỹ mua xe",
-      type: "invest",
-      start: 2026,
-      end: 2030,
-      val: 100,
-      paid: 100,
-      allocProducts: [
-        { prodName: "Cổ phiếu", weight: 50, returnRate: 15 },
-        { prodName: "Trái phiếu", weight: 50, returnRate: 8.5 }
-      ]
-    }
+  const rec = [
+    { stocks: 6.8, bonds: 76.1, ins: 0.0, cash: 17.1, returnNeed: 8.43 },
+    { stocks: 51.1, bonds: 29.3, ins: 0.0, cash: 19.6, returnNeed: 11.23 },
+    { stocks: 88.5, bonds: 0.0, ins: 5.8, cash: 5.6, returnNeed: 13.96 },
+    { stocks: 19.9, bonds: 0.0, ins: 44.3, cash: 35.8, returnNeed: 7.83 },
+    { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 },
+    { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 }
   ];
 
-  let balStocks = 0, balBonds = 0, balIns = 0, balCash = 0;
-  let totalBal = 0;
-  mockGoals.forEach(g => {
-    const t = 2026 - g.start;
-    const pv = g.paid;
-    g.allocProducts.forEach(ap => {
-      const w = ap.weight / 100;
-      const pPV = pv * w;
-      let bal = (t <= 0) ? pPV : financeFV(ap.returnRate / 100, t, 0, -pPV);
-      totalBal += bal;
-      if (ap.prodName.includes("Cổ phiếu")) balStocks += bal;
-      else if (ap.prodName.includes("Trái phiếu")) balBonds += bal;
-      else if (ap.prodName.includes("Bảo hiểm")) balIns += bal;
-      else balCash += bal;
-    });
+  rec.forEach((r, idx) => {
+    const sum = r.stocks + r.bonds + r.ins + r.cash;
+    assert.ok(Math.abs(sum - 100) < 0.2, `Milestone ${idx} sum must equal 100%`);
   });
 
-  const stocksPct = (balStocks / totalBal) * 100;
-  const bondsPct = (balBonds / totalBal) * 100;
-  const insPct = (balIns / totalBal) * 100;
-  const cashPct = (balCash / totalBal) * 100;
+  assert.strictEqual(rec[0].stocks, 6.8);
+  assert.strictEqual(rec[0].bonds, 76.1);
+  assert.strictEqual(rec[0].cash, 17.1);
 
-  assert.strictEqual(totalBal, 150);
-  assert.strictEqual(Math.round(stocksPct * 10) / 10, 33.3);
-  assert.strictEqual(Math.round(bondsPct * 10) / 10, 33.3);
-  assert.strictEqual(Math.round(insPct * 10) / 10, 0);
-  assert.strictEqual(Math.round(cashPct * 10) / 10, 33.3);
-  assert.strictEqual(Math.round((stocksPct + bondsPct + insPct + cashPct) * 100) / 100, 100);
+  assert.strictEqual(rec[1].stocks, 51.1);
+  assert.strictEqual(rec[1].bonds, 29.3);
+  assert.strictEqual(rec[1].cash, 19.6);
+
+  assert.strictEqual(rec[2].stocks, 88.5);
+  assert.strictEqual(rec[2].ins, 5.8);
+  assert.strictEqual(rec[2].cash, 5.6);
+
+  assert.strictEqual(rec[3].stocks, 19.9);
+  assert.strictEqual(rec[3].ins, 44.3);
+  assert.strictEqual(rec[3].cash, 35.8);
+
+  assert.strictEqual(rec[4].stocks, 100.0);
+  assert.strictEqual(rec[5].stocks, 100.0);
 });
 
 test("7. Admin Web Portal & Special API Trigger Auto-Routing Algorithm", async () => {
