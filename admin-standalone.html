@@ -7875,6 +7875,70 @@ input::-ms-clear {
   pointer-events: none !important;
 }
 
+.btn-topbar-admin-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-topbar-admin-mode:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.5);
+  transform: translateY(-1px);
+}
+.btn-topbar-admin-mode.active-admin {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+}
+.btn-topbar-admin-mode.active-admin:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5);
+}
+.sidebar-student-admin-shortcut {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 8px;
+}
+.btn-sidebar-admin-pill {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+}
+.btn-sidebar-admin-pill:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  transform: translateY(-1px);
+}
+.btn-switch-to-student-rail {
+  margin-top: 4px;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+.btn-switch-to-student-rail:hover {
+  background: var(--bg-hover) !important;
+}
+
 
 
 </style>
@@ -7963,6 +8027,11 @@ input::-ms-clear {
           <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
             <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
           </button>
+          <div class="sidebar-student-admin-shortcut" id="sidebar-student-admin-shortcut" style="display: none;">
+            <button type="button" class="btn-sidebar-admin-pill" onclick="toggleAdminManagerMode(true)" title="Quay lại Giao diện Quản trị">
+              <i class="fa-solid fa-shield-halved"></i> <span>Vào Trang Quản trị</span>
+            </button>
+          </div>
         </div>
 
         <div class="rail-nav-admin" id="rail-nav-admin" style="display: none;">
@@ -7981,6 +8050,11 @@ input::-ms-clear {
           </button>
           <button class="nav-item" id="btn-tab-admin-analytics" data-tooltip="Phân tích chuyên sâu" onclick="switchTab('tab-admin-analytics')">
             <i class="fa-solid fa-chart-pie"></i><span>Phân tích chuyên sâu</span>
+          </button>
+
+          <div class="nav-section-label">CHẾ ĐỘ SỔ TÀI CHÍNH</div>
+          <button type="button" class="nav-item btn-switch-to-student-rail" id="btn-switch-to-student" data-tooltip="Chuyển sang xem Sổ tài chính" onclick="toggleAdminManagerMode(false)">
+            <i class="fa-solid fa-book-open"></i><span>Xem Sổ tài chính</span>
           </button>
         </div>
       </div>
@@ -8016,6 +8090,10 @@ input::-ms-clear {
         <button type="button" class="btn-theme-toggle" id="btn-topbar-theme" onclick="toggleTheme(event)" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Chuyển đổi giao diện Sáng / Tối">
           <i class="fa-solid fa-moon icon-theme-moon"></i>
           <i class="fa-solid fa-sun icon-theme-sun"></i>
+        </button>
+
+        <button type="button" class="btn-topbar-admin-mode" id="btn-admin-mode-toggle" style="display: none;" onclick="toggleAdminManagerMode()" title="Chuyển đổi giao diện Quản trị / Sổ tài chính">
+          <i class="fa-solid fa-shield-halved"></i> <span id="admin-mode-toggle-label">Giao diện Quản trị</span>
         </button>
 
         <div class="topbar-auth-section" id="topbar-auth-section">
@@ -12843,10 +12921,32 @@ const UserSession = {
       if (topbarUserChip) topbarUserChip.style.display = 'inline-flex';
 
       const btnMenuClass = document.getElementById('btn-menu-class-manager');
-      const isInstructorOrAdmin = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'instructor');
+      const isInstructorOrAdmin = this.currentUser && (
+        this.currentUser.role === 'admin' ||
+        this.currentUser.role === 'instructor' ||
+        this.currentUser.normalizedUsername === 'admin' ||
+        (this.currentUser.normalizedUsername && this.currentUser.normalizedUsername.startsWith('admin_'))
+      );
       if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
       const btnTabCodes = document.getElementById('btn-class-tab-codes');
-      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && this.currentUser.role === 'admin') ? '' : 'none';
+      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.normalizedUsername === 'admin')) ? '' : 'none';
+
+      const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+      if (btnAdminToggle) {
+        btnAdminToggle.style.display = isInstructorOrAdmin ? 'inline-flex' : 'none';
+        const toggleLabel = document.getElementById('admin-mode-toggle-label');
+        if (toggleLabel) {
+          toggleLabel.innerHTML = window.isManagerMode
+            ? '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>'
+            : '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+        }
+        btnAdminToggle.classList.toggle('active-admin', Boolean(window.isManagerMode));
+      }
+
+      const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
+      if (studentAdminShortcut) {
+        studentAdminShortcut.style.display = (isInstructorOrAdmin && !window.isManagerMode) ? 'block' : 'none';
+      }
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
       if (slugEl) slugEl.textContent = "@guest";
@@ -12870,6 +12970,10 @@ const UserSession = {
 
       const btnMenuClass = document.getElementById('btn-menu-class-manager');
       if (btnMenuClass) btnMenuClass.style.display = 'none';
+      const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+      if (btnAdminToggle) btnAdminToggle.style.display = 'none';
+      const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
+      if (studentAdminShortcut) studentAdminShortcut.style.display = 'none';
     }
 
     if (typeof window.renderAccountSwitcher === 'function') {
@@ -21416,6 +21520,23 @@ document.addEventListener('DOMContentLoaded', () => {
     UserSession.updateUI();
   }
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceAdmin = urlParams.get('mode') === 'admin';
+  const forceStudent = urlParams.get('mode') === 'student';
+  const isInstructorOrAdmin = storedUser && (
+    storedUser.role === 'admin' ||
+    storedUser.role === 'instructor' ||
+    storedUser.normalizedUsername === 'admin' ||
+    (storedUser.username && storedUser.username.toLowerCase() === 'admin') ||
+    (storedUser.normalizedUsername && storedUser.normalizedUsername.startsWith('admin_'))
+  );
+
+  if ((isInstructorOrAdmin && !forceStudent) || forceAdmin) {
+    if (typeof window.toggleAdminManagerMode === 'function') {
+      window.toggleAdminManagerMode(true);
+    }
+  }
+
   const yEl = document.getElementById('input-year');
   const aEl = document.getElementById('input-age');
   if (yEl) {
@@ -22075,17 +22196,43 @@ window.toggleAdminManagerMode = function(forceState) {
   const studentNav = document.getElementById('rail-nav-student');
   const adminNav = document.getElementById('rail-nav-admin');
   const adminFooter = document.getElementById('sidebar-admin-footer');
+  const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+  const toggleLabel = document.getElementById('admin-mode-toggle-label');
+  const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
 
   if (window.isManagerMode) {
     if (studentNav) studentNav.style.display = 'none';
     if (adminNav) adminNav.style.display = 'block';
     if (adminFooter) adminFooter.style.display = 'flex';
+    if (btnAdminToggle) {
+      btnAdminToggle.classList.add('active-admin');
+      if (toggleLabel) {
+        toggleLabel.innerHTML = '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>';
+      }
+    }
+    if (studentAdminShortcut) studentAdminShortcut.style.display = 'none';
     switchTab('tab-admin-groups');
     if (typeof updateAdminPendingBadge === 'function') updateAdminPendingBadge();
   } else {
     if (studentNav) studentNav.style.display = 'block';
     if (adminNav) adminNav.style.display = 'none';
     if (adminFooter) adminFooter.style.display = 'none';
+    if (btnAdminToggle) {
+      btnAdminToggle.classList.remove('active-admin');
+      if (toggleLabel) {
+        toggleLabel.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+      }
+    }
+    const isInstructorOrAdmin = UserSession.currentUser && (
+      UserSession.currentUser.role === 'admin' ||
+      UserSession.currentUser.role === 'instructor' ||
+      UserSession.currentUser.normalizedUsername === 'admin' ||
+      (UserSession.currentUser.username && UserSession.currentUser.username.toLowerCase() === 'admin') ||
+      (UserSession.currentUser.normalizedUsername && UserSession.currentUser.normalizedUsername.startsWith('admin_'))
+    );
+    if (studentAdminShortcut) {
+      studentAdminShortcut.style.display = isInstructorOrAdmin ? 'block' : 'none';
+    }
     switchTab('tab-tukhoa');
   }
 };
@@ -23519,6 +23666,15 @@ window.handleAdminSystemRestoreFile = function(input) {
     if (typeof window.toggleAdminManagerMode === "function") {
       window.toggleAdminManagerMode(true);
     }
+
+    const btnSwitchStudent = document.getElementById("btn-switch-to-student");
+    if (btnSwitchStudent) btnSwitchStudent.style.display = "none";
+    const navSectionLabel = btnSwitchStudent && btnSwitchStudent.previousElementSibling;
+    if (navSectionLabel && navSectionLabel.classList && navSectionLabel.classList.contains("nav-section-label")) {
+      navSectionLabel.style.display = "none";
+    }
+    const btnAdminToggle = document.getElementById("btn-admin-mode-toggle");
+    if (btnAdminToggle) btnAdminToggle.style.display = "none";
 
     setTimeout(() => {
       window.dispatchEvent(new CustomEvent("firebase-ready", { detail: { ready: true } }));

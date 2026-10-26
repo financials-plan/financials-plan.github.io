@@ -744,7 +744,12 @@ function transitionToWelcomeScreen(user, isNew = false) {
 }
 
 window.navigateToApp = function() {
-  window.location.href = "../main.html";
+  const stored = getStoredSession();
+  if (stored && (stored.role === "admin" || stored.role === "instructor" || stored.normalizedUsername === "admin" || (stored.normalizedUsername && stored.normalizedUsername.startsWith("admin_")))) {
+    window.location.href = "../main.html?mode=admin";
+  } else {
+    window.location.href = "../main.html";
+  }
 };
 
 
@@ -1035,7 +1040,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (stored && (stored.displayUsername || stored.username || stored.rawName)) {
     const disp = stored.displayUsername || stored.username || stored.rawName;
     const norm = stored.normalizedUsername || stored.normalizedName || normalizeUserName(disp);
-    if (bannerEl) bannerEl.style.display = "flex";
+    if (bannerEl) {
+      bannerEl.style.display = "flex";
+      const continueLink = bannerEl.querySelector(".btn-continue-session");
+      if (continueLink) {
+        const isAdmin = Boolean(stored.role === "admin" || stored.role === "instructor" || stored.normalizedUsername === "admin" || (stored.normalizedUsername && stored.normalizedUsername.startsWith("admin_")));
+        continueLink.href = isAdmin ? "../main.html?mode=admin" : "../main.html";
+        const span = continueLink.querySelector("span");
+        if (span) span.textContent = isAdmin ? "Tiếp tục vào Trang Quản Trị" : "Tiếp tục vào Sổ Tài Chính";
+      }
+    }
     if (backBtn) backBtn.style.display = "inline-flex";
     if (bannerName) bannerName.textContent = disp;
     if (bannerSlug) bannerSlug.textContent = `@${norm}`;

@@ -7858,4 +7858,68 @@ input::-ms-clear {
   pointer-events: none !important;
 }
 
+.btn-topbar-admin-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-topbar-admin-mode:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.5);
+  transform: translateY(-1px);
+}
+.btn-topbar-admin-mode.active-admin {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+}
+.btn-topbar-admin-mode.active-admin:hover {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.5);
+}
+.sidebar-student-admin-shortcut {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 8px;
+}
+.btn-sidebar-admin-pill {
+  width: 100%;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+}
+.btn-sidebar-admin-pill:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  transform: translateY(-1px);
+}
+.btn-switch-to-student-rail {
+  margin-top: 4px;
+  color: var(--primary) !important;
+  font-weight: 600;
+}
+.btn-switch-to-student-rail:hover {
+  background: var(--bg-hover) !important;
+}
+
 

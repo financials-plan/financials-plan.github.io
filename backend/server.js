@@ -29,7 +29,7 @@ const classesStore = new Map();
 
 function seedInitialData() {
   const seeds = [
-    { u: "admin", name: "Admin", p: "admin123", email: "admin@financials-plan.io", role: "admin" },
+    { u: "admin", name: "Admin", p: "administrator", email: "admin@financials-plan.io", role: "admin" },
     { u: "dinh_anh_quan", name: "Đinh Anh Quân", p: "dinh_anh_quan", email: "dinh_anh_quan@gmail.com", role: "instructor" },
     { u: "hst", name: "HST", p: "hst2026", email: "hst@gmail.com", role: "student" },
     { u: "demo", name: "Demo User", p: "lumen2026", email: "demo@financials-plan.io", role: "student" }

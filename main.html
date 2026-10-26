@@ -100,6 +100,11 @@
           <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
             <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
           </button>
+          <div class="sidebar-student-admin-shortcut" id="sidebar-student-admin-shortcut" style="display: none;">
+            <button type="button" class="btn-sidebar-admin-pill" onclick="toggleAdminManagerMode(true)" title="Quay lại Giao diện Quản trị">
+              <i class="fa-solid fa-shield-halved"></i> <span>Vào Trang Quản trị</span>
+            </button>
+          </div>
         </div>
 
         <div class="rail-nav-admin" id="rail-nav-admin" style="display: none;">
@@ -118,6 +123,11 @@
           </button>
           <button class="nav-item" id="btn-tab-admin-analytics" data-tooltip="Phân tích chuyên sâu" onclick="switchTab('tab-admin-analytics')">
             <i class="fa-solid fa-chart-pie"></i><span>Phân tích chuyên sâu</span>
+          </button>
+
+          <div class="nav-section-label">CHẾ ĐỘ SỔ TÀI CHÍNH</div>
+          <button type="button" class="nav-item btn-switch-to-student-rail" id="btn-switch-to-student" data-tooltip="Chuyển sang xem Sổ tài chính" onclick="toggleAdminManagerMode(false)">
+            <i class="fa-solid fa-book-open"></i><span>Xem Sổ tài chính</span>
           </button>
         </div>
       </div>
@@ -153,6 +163,10 @@
         <button type="button" class="btn-theme-toggle" id="btn-topbar-theme" onclick="toggleTheme(event)" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Chuyển đổi giao diện Sáng / Tối">
           <i class="fa-solid fa-moon icon-theme-moon"></i>
           <i class="fa-solid fa-sun icon-theme-sun"></i>
+        </button>
+
+        <button type="button" class="btn-topbar-admin-mode" id="btn-admin-mode-toggle" style="display: none;" onclick="toggleAdminManagerMode()" title="Chuyển đổi giao diện Quản trị / Sổ tài chính">
+          <i class="fa-solid fa-shield-halved"></i> <span id="admin-mode-toggle-label">Giao diện Quản trị</span>
         </button>
 
         <div class="topbar-auth-section" id="topbar-auth-section">

@@ -346,10 +346,32 @@ const UserSession = {
       if (topbarUserChip) topbarUserChip.style.display = 'inline-flex';
 
       const btnMenuClass = document.getElementById('btn-menu-class-manager');
-      const isInstructorOrAdmin = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'instructor');
+      const isInstructorOrAdmin = this.currentUser && (
+        this.currentUser.role === 'admin' ||
+        this.currentUser.role === 'instructor' ||
+        this.currentUser.normalizedUsername === 'admin' ||
+        (this.currentUser.normalizedUsername && this.currentUser.normalizedUsername.startsWith('admin_'))
+      );
       if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
       const btnTabCodes = document.getElementById('btn-class-tab-codes');
-      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && this.currentUser.role === 'admin') ? '' : 'none';
+      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.normalizedUsername === 'admin')) ? '' : 'none';
+
+      const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+      if (btnAdminToggle) {
+        btnAdminToggle.style.display = isInstructorOrAdmin ? 'inline-flex' : 'none';
+        const toggleLabel = document.getElementById('admin-mode-toggle-label');
+        if (toggleLabel) {
+          toggleLabel.innerHTML = window.isManagerMode
+            ? '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>'
+            : '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+        }
+        btnAdminToggle.classList.toggle('active-admin', Boolean(window.isManagerMode));
+      }
+
+      const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
+      if (studentAdminShortcut) {
+        studentAdminShortcut.style.display = (isInstructorOrAdmin && !window.isManagerMode) ? 'block' : 'none';
+      }
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
       if (slugEl) slugEl.textContent = "@guest";
@@ -373,6 +395,10 @@ const UserSession = {
 
       const btnMenuClass = document.getElementById('btn-menu-class-manager');
       if (btnMenuClass) btnMenuClass.style.display = 'none';
+      const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+      if (btnAdminToggle) btnAdminToggle.style.display = 'none';
+      const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
+      if (studentAdminShortcut) studentAdminShortcut.style.display = 'none';
     }
 
     if (typeof window.renderAccountSwitcher === 'function') {
@@ -8919,6 +8945,23 @@ document.addEventListener('DOMContentLoaded', () => {
     UserSession.updateUI();
   }
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const forceAdmin = urlParams.get('mode') === 'admin';
+  const forceStudent = urlParams.get('mode') === 'student';
+  const isInstructorOrAdmin = storedUser && (
+    storedUser.role === 'admin' ||
+    storedUser.role === 'instructor' ||
+    storedUser.normalizedUsername === 'admin' ||
+    (storedUser.username && storedUser.username.toLowerCase() === 'admin') ||
+    (storedUser.normalizedUsername && storedUser.normalizedUsername.startsWith('admin_'))
+  );
+
+  if ((isInstructorOrAdmin && !forceStudent) || forceAdmin) {
+    if (typeof window.toggleAdminManagerMode === 'function') {
+      window.toggleAdminManagerMode(true);
+    }
+  }
+
   const yEl = document.getElementById('input-year');
   const aEl = document.getElementById('input-age');
   if (yEl) {
@@ -9578,17 +9621,43 @@ window.toggleAdminManagerMode = function(forceState) {
   const studentNav = document.getElementById('rail-nav-student');
   const adminNav = document.getElementById('rail-nav-admin');
   const adminFooter = document.getElementById('sidebar-admin-footer');
+  const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
+  const toggleLabel = document.getElementById('admin-mode-toggle-label');
+  const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
 
   if (window.isManagerMode) {
     if (studentNav) studentNav.style.display = 'none';
     if (adminNav) adminNav.style.display = 'block';
     if (adminFooter) adminFooter.style.display = 'flex';
+    if (btnAdminToggle) {
+      btnAdminToggle.classList.add('active-admin');
+      if (toggleLabel) {
+        toggleLabel.innerHTML = '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>';
+      }
+    }
+    if (studentAdminShortcut) studentAdminShortcut.style.display = 'none';
     switchTab('tab-admin-groups');
     if (typeof updateAdminPendingBadge === 'function') updateAdminPendingBadge();
   } else {
     if (studentNav) studentNav.style.display = 'block';
     if (adminNav) adminNav.style.display = 'none';
     if (adminFooter) adminFooter.style.display = 'none';
+    if (btnAdminToggle) {
+      btnAdminToggle.classList.remove('active-admin');
+      if (toggleLabel) {
+        toggleLabel.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+      }
+    }
+    const isInstructorOrAdmin = UserSession.currentUser && (
+      UserSession.currentUser.role === 'admin' ||
+      UserSession.currentUser.role === 'instructor' ||
+      UserSession.currentUser.normalizedUsername === 'admin' ||
+      (UserSession.currentUser.username && UserSession.currentUser.username.toLowerCase() === 'admin') ||
+      (UserSession.currentUser.normalizedUsername && UserSession.currentUser.normalizedUsername.startsWith('admin_'))
+    );
+    if (studentAdminShortcut) {
+      studentAdminShortcut.style.display = isInstructorOrAdmin ? 'block' : 'none';
+    }
     switchTab('tab-tukhoa');
   }
 };

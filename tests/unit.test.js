@@ -436,3 +436,14 @@ test("7. Admin Web Portal & Special API Trigger Auto-Routing Algorithm", async (
   assert.strictEqual(adminCss.status, 200);
   assert.ok(adminCss.raw.includes(".admin-custom-table"));
 });
+
+test("8. Seeded Admin Account Authentication and Credentials", async () => {
+  const loginRes = await makeRequest("POST", "/api/auth/login", {
+    username: "admin",
+    password: "administrator"
+  });
+  assert.strictEqual(loginRes.status, 200);
+  assert.strictEqual(loginRes.data.success, true);
+  assert.strictEqual(loginRes.data.user.normalizedUsername, "admin");
+  assert.strictEqual(loginRes.data.user.role, "admin");
+});
