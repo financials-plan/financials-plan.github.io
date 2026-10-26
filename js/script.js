@@ -9796,7 +9796,7 @@ window.renderAdminGroupsList = async function() {
             <div class="group-meta-badges">
               <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
                 <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i>
-                <span>${isPriv ? 'Nhóm Kín (Private)' : 'Nhóm Mở (Global)'}</span>
+                <span>${isPriv ? 'Nhóm riêng tư' : 'Nhóm mở'}</span>
               </span>
               <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${c.code}')" title="Bấm để sao chép mã">
                 <code>${c.code}</code> <i class="fa-regular fa-copy"></i>
@@ -9969,7 +9969,7 @@ window.renderAdminRequestsTable = async function() {
 
   if (groupFilter) {
     const curVal = groupFilter.value;
-    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm Kín</option>';
+    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm riêng tư</option>';
     classes.filter(c => c.isPrivate !== false).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
@@ -10947,7 +10947,7 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += 'Chỉ số,Giá trị,Mô tả / Đơn vị\n';
   csv += `Tổng số Nhóm / Lớp học,${classes.length},Nhóm đang hoạt động trên hệ thống\n`;
   csv += `Tổng số Học viên chính thức,${totalMembers},Học viên đã tham gia vào các nhóm\n`;
-  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm Kín (Private)\n`;
+  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm riêng tư\n`;
   csv += `Tỷ lệ hoàn thành ma trận học tập,${totalMembers > 0 ? '78.5%' : '0%'},Đánh giá trên 4 phân hệ cốt lõi M1-M4\n`;
   csv += 'Tỷ lệ tiết kiệm bình quân hệ thống,38.2%,Tỷ lệ tiết kiệm trên tổng thu nhập hàng tháng\n';
   csv += 'Tỷ lệ trả nợ bình quân (DSR),14.6%,Khuyến nghị chuẩn an toàn DSR < 35%\n';
