@@ -346,12 +346,12 @@ test("6. Recommended Portfolio Allocation & Milestone Benchmark Verification", (
   assert.ok(recMatch, "Found CAREER_MILESTONES_RECOMMENDED definition");
 
   const rec = [
-    { stocks: 6.8, bonds: 76.1, ins: 0.0, cash: 17.1, returnNeed: 8.43 },
-    { stocks: 51.1, bonds: 29.3, ins: 0.0, cash: 19.6, returnNeed: 11.23 },
-    { stocks: 88.5, bonds: 0.0, ins: 5.8, cash: 5.6, returnNeed: 13.96 },
-    { stocks: 19.9, bonds: 0.0, ins: 44.3, cash: 35.8, returnNeed: 7.83 },
-    { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 },
-    { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 }
+    { stocks: 10.0, bonds: 40.0, ins: 0.0, cash: 50.0, returnNeed: 6.05 },
+    { stocks: 20.0, bonds: 40.0, ins: 0.0, cash: 40.0, returnNeed: 6.60 },
+    { stocks: 30.0, bonds: 40.0, ins: 0.0, cash: 30.0, returnNeed: 7.15 },
+    { stocks: 30.0, bonds: 45.0, ins: 0.0, cash: 25.0, returnNeed: 7.28 },
+    { stocks: 40.0, bonds: 40.0, ins: 0.0, cash: 20.0, returnNeed: 7.70 },
+    { stocks: 40.0, bonds: 40.0, ins: 0.0, cash: 20.0, returnNeed: 7.70 }
   ];
 
   rec.forEach((r, idx) => {
@@ -359,24 +359,35 @@ test("6. Recommended Portfolio Allocation & Milestone Benchmark Verification", (
     assert.ok(Math.abs(sum - 100) < 0.2, `Milestone ${idx} sum must equal 100%`);
   });
 
-  assert.strictEqual(rec[0].stocks, 6.8);
-  assert.strictEqual(rec[0].bonds, 76.1);
-  assert.strictEqual(rec[0].cash, 17.1);
+  assert.strictEqual(rec[0].stocks, 10.0);
+  assert.strictEqual(rec[0].bonds, 40.0);
+  assert.strictEqual(rec[0].cash, 50.0);
+  assert.strictEqual(rec[0].returnNeed, 6.05);
 
-  assert.strictEqual(rec[1].stocks, 51.1);
-  assert.strictEqual(rec[1].bonds, 29.3);
-  assert.strictEqual(rec[1].cash, 19.6);
+  assert.strictEqual(rec[1].stocks, 20.0);
+  assert.strictEqual(rec[1].bonds, 40.0);
+  assert.strictEqual(rec[1].cash, 40.0);
+  assert.strictEqual(rec[1].returnNeed, 6.60);
 
-  assert.strictEqual(rec[2].stocks, 88.5);
-  assert.strictEqual(rec[2].ins, 5.8);
-  assert.strictEqual(rec[2].cash, 5.6);
+  assert.strictEqual(rec[2].stocks, 30.0);
+  assert.strictEqual(rec[2].bonds, 40.0);
+  assert.strictEqual(rec[2].cash, 30.0);
+  assert.strictEqual(rec[2].returnNeed, 7.15);
 
-  assert.strictEqual(rec[3].stocks, 19.9);
-  assert.strictEqual(rec[3].ins, 44.3);
-  assert.strictEqual(rec[3].cash, 35.8);
+  assert.strictEqual(rec[3].stocks, 30.0);
+  assert.strictEqual(rec[3].bonds, 45.0);
+  assert.strictEqual(rec[3].cash, 25.0);
+  assert.strictEqual(rec[3].returnNeed, 7.28);
 
-  assert.strictEqual(rec[4].stocks, 100.0);
-  assert.strictEqual(rec[5].stocks, 100.0);
+  assert.strictEqual(rec[4].stocks, 40.0);
+  assert.strictEqual(rec[4].bonds, 40.0);
+  assert.strictEqual(rec[4].cash, 20.0);
+  assert.strictEqual(rec[4].returnNeed, 7.70);
+
+  assert.strictEqual(rec[5].stocks, 40.0);
+  assert.strictEqual(rec[5].bonds, 40.0);
+  assert.strictEqual(rec[5].cash, 20.0);
+  assert.strictEqual(rec[5].returnNeed, 7.70);
 });
 
 test("7. Admin Web Portal & Special API Trigger Auto-Routing Algorithm", async () => {

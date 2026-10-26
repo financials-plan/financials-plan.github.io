@@ -14213,12 +14213,12 @@ function closePortfolio30YrModal() {
 }
 
 const CAREER_MILESTONES_RECOMMENDED = [
-  { stocks: 6.8, bonds: 76.1, ins: 0.0, cash: 17.1, returnNeed: 8.43 },
-  { stocks: 51.1, bonds: 29.3, ins: 0.0, cash: 19.6, returnNeed: 11.23 },
-  { stocks: 88.5, bonds: 0.0, ins: 5.8, cash: 5.6, returnNeed: 13.96 },
-  { stocks: 19.9, bonds: 0.0, ins: 44.3, cash: 35.8, returnNeed: 7.83 },
-  { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 },
-  { stocks: 100.0, bonds: 0.0, ins: 0.0, cash: 0.0, returnNeed: 15.00 }
+  { stocks: 10.0, bonds: 40.0, ins: 0.0, cash: 50.0, returnNeed: 6.05 },
+  { stocks: 20.0, bonds: 40.0, ins: 0.0, cash: 40.0, returnNeed: 6.60 },
+  { stocks: 30.0, bonds: 40.0, ins: 0.0, cash: 30.0, returnNeed: 7.15 },
+  { stocks: 30.0, bonds: 45.0, ins: 0.0, cash: 25.0, returnNeed: 7.28 },
+  { stocks: 40.0, bonds: 40.0, ins: 0.0, cash: 20.0, returnNeed: 7.70 },
+  { stocks: 40.0, bonds: 40.0, ins: 0.0, cash: 20.0, returnNeed: 7.70 }
 ];
 
 function calculateAgeMilestones() {
@@ -14230,6 +14230,33 @@ function calculateAgeMilestones() {
     AppState.milestonesStore = {};
   }
 
+  if (AppState.milestonesStore && Object.keys(AppState.milestonesStore).length > 0) {
+    const hasStale = Object.keys(AppState.milestonesStore).some(k => {
+      const row = AppState.milestonesStore[k];
+      return row && (
+        Math.abs(Number(row.stocks) - 6.8) < 0.1 ||
+        Math.abs(Number(row.stocks) - 51.1) < 0.1 ||
+        Math.abs(Number(row.stocks) - 88.5) < 0.1 ||
+        Math.abs(Number(row.stocks) - 19.9) < 0.1 ||
+        Math.abs(Number(row.stocks) - 100) < 0.1 ||
+        Math.abs(Number(row.bonds) - 76.1) < 0.1 ||
+        Math.abs(Number(row.bonds) - 29.3) < 0.1
+      );
+    });
+    if (hasStale) {
+      AppState.milestonesStore = {};
+    }
+  }
+
+  const defaultSkills = [
+    "Kỹ năng quản lý vốn và dòng tiền",
+    "Kỹ năng thiết kế khuôn và phụ kiện",
+    "Kỹ năng quản lý chất lượng, lãnh đạo nhân sự",
+    "Kỹ năng quản lý tài sản và nợ, đa dạng hóa đầu tư",
+    "Kỹ năng quản lý tiền theo thời hạn",
+    ""
+  ];
+
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = startYr + off;
@@ -14239,8 +14266,10 @@ function calculateAgeMilestones() {
     const userStore = AppState.milestonesStore[idx] || {};
 
     let skillVal = '';
-    if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null) {
+    if (AppState.skillsStore && AppState.skillsStore[idx] !== undefined && AppState.skillsStore[idx] !== null && String(AppState.skillsStore[idx]).trim() !== '') {
       skillVal = String(AppState.skillsStore[idx]);
+    } else {
+      skillVal = defaultSkills[idx] || '';
     }
 
     return {
