@@ -213,6 +213,14 @@ test("3. Backend API - Class & Group Management", async () => {
   assert.strictEqual(joinGlobalRes.status, 200);
   assert.strictEqual(joinGlobalRes.data.status, "approved");
 
+  const joinHyphenInsensitiveRes = await makeRequest("POST", "/api/classes/join", {
+    classCode: "tcglobal",
+    username: "hocvien_case_no_dash",
+    studentName: "Học Viên No Dash"
+  });
+  assert.strictEqual(joinHyphenInsensitiveRes.status, 200);
+  assert.strictEqual(joinHyphenInsensitiveRes.data.status, "approved");
+
   const createNoLimitRes = await makeRequest("POST", "/api/classes", {
     name: "Nhóm Tài Chính Không Giới Hạn",
     code: "TC-NOLIMIT",

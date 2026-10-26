@@ -792,7 +792,12 @@ const server = http.createServer(async (req, res) => {
       const classCode = sanitizeInput(body.classCode, 32).toUpperCase();
       const username = sanitizeInput(body.username, 32);
       const studentName = sanitizeInput(body.studentName, 64) || username;
-      const targetClass = Array.from(classesStore.values()).find(c => c.code === classCode && c.status === "active");
+      const cleanInNoDash = classCode.replace(/[^A-Z0-9]/g, "");
+      const targetClass = Array.from(classesStore.values()).find(c => {
+        const cCode = String(c.code || "").toUpperCase();
+        const cCodeNoDash = cCode.replace(/[^A-Z0-9]/g, "");
+        return (cCode === classCode || c.id === classCode || (cCodeNoDash && cCodeNoDash === cleanInNoDash)) && c.status === "active";
+      });
       if (!targetClass) {
         sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." });
         return;

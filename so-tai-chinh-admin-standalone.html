@@ -22651,36 +22651,73 @@ window.submitStudentJoinClass = async function() {
     return;
   }
   const curUser = UserSession.currentUser;
-  const username = curUser ? curUser.normalizedUsername : 'guest';
-  const dispName = curUser ? curUser.displayUsername : 'Khách';
+  let username = curUser ? curUser.normalizedUsername : '';
+  let dispName = curUser ? curUser.displayUsername : '';
+  if (!username) {
+    let localGuestId = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID');
+    let localGuestName = localStorage.getItem('FIN_APP_GUEST_STUDENT_NAME');
+    if (!localGuestId) {
+      localGuestId = 'hv_' + Math.random().toString(36).substring(2, 8);
+      localStorage.setItem('FIN_APP_GUEST_STUDENT_ID', localGuestId);
+    }
+    username = localGuestId;
+    dispName = localGuestName || (AppState.ho_ten ? AppState.ho_ten.trim() : ('Học viên ' + localGuestId.slice(-4)));
+  }
 
-  const res = await window.CloudDB.joinClass(code, username, dispName);
+  const btnSubmit = document.querySelector('#student-join-class-modal-overlay .btn-modal-submit');
+  const originalBtnHtml = btnSubmit ? btnSubmit.innerHTML : '';
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span>Đang kiểm tra mã...</span> <i class="fa-solid fa-spinner fa-spin"></i>';
+  }
+
   const fb = document.getElementById('student-join-feedback');
-  if (res.success) {
-    showToast(res.message);
-    if (res.isAdminUpgrade) {
-      if (UserSession.currentUser) {
-        UserSession.currentUser.role = res.role;
-        UserSession.setStored(UserSession.currentUser);
+  if (fb) {
+    fb.style.display = 'block';
+    fb.className = 'text-info';
+    fb.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tìm kiếm thông tin lớp học trên đám mây...';
+  }
+
+  try {
+    const res = await window.CloudDB.joinClass(code, username, dispName);
+    if (res.success) {
+      showToast(res.message);
+      if (res.isAdminUpgrade) {
+        if (UserSession.currentUser) {
+          UserSession.currentUser.role = res.role;
+          UserSession.setStored(UserSession.currentUser);
+        }
+        UserSession.updateUI();
+        window.closeStudentJoinClassModal();
+        window.toggleAdminManagerMode(true);
+        return;
       }
-      UserSession.updateUI();
-      window.closeStudentJoinClassModal();
-      window.toggleAdminManagerMode(true);
-      return;
+      if (fb) {
+        fb.style.display = 'block';
+        fb.className = 'text-success';
+        fb.textContent = res.message;
+      }
+      if (input) input.value = '';
+      await renderStudentEnrolledClasses();
+    } else {
+      showToast(res.error || "Không thể tham gia nhóm.", "error");
+      if (fb) {
+        fb.style.display = 'block';
+        fb.className = 'text-danger';
+        fb.textContent = res.error || "Không thể tham gia nhóm.";
+      }
     }
-    if (fb) {
-      fb.style.display = 'block';
-      fb.className = 'text-success';
-      fb.textContent = res.message;
-    }
-    if (input) input.value = '';
-    await renderStudentEnrolledClasses();
-  } else {
-    showToast(res.error || "Không thể tham gia nhóm.", "error");
+  } catch (err) {
+    showToast("Lỗi kết nối khi tham gia nhóm: " + (err.message || err), "error");
     if (fb) {
       fb.style.display = 'block';
       fb.className = 'text-danger';
-      fb.textContent = res.error || "Không thể tham gia nhóm.";
+      fb.textContent = "Lỗi kết nối máy chủ khi tham gia nhóm.";
+    }
+  } finally {
+    if (btnSubmit) {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = originalBtnHtml;
     }
   }
 };
@@ -22689,7 +22726,10 @@ async function renderStudentEnrolledClasses() {
   const tbody = document.getElementById('student-enrolled-classes-tbody');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
   const curUser = UserSession.currentUser;
-  const username = curUser ? curUser.normalizedUsername : '';
+  let username = curUser ? curUser.normalizedUsername : '';
+  if (!username) {
+    username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
+  }
   const allClasses = await window.CloudDB.getClasses();
   const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
 
