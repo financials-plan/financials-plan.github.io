@@ -467,15 +467,24 @@ test("8. Seeded Admin Account Authentication and Credentials", async () => {
 test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   const mainHtml = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
   assert.ok(mainHtml.includes('id="btn-floating-switch-class"'));
+  assert.ok(mainHtml.includes('title="Cài đặt lớp học"'));
   assert.ok(mainHtml.includes('id="u021-theme-switch"'));
   assert.ok(!mainHtml.includes('id="btn-topbar-theme"'));
   assert.ok(!mainHtml.includes('id="btn-menu-auth-login"'));
+  assert.ok(mainHtml.includes('id="dash-tc-start-year"'));
+  assert.ok(mainHtml.includes('id="dash-tc-total-savings"'));
+  assert.ok(mainHtml.includes('id="dash-tc-avg-return"'));
+  assert.ok(mainHtml.includes('id="chart-dashboard-tc-goals-pie"'));
+  assert.ok(mainHtml.includes('id="chart-dashboard-tc-timeline-dual"'));
 
   const scriptJs = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
   const jsScriptJs = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
   const hash1 = crypto.createHash("sha256").update(scriptJs).digest("hex");
   const hash2 = crypto.createHash("sha256").update(jsScriptJs).digest("hex");
   assert.strictEqual(hash1, hash2);
+  assert.ok(scriptJs.includes("chart-dashboard-tc-goals-pie"));
+  assert.ok(scriptJs.includes("chart-dashboard-tc-timeline-dual"));
+  assert.ok(scriptJs.includes("const portfolio30Yr = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];"));
 
   const authJs = fs.readFileSync(path.join(__dirname, "../auth/auth.js"), "utf8");
   assert.ok(authJs.includes("role: userRole"));

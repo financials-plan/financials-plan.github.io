@@ -1802,11 +1802,21 @@ function calculateAgeMilestones() {
     ""
   ];
 
+  const portfolio30Yr = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];
+
   return offsets.map((off, idx) => {
     const age = baseAge + off;
     const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-    const rec = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
+    const recFallback = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
+
+    const matchedP = (portfolio30Yr && portfolio30Yr.find(p => Number(p.age) === Number(age))) || (portfolio30Yr && portfolio30Yr[off]);
+
+    const stocks = matchedP ? (Number(matchedP.stockTot) || 0) : recFallback.stocks;
+    const bonds = matchedP ? (Number(matchedP.bondTot) || 0) : recFallback.bonds;
+    const ins = matchedP ? (Number(matchedP.insTot) || 0) : recFallback.ins;
+    const cash = matchedP ? (Number(matchedP.cashTot) || 0) : recFallback.cash;
+    const returnNeed = matchedP ? (Number(matchedP.ret) || 0) : recFallback.returnNeed;
 
     const userStore = AppState.milestonesStore[idx] || {};
 
@@ -1821,11 +1831,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: rec.stocks,
-      bonds: rec.bonds,
-      ins: rec.ins,
-      cash: rec.cash,
-      returnNeed: rec.returnNeed,
+      stocks,
+      bonds,
+      ins,
+      cash,
+      returnNeed,
       skills: skillVal
     };
   });
@@ -2454,6 +2464,224 @@ function renderDashboardAllCharts() {
   const themeTokens = typeof window.getChartThemeTokens === 'function' ? window.getChartThemeTokens() : {
     text: '#292747', textMuted: '#8582A3', grid: '#E8E5F7', border: '#ffffff', planBar: '#E8E5F7'
   };
+
+  const startYrEl = document.getElementById('dash-tc-start-year');
+  const totalSavEl = document.getElementById('dash-tc-total-savings');
+  const avgRetEl = document.getElementById('dash-tc-avg-return');
+
+  const startYr = Number(AppState.currentYear) || 2026;
+  const startAge = Number(AppState.currentAge) || 21;
+  if (startYrEl) startYrEl.textContent = startYr;
+
+  const validGoals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
+  const totalVal = validGoals.reduce((s, g) => s + (Number(g.val) || Number(g.calculatedTargetFV) || 0), 0);
+  if (totalSavEl) {
+    totalSavEl.textContent = Number.isInteger(totalVal)
+      ? totalVal.toLocaleString('vi-VN')
+      : totalVal.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
+  }
+
+  const p30 = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];
+  let avgP30Ret = 0;
+  if (p30 && p30.length > 0) {
+    avgP30Ret = p30.reduce((s, p) => s + (Number(p.ret) || 0), 0) / p30.length;
+  }
+  if (avgRetEl) {
+    avgRetEl.textContent = avgP30Ret.toFixed(2).replace('.', ',') + '%';
+  }
+
+  const cvTcPie = document.getElementById('chart-dashboard-tc-goals-pie');
+  if (cvTcPie) {
+    if (dashChartInstances.tcGoalsPie) dashChartInstances.tcGoalsPie.destroy();
+
+    const pieGoals = (AppState.tcGoals || []).filter(g => g && (Number(g.val) > 0 || Number(g.calculatedTargetFV) > 0));
+    let pieLabels = [];
+    let pieData = [];
+    if (pieGoals.length > 0) {
+      const sumVal = pieGoals.reduce((s, g) => s + (Number(g.val) || Number(g.calculatedTargetFV) || 0), 0);
+      pieLabels = pieGoals.map(g => {
+        const v = Number(g.val) || Number(g.calculatedTargetFV) || 0;
+        const pct = sumVal > 0 ? Math.round((v / sumVal) * 100) : 0;
+        return `${g.name || 'Mục tiêu'}, ${v.toLocaleString('vi-VN')}, ${pct}%`;
+      });
+      pieData = pieGoals.map(g => Number(g.val) || Number(g.calculatedTargetFV) || 0);
+    } else {
+      pieLabels = ['Chưa có mục tiêu'];
+      pieData = [1];
+    }
+
+    const greenPalette = [
+      '#2d6a2e', '#388e3c', '#4caf50', '#66bb6a', '#81c784',
+      '#a5d6a7', '#558b2f', '#7cb342', '#9ccc65', '#33691e',
+      '#1b5e20', '#c8e6c9', '#43a047', '#2e7d32'
+    ];
+
+    dashChartInstances.tcGoalsPie = new Chart(cvTcPie.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieData,
+          backgroundColor: greenPalette.slice(0, pieLabels.length),
+          borderWidth: 1.5,
+          borderColor: themeTokens.border || '#ffffff'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: { family: 'Inter', size: 10, weight: '500' },
+              color: themeTokens.text,
+              boxWidth: 10,
+              padding: 8
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.parsed || 0;
+                return ` ${ctx.label}: ${val.toLocaleString('vi-VN')} triệu`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const cvTcDual = document.getElementById('chart-dashboard-tc-timeline-dual');
+  if (cvTcDual) {
+    if (dashChartInstances.tcTimelineDual) dashChartInstances.tcTimelineDual.destroy();
+
+    const maxEndYear = Math.max(startYr + 15, ...(AppState.tcGoals || []).map(g => Number(g.end) || 0));
+    const numYears = Math.min(30, Math.max(15, maxEndYear - startYr + 1));
+
+    const ages = [];
+    const savingNeeds = [];
+    const incomeNeeds = [];
+    const expectedReturns = [];
+
+    for (let i = 0; i < numYears; i++) {
+      const yr = startYr + i;
+      const age = startAge + i;
+      ages.push(age);
+
+      let sSum = 0;
+      (AppState.tcGoals || []).forEach(g => {
+        if (yr >= g.start && yr <= g.end) {
+          sSum += calculateMonthlyNeed(g);
+        }
+      });
+      savingNeeds.push(Number(sSum.toFixed(1)));
+      const inc = getMatrixIncomeNeed(i);
+      incomeNeeds.push(Number(inc.toFixed(1)));
+
+      const pRow = (p30 && p30[i]) || (p30 && p30.find(p => p.age === age));
+      const retVal = pRow ? (Number(pRow.ret) || 0) : 0;
+      expectedReturns.push(Number(retVal.toFixed(2)));
+    }
+
+    dashChartInstances.tcTimelineDual = new Chart(cvTcDual.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ages,
+        datasets: [
+          {
+            label: 'Tiết kiệm cần có',
+            data: savingNeeds,
+            borderColor: '#f57c00',
+            backgroundColor: '#f57c00',
+            tension: 0.35,
+            borderWidth: 3,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Thu nhập cần có',
+            data: incomeNeeds,
+            borderColor: '#b71c1c',
+            backgroundColor: '#b71c1c',
+            tension: 0.35,
+            borderWidth: 3,
+            pointRadius: 0,
+            pointHoverRadius: 5,
+            yAxisID: 'y'
+          },
+          {
+            label: 'Mức sinh lời trung bình ước tính',
+            data: expectedReturns,
+            showLine: false,
+            borderColor: '#2e7d32',
+            backgroundColor: '#2e7d32',
+            pointStyle: 'circle',
+            pointRadius: 4.5,
+            pointHoverRadius: 7,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              usePointStyle: true,
+              font: { family: 'Inter', size: 11, weight: '600' },
+              color: themeTokens.text,
+              padding: 12
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                if (ctx.dataset.yAxisID === 'y1') {
+                  return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`;
+                }
+                return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} triệu`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Tuổi', color: themeTokens.textMuted, font: { family: 'Inter', size: 11, weight: '600' } },
+            grid: { color: themeTokens.grid },
+            ticks: { font: { family: 'Inter', size: 10 }, color: themeTokens.textMuted }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            beginAtZero: true,
+            title: { display: true, text: 'Số tiền', color: themeTokens.textMuted, font: { family: 'Inter', size: 11, weight: '600' } },
+            grid: { color: themeTokens.grid },
+            ticks: { font: { family: 'Inter', size: 10 }, color: themeTokens.textMuted }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            beginAtZero: true,
+            title: { display: true, text: 'Mức sinh lời ước tính', color: themeTokens.textMuted, font: { family: 'Inter', size: 11, weight: '600' } },
+            grid: { drawOnChartArea: false },
+            ticks: {
+              font: { family: 'Inter', size: 10 },
+              color: themeTokens.textMuted,
+              callback: (v) => v.toFixed(1) + '%'
+            }
+          }
+        }
+      }
+    });
+  }
 
   const cv1 = document.getElementById('chartDashGoalsPie');
   if (cv1) {

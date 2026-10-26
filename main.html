@@ -747,6 +747,36 @@
             <h2 class="section-heading">Dòng tiền trong năm</h2>
             <p class="section-hint">Thu nhập, chi phí và tiết kiệm theo từng tháng; so sánh chi tiêu thực tế với kế hoạch.</p>
           </div>
+
+          <div class="dash-tc-banner-row">
+            <div class="tc-banner-item tc-banner-green">
+              <span class="tc-banner-label">Năm bắt đầu theo dõi</span>
+              <span class="tc-banner-val" id="dash-tc-start-year">2026</span>
+            </div>
+            <div class="tc-banner-item tc-banner-orange">
+              <span class="tc-banner-label">Tổng tiết kiệm cần đạt</span>
+              <span class="tc-banner-val" id="dash-tc-total-savings">0</span>
+            </div>
+            <div class="tc-banner-item tc-banner-red">
+              <span class="tc-banner-label">Mức sinh lời trung bình ước tính</span>
+              <span class="tc-banner-val" id="dash-tc-avg-return">0,00%</span>
+            </div>
+          </div>
+
+          <div class="dash-tc-charts-row">
+            <div class="chart-card dash-tc-card-pie">
+              <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu các mục tiêu tài chính</h3>
+              <div class="chart-container-compact" style="position: relative; height: 320px;">
+                <canvas id="chart-dashboard-tc-goals-pie"></canvas>
+              </div>
+            </div>
+            <div class="chart-card dash-tc-card-timeline">
+              <h3 style="text-align: center;"><i class="fa-solid fa-chart-line"></i> Theo dõi mục tiêu tài chính</h3>
+              <div class="chart-container-compact" style="position: relative; height: 320px;">
+                <canvas id="chart-dashboard-tc-timeline-dual"></canvas>
+              </div>
+            </div>
+          </div>
           <div class="chart-card chart-card--wide">
             <h3><i class="fa-solid fa-chart-simple"></i> Thu nhập - Chi phí - Dòng tiền tích lũy 12 tháng</h3>
             <div class="chart-container-compact"><canvas id="chartDashCombo12"></canvas></div>
@@ -2896,9 +2926,9 @@
     </div>
   </div>
 
-  <button type="button" class="btn-floating-class-action" id="btn-floating-switch-class" onclick="openStudentJoinClassModal()" title="Đổi lớp học hoặc nhập mã lớp học" aria-label="Đổi lớp học hoặc nhập mã lớp học">
-    <i class="fa-solid fa-users-rectangle"></i>
-    <span>Đổi lớp / Nhập mã lớp</span>
+  <button type="button" class="btn-primary btn-floating-class-action" id="btn-floating-switch-class" onclick="openStudentJoinClassModal()" title="Cài đặt lớp học" aria-label="Cài đặt lớp học">
+    <i class="fa-solid fa-graduation-cap"></i>
+    <span>Cài đặt lớp học</span>
   </button>
 
   <script type="module" src="./backend/firestore-service.js"></script>
