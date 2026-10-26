@@ -626,7 +626,7 @@ function createFixedCollegeGoal() {
     id: "fixed_college",
     fixedType: "college",
     isFixed: true,
-    name: "Cho con đi học đại học",
+    name: "Quỹ dự phòng Tài chính",
     type: "invest",
     start: 0,
     end: 0,
@@ -768,7 +768,7 @@ function ensureFixedInvestmentGoals() {
     collegeGoal.id = "fixed_college";
     collegeGoal.fixedType = "college";
     collegeGoal.isFixed = true;
-    collegeGoal.name = "Cho con đi học đại học";
+    collegeGoal.name = "Quỹ dự phòng Tài chính";
     collegeGoal.type = "invest";
     normalizeGoalNumericFields(collegeGoal, tpl);
   }
@@ -5354,7 +5354,7 @@ function createCardHtmlCollege(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="college">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college">Cho con đi học đại học</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college">Quỹ dự phòng Tài chính</strong></span>
         <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
       </div>
       <div class="tc-card-table-scroll">
@@ -7731,7 +7731,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Quỹ dự phòng Tài chính"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -7853,7 +7853,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         if (!g || typeof g !== 'object') return;
         if (isCollegeFixedGoal(g)) {
           if (mode === 'update' && currentCollege) {
-            Object.assign(currentCollege, g, { id: 'fixed_college', name: 'Cho con đi học đại học', type: 'invest', isFixed: true, fixedType: 'college' });
+            Object.assign(currentCollege, g, { id: 'fixed_college', name: 'Quỹ dự phòng Tài chính', type: 'invest', isFixed: true, fixedType: 'college' });
           }
           return;
         }
