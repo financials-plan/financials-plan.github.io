@@ -10392,7 +10392,7 @@ window.renderAdminRequestsTable = async function() {
           classCode: c.code,
           username: m.username,
           name: m.name || m.username,
-          email: m.email || `${m.username}@gmail.com`,
+          email: m.email || m.recoveryEmail || '',
           joinedAt: m.joinedAt || new Date().toISOString()
         });
       }
@@ -10627,19 +10627,21 @@ window.renderAdminStudentsTable = async function() {
   const processedMembers = members.map(m => {
     let percent = 20;
     let statusLabel = "Chưa hoàn thiện";
-    let netCashflow = 8.5;
-    let savingsRate = 35;
-    let dsrVal = 12.5;
-    let allocStocks = 45;
-    let allocBonds = 25;
-    let allocIns = 12;
-    let allocCash = 18;
+    let netCashflow = 0;
+    let savingsRate = 0;
+    let dsrVal = 0;
+    let allocStocks = 0;
+    let allocBonds = 0;
+    let allocIns = 0;
+    let allocCash = 0;
 
-    let studentPlan = null;
-    try {
-      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
-      if (raw) studentPlan = JSON.parse(raw);
-    } catch (e) {}
+    let studentPlan = m.plan || null;
+    if (!studentPlan) {
+      try {
+        const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
+        if (raw) studentPlan = JSON.parse(raw);
+      } catch (e) {}
+    }
 
     if (studentPlan) {
       let mCount = 0;
@@ -10739,7 +10741,7 @@ window.renderAdminStudentsTable = async function() {
       allocIns,
       allocCash,
       healthBadge,
-      email: m.email || `${m.username}@gmail.com`
+      email: m.email || m.recoveryEmail || ''
     };
   });
 
@@ -10954,7 +10956,7 @@ window.exportGroupMembersCsv = function() {
       cash = '-';
     }
 
-    csv += `"${idx + 1}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || (m.username + '@gmail.com')}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+    csv += `"${idx + 1}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || m.recoveryEmail || ''}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -10994,7 +10996,7 @@ window.exportGroupJsonSnapshot = function() {
       return {
         username: m.username,
         name: m.name,
-        email: m.email || (m.username + '@gmail.com'),
+        email: m.email || m.recoveryEmail || '',
         status: m.status,
         joinedAt: m.joinedAt,
         planSnapshot: plan
@@ -11419,7 +11421,7 @@ window.exportAdminComprehensiveCsv = async function() {
         cash = '-';
       }
 
-      csv += `"${stt++}","${(c.name || '').replace(/"/g, '""')}","${c.code || ''}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || (m.username + '@gmail.com')}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+      csv += `"${stt++}","${(c.name || '').replace(/"/g, '""')}","${c.code || ''}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || m.recoveryEmail || ''}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
     });
   });
   csv += '\n';

@@ -1892,12 +1892,6 @@ const FirestoreService = {
         notFound: true,
         message: "Chưa có dữ liệu trên Cloud cho hồ sơ này."
       };
-        return {
-          success: false,
-          notFound: true,
-          message: "Chưa có dữ liệu trên Cloud cho hồ sơ này."
-        };
-      }
     } catch (error) {
       return {
         success: false,
@@ -1974,6 +1968,26 @@ const FirestoreService = {
       setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: local }, { merge: true }).catch(() => {});
     }
     return { success: true, code: newCode };
+  },
+
+  async revokeAdminCode(adminCode) {
+    const clean = String(adminCode || "").trim().toUpperCase();
+    if (!clean) return { success: false, error: "Thiếu mã quản trị cần thu hồi." };
+    const local = getLocalAdminCodes();
+    if (local[clean]) {
+      local[clean].isRevoked = true;
+      local[clean].revokedAt = new Date().toISOString();
+      saveLocalAdminCodes(local);
+    }
+    if (isFirebaseReady && db) {
+      try {
+        await Promise.allSettled([
+          setDoc(doc(db, ADMIN_CODES_COLLECTION, clean), { isRevoked: true, revokedAt: new Date().toISOString() }, { merge: true }),
+          setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { updatedAt: new Date().toISOString(), codes: local }, { merge: true })
+        ]);
+      } catch (e) {}
+    }
+    return { success: true, message: `Đã thu hồi mã ${clean} thành công.` };
   },
 
   async activateAdminCode(adminCode, username) {

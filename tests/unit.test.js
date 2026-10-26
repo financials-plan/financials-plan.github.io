@@ -501,12 +501,21 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(firestoreService.includes("getDocs"));
   assert.ok(firestoreService.includes("collection"));
   assert.ok(firestoreService.includes("activateAdminCode"));
+  assert.ok(firestoreService.includes("revokeAdminCode"));
   assert.ok(firestoreService.includes("syncClassesStoreToFirestore"));
   assert.ok(firestoreService.includes("GROUPS_COLLECTION"));
   assert.ok(firestoreService.includes("FINANCIAL_AUTH_COLLECTION"));
   assert.ok(firestoreService.includes("loadUserData"));
   assert.ok(firestoreService.includes("saveUserData"));
   assert.ok(firestoreService.includes("submissions"));
+
+  const { execSync } = require("child_process");
+  assert.doesNotThrow(() => {
+    execSync(`node --experimental-vm-modules --input-type=module -e "import fs from 'fs'; import vm from 'vm'; const code = fs.readFileSync('backend/firestore-service.js', 'utf8'); new vm.SourceTextModule(code);"`, {
+      cwd: path.join(__dirname, ".."),
+      stdio: "pipe"
+    });
+  }, "backend/firestore-service.js must have valid ES module syntax without syntax errors");
 
   const rulesContent = fs.readFileSync(path.join(__dirname, "../backend/firestore.rules"), "utf8");
   assert.ok(rulesContent.includes("match /groups/{groupId}"));
