@@ -52,11 +52,8 @@ function seedInitialData() {
   });
 
   const sampleCodes = [
-    { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 10, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-    { code: "INST-2026-K48A", role: "instructor", maxUses: 20, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-    { code: "INST-2026-K48B", role: "instructor", maxUses: 1, usedCount: 1, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-    { code: "EXPD-2025-0001", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2025-01-01T00:00:00.000Z", createdAt: "2024-01-01T00:00:00.000Z" },
-    { code: "RVKD-2026-9999", role: "instructor", maxUses: 5, usedCount: 0, isRevoked: true, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
+    { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+    { code: "INST-2026-K48A", role: "instructor", maxUses: 2, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
   ];
   sampleCodes.forEach(c => adminCodesStore.set(c.code, { ...c }));
 

@@ -351,11 +351,8 @@ const ADMIN_CODES_COLLECTION = "admin_codes";
 const CLASSES_COLLECTION = "classes";
 
 const DEFAULT_ADMIN_CODES = {
-  "ADMN-2026-X8Y9": { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 10, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-  "INST-2026-K48A": { code: "INST-2026-K48A", role: "instructor", maxUses: 20, usedCount: 0, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-  "INST-2026-K48B": { code: "INST-2026-K48B", role: "instructor", maxUses: 1, usedCount: 1, isRevoked: false, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-  "EXPD-2025-0001": { code: "EXPD-2025-0001", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2025-01-01T00:00:00.000Z", createdAt: "2024-01-01T00:00:00.000Z" },
-  "RVKD-2026-9999": { code: "RVKD-2026-9999", role: "instructor", maxUses: 5, usedCount: 0, isRevoked: true, expiresAt: "2027-12-31T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
+  "ADMN-2026-X8Y9": { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
+  "INST-2026-K48A": { code: "INST-2026-K48A", role: "instructor", maxUses: 2, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
 };
 
 const DEFAULT_CLASSES = {
@@ -385,8 +382,14 @@ function getLocalAdminCodes() {
     codes = {};
   }
   let modified = false;
+  ["INST-2026-K48B", "EXPD-2025-0001", "RVKD-2026-9999"].forEach(oldKey => {
+    if (codes[oldKey]) {
+      delete codes[oldKey];
+      modified = true;
+    }
+  });
   Object.keys(DEFAULT_ADMIN_CODES).forEach(k => {
-    if (!codes[k]) {
+    if (!codes[k] || codes[k].maxUses !== DEFAULT_ADMIN_CODES[k].maxUses || codes[k].expiresAt !== DEFAULT_ADMIN_CODES[k].expiresAt) {
       codes[k] = { ...DEFAULT_ADMIN_CODES[k] };
       modified = true;
     }

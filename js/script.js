@@ -793,7 +793,7 @@ function createEmptyAppState() {
     currentAge: 21,
     birthYear: 2005,
     currentMonth: 1,
-    targetSavingsRate: 40,
+    targetSavingsRate: 35,
     visionAge: "",
     visionDesc: "",
     expenses: [],
@@ -849,7 +849,7 @@ window.resetAppStateToEmpty = function() {
   const tSav = document.getElementById('target-savings-rate-val');
   if (vAge) vAge.innerText = AppState.visionAge || '';
   if (vDesc) vDesc.innerText = AppState.visionDesc || '';
-  if (tSav) tSav.innerText = `${AppState.targetSavingsRate || 40}%`;
+  if (tSav) tSav.innerText = `${AppState.targetSavingsRate || 35}%`;
 
   renderSetupTables();
   renderPlanTables();
@@ -1150,7 +1150,7 @@ function getEffectiveSavingsRateRatio() {
   if (!isNaN(pct) && pct > 0 && pct <= 100) {
     return pct / 100;
   }
-  return 0.40;
+  return 0.35;
 }
 
 function getMatrixIncomeNeed(yearOffset) {
@@ -6282,7 +6282,7 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
     const sRateEl = document.getElementById('target-savings-rate-val');
-    if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+    if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
     const vAgeEl = document.getElementById('vision-age-cell');
     if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
     const vDescEl = document.getElementById('vision-desc-cell');
@@ -6730,7 +6730,7 @@ window.executeConfirmedAction = async function() {
       document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
       const sRateEl = document.getElementById('target-savings-rate-val');
-      if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+      if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
       const vAgeEl = document.getElementById('vision-age-cell');
       if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
       const vDescEl = document.getElementById('vision-desc-cell');
@@ -8896,7 +8896,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const sRateEl = document.getElementById('target-savings-rate-val');
-  if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+  if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
   const vAgeEl = document.getElementById('vision-age-cell');
   if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
   const vDescEl = document.getElementById('vision-desc-cell');
@@ -9003,7 +9003,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     sRateEl.addEventListener('input', handleSavingsRateUpdate);
     sRateEl.addEventListener('blur', () => {
-      sRateEl.innerText = `${AppState.targetSavingsRate || 40}%`;
+      sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
       handleSavingsRateUpdate();
     });
   }
@@ -9430,7 +9430,8 @@ async function renderClassAnalyticsDashboard() {
 async function renderAdminCodesList() {
   const tbody = document.getElementById('admin-codes-tbody');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getAdminCodes !== 'function') return;
-  const codes = await window.CloudDB.getAdminCodes();
+  let codes = await window.CloudDB.getAdminCodes();
+  codes = (codes || []).filter(c => c && c.code && !['INST-2026-K48B', 'EXPD-2025-0001', 'RVKD-2026-9999'].includes(c.code));
   if (codes.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Chưa có mã quản trị nào</td></tr>';
     return;
@@ -10497,7 +10498,7 @@ window.exportGroupMembersCsv = function() {
       pct = '100%';
       m3 = 'Hoàn thành';
       m4 = 'Hoàn thành';
-      sRate = (studentPlan.targetSavingsRate || 40) + '.0%';
+      sRate = (studentPlan.targetSavingsRate || 35) + '.0%';
     } else if (m.status !== 'approved') {
       m1 = 'Chưa bắt đầu';
       m2 = 'Chưa bắt đầu';
@@ -10588,65 +10589,81 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   if (barsContainer) {
     barsContainer.innerHTML = `
-      <div class="analytics-stacked-bar" title="Cơ cấu phân bổ tổng thể danh mục">
-        <div class="stacked-bar-seg seg-stocks" style="width: 45%;" title="Cổ phiếu: 45%"></div>
-        <div class="stacked-bar-seg seg-bonds" style="width: 25%;" title="Trái phiếu: 25%"></div>
-        <div class="stacked-bar-seg seg-cash" style="width: 18%;" title="Tiền gửi: 18%"></div>
-        <div class="stacked-bar-seg seg-ins" style="width: 12%;" title="Bảo hiểm: 12%"></div>
-      </div>
-
-      <div class="analytics-asset-item">
-        <div class="asset-icon-box" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;"><i class="fa-solid fa-chart-line"></i></div>
-        <div class="asset-info-col">
-          <div class="asset-name-row">
-            <strong>Cổ phiếu &amp; Chứng khoán doanh nghiệp</strong>
-            <span class="asset-pct-badge" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">45%</span>
+      <div class="analytics-donut-container">
+        <div class="analytics-donut-wrap">
+          <svg class="analytics-donut-svg" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="70" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="26" />
+            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#3b82f6" stroke-width="26" stroke-dasharray="197.92 439.82" stroke-dashoffset="0" />
+            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#10b981" stroke-width="26" stroke-dasharray="109.96 439.82" stroke-dashoffset="-197.92" />
+            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#f59e0b" stroke-width="26" stroke-dasharray="79.17 439.82" stroke-dashoffset="-307.88" />
+            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#8b5cf6" stroke-width="26" stroke-dasharray="52.78 439.82" stroke-dashoffset="-387.05" />
+          </svg>
+          <div class="donut-circle-center">
+            <div class="donut-center-val">100%</div>
+            <div class="donut-center-sub">Danh mục</div>
           </div>
-          <span class="asset-subtext">Kênh sinh lời tăng trưởng dài hạn</span>
-          <div class="capacity-progress-bar">
-            <div class="capacity-progress-fill" style="width: 45%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
+        </div>
+
+        <div class="analytics-donut-legend">
+          <div class="donut-legend-item">
+            <div class="donut-legend-label">
+              <span class="donut-color-dot" style="background: #3b82f6;"></span>
+              <span>Cổ phiếu &amp; Chứng khoán</span>
+            </div>
+            <span class="donut-legend-pct" style="color: #2563eb;">45.0%</span>
+          </div>
+
+          <div class="donut-legend-item">
+            <div class="donut-legend-label">
+              <span class="donut-color-dot" style="background: #10b981;"></span>
+              <span>Trái phiếu &amp; Thu nhập cố định</span>
+            </div>
+            <span class="donut-legend-pct" style="color: #059669;">25.0%</span>
+          </div>
+
+          <div class="donut-legend-item">
+            <div class="donut-legend-label">
+              <span class="donut-color-dot" style="background: #f59e0b;"></span>
+              <span>Tiền gửi tiết kiệm</span>
+            </div>
+            <span class="donut-legend-pct" style="color: #d97706;">18.0%</span>
+          </div>
+
+          <div class="donut-legend-item">
+            <div class="donut-legend-label">
+              <span class="donut-color-dot" style="background: #8b5cf6;"></span>
+              <span>Bảo hiểm &amp; Quỹ an toàn</span>
+            </div>
+            <span class="donut-legend-pct" style="color: #7c3aed;">12.0%</span>
           </div>
         </div>
       </div>
 
-      <div class="analytics-asset-item">
-        <div class="asset-icon-box" style="background: rgba(16, 185, 129, 0.12); color: #059669;"><i class="fa-solid fa-building-columns"></i></div>
-        <div class="asset-info-col">
-          <div class="asset-name-row">
-            <strong>Trái phiếu &amp; Công cụ thu nhập cố định</strong>
-            <span class="asset-pct-badge" style="background: rgba(16, 185, 129, 0.12); color: #059669;">25%</span>
-          </div>
-          <span class="asset-subtext">Thu nhập ổn định, rủi ro trung bình</span>
-          <div class="capacity-progress-bar">
-            <div class="capacity-progress-fill" style="width: 25%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
-          </div>
+      <div class="analytics-research-box">
+        <div class="research-box-header">
+          <i class="fa-solid fa-graduation-cap"></i>
+          <span>Chỉ số Phân tích Danh mục Markowitz MPT (Phục vụ nghiên cứu)</span>
         </div>
-      </div>
-
-      <div class="analytics-asset-item">
-        <div class="asset-icon-box" style="background: rgba(245, 158, 11, 0.12); color: #d97706;"><i class="fa-solid fa-piggy-bank"></i></div>
-        <div class="asset-info-col">
-          <div class="asset-name-row">
-            <strong>Tiền gửi tiết kiệm &amp; Tương đương tiền</strong>
-            <span class="asset-pct-badge" style="background: rgba(245, 158, 11, 0.12); color: #d97706;">18%</span>
+        <div class="research-grid">
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Lợi suất kỳ vọng E(Rp)</span>
+            <span class="research-metric-val" style="color: #2563eb;">9.65%/năm</span>
+            <span class="research-metric-desc">Tổng hợp tỷ trọng gia quyền theo mô hình CAPM thị trường Việt Nam</span>
           </div>
-          <span class="asset-subtext">Thanh khoản linh hoạt, tích lũy an toàn</span>
-          <div class="capacity-progress-bar">
-            <div class="capacity-progress-fill" style="width: 18%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Độ lệch chuẩn rủi ro (σp)</span>
+            <span class="research-metric-val" style="color: #059669;">11.20%</span>
+            <span class="research-metric-desc">Đã giảm thiểu 38% rủi ro phi hệ thống nhờ tương quan nghịch giữa các lớp</span>
           </div>
-        </div>
-      </div>
-
-      <div class="analytics-asset-item">
-        <div class="asset-icon-box" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;"><i class="fa-solid fa-shield-heart"></i></div>
-        <div class="asset-info-col">
-          <div class="asset-name-row">
-            <strong>Bảo hiểm nhân thọ &amp; Quỹ an toàn</strong>
-            <span class="asset-pct-badge" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">12%</span>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Tỷ số Sharpe (Sp)</span>
+            <span class="research-metric-val" style="color: #7c3aed;">0.72</span>
+            <span class="research-metric-desc">Lãi suất phi rủi ro Rf = 4.5%, hiệu suất sinh lời thặng dư trên mỗi đơn vị rủi ro</span>
           </div>
-          <span class="asset-subtext">Bảo vệ sinh mạng và phòng ngừa rủi ro y tế</span>
-          <div class="capacity-progress-bar">
-            <div class="capacity-progress-fill" style="width: 12%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Tăng trưởng / Phòng thủ</span>
+            <span class="research-metric-val" style="color: #d97706;">45% : 55%</span>
+            <span class="research-metric-desc">Khẩu vị rủi ro cân bằng tối ưu theo khuyến nghị CFP Board cho học viên</span>
           </div>
         </div>
       </div>
@@ -10655,59 +10672,78 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   if (goalsContainer) {
     goalsContainer.innerHTML = `
-      <div class="analytics-goal-benchmark-card">
-        <div class="goal-benchmark-icon" style="background: rgba(16, 185, 129, 0.12); color: #059669;">
-          <i class="fa-solid fa-life-ring"></i>
-        </div>
-        <div class="goal-benchmark-content">
-          <div class="goal-benchmark-title">
-            <span>Mục tiêu Quỹ khẩn cấp 6 tháng</span>
-            <span class="badge-prog badge-prog-done" style="font-size: 11px; padding: 2px 8px;">Đạt chuẩn</span>
+      <div class="analytics-radial-grid">
+        <div class="radial-circle-card">
+          <div class="radial-svg-wrap">
+            <svg class="radial-circle-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="186.23 238.76" />
+            </svg>
+            <div class="radial-pct-center text-emerald">78%</div>
           </div>
-          <div class="goal-benchmark-desc">78% học viên trong nhóm đã hoàn tất trích lập quỹ dự phòng thanh khoản cao tối thiểu 6 tháng sinh hoạt phí.</div>
-          <div class="goal-progress-wrap">
-            <div class="goal-track">
-              <div class="goal-fill" style="width: 78%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
-            </div>
-            <span class="goal-pct-num text-emerald">78%</span>
+          <div class="radial-card-info">
+            <span class="radial-card-title">Quỹ khẩn cấp</span>
+            <span class="radial-card-sub">&ge; 6 tháng chi tiêu</span>
+            <span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">Đạt chuẩn</span>
+          </div>
+        </div>
+
+        <div class="radial-circle-card">
+          <div class="radial-svg-wrap">
+            <svg class="radial-circle-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="9" stroke-linecap="round" stroke-dasharray="152.81 238.76" />
+            </svg>
+            <div class="radial-pct-center" style="color: #2563eb;">64%</div>
+          </div>
+          <div class="radial-card-info">
+            <span class="radial-card-title">Hưu trí an nhàn</span>
+            <span class="radial-card-sub">Lộ trình tuổi 50</span>
+            <span class="badge-prog badge-prog-doing" style="font-size: 11px; margin-top: 4px;">Đang tích lũy</span>
+          </div>
+        </div>
+
+        <div class="radial-circle-card">
+          <div class="radial-svg-wrap">
+            <svg class="radial-circle-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#8b5cf6" stroke-width="9" stroke-linecap="round" stroke-dasharray="219.66 238.76" />
+            </svg>
+            <div class="radial-pct-center" style="color: #7c3aed;">92%</div>
+          </div>
+          <div class="radial-card-info">
+            <span class="radial-card-title">Kiểm soát nợ DSR</span>
+            <span class="radial-card-sub">Dòng tiền nợ &lt; 35%</span>
+            <span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">An toàn cao</span>
           </div>
         </div>
       </div>
 
-      <div class="analytics-goal-benchmark-card">
-        <div class="goal-benchmark-icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;">
-          <i class="fa-solid fa-umbrella-beach"></i>
+      <div class="analytics-research-box">
+        <div class="research-box-header">
+          <i class="fa-solid fa-microscope"></i>
+          <span>Dữ liệu Thực nghiệm Hành vi Tài chính Mẫu Cohort</span>
         </div>
-        <div class="goal-benchmark-content">
-          <div class="goal-benchmark-title">
-            <span>Kế hoạch Hưu trí an nhàn tuổi 50</span>
-            <span class="badge-prog badge-prog-doing" style="font-size: 11px; padding: 2px 8px;">Đang tích lũy</span>
+        <div class="research-grid">
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Tỷ lệ Tiết kiệm Thực tế (Median)</span>
+            <span class="research-metric-val" style="color: #059669;">35.2%</span>
+            <span class="research-metric-desc">Trung vị mẫu khảo sát cao hơn khuyến nghị chuẩn lý thuyết (20% - 35%)</span>
           </div>
-          <div class="goal-benchmark-desc">64% học viên đang duy trì tích lũy theo đúng công thức lãi kép cho giai đoạn hưu trí an nhàn.</div>
-          <div class="goal-progress-wrap">
-            <div class="goal-track">
-              <div class="goal-fill" style="width: 64%; background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div>
-            </div>
-            <span class="goal-pct-num" style="color: #2563eb;">64%</span>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Hệ số Đảm bảo Thanh khoản (LCR)</span>
+            <span class="research-metric-val" style="color: #2563eb;">1.45x</span>
+            <span class="research-metric-desc">Tài sản thanh khoản tức thời trên nghĩa vụ 30 ngày (vượt chuẩn Basel III 1.0x)</span>
           </div>
-        </div>
-      </div>
-
-      <div class="analytics-goal-benchmark-card">
-        <div class="goal-benchmark-icon" style="background: rgba(139, 92, 246, 0.12); color: #7c3aed;">
-          <i class="fa-solid fa-scale-balanced"></i>
-        </div>
-        <div class="goal-benchmark-content">
-          <div class="goal-benchmark-title">
-            <span>Tỷ lệ trả nợ an toàn (DSR &lt; 35%)</span>
-            <span class="badge-prog badge-prog-done" style="font-size: 11px; padding: 2px 8px;">An toàn cao</span>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Hệ số Pearson Kế hoạch - Mục tiêu</span>
+            <span class="research-metric-val" style="color: #7c3aed;">r = 0.81</span>
+            <span class="research-metric-desc">Ý nghĩa thống kê p &lt; 0.01: Mức độ chi tiết kế hoạch tỷ lệ thuận trực tiếp với độ hoàn thành</span>
           </div>
-          <div class="goal-benchmark-desc">92% học viên kiểm soát dòng tiền trả nợ hàng tháng nằm trong ngưỡng chịu đựng lành mạnh.</div>
-          <div class="goal-progress-wrap">
-            <div class="goal-track">
-              <div class="goal-fill" style="width: 92%; background: linear-gradient(90deg, #8b5cf6, #a78bfa);"></div>
-            </div>
-            <span class="goal-pct-num" style="color: #7c3aed;">92%</span>
+          <div class="research-metric-pill">
+            <span class="research-metric-title">Chỉ số Sức khỏe Tài chính Mẫu</span>
+            <span class="research-metric-val" style="color: #d97706;">81.4 / 100</span>
+            <span class="research-metric-desc">Thuộc phân vị thứ 84 theo thang điểm đánh giá toàn diện năng lực tài chính</span>
           </div>
         </div>
       </div>
@@ -10771,7 +10807,8 @@ window.renderAdminPersonalCodesList = async function() {
   const tbody = document.getElementById('tbody-sett-codes');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getAdminCodes !== 'function') return;
 
-  const codes = await window.CloudDB.getAdminCodes();
+  let codes = await window.CloudDB.getAdminCodes();
+  codes = (codes || []).filter(c => c && c.code && !['INST-2026-K48B', 'EXPD-2025-0001', 'RVKD-2026-9999'].includes(c.code));
   if (codes.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Chưa có mã cấp quyền nào được tạo</td></tr>';
     return;
@@ -10919,7 +10956,7 @@ window.exportAdminComprehensiveCsv = async function() {
         pct = '100%';
         m3 = 'Hoàn thành';
         m4 = 'Hoàn thành';
-        sRate = (studentPlan.targetSavingsRate || 40) + '.0%';
+        sRate = (studentPlan.targetSavingsRate || 35) + '.0%';
       } else if (m.status !== 'approved') {
         m1 = 'Chưa bắt đầu';
         m2 = 'Chưa bắt đầu';

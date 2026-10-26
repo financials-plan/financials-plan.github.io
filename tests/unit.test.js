@@ -148,7 +148,7 @@ test("2. Backend API - Admin Codes & Role Assignment", async () => {
   const codesList = await makeRequest("GET", "/api/admin/codes");
   assert.strictEqual(codesList.status, 200);
   assert.strictEqual(Array.isArray(codesList.data.codes), true);
-  assert.ok(codesList.data.codes.length >= 5);
+  assert.ok(codesList.data.codes.length >= 2);
 
   const newCodeRes = await makeRequest("POST", "/api/admin/codes", {
     role: "instructor",
@@ -276,7 +276,7 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.strictEqual(ovRes.data.success, true);
   assert.ok(ovRes.data.overview.users.total >= 4);
   assert.ok(ovRes.data.overview.classes.total >= 1);
-  assert.ok(ovRes.data.overview.adminCodes.total >= 5);
+  assert.ok(ovRes.data.overview.adminCodes.total >= 2);
 
   const usersRes = await makeRequest("GET", "/api/admin/users");
   assert.strictEqual(usersRes.status, 200);
