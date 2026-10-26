@@ -359,6 +359,29 @@ const LOCAL_ADMIN_CODES_KEY = "FIN_APP_ADMIN_CODES_SECURE_V1";
 const LOCAL_CLASSES_KEY = "FIN_APP_CLASSES_SECURE_V1";
 const ADMIN_CODES_COLLECTION = "admin_codes";
 const CLASSES_COLLECTION = "classes";
+const GROUPS_COLLECTION = "groups";
+const FINANCIAL_AUTH_COLLECTION = firestoreSettings.collectionName || "financial_Authentication";
+
+async function syncClassesStoreToFirestore(classes, updatedClassId = null, isDeleted = false) {
+  if (!isFirebaseReady || !db) return;
+  try {
+    const payload = { id: "groups", updatedAt: new Date().toISOString(), classes: classes || {} };
+    setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "groups"), payload, { merge: true }).catch(() => {});
+    setDoc(doc(db, CLASSES_COLLECTION, "groups"), payload, { merge: true }).catch(() => {});
+    setDoc(doc(db, GROUPS_COLLECTION, "groups"), payload, { merge: true }).catch(() => {});
+    setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes: classes || {} }, { merge: true }).catch(() => {});
+    if (updatedClassId) {
+      if (isDeleted) {
+        deleteDoc(doc(db, CLASSES_COLLECTION, updatedClassId)).catch(() => {});
+        deleteDoc(doc(db, GROUPS_COLLECTION, updatedClassId)).catch(() => {});
+      } else if (classes && classes[updatedClassId]) {
+        const item = classes[updatedClassId];
+        setDoc(doc(db, CLASSES_COLLECTION, updatedClassId), item, { merge: true }).catch(() => {});
+        setDoc(doc(db, GROUPS_COLLECTION, updatedClassId), item, { merge: true }).catch(() => {});
+      }
+    }
+  } catch (e) {}
+}
 
 const DEFAULT_ADMIN_CODES = {
   "ADMN-2026-X8Y9": { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
@@ -1726,14 +1749,29 @@ const FirestoreService = {
     const local = getLocalClasses();
     if (isFirebaseReady && db) {
       try {
+        const gDoc = await Promise.race([
+          getDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "groups")),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
+        ]).catch(() => null);
+
+        if (gDoc && gDoc.exists && gDoc.exists()) {
+          const gData = gDoc.data();
+          if (gData && gData.classes && typeof gData.classes === "object") {
+            Object.keys(gData.classes).forEach(cid => {
+              local[cid] = { ...local[cid], ...gData.classes[cid] };
+            });
+          }
+        }
+
         const snap = await Promise.race([
           getDocs(collection(db, CLASSES_COLLECTION)),
-          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
-        ]);
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 6000))
+        ]).catch(() => null);
+
         if (snap && !snap.empty) {
           snap.forEach(d => {
             const data = d.data();
-            if (data && data.id && data.id !== "class" && data.id !== "class_index") {
+            if (data && data.id && data.id !== "class" && data.id !== "class_index" && data.id !== "groups") {
               local[data.id] = { ...local[data.id], ...data };
             } else if (data && data.classes && typeof data.classes === "object") {
               Object.keys(data.classes).forEach(cid => {
@@ -1741,8 +1779,27 @@ const FirestoreService = {
               });
             }
           });
-          saveLocalClasses(local);
         }
+
+        const grpSnap = await Promise.race([
+          getDocs(collection(db, GROUPS_COLLECTION)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 6000))
+        ]).catch(() => null);
+
+        if (grpSnap && !grpSnap.empty) {
+          grpSnap.forEach(d => {
+            const data = d.data();
+            if (data && data.id && data.id !== "class" && data.id !== "groups") {
+              local[data.id] = { ...local[data.id], ...data };
+            } else if (data && data.classes && typeof data.classes === "object") {
+              Object.keys(data.classes).forEach(cid => {
+                local[cid] = { ...local[cid], ...data.classes[cid] };
+              });
+            }
+          });
+        }
+
+        saveLocalClasses(local);
       } catch (err) {
         console.warn("Lỗi tải lớp từ Firestore, sử dụng bộ nhớ thiết bị:", err);
       }
@@ -1769,10 +1826,7 @@ const FirestoreService = {
     const local = getLocalClasses();
     local[classId] = newClass;
     saveLocalClasses(local);
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, classId), newClass, { merge: true }).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes: local }, { merge: true }).catch(() => {});
-    }
+    syncClassesStoreToFirestore(local, classId, false);
     return { success: true, class: newClass };
   },
 
@@ -1806,7 +1860,7 @@ const FirestoreService = {
         if (snap && !snap.empty) {
           snap.forEach(d => {
             const data = d.data();
-            if (data && data.id && data.id !== "class") {
+            if (data && data.id && data.id !== "class" && data.id !== "groups") {
               classes[data.id] = { ...classes[data.id], ...data };
             } else if (data && data.classes && typeof data.classes === "object") {
               Object.keys(data.classes).forEach(cid => {
@@ -1842,10 +1896,7 @@ const FirestoreService = {
 
     classes[targetClass.id] = targetClass;
     saveLocalClasses(classes);
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, targetClass.id), targetClass, { merge: true }).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
-    }
+    syncClassesStoreToFirestore(classes, targetClass.id, false);
     return {
       success: true,
       status: newMember.status,
@@ -1873,10 +1924,7 @@ const FirestoreService = {
     }
     classes[classId] = targetClass;
     saveLocalClasses(classes);
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
-    }
+    syncClassesStoreToFirestore(classes, classId, false);
     return { success: true, class: targetClass };
   },
 
@@ -1897,10 +1945,7 @@ const FirestoreService = {
     targetClass.updatedAt = new Date().toISOString();
     classes[classId] = targetClass;
     saveLocalClasses(classes);
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
-    }
+    syncClassesStoreToFirestore(classes, classId, false);
     return { success: true, class: targetClass };
   },
 
@@ -1914,10 +1959,7 @@ const FirestoreService = {
     targetClass.archivedAt = new Date().toISOString();
     classes[classId] = targetClass;
     saveLocalClasses(classes);
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
-    }
+    syncClassesStoreToFirestore(classes, classId, false);
     return { success: true, message: "Đã lưu trữ và kết thúc học kỳ an toàn.", class: targetClass };
   },
 
@@ -1928,11 +1970,7 @@ const FirestoreService = {
     }
     delete classes[classId];
     saveLocalClasses(classes);
-    if (isFirebaseReady && db) {
-      deleteDoc(doc(db, CLASSES_COLLECTION, classId)).catch(() => {});
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
-    }
-    }
+    syncClassesStoreToFirestore(classes, classId, true);
     return { success: true, message: "Đã xóa nhóm thành công." };
   },
 

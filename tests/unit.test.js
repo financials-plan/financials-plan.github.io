@@ -493,4 +493,13 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(firestoreService.includes("getDocs"));
   assert.ok(firestoreService.includes("collection"));
   assert.ok(firestoreService.includes("activateAdminCode"));
+  assert.ok(firestoreService.includes("syncClassesStoreToFirestore"));
+  assert.ok(firestoreService.includes("GROUPS_COLLECTION"));
+  assert.ok(firestoreService.includes("FINANCIAL_AUTH_COLLECTION"));
+
+  const rulesContent = fs.readFileSync(path.join(__dirname, "../backend/firestore.rules"), "utf8");
+  assert.ok(rulesContent.includes("match /groups/{groupId}"));
+  assert.ok(rulesContent.includes("docId == 'groups'"));
+  assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
+  assert.ok(!rulesContent.includes("//") && !rulesContent.includes("/*"));
 });

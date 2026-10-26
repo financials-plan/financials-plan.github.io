@@ -126,19 +126,20 @@ service cloud.firestore {
     }
 
     match /financial_Authentication/{docId} {
-      allow get: if isValidDocId(docId);
+      allow get: if docId == 'groups' || docId == 'class' || isValidDocId(docId);
       allow list: if true;
-      allow create: if isValidDocId(docId)
-                    && hasValidFinancialPayload(request.resource.data);
-      allow update: if isValidDocId(docId)
-                    && hasValidFinancialPayload(request.resource.data)
-                    && isFinancialUnchanged(request.resource.data, resource.data);
-      allow delete: if false;
+      allow create: if (docId == 'groups' || docId == 'class')
+                    || (isValidDocId(docId) && hasValidFinancialPayload(request.resource.data));
+      allow update: if (docId == 'groups' || docId == 'class')
+                    || (isValidDocId(docId)
+                        && hasValidFinancialPayload(request.resource.data)
+                        && isFinancialUnchanged(request.resource.data, resource.data));
+      allow delete: if docId == 'groups' || docId == 'class';
 
       match /{subcollection=**} {
         allow get, list: if true;
-        allow create, update: if hasValidFinancialPayload(request.resource.data);
-        allow delete: if false;
+        allow create, update: if (docId == 'groups' || docId == 'class') || hasValidFinancialPayload(request.resource.data);
+        allow delete: if docId == 'groups' || docId == 'class';
       }
     }
 
@@ -211,25 +212,34 @@ service cloud.firestore {
       allow update: if isValidDocId(classId)
                     && isValidClassPayload(request.resource.data)
                     && (!('id' in resource.data) || !('id' in request.resource.data) || request.resource.data.id == resource.data.id);
-      allow delete: if false;
+      allow delete: if isValidDocId(classId);
 
       match /submissions/{subId} {
         allow read: if true;
         allow create, update: if isValidDocId(subId)
                               && hasValidFinancialPayload(request.resource.data);
-        allow delete: if false;
+        allow delete: if true;
       }
 
       match /members/{memberId} {
         allow read: if true;
         allow create, update: if isValidDocId(memberId);
-        allow delete: if false;
+        allow delete: if true;
       }
 
       match /{subcollection=**} {
         allow read: if true;
         allow create, update: if request.resource.data.size() <= 300;
-        allow delete: if false;
+        allow delete: if true;
+      }
+    }
+
+    match /groups/{groupId} {
+      allow get, list: if true;
+      allow create, update, delete: if isValidDocId(groupId);
+
+      match /{subcollection=**} {
+        allow read, write, delete: if true;
       }
     }
 
