@@ -8280,66 +8280,46 @@ input::-ms-clear {
   }
 }
 
-.dash-tc-banner-row {
+.dash-kpi-sub-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 20px;
+  width: 100%;
+  margin-top: 14px;
 }
-.tc-banner-item {
-  display: flex;
-  align-items: stretch;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+.kpi-modern-warning .kpi-icon-wrap {
+  background: var(--warning-bg);
+  color: var(--warning-strong);
 }
-.tc-banner-label {
-  flex: 1.2;
-  padding: 10px 14px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #ffffff;
+.kpi-modern-warning .kpi-num {
+  color: var(--warning-strong);
 }
-.tc-banner-val {
-  flex: 1;
-  padding: 10px 14px;
-  font-size: 1.125rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono, monospace);
-  color: #1f2937;
+.kpi-modern-violet .kpi-icon-wrap {
+  background: var(--violet-soft);
+  color: var(--violet);
 }
-.tc-banner-green .tc-banner-label { background: #2e7d32; }
-.tc-banner-green .tc-banner-val { background: #dcedc8; }
-.tc-banner-orange .tc-banner-label { background: #ef6c00; }
-.tc-banner-orange .tc-banner-val { background: #ffe0b2; }
-.tc-banner-red .tc-banner-label { background: #b71c1c; }
-.tc-banner-red .tc-banner-val { background: #ffcdd2; }
-
-html[data-theme="dark"] .tc-banner-green .tc-banner-val { background: #1b381e; color: #a5d6a7; }
-html[data-theme="dark"] .tc-banner-orange .tc-banner-val { background: #422204; color: #ffcc80; }
-html[data-theme="dark"] .tc-banner-red .tc-banner-val { background: #3d0d0d; color: #ef9a9a; }
+.kpi-modern-violet .kpi-num {
+  color: var(--violet);
+}
 
 .dash-tc-charts-row {
   display: grid;
-  grid-template-columns: 5fr 7fr;
+  grid-template-columns: 4fr 8fr;
   gap: 16px;
   margin-bottom: 24px;
 }
-@media (max-width: 900px) {
-  .dash-tc-banner-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
+.dash-tc-pie-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+@media (max-width: 1100px) {
   .dash-tc-charts-row {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .dash-kpi-sub-strip {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -9072,6 +9052,23 @@ html[data-theme="dark"] .tc-banner-red .tc-banner-val { background: #3d0d0d; col
           </div>
         </div>
 
+        <div class="dash-kpi-sub-strip">
+          <div class="dash-kpi-block kpi-modern-warning">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng tiết kiệm cần đạt</span>
+              <span class="kpi-num" id="dash-tc-total-savings">0</span>
+            </div>
+          </div>
+          <div class="dash-kpi-block kpi-modern-violet">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Mức sinh lời trung bình ước tính</span>
+              <span class="kpi-num" id="dash-tc-avg-return">0,00%</span>
+            </div>
+          </div>
+        </div>
+
         
         <section class="dash-section">
           <div class="dash-section-head">
@@ -9079,31 +9076,16 @@ html[data-theme="dark"] .tc-banner-red .tc-banner-val { background: #3d0d0d; col
             <p class="section-hint">Thu nhập, chi phí và tiết kiệm theo từng tháng; so sánh chi tiêu thực tế với kế hoạch.</p>
           </div>
 
-          <div class="dash-tc-banner-row">
-            <div class="tc-banner-item tc-banner-green">
-              <span class="tc-banner-label">Năm bắt đầu theo dõi</span>
-              <span class="tc-banner-val" id="dash-tc-start-year">2026</span>
-            </div>
-            <div class="tc-banner-item tc-banner-orange">
-              <span class="tc-banner-label">Tổng tiết kiệm cần đạt</span>
-              <span class="tc-banner-val" id="dash-tc-total-savings">0</span>
-            </div>
-            <div class="tc-banner-item tc-banner-red">
-              <span class="tc-banner-label">Mức sinh lời trung bình ước tính</span>
-              <span class="tc-banner-val" id="dash-tc-avg-return">0,00%</span>
-            </div>
-          </div>
-
           <div class="dash-tc-charts-row">
             <div class="chart-card dash-tc-card-pie">
               <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu các mục tiêu tài chính</h3>
-              <div class="chart-container-compact" style="position: relative; height: 320px;">
+              <div class="chart-container-compact dash-tc-pie-container" style="position: relative; height: 260px;">
                 <canvas id="chart-dashboard-tc-goals-pie"></canvas>
               </div>
             </div>
             <div class="chart-card dash-tc-card-timeline">
               <h3 style="text-align: center;"><i class="fa-solid fa-chart-line"></i> Theo dõi mục tiêu tài chính</h3>
-              <div class="chart-container-compact" style="position: relative; height: 320px;">
+              <div class="chart-container-compact" style="position: relative; height: 260px;">
                 <canvas id="chart-dashboard-tc-timeline-dual"></canvas>
               </div>
             </div>
@@ -15438,14 +15420,18 @@ function renderDashboardAllCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        radius: '72%',
+        layout: {
+          padding: 4
+        },
         plugins: {
           legend: {
             position: 'right',
             labels: {
               font: { family: 'Inter', size: 10, weight: '500' },
               color: themeTokens.text,
-              boxWidth: 10,
-              padding: 8
+              boxWidth: 8,
+              padding: 6
             }
           },
           tooltip: {

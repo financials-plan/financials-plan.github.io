@@ -2530,14 +2530,18 @@ function renderDashboardAllCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        radius: '72%',
+        layout: {
+          padding: 4
+        },
         plugins: {
           legend: {
             position: 'right',
             labels: {
               font: { family: 'Inter', size: 10, weight: '500' },
               color: themeTokens.text,
-              boxWidth: 10,
-              padding: 8
+              boxWidth: 8,
+              padding: 6
             }
           },
           tooltip: {

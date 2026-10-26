@@ -741,6 +741,23 @@
           </div>
         </div>
 
+        <div class="dash-kpi-sub-strip">
+          <div class="dash-kpi-block kpi-modern-warning">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-bullseye"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Tổng tiết kiệm cần đạt</span>
+              <span class="kpi-num" id="dash-tc-total-savings">0</span>
+            </div>
+          </div>
+          <div class="dash-kpi-block kpi-modern-violet">
+            <div class="kpi-icon-wrap"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div class="kpi-content-wrap">
+              <span class="kpi-title">Mức sinh lời trung bình ước tính</span>
+              <span class="kpi-num" id="dash-tc-avg-return">0,00%</span>
+            </div>
+          </div>
+        </div>
+
         
         <section class="dash-section">
           <div class="dash-section-head">
@@ -748,31 +765,16 @@
             <p class="section-hint">Thu nhập, chi phí và tiết kiệm theo từng tháng; so sánh chi tiêu thực tế với kế hoạch.</p>
           </div>
 
-          <div class="dash-tc-banner-row">
-            <div class="tc-banner-item tc-banner-green">
-              <span class="tc-banner-label">Năm bắt đầu theo dõi</span>
-              <span class="tc-banner-val" id="dash-tc-start-year">2026</span>
-            </div>
-            <div class="tc-banner-item tc-banner-orange">
-              <span class="tc-banner-label">Tổng tiết kiệm cần đạt</span>
-              <span class="tc-banner-val" id="dash-tc-total-savings">0</span>
-            </div>
-            <div class="tc-banner-item tc-banner-red">
-              <span class="tc-banner-label">Mức sinh lời trung bình ước tính</span>
-              <span class="tc-banner-val" id="dash-tc-avg-return">0,00%</span>
-            </div>
-          </div>
-
           <div class="dash-tc-charts-row">
             <div class="chart-card dash-tc-card-pie">
               <h3><i class="fa-solid fa-chart-pie"></i> Cơ cấu các mục tiêu tài chính</h3>
-              <div class="chart-container-compact" style="position: relative; height: 320px;">
+              <div class="chart-container-compact dash-tc-pie-container" style="position: relative; height: 260px;">
                 <canvas id="chart-dashboard-tc-goals-pie"></canvas>
               </div>
             </div>
             <div class="chart-card dash-tc-card-timeline">
               <h3 style="text-align: center;"><i class="fa-solid fa-chart-line"></i> Theo dõi mục tiêu tài chính</h3>
-              <div class="chart-container-compact" style="position: relative; height: 320px;">
+              <div class="chart-container-compact" style="position: relative; height: 260px;">
                 <canvas id="chart-dashboard-tc-timeline-dual"></canvas>
               </div>
             </div>

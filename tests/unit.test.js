@@ -471,9 +471,12 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(mainHtml.includes('id="u021-theme-switch"'));
   assert.ok(!mainHtml.includes('id="btn-topbar-theme"'));
   assert.ok(!mainHtml.includes('id="btn-menu-auth-login"'));
-  assert.ok(mainHtml.includes('id="dash-tc-start-year"'));
+  assert.ok(!mainHtml.includes('id="dash-tc-start-year"'));
   assert.ok(mainHtml.includes('id="dash-tc-total-savings"'));
   assert.ok(mainHtml.includes('id="dash-tc-avg-return"'));
+  assert.ok(mainHtml.includes('dash-kpi-sub-strip'));
+  assert.ok(mainHtml.includes('kpi-modern-warning'));
+  assert.ok(mainHtml.includes('kpi-modern-violet'));
   assert.ok(mainHtml.includes('id="chart-dashboard-tc-goals-pie"'));
   assert.ok(mainHtml.includes('id="chart-dashboard-tc-timeline-dual"'));
 
