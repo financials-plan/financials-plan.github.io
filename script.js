@@ -208,6 +208,23 @@ const UserSession = {
       if (!parsed.docId && normalizedUsername) {
         parsed.docId = `user_${normalizedUsername}`;
       }
+      if (!parsed.role) {
+        try {
+          const localAccs = JSON.parse(localStorage.getItem("FIN_APP_AUTH_ACCOUNTS_SECURE_V2") || "{}");
+          if (localAccs[normalizedUsername] && localAccs[normalizedUsername].role) {
+            parsed.role = localAccs[normalizedUsername].role;
+          }
+        } catch (e) {}
+      }
+      if (!parsed.role) {
+        if (normalizedUsername === 'admin' || (normalizedUsername && normalizedUsername.startsWith('admin_')) || normalizedUsername === 'administrator') {
+          parsed.role = 'admin';
+        } else if (normalizedUsername === 'dinh_anh_quan' || normalizedUsername === 'haketo_spec' || (normalizedUsername && (normalizedUsername.includes('instructor') || normalizedUsername.includes('teacher')))) {
+          parsed.role = 'instructor';
+        } else {
+          parsed.role = 'student';
+        }
+      }
       return parsed;
     } catch (e) {
       console.error("Lỗi đọc session từ localStorage:", e);
@@ -249,6 +266,7 @@ const UserSession = {
         rawName: displayUsername,
         normalizedUsername: norm,
         normalizedName: norm,
+        role: user.role || 'student',
         docId: user.docId,
         uid: user.uid || '',
         maskedEmail: user.maskedEmail || '',
@@ -349,8 +367,11 @@ const UserSession = {
       const isInstructorOrAdmin = this.currentUser && (
         this.currentUser.role === 'admin' ||
         this.currentUser.role === 'instructor' ||
+        this.currentUser.role === 'teacher' ||
         this.currentUser.normalizedUsername === 'admin' ||
-        (this.currentUser.normalizedUsername && this.currentUser.normalizedUsername.startsWith('admin_'))
+        this.currentUser.normalizedUsername === 'haketo_spec' ||
+        (this.currentUser.username && this.currentUser.username.toLowerCase() === 'admin') ||
+        (this.currentUser.normalizedUsername && (this.currentUser.normalizedUsername.startsWith('admin_') || this.currentUser.normalizedUsername.includes('instructor') || this.currentUser.normalizedUsername.includes('teacher')))
       );
       if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
       const btnTabCodes = document.getElementById('btn-class-tab-codes');
@@ -363,7 +384,7 @@ const UserSession = {
         if (toggleLabel) {
           toggleLabel.innerHTML = window.isManagerMode
             ? '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>'
-            : '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+            : '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
         }
         btnAdminToggle.classList.toggle('active-admin', Boolean(window.isManagerMode));
       }
@@ -371,6 +392,11 @@ const UserSession = {
       const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
       if (studentAdminShortcut) {
         studentAdminShortcut.style.display = (isInstructorOrAdmin && !window.isManagerMode) ? 'block' : 'none';
+        const shortcutBtn = studentAdminShortcut.querySelector('.btn-sidebar-admin-pill');
+        if (shortcutBtn) {
+          shortcutBtn.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
+          shortcutBtn.title = 'Xem toàn cảnh lớp học';
+        }
       }
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
@@ -440,49 +466,35 @@ window.renderAccountSwitcher = function() {
   if (!listEl) return;
 
   const current = UserSession.currentUser;
-  if (current && current.docId) {
-    UserSession.addProfile(current);
-  }
-
-  const profiles = UserSession.getProfilesList();
   if (countEl) {
-    countEl.textContent = `${profiles.length} hồ sơ`;
+    countEl.style.display = 'none';
   }
 
-  if (profiles.length === 0) {
+  if (!current) {
     listEl.innerHTML = `
       <div style="padding: 0.875rem 0.75rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
         <i class="fa-solid fa-user-clock" style="font-size: 1.25rem; display: block; margin-bottom: 0.375rem; opacity: 0.5;"></i>
-        Chưa có hồ sơ nào được lưu
+        Chưa đăng nhập
       </div>
     `;
     return;
   }
 
-  listEl.innerHTML = profiles.map(p => {
-    const isActive = current && current.docId === p.docId;
-    const dispName = p.displayUsername || p.username || p.rawName || 'U';
-    const normName = p.normalizedUsername || p.normalizedName || p.docId;
-    const initial = dispName.trim().charAt(0).toUpperCase();
-    return `
-      <div class="account-item ${isActive ? 'active' : ''}"
-           role="menuitem"
-           tabindex="0"
-           data-doc-id="${escapeHtml(p.docId)}"
-           onclick="switchUserProfile('${escapeHtml(p.docId)}')"
-           onkeydown="handleAccountItemKeyDown(event, '${escapeHtml(p.docId)}')">
-        <div class="account-item-avatar">${initial}</div>
-        <div class="account-item-info">
-          <div class="account-item-name">${escapeHtml(dispName)}</div>
-          <div class="account-item-slug">@${escapeHtml(normName)}</div>
-        </div>
-        ${isActive ? '<i class="fa-solid fa-check account-item-check" aria-hidden="true"></i>' : ''}
-        <button type="button" class="btn-remove-profile-item" title="Loại bỏ tài khoản khỏi thiết bị" onclick="removeProfileFromDevice('${escapeHtml(p.docId)}', event)" aria-label="Loại bỏ tài khoản">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
+  const dispName = current.displayUsername || current.username || current.rawName || 'Người dùng';
+  const normName = current.normalizedUsername || current.normalizedName || current.docId;
+  const initial = dispName.trim().charAt(0).toUpperCase();
+  const roleName = (current.role === 'admin') ? 'Quản trị viên' : ((current.role === 'instructor' || current.role === 'teacher') ? 'Giảng viên' : 'Học viên');
+
+  listEl.innerHTML = `
+    <div class="account-item active" role="menuitem" tabindex="0">
+      <div class="account-item-avatar">${initial}</div>
+      <div class="account-item-info">
+        <div class="account-item-name">${escapeHtml(dispName)}</div>
+        <div class="account-item-slug">@${escapeHtml(normName)} • <span class="badge-role-tag">${roleName}</span></div>
       </div>
-    `;
-  }).join('');
+      <i class="fa-solid fa-circle-check text-success account-item-check" aria-hidden="true"></i>
+    </div>
+  `;
 };
 
 window.toggleAccountMenu = function(e, fromTopbar = false) {
@@ -8943,12 +8955,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const forceAdmin = urlParams.get('mode') === 'admin';
   const forceStudent = urlParams.get('mode') === 'student';
+  const triggerCode = urlParams.get('adminCode') || urlParams.get('code') || urlParams.get('apiKey');
+  if (triggerCode && storedUser && window.CloudDB && typeof window.CloudDB.activateAdminCode === 'function') {
+    window.CloudDB.activateAdminCode(triggerCode, storedUser.normalizedUsername).then(res => {
+      if (res && res.success) {
+        storedUser.role = res.role;
+        UserSession.setStored(storedUser);
+        UserSession.updateUI();
+        if (typeof window.toggleAdminManagerMode === 'function') {
+          window.toggleAdminManagerMode(true);
+        }
+      }
+    }).catch(() => {});
+  }
   const isInstructorOrAdmin = storedUser && (
     storedUser.role === 'admin' ||
     storedUser.role === 'instructor' ||
+    storedUser.role === 'teacher' ||
     storedUser.normalizedUsername === 'admin' ||
+    storedUser.normalizedUsername === 'haketo_spec' ||
     (storedUser.username && storedUser.username.toLowerCase() === 'admin') ||
-    (storedUser.normalizedUsername && storedUser.normalizedUsername.startsWith('admin_'))
+    (storedUser.normalizedUsername && (storedUser.normalizedUsername.startsWith('admin_') || storedUser.normalizedUsername.includes('instructor') || storedUser.normalizedUsername.includes('teacher')))
   );
 
   if ((isInstructorOrAdmin && !forceStudent) || forceAdmin) {
@@ -9490,6 +9517,16 @@ window.submitStudentJoinClass = async function() {
   const fb = document.getElementById('student-join-feedback');
   if (res.success) {
     showToast(res.message);
+    if (res.isAdminUpgrade) {
+      if (UserSession.currentUser) {
+        UserSession.currentUser.role = res.role;
+        UserSession.setStored(UserSession.currentUser);
+      }
+      UserSession.updateUI();
+      window.closeStudentJoinClassModal();
+      window.toggleAdminManagerMode(true);
+      return;
+    }
     if (fb) {
       fb.style.display = 'block';
       fb.className = 'text-success';
@@ -9532,17 +9569,27 @@ async function renderStudentEnrolledClasses() {
   }).join('');
 }
 
-window.viewStudentPlanReadOnly = function(studentUsername, studentName) {
+window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   closeClassManagerModal();
 
   backupInstructorAppState = JSON.parse(JSON.stringify(AppState));
   window.isReadOnlyStudentView = true;
 
   let studentPlan = null;
-  try {
-    const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
-    if (raw) studentPlan = JSON.parse(raw);
-  } catch (e) {}
+  if (window.CloudDB && typeof window.CloudDB.loadUserData === 'function') {
+    try {
+      const cloudRes = await window.CloudDB.loadUserData('user_' + studentUsername);
+      if (cloudRes && cloudRes.success && cloudRes.data) {
+        studentPlan = cloudRes.data;
+      }
+    } catch (e) {}
+  }
+  if (!studentPlan) {
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
+      if (raw) studentPlan = JSON.parse(raw);
+    } catch (e) {}
+  }
 
   if (studentPlan) {
     Object.assign(AppState, studentPlan);
@@ -9641,18 +9688,25 @@ window.toggleAdminManagerMode = function(forceState) {
     if (btnAdminToggle) {
       btnAdminToggle.classList.remove('active-admin');
       if (toggleLabel) {
-        toggleLabel.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+        toggleLabel.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
       }
     }
     const isInstructorOrAdmin = UserSession.currentUser && (
       UserSession.currentUser.role === 'admin' ||
       UserSession.currentUser.role === 'instructor' ||
+      UserSession.currentUser.role === 'teacher' ||
       UserSession.currentUser.normalizedUsername === 'admin' ||
+      UserSession.currentUser.normalizedUsername === 'haketo_spec' ||
       (UserSession.currentUser.username && UserSession.currentUser.username.toLowerCase() === 'admin') ||
-      (UserSession.currentUser.normalizedUsername && UserSession.currentUser.normalizedUsername.startsWith('admin_'))
+      (UserSession.currentUser.normalizedUsername && (UserSession.currentUser.normalizedUsername.startsWith('admin_') || UserSession.currentUser.normalizedUsername.includes('instructor') || UserSession.currentUser.normalizedUsername.includes('teacher')))
     );
     if (studentAdminShortcut) {
       studentAdminShortcut.style.display = isInstructorOrAdmin ? 'block' : 'none';
+      const shortcutBtn = studentAdminShortcut.querySelector('.btn-sidebar-admin-pill');
+      if (shortcutBtn) {
+        shortcutBtn.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
+        shortcutBtn.title = 'Xem toàn cảnh lớp học';
+      }
     }
     switchTab('tab-tukhoa');
   }

@@ -8226,6 +8226,59 @@ input::-ms-clear {
   background: var(--bg-hover) !important;
 }
 
+.badge-role-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background: var(--violet-soft);
+  color: var(--primary);
+  margin-left: 4px;
+}
+
+.btn-floating-class-action {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 990;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 8px 10px -6px rgba(99, 102, 241, 0.4);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+}
+.btn-floating-class-action:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 18px 32px -6px rgba(99, 102, 241, 0.65), 0 10px 14px -6px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #ffffff;
+}
+.btn-floating-class-action:active {
+  transform: translateY(0) scale(0.98);
+}
+.btn-floating-class-action i {
+  font-size: 1.125rem;
+}
+@media (max-width: 640px) {
+  .btn-floating-class-action {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+}
+
 
 
 </style>
@@ -8374,13 +8427,30 @@ input::-ms-clear {
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
 
-        <button type="button" class="btn-theme-toggle" id="btn-topbar-theme" onclick="toggleTheme(event)" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Chuyển đổi giao diện Sáng / Tối">
-          <i class="fa-solid fa-moon icon-theme-moon"></i>
-          <i class="fa-solid fa-sun icon-theme-sun"></i>
+        <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
+          <span class="u021-track">
+            <span class="u021-sky u021-sky-day">
+              <span class="u021-cloud u021-cloud-1"></span>
+              <span class="u021-cloud u021-cloud-2"></span>
+              <span class="u021-cloud u021-cloud-3"></span>
+            </span>
+            <span class="u021-sky u021-sky-night">
+              <span class="u021-star u021-star-1"></span>
+              <span class="u021-star u021-star-2"></span>
+              <span class="u021-star u021-star-3"></span>
+              <span class="u021-star u021-star-4"></span>
+              <span class="u021-star u021-star-5"></span>
+            </span>
+            <span class="u021-knob">
+              <span class="u021-crater u021-crater-1"></span>
+              <span class="u021-crater u021-crater-2"></span>
+              <span class="u021-crater u021-crater-3"></span>
+            </span>
+          </span>
         </button>
 
         <button type="button" class="btn-topbar-admin-mode" id="btn-admin-mode-toggle" style="display: none;" onclick="toggleAdminManagerMode()" title="Chuyển đổi giao diện Quản trị / Sổ tài chính">
-          <i class="fa-solid fa-shield-halved"></i> <span id="admin-mode-toggle-label">Giao diện Quản trị</span>
+          <i class="fa-solid fa-chalkboard-user"></i> <span id="admin-mode-toggle-label">Xem toàn cảnh lớp học</span>
         </button>
 
         <div class="topbar-auth-section" id="topbar-auth-section">
@@ -8395,42 +8465,11 @@ input::-ms-clear {
 
           <div class="account-switcher-menu menu-from-topbar" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
             <div class="account-menu-header">
-              <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
-              <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
+              <span class="account-menu-title"><i class="fa-solid fa-user-circle text-primary"></i> Tài khoản của bạn</span>
+              <span class="account-menu-badge" id="account-profiles-count" style="display: none;"></span>
             </div>
 
             <div class="account-list" id="rail-account-list" role="group"></div>
-
-            <div class="account-menu-divider"></div>
-
-            <div class="account-theme-row">
-              <div class="account-theme-info">
-                <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
-                <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
-              </div>
-
-              <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
-                <span class="u021-track">
-                  <span class="u021-sky u021-sky-day">
-                    <span class="u021-cloud u021-cloud-1"></span>
-                    <span class="u021-cloud u021-cloud-2"></span>
-                    <span class="u021-cloud u021-cloud-3"></span>
-                  </span>
-                  <span class="u021-sky u021-sky-night">
-                    <span class="u021-star u021-star-1"></span>
-                    <span class="u021-star u021-star-2"></span>
-                    <span class="u021-star u021-star-3"></span>
-                    <span class="u021-star u021-star-4"></span>
-                    <span class="u021-star u021-star-5"></span>
-                  </span>
-                  <span class="u021-knob">
-                    <span class="u021-crater u021-crater-1"></span>
-                    <span class="u021-crater u021-crater-2"></span>
-                    <span class="u021-crater u021-crater-3"></span>
-                  </span>
-                </span>
-              </button>
-            </div>
 
             <div class="account-menu-divider"></div>
 
@@ -8441,9 +8480,6 @@ input::-ms-clear {
               <button type="button" class="account-action-btn" id="btn-menu-change-password" onclick="openUserModal(true, 'change-password'); closeAccountMenu();">
                 <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
               </button>
-              <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
-                <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
-              </a>
               <button type="button" class="account-action-btn" id="btn-menu-class-manager" onclick="openClassManagerModal(); closeAccountMenu();" style="display: none;">
                 <i class="fa-solid fa-chalkboard-user text-primary"></i> <span>Quản lý Lớp học &amp; Giảng viên</span>
               </button>
@@ -11127,6 +11163,11 @@ input::-ms-clear {
     </div>
   </div>
 
+  <button type="button" class="btn-floating-class-action" id="btn-floating-switch-class" onclick="openStudentJoinClassModal()" title="Đổi lớp học hoặc nhập mã lớp học" aria-label="Đổi lớp học hoặc nhập mã lớp học">
+    <i class="fa-solid fa-users-rectangle"></i>
+    <span>Đổi lớp / Nhập mã lớp</span>
+  </button>
+
   
   <script id="test-sample-data" type="application/json">
 {
@@ -12981,6 +13022,23 @@ const UserSession = {
       if (!parsed.docId && normalizedUsername) {
         parsed.docId = `user_${normalizedUsername}`;
       }
+      if (!parsed.role) {
+        try {
+          const localAccs = JSON.parse(localStorage.getItem("FIN_APP_AUTH_ACCOUNTS_SECURE_V2") || "{}");
+          if (localAccs[normalizedUsername] && localAccs[normalizedUsername].role) {
+            parsed.role = localAccs[normalizedUsername].role;
+          }
+        } catch (e) {}
+      }
+      if (!parsed.role) {
+        if (normalizedUsername === 'admin' || (normalizedUsername && normalizedUsername.startsWith('admin_')) || normalizedUsername === 'administrator') {
+          parsed.role = 'admin';
+        } else if (normalizedUsername === 'dinh_anh_quan' || normalizedUsername === 'haketo_spec' || (normalizedUsername && (normalizedUsername.includes('instructor') || normalizedUsername.includes('teacher')))) {
+          parsed.role = 'instructor';
+        } else {
+          parsed.role = 'student';
+        }
+      }
       return parsed;
     } catch (e) {
       console.error("Lỗi đọc session từ localStorage:", e);
@@ -13022,6 +13080,7 @@ const UserSession = {
         rawName: displayUsername,
         normalizedUsername: norm,
         normalizedName: norm,
+        role: user.role || 'student',
         docId: user.docId,
         uid: user.uid || '',
         maskedEmail: user.maskedEmail || '',
@@ -13122,8 +13181,11 @@ const UserSession = {
       const isInstructorOrAdmin = this.currentUser && (
         this.currentUser.role === 'admin' ||
         this.currentUser.role === 'instructor' ||
+        this.currentUser.role === 'teacher' ||
         this.currentUser.normalizedUsername === 'admin' ||
-        (this.currentUser.normalizedUsername && this.currentUser.normalizedUsername.startsWith('admin_'))
+        this.currentUser.normalizedUsername === 'haketo_spec' ||
+        (this.currentUser.username && this.currentUser.username.toLowerCase() === 'admin') ||
+        (this.currentUser.normalizedUsername && (this.currentUser.normalizedUsername.startsWith('admin_') || this.currentUser.normalizedUsername.includes('instructor') || this.currentUser.normalizedUsername.includes('teacher')))
       );
       if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
       const btnTabCodes = document.getElementById('btn-class-tab-codes');
@@ -13136,7 +13198,7 @@ const UserSession = {
         if (toggleLabel) {
           toggleLabel.innerHTML = window.isManagerMode
             ? '<i class="fa-solid fa-book-open"></i> <span>Xem Sổ tài chính</span>'
-            : '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+            : '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
         }
         btnAdminToggle.classList.toggle('active-admin', Boolean(window.isManagerMode));
       }
@@ -13144,6 +13206,11 @@ const UserSession = {
       const studentAdminShortcut = document.getElementById('sidebar-student-admin-shortcut');
       if (studentAdminShortcut) {
         studentAdminShortcut.style.display = (isInstructorOrAdmin && !window.isManagerMode) ? 'block' : 'none';
+        const shortcutBtn = studentAdminShortcut.querySelector('.btn-sidebar-admin-pill');
+        if (shortcutBtn) {
+          shortcutBtn.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
+          shortcutBtn.title = 'Xem toàn cảnh lớp học';
+        }
       }
     } else {
       if (rawEl) rawEl.textContent = "Chưa đăng nhập";
@@ -13213,49 +13280,35 @@ window.renderAccountSwitcher = function() {
   if (!listEl) return;
 
   const current = UserSession.currentUser;
-  if (current && current.docId) {
-    UserSession.addProfile(current);
-  }
-
-  const profiles = UserSession.getProfilesList();
   if (countEl) {
-    countEl.textContent = `${profiles.length} hồ sơ`;
+    countEl.style.display = 'none';
   }
 
-  if (profiles.length === 0) {
+  if (!current) {
     listEl.innerHTML = `
       <div style="padding: 0.875rem 0.75rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">
         <i class="fa-solid fa-user-clock" style="font-size: 1.25rem; display: block; margin-bottom: 0.375rem; opacity: 0.5;"></i>
-        Chưa có hồ sơ nào được lưu
+        Chưa đăng nhập
       </div>
     `;
     return;
   }
 
-  listEl.innerHTML = profiles.map(p => {
-    const isActive = current && current.docId === p.docId;
-    const dispName = p.displayUsername || p.username || p.rawName || 'U';
-    const normName = p.normalizedUsername || p.normalizedName || p.docId;
-    const initial = dispName.trim().charAt(0).toUpperCase();
-    return `
-      <div class="account-item ${isActive ? 'active' : ''}"
-           role="menuitem"
-           tabindex="0"
-           data-doc-id="${escapeHtml(p.docId)}"
-           onclick="switchUserProfile('${escapeHtml(p.docId)}')"
-           onkeydown="handleAccountItemKeyDown(event, '${escapeHtml(p.docId)}')">
-        <div class="account-item-avatar">${initial}</div>
-        <div class="account-item-info">
-          <div class="account-item-name">${escapeHtml(dispName)}</div>
-          <div class="account-item-slug">@${escapeHtml(normName)}</div>
-        </div>
-        ${isActive ? '<i class="fa-solid fa-check account-item-check" aria-hidden="true"></i>' : ''}
-        <button type="button" class="btn-remove-profile-item" title="Loại bỏ tài khoản khỏi thiết bị" onclick="removeProfileFromDevice('${escapeHtml(p.docId)}', event)" aria-label="Loại bỏ tài khoản">
-          <i class="fa-solid fa-trash-can"></i>
-        </button>
+  const dispName = current.displayUsername || current.username || current.rawName || 'Người dùng';
+  const normName = current.normalizedUsername || current.normalizedName || current.docId;
+  const initial = dispName.trim().charAt(0).toUpperCase();
+  const roleName = (current.role === 'admin') ? 'Quản trị viên' : ((current.role === 'instructor' || current.role === 'teacher') ? 'Giảng viên' : 'Học viên');
+
+  listEl.innerHTML = `
+    <div class="account-item active" role="menuitem" tabindex="0">
+      <div class="account-item-avatar">${initial}</div>
+      <div class="account-item-info">
+        <div class="account-item-name">${escapeHtml(dispName)}</div>
+        <div class="account-item-slug">@${escapeHtml(normName)} • <span class="badge-role-tag">${roleName}</span></div>
       </div>
-    `;
-  }).join('');
+      <i class="fa-solid fa-circle-check text-success account-item-check" aria-hidden="true"></i>
+    </div>
+  `;
 };
 
 window.toggleAccountMenu = function(e, fromTopbar = false) {
@@ -21716,12 +21769,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
   const forceAdmin = urlParams.get('mode') === 'admin';
   const forceStudent = urlParams.get('mode') === 'student';
+  const triggerCode = urlParams.get('adminCode') || urlParams.get('code') || urlParams.get('apiKey');
+  if (triggerCode && storedUser && window.CloudDB && typeof window.CloudDB.activateAdminCode === 'function') {
+    window.CloudDB.activateAdminCode(triggerCode, storedUser.normalizedUsername).then(res => {
+      if (res && res.success) {
+        storedUser.role = res.role;
+        UserSession.setStored(storedUser);
+        UserSession.updateUI();
+        if (typeof window.toggleAdminManagerMode === 'function') {
+          window.toggleAdminManagerMode(true);
+        }
+      }
+    }).catch(() => {});
+  }
   const isInstructorOrAdmin = storedUser && (
     storedUser.role === 'admin' ||
     storedUser.role === 'instructor' ||
+    storedUser.role === 'teacher' ||
     storedUser.normalizedUsername === 'admin' ||
+    storedUser.normalizedUsername === 'haketo_spec' ||
     (storedUser.username && storedUser.username.toLowerCase() === 'admin') ||
-    (storedUser.normalizedUsername && storedUser.normalizedUsername.startsWith('admin_'))
+    (storedUser.normalizedUsername && (storedUser.normalizedUsername.startsWith('admin_') || storedUser.normalizedUsername.includes('instructor') || storedUser.normalizedUsername.includes('teacher')))
   );
 
   if ((isInstructorOrAdmin && !forceStudent) || forceAdmin) {
@@ -22263,6 +22331,16 @@ window.submitStudentJoinClass = async function() {
   const fb = document.getElementById('student-join-feedback');
   if (res.success) {
     showToast(res.message);
+    if (res.isAdminUpgrade) {
+      if (UserSession.currentUser) {
+        UserSession.currentUser.role = res.role;
+        UserSession.setStored(UserSession.currentUser);
+      }
+      UserSession.updateUI();
+      window.closeStudentJoinClassModal();
+      window.toggleAdminManagerMode(true);
+      return;
+    }
     if (fb) {
       fb.style.display = 'block';
       fb.className = 'text-success';
@@ -22305,17 +22383,27 @@ async function renderStudentEnrolledClasses() {
   }).join('');
 }
 
-window.viewStudentPlanReadOnly = function(studentUsername, studentName) {
+window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   closeClassManagerModal();
 
   backupInstructorAppState = JSON.parse(JSON.stringify(AppState));
   window.isReadOnlyStudentView = true;
 
   let studentPlan = null;
-  try {
-    const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
-    if (raw) studentPlan = JSON.parse(raw);
-  } catch (e) {}
+  if (window.CloudDB && typeof window.CloudDB.loadUserData === 'function') {
+    try {
+      const cloudRes = await window.CloudDB.loadUserData('user_' + studentUsername);
+      if (cloudRes && cloudRes.success && cloudRes.data) {
+        studentPlan = cloudRes.data;
+      }
+    } catch (e) {}
+  }
+  if (!studentPlan) {
+    try {
+      const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + studentUsername);
+      if (raw) studentPlan = JSON.parse(raw);
+    } catch (e) {}
+  }
 
   if (studentPlan) {
     Object.assign(AppState, studentPlan);
@@ -22414,18 +22502,25 @@ window.toggleAdminManagerMode = function(forceState) {
     if (btnAdminToggle) {
       btnAdminToggle.classList.remove('active-admin');
       if (toggleLabel) {
-        toggleLabel.innerHTML = '<i class="fa-solid fa-shield-halved"></i> <span>Giao diện Quản trị</span>';
+        toggleLabel.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
       }
     }
     const isInstructorOrAdmin = UserSession.currentUser && (
       UserSession.currentUser.role === 'admin' ||
       UserSession.currentUser.role === 'instructor' ||
+      UserSession.currentUser.role === 'teacher' ||
       UserSession.currentUser.normalizedUsername === 'admin' ||
+      UserSession.currentUser.normalizedUsername === 'haketo_spec' ||
       (UserSession.currentUser.username && UserSession.currentUser.username.toLowerCase() === 'admin') ||
-      (UserSession.currentUser.normalizedUsername && UserSession.currentUser.normalizedUsername.startsWith('admin_'))
+      (UserSession.currentUser.normalizedUsername && (UserSession.currentUser.normalizedUsername.startsWith('admin_') || UserSession.currentUser.normalizedUsername.includes('instructor') || UserSession.currentUser.normalizedUsername.includes('teacher')))
     );
     if (studentAdminShortcut) {
       studentAdminShortcut.style.display = isInstructorOrAdmin ? 'block' : 'none';
+      const shortcutBtn = studentAdminShortcut.querySelector('.btn-sidebar-admin-pill');
+      if (shortcutBtn) {
+        shortcutBtn.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
+        shortcutBtn.title = 'Xem toàn cảnh lớp học';
+      }
     }
     switchTab('tab-tukhoa');
   }

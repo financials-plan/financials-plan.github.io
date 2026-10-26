@@ -160,13 +160,30 @@
           <i class="fa-solid fa-cloud-arrow-up"></i> <span>Lưu</span>
         </button>
 
-        <button type="button" class="btn-theme-toggle" id="btn-topbar-theme" onclick="toggleTheme(event)" title="Chuyển đổi giao diện Sáng / Tối" aria-label="Chuyển đổi giao diện Sáng / Tối">
-          <i class="fa-solid fa-moon icon-theme-moon"></i>
-          <i class="fa-solid fa-sun icon-theme-sun"></i>
+        <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
+          <span class="u021-track">
+            <span class="u021-sky u021-sky-day">
+              <span class="u021-cloud u021-cloud-1"></span>
+              <span class="u021-cloud u021-cloud-2"></span>
+              <span class="u021-cloud u021-cloud-3"></span>
+            </span>
+            <span class="u021-sky u021-sky-night">
+              <span class="u021-star u021-star-1"></span>
+              <span class="u021-star u021-star-2"></span>
+              <span class="u021-star u021-star-3"></span>
+              <span class="u021-star u021-star-4"></span>
+              <span class="u021-star u021-star-5"></span>
+            </span>
+            <span class="u021-knob">
+              <span class="u021-crater u021-crater-1"></span>
+              <span class="u021-crater u021-crater-2"></span>
+              <span class="u021-crater u021-crater-3"></span>
+            </span>
+          </span>
         </button>
 
         <button type="button" class="btn-topbar-admin-mode" id="btn-admin-mode-toggle" style="display: none;" onclick="toggleAdminManagerMode()" title="Chuyển đổi giao diện Quản trị / Sổ tài chính">
-          <i class="fa-solid fa-shield-halved"></i> <span id="admin-mode-toggle-label">Giao diện Quản trị</span>
+          <i class="fa-solid fa-chalkboard-user"></i> <span id="admin-mode-toggle-label">Xem toàn cảnh lớp học</span>
         </button>
 
         <div class="topbar-auth-section" id="topbar-auth-section">
@@ -181,42 +198,11 @@
 
           <div class="account-switcher-menu menu-from-topbar" id="account-switcher-menu" role="menu" aria-label="Danh sách tài khoản và hồ sơ" style="display: none;">
             <div class="account-menu-header">
-              <span class="account-menu-title"><i class="fa-solid fa-users-gear text-primary"></i> Hồ sơ tài chính</span>
-              <span class="account-menu-badge" id="account-profiles-count">1 hồ sơ</span>
+              <span class="account-menu-title"><i class="fa-solid fa-user-circle text-primary"></i> Tài khoản của bạn</span>
+              <span class="account-menu-badge" id="account-profiles-count" style="display: none;"></span>
             </div>
 
             <div class="account-list" id="rail-account-list" role="group"></div>
-
-            <div class="account-menu-divider"></div>
-
-            <div class="account-theme-row">
-              <div class="account-theme-info">
-                <span class="account-theme-title"><i class="fa-solid fa-circle-half-stroke"></i> Giao diện</span>
-                <span class="account-theme-subtitle" id="u021-theme-label">Giao diện sáng</span>
-              </div>
-
-              <button type="button" class="u021-switch" id="u021-theme-switch" role="switch" aria-checked="false" aria-label="Chuyển đổi giao diện Sáng / Tối" title="Chuyển sang giao diện Tối" onclick="toggleTheme(event)">
-                <span class="u021-track">
-                  <span class="u021-sky u021-sky-day">
-                    <span class="u021-cloud u021-cloud-1"></span>
-                    <span class="u021-cloud u021-cloud-2"></span>
-                    <span class="u021-cloud u021-cloud-3"></span>
-                  </span>
-                  <span class="u021-sky u021-sky-night">
-                    <span class="u021-star u021-star-1"></span>
-                    <span class="u021-star u021-star-2"></span>
-                    <span class="u021-star u021-star-3"></span>
-                    <span class="u021-star u021-star-4"></span>
-                    <span class="u021-star u021-star-5"></span>
-                  </span>
-                  <span class="u021-knob">
-                    <span class="u021-crater u021-crater-1"></span>
-                    <span class="u021-crater u021-crater-2"></span>
-                    <span class="u021-crater u021-crater-3"></span>
-                  </span>
-                </span>
-              </button>
-            </div>
 
             <div class="account-menu-divider"></div>
 
@@ -227,9 +213,6 @@
               <button type="button" class="account-action-btn" id="btn-menu-change-password" onclick="openUserModal(true, 'change-password'); closeAccountMenu();">
                 <i class="fa-solid fa-lock text-primary"></i> <span>Đổi mật khẩu</span>
               </button>
-              <a href="./auth/index.html" class="account-action-btn" id="btn-menu-auth-login" onclick="goToAuthPage('login', '', true); return false;">
-                <i class="fa-solid fa-user-shield text-primary"></i> <span>Đăng nhập / Đăng ký</span>
-              </a>
               <button type="button" class="account-action-btn" id="btn-menu-class-manager" onclick="openClassManagerModal(); closeAccountMenu();" style="display: none;">
                 <i class="fa-solid fa-chalkboard-user text-primary"></i> <span>Quản lý Lớp học &amp; Giảng viên</span>
               </button>
@@ -2912,6 +2895,11 @@
       </div>
     </div>
   </div>
+
+  <button type="button" class="btn-floating-class-action" id="btn-floating-switch-class" onclick="openStudentJoinClassModal()" title="Đổi lớp học hoặc nhập mã lớp học" aria-label="Đổi lớp học hoặc nhập mã lớp học">
+    <i class="fa-solid fa-users-rectangle"></i>
+    <span>Đổi lớp / Nhập mã lớp</span>
+  </button>
 
   <script type="module" src="./backend/firestore-service.js"></script>
   <script src="./js/script.js?v=3.2.0"></script>

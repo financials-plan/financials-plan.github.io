@@ -3,6 +3,7 @@ const assert = require("node:assert");
 const http = require("node:http");
 const fs = require("node:fs");
 const crypto = require("node:crypto");
+const path = require("node:path");
 const {
   validateAdminCodeFormat,
   generateAdminCode,
@@ -461,4 +462,26 @@ test("8. Seeded Admin Account Authentication and Credentials", async () => {
   assert.strictEqual(loginRes.data.success, true);
   assert.strictEqual(loginRes.data.user.normalizedUsername, "admin");
   assert.strictEqual(loginRes.data.user.role, "admin");
+});
+
+test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
+  const mainHtml = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(mainHtml.includes('id="btn-floating-switch-class"'));
+  assert.ok(mainHtml.includes('id="u021-theme-switch"'));
+  assert.ok(!mainHtml.includes('id="btn-topbar-theme"'));
+  assert.ok(!mainHtml.includes('id="btn-menu-auth-login"'));
+
+  const scriptJs = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
+  const jsScriptJs = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
+  const hash1 = crypto.createHash("sha256").update(scriptJs).digest("hex");
+  const hash2 = crypto.createHash("sha256").update(jsScriptJs).digest("hex");
+  assert.strictEqual(hash1, hash2);
+
+  const authJs = fs.readFileSync(path.join(__dirname, "../auth/auth.js"), "utf8");
+  assert.ok(authJs.includes("role: userRole"));
+
+  const firestoreService = fs.readFileSync(path.join(__dirname, "../backend/firestore-service.js"), "utf8");
+  assert.ok(firestoreService.includes("getDocs"));
+  assert.ok(firestoreService.includes("collection"));
+  assert.ok(firestoreService.includes("activateAdminCode"));
 });

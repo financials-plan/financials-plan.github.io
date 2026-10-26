@@ -190,6 +190,8 @@ function saveAuthenticatedSession(authUser) {
   const normalizedUsername = authUser.normalizedUsername || authUser.normalizedName || normalizeUserName(displayUsername);
   const docId = authUser.docId || `user_${normalizedUsername}`;
 
+  const userRole = authUser.role || (normalizedUsername === "admin" ? "admin" : (normalizedUsername === "haketo_spec" || normalizedUsername === "dinh_anh_quan" ? "instructor" : "student"));
+
   const userObj = {
     uid: authUser.uid || "",
     username: displayUsername,
@@ -198,6 +200,7 @@ function saveAuthenticatedSession(authUser) {
     ho_ten: displayUsername,
     normalizedUsername: normalizedUsername,
     normalizedName: normalizedUsername,
+    role: userRole,
     maskedEmail: authUser.maskedEmail || "",
     hasRecoveryEmail: Boolean(authUser.hasRecoveryEmail),
     docId: docId,
@@ -217,6 +220,7 @@ function saveAuthenticatedSession(authUser) {
       rawName: displayUsername,
       normalizedUsername: normalizedUsername,
       normalizedName: normalizedUsername,
+      role: userRole,
       docId: docId,
       uid: userObj.uid,
       maskedEmail: userObj.maskedEmail,

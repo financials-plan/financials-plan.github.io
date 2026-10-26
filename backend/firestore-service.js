@@ -4,7 +4,9 @@ import {
   doc,
   setDoc,
   getDoc,
-  deleteDoc
+  deleteDoc,
+  collection,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth,
@@ -54,6 +56,13 @@ async function syncSeedAccountsToFirestore() {
       const accRef = doc(db, ACCOUNTS_COLLECTION, acc.normalizedUsername);
       await setDoc(accRef, { ...acc }, { merge: true }).catch(() => {});
     }
+    const adminKeys = Object.keys(DEFAULT_ADMIN_CODES);
+    for (const ak of adminKeys) {
+      const codeRec = DEFAULT_ADMIN_CODES[ak];
+      const codeRef = doc(db, ADMIN_CODES_COLLECTION, codeRec.code);
+      await setDoc(codeRef, { ...codeRec }, { merge: true }).catch(() => {});
+    }
+    await setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: DEFAULT_ADMIN_CODES }, { merge: true }).catch(() => {});
   } catch (e) {}
 }
 
@@ -499,9 +508,51 @@ const FirestoreService = {
 
   restoreSessionContext(storedUser) {
     if (!storedUser || typeof storedUser !== "object") return null;
+    const norm = normalizeUsername(storedUser.normalizedUsername || storedUser.username || storedUser.displayUsername);
+    let role = storedUser.role;
+    if (!role) {
+      const localAccs = getLocalAuthAccounts();
+      if (localAccs && localAccs[norm] && localAccs[norm].role) {
+        role = localAccs[norm].role;
+      }
+    }
+    if (!role) {
+      if (norm === "admin" || (norm && norm.startsWith("admin_")) || norm === "administrator") {
+        role = "admin";
+      } else if (norm === "dinh_anh_quan" || norm === "haketo_spec" || (norm && (norm.includes("instructor") || norm.includes("teacher")))) {
+        role = "instructor";
+      } else {
+        role = "student";
+      }
+    }
+    storedUser.role = role;
     if (storedUser.uid || storedUser.docId) {
       const token = storedUser.sessionToken || ("sess_" + (storedUser.uid || storedUser.docId || Date.now()));
-      return setActiveSessionFromUser(storedUser, token);
+      const ctx = setActiveSessionFromUser(storedUser, token);
+      if (isFirebaseReady && db && norm) {
+        getDoc(doc(db, ACCOUNTS_COLLECTION, norm)).then(snap => {
+          if (snap && snap.exists()) {
+            const data = snap.data();
+            if (data && data.role && data.role !== ctx.role) {
+              storedUser.role = data.role;
+              setActiveSessionFromUser(storedUser, token);
+              try {
+                const s = localStorage.getItem("FIN_APP_USER_SESSION");
+                if (s) {
+                  const p = JSON.parse(s);
+                  p.role = data.role;
+                  localStorage.setItem("FIN_APP_USER_SESSION", JSON.stringify(p));
+                }
+              } catch (e) {}
+              if (window.UserSession && typeof window.UserSession.updateUI === "function") {
+                if (window.UserSession.currentUser) window.UserSession.currentUser.role = data.role;
+                window.UserSession.updateUI();
+              }
+            }
+          }
+        }).catch(() => {});
+      }
+      return ctx;
     }
     return null;
   },
@@ -1561,6 +1612,29 @@ const FirestoreService = {
 
   async getAdminCodes() {
     const local = getLocalAdminCodes();
+    if (isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDocs(collection(db, ADMIN_CODES_COLLECTION)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+        ]);
+        if (snap && !snap.empty) {
+          snap.forEach(d => {
+            const data = d.data();
+            if (data && data.code && data.code !== "all_codes" && data.code !== "admin_codes") {
+              local[data.code] = { ...local[data.code], ...data };
+            } else if (data && data.codes && typeof data.codes === "object") {
+              Object.keys(data.codes).forEach(k => {
+                local[k] = { ...local[k], ...data.codes[k] };
+              });
+            }
+          });
+          saveLocalAdminCodes(local);
+        }
+      } catch (err) {
+        console.warn("Lỗi tải mã quản trị từ Firestore:", err);
+      }
+    }
     return Object.values(local);
   },
 
@@ -1575,17 +1649,104 @@ const FirestoreService = {
       expiresAt: new Date(Date.now() + (parseInt(validDays, 10) || 30) * 24 * 60 * 60 * 1000).toISOString(),
       createdAt: new Date().toISOString()
     };
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, ADMIN_CODES_COLLECTION, code), newCode, { merge: true }).catch(() => {});
-    }
     const local = getLocalAdminCodes();
     local[code] = newCode;
     saveLocalAdminCodes(local);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, code), newCode, { merge: true }).catch(() => {});
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: local }, { merge: true }).catch(() => {});
+    }
     return { success: true, code: newCode };
+  },
+
+  async activateAdminCode(adminCode, username) {
+    const cleanAdminCode = String(adminCode || "").trim().toUpperCase();
+    const cleanUser = normalizeUsername(username || (activeAuthContext ? activeAuthContext.normalizedUsername : ""));
+    if (!cleanAdminCode) {
+      return { success: false, error: "Vui lòng nhập Mã Quản trị / Giảng viên." };
+    }
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanAdminCode)) {
+      return { success: false, error: "Mã Quản trị phải có định dạng XXXX-XXXX-XXXX (12 ký tự chữ và số)." };
+    }
+    let codeRec = null;
+    if (isFirebaseReady && db) {
+      try {
+        const cSnap = await Promise.race([
+          getDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+        ]);
+        if (cSnap && cSnap.exists()) {
+          codeRec = cSnap.data();
+        }
+      } catch (e) {}
+    }
+    if (!codeRec) {
+      const localCodes = getLocalAdminCodes();
+      codeRec = localCodes[cleanAdminCode];
+    }
+    if (!codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
+      return { success: false, error: "Mã Quản trị / Giảng viên không hợp lệ, đã bị thu hồi hoặc đã hết lượt sử dụng." };
+    }
+
+    const assignedRole = codeRec.role || "instructor";
+    codeRec.usedCount = (codeRec.usedCount || 0) + 1;
+    codeRec.lastUsedAt = new Date().toISOString();
+    codeRec.lastUsedBy = cleanUser;
+
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }).catch(() => {});
+      const allLocalCodes = getLocalAdminCodes();
+      allLocalCodes[cleanAdminCode] = codeRec;
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: allLocalCodes }, { merge: true }).catch(() => {});
+    }
+    const allLocalCodes = getLocalAdminCodes();
+    allLocalCodes[cleanAdminCode] = codeRec;
+    saveLocalAdminCodes(allLocalCodes);
+
+    const accounts = getLocalAuthAccounts();
+    if (accounts[cleanUser]) {
+      accounts[cleanUser].role = assignedRole;
+      accounts[cleanUser].updatedAt = new Date().toISOString();
+      saveLocalAuthAccounts(accounts);
+    }
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, ACCOUNTS_COLLECTION, cleanUser), { role: assignedRole, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+    }
+    if (activeAuthContext && activeAuthContext.normalizedUsername === cleanUser) {
+      setActiveSessionFromUser({ ...activeAuthContext, role: assignedRole }, activeAuthContext.sessionToken);
+    }
+    return {
+      success: true,
+      role: assignedRole,
+      message: `Kích hoạt thành công vai trò: ${assignedRole === "admin" ? "Quản trị viên" : "Giảng viên"}`
+    };
   },
 
   async getClasses() {
     const local = getLocalClasses();
+    if (isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDocs(collection(db, CLASSES_COLLECTION)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+        ]);
+        if (snap && !snap.empty) {
+          snap.forEach(d => {
+            const data = d.data();
+            if (data && data.id && data.id !== "class" && data.id !== "class_index") {
+              local[data.id] = { ...local[data.id], ...data };
+            } else if (data && data.classes && typeof data.classes === "object") {
+              Object.keys(data.classes).forEach(cid => {
+                local[cid] = { ...local[cid], ...data.classes[cid] };
+              });
+            }
+          });
+          saveLocalClasses(local);
+        }
+      } catch (err) {
+        console.warn("Lỗi tải lớp từ Firestore, sử dụng bộ nhớ thiết bị:", err);
+      }
+    }
     return Object.values(local);
   },
 
@@ -1605,12 +1766,13 @@ const FirestoreService = {
       createdAt: new Date().toISOString(),
       members: []
     };
-    if (isFirebaseReady && db) {
-      setDoc(doc(db, CLASSES_COLLECTION, classId), newClass, { merge: true }).catch(() => {});
-    }
     const local = getLocalClasses();
     local[classId] = newClass;
     saveLocalClasses(local);
+    if (isFirebaseReady && db) {
+      setDoc(doc(db, CLASSES_COLLECTION, classId), newClass, { merge: true }).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes: local }, { merge: true }).catch(() => {});
+    }
     return { success: true, class: newClass };
   },
 
@@ -1619,8 +1781,45 @@ const FirestoreService = {
     const cleanUser = normalizeUsername(username || (activeAuthContext ? activeAuthContext.normalizedUsername : ""));
     const dispName = studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser);
 
+    if (/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanCode) || cleanCode.startsWith("INST-") || cleanCode.startsWith("ADMN-")) {
+      const actRes = await this.activateAdminCode(cleanCode, cleanUser);
+      if (actRes.success) {
+        return {
+          success: true,
+          isAdminUpgrade: true,
+          role: actRes.role,
+          message: actRes.message
+        };
+      }
+    }
+
+    await this.getClasses();
     const classes = getLocalClasses();
-    const targetClass = Object.values(classes).find(c => c.code === cleanCode && c.status === "active");
+    let targetClass = Object.values(classes).find(c => c.code === cleanCode && c.status === "active");
+
+    if (!targetClass && isFirebaseReady && db) {
+      try {
+        const snap = await Promise.race([
+          getDocs(collection(db, CLASSES_COLLECTION)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+        ]);
+        if (snap && !snap.empty) {
+          snap.forEach(d => {
+            const data = d.data();
+            if (data && data.id && data.id !== "class") {
+              classes[data.id] = { ...classes[data.id], ...data };
+            } else if (data && data.classes && typeof data.classes === "object") {
+              Object.keys(data.classes).forEach(cid => {
+                classes[cid] = { ...classes[cid], ...data.classes[cid] };
+              });
+            }
+          });
+          saveLocalClasses(classes);
+          targetClass = Object.values(classes).find(c => c.code === cleanCode && c.status === "active");
+        }
+      } catch (e) {}
+    }
+
     if (!targetClass) {
       return { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." };
     }
@@ -1645,6 +1844,7 @@ const FirestoreService = {
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {
       setDoc(doc(db, CLASSES_COLLECTION, targetClass.id), targetClass, { merge: true }).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
     }
     return {
       success: true,
@@ -1675,6 +1875,7 @@ const FirestoreService = {
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {
       setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
     }
     return { success: true, class: targetClass };
   },
@@ -1698,6 +1899,7 @@ const FirestoreService = {
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {
       setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
     }
     return { success: true, class: targetClass };
   },
@@ -1714,6 +1916,7 @@ const FirestoreService = {
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {
       setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
     }
     return { success: true, message: "Đã lưu trữ và kết thúc học kỳ an toàn.", class: targetClass };
   },
@@ -1727,6 +1930,8 @@ const FirestoreService = {
     saveLocalClasses(classes);
     if (isFirebaseReady && db) {
       deleteDoc(doc(db, CLASSES_COLLECTION, classId)).catch(() => {});
+      setDoc(doc(db, CLASSES_COLLECTION, "class"), { id: "class", updatedAt: new Date().toISOString(), classes }, { merge: true }).catch(() => {});
+    }
     }
     return { success: true, message: "Đã xóa nhóm thành công." };
   },
