@@ -737,24 +737,6 @@ function ensureFixedInvestmentGoals() {
   if (!Array.isArray(AppState.tcGoals)) {
     AppState.tcGoals = [];
   }
-  let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
-  if (!collegeGoal) {
-    collegeGoal = createFixedCollegeGoal();
-  } else {
-    const tpl = createFixedCollegeGoal();
-    Object.keys(tpl).forEach(k => {
-      if (collegeGoal[k] === undefined || collegeGoal[k] === null) {
-        collegeGoal[k] = tpl[k];
-      }
-    });
-    collegeGoal.id = "fixed_college";
-    collegeGoal.fixedType = "college";
-    collegeGoal.isFixed = true;
-    collegeGoal.name = "Cho con đi học đại học";
-    collegeGoal.type = "invest";
-    normalizeGoalNumericFields(collegeGoal, tpl);
-  }
-
   let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
   if (!retireGoal) {
     retireGoal = createFixedRetirementGoal();
@@ -773,8 +755,26 @@ function ensureFixedInvestmentGoals() {
     normalizeGoalNumericFields(retireGoal, tpl);
   }
 
+  let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
+  if (!collegeGoal) {
+    collegeGoal = createFixedCollegeGoal();
+  } else {
+    const tpl = createFixedCollegeGoal();
+    Object.keys(tpl).forEach(k => {
+      if (collegeGoal[k] === undefined || collegeGoal[k] === null) {
+        collegeGoal[k] = tpl[k];
+      }
+    });
+    collegeGoal.id = "fixed_college";
+    collegeGoal.fixedType = "college";
+    collegeGoal.isFixed = true;
+    collegeGoal.name = "Cho con đi học đại học";
+    collegeGoal.type = "invest";
+    normalizeGoalNumericFields(collegeGoal, tpl);
+  }
+
   const regularGoals = AppState.tcGoals.filter(g => !isFixedInvestmentGoal(g));
-  AppState.tcGoals = [...regularGoals, collegeGoal, retireGoal];
+  AppState.tcGoals = [...regularGoals, retireGoal, collegeGoal];
 }
 
 function createEmptyAppState() {
@@ -801,8 +801,8 @@ function createEmptyAppState() {
     planList: [],
     investProducts: [],
     tcGoals: [
-      createFixedCollegeGoal(),
-      createFixedRetirementGoal()
+      createFixedRetirementGoal(),
+      createFixedCollegeGoal()
     ],
     skillsList: [],
     familyList: [],
@@ -1683,8 +1683,8 @@ function renderPortfolioT1Table() {
           <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT6: Đám cưới</th>
           <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT7: Khởi nghiệp</th>
           <th colspan="1" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT8: Mua chung cư</th>
-          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Cho con học ĐH</th>
-          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Hưu trí</th>
+          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Hưu trí</th>
+          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Cho con học ĐH</th>
         </tr>
         <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">
           <th>Tiền gửi NH</th><th>ETF FINLEAD</th><th>TP Techcom</th>
@@ -1692,8 +1692,8 @@ function renderPortfolioT1Table() {
           <th>ETF FINLEAD</th><th>TP Techcom</th><th>Tiền gửi NH</th>
           <th>Tiền gửi NH</th><th>TP FE Credit</th>
           <th>DCBC</th>
-          <th>ETF ETFVFM</th><th>DCBC</th>
           <th>Tiền gửi NH</th><th>BH liên kết ĐT</th>
+          <th>ETF ETFVFM</th><th>DCBC</th>
         </tr>
       `;
     }
@@ -1714,10 +1714,10 @@ function renderPortfolioT1Table() {
         <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
       </tr>`;
     }).join('');
   }
@@ -7751,7 +7751,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Cho con đi học đại học", "Hưu trí"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -7857,16 +7857,16 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
 
   if (Array.isArray(cleanImport.tcGoals)) {
     ensureFixedInvestmentGoals();
-    const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
     const currentRetire = AppState.tcGoals.find(isRetirementFixedGoal);
+    const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
 
     if (mode === 'replace') {
       AppState.tcGoals = cleanImport.tcGoals.filter(g => g && typeof g === 'object');
-      if (!AppState.tcGoals.find(isCollegeFixedGoal) && currentCollege) {
-        AppState.tcGoals.unshift(currentCollege);
-      }
       if (!AppState.tcGoals.find(isRetirementFixedGoal) && currentRetire) {
         AppState.tcGoals.push(currentRetire);
+      }
+      if (!AppState.tcGoals.find(isCollegeFixedGoal) && currentCollege) {
+        AppState.tcGoals.push(currentCollege);
       }
     } else {
       cleanImport.tcGoals.forEach(g => {
@@ -9796,7 +9796,7 @@ window.renderAdminGroupsList = async function() {
             <div class="group-meta-badges">
               <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
                 <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i>
-                <span>${isPriv ? 'Nhóm Kín (Private)' : 'Nhóm Mở (Global)'}</span>
+                <span>${isPriv ? 'Nhóm riêng tư' : 'Nhóm mở'}</span>
               </span>
               <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${c.code}')" title="Bấm để sao chép mã">
                 <code>${c.code}</code> <i class="fa-regular fa-copy"></i>
@@ -9969,7 +9969,7 @@ window.renderAdminRequestsTable = async function() {
 
   if (groupFilter) {
     const curVal = groupFilter.value;
-    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm Kín</option>';
+    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm riêng tư</option>';
     classes.filter(c => c.isPrivate !== false).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
@@ -10947,7 +10947,7 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += 'Chỉ số,Giá trị,Mô tả / Đơn vị\n';
   csv += `Tổng số Nhóm / Lớp học,${classes.length},Nhóm đang hoạt động trên hệ thống\n`;
   csv += `Tổng số Học viên chính thức,${totalMembers},Học viên đã tham gia vào các nhóm\n`;
-  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm Kín (Private)\n`;
+  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm riêng tư\n`;
   csv += `Tỷ lệ hoàn thành ma trận học tập,${totalMembers > 0 ? '78.5%' : '0%'},Đánh giá trên 4 phân hệ cốt lõi M1-M4\n`;
   csv += 'Tỷ lệ tiết kiệm bình quân hệ thống,38.2%,Tỷ lệ tiết kiệm trên tổng thu nhập hàng tháng\n';
   csv += 'Tỷ lệ trả nợ bình quân (DSR),14.6%,Khuyến nghị chuẩn an toàn DSR < 35%\n';

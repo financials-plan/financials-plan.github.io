@@ -243,6 +243,7 @@ test("4. Financial Data & Code Parity Preservation", () => {
   const scriptContent = fs.readFileSync("js/script.js", "utf8");
   assert.ok(scriptContent.includes("Cho con đi học đại học"), "Fixed goal 1 preserved");
   assert.ok(scriptContent.includes("Hưu trí"), "Fixed goal 2 preserved");
+  assert.ok(scriptContent.includes("[...regularGoals, retireGoal, collegeGoal]"), "Retirement goal precedes College goal in AppState.tcGoals");
   assert.ok(scriptContent.includes("CAREER_MILESTONES_RECOMMENDED"), "Career Milestones benchmark preserved");
 
   const mainContent = fs.readFileSync("main.html", "utf8");

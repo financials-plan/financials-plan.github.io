@@ -11130,1247 +11130,1145 @@ input::-ms-clear {
   
   <script id="test-sample-data" type="application/json">
 {
-    "schemaVersion":  "2.2.0",
-    "exportedAt":  "2026-10-21T12:03:43.015Z",
-    "accountMeta":  {
-                        "ho_ten":  "Ng╞░ß╗¥i d├╣ng mß║½u (Sample Test)",
-                        "docId":  "tai_khoan_kiem_thu"
+    "schemaVersion": "2.2.0",
+    "exportedAt": "2026-10-21T12:03:43.015Z",
+    "accountMeta": {
+        "ho_ten": "Ng╞░ß╗¥i d├╣ng mß║½u (Sample Test)",
+        "docId": "tai_khoan_kiem_thu"
+    },
+    "data": {
+        "currentYear": 2023,
+        "currentAge": 21,
+        "birthYear": 2002,
+        "currentMonth": 1,
+        "targetSavingsRate": 40,
+        "visionAge": "50",
+        "visionDesc": "Tß╗½ng b╞░ß╗¢c ─æß║ít mß╗Ñc ti├¬u t├ái ch├¡nh trong t╞░╞íng lai",
+        "expenses": [
+            "Mua thß╗▒c phß║⌐m",
+            "Mua ─æß╗ô d├╣ng trong nh├á",
+            "─Éi ─ân ß╗ƒ ngo├ái",
+            "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+            "Chi tiß╗ün bß║úo hiß╗âm",
+            "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+            "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+            "Chi tiß╗ün cho con",
+            "Chi tiß╗ün trß║ú nß╗ú",
+            "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+            "Chi ti├¬u 1",
+            "Chi ti├¬u 2",
+            "Chi ti├¬u 3",
+            "Chi ti├¬u 4",
+            "Chi ti├¬u 5"
+        ],
+        "incomeList": [
+            "L╞░╞íng tß╗½ c├┤ng ty",
+            "Thu nhß║¡p kh├íc"
+        ],
+        "planList": [
+            "Mua s├ích",
+            "Kh├│a hß╗ìc ngß║»n hß║ín",
+            "Kh├│a hß╗ìc d├ái hß║ín",
+            "Tham gia c├íc buß╗òi diß╗àn thuyß║┐t",
+            "Chi ph├ít triß╗ân bß║ún th├ón kh├íc"
+        ],
+        "investProducts": [
+            {
+                "name": "ETF - ETFVFM",
+                "returnRate": 13,
+                "risk": 18
+            },
+            {
+                "name": "ETF - ETFFINLEAD",
+                "returnRate": 15,
+                "risk": 20
+            },
+            {
+                "name": "DCBC",
+                "returnRate": 16,
+                "risk": 20
+            },
+            {
+                "name": "DCDS",
+                "returnRate": 11,
+                "risk": 10
+            },
+            {
+                "name": "DCBF",
+                "returnRate": 9,
+                "risk": 8
+            },
+            {
+                "name": "Tr├íi phiß║┐u Techcombank",
+                "returnRate": 10.5,
+                "risk": 6
+            },
+            {
+                "name": "Tr├íi phiß║┐u FE Credit",
+                "returnRate": 10,
+                "risk": 8
+            },
+            {
+                "name": "Finhay",
+                "returnRate": 6,
+                "risk": 7
+            },
+            {
+                "name": "Bß║úo hiß╗âm thuß║ºn t├║y",
+                "returnRate": 4,
+                "risk": 5
+            },
+            {
+                "name": "BH li├¬n kß║┐t ─æß║ºu t╞░",
+                "returnRate": 12,
+                "risk": 5
+            },
+            {
+                "name": "Tiß╗ün gß╗¡i ng├ón h├áng",
+                "returnRate": 5,
+                "risk": 2
+            },
+            {
+                "name": "Cß╗ò phiß║┐u ri├¬ng lß║╗",
+                "returnRate": 12,
+                "risk": 6
+            }
+        ],
+        "tcGoals": [
+            {
+                "id": "debt_chung_cu",
+                "name": "Vay mua chung c╞░",
+                "type": "debt",
+                "val": 500,
+                "paid": 400,
+                "start": 2037,
+                "end": 2052,
+                "rate": 8,
+                "allocProducts": [
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
                     },
-    "data":  {
-                 "currentYear":  2023,
-                 "currentAge":  21,
-                 "birthYear":  2002,
-                 "currentMonth":  1,
-                 "targetSavingsRate":  40,
-                 "visionAge":  "50",
-                 "visionDesc":  "Tß╗½ng b╞░ß╗¢c ─æß║ít mß╗Ñc ti├¬u t├ái ch├¡nh trong t╞░╞íng lai",
-                 "expenses":  [
-                                  "Mua thß╗▒c phß║⌐m",
-                                  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                  "─Éi ─ân ß╗ƒ ngo├ái",
-                                  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                  "Chi tiß╗ün bß║úo hiß╗âm",
-                                  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                  "Chi tiß╗ün cho con",
-                                  "Chi tiß╗ün trß║ú nß╗ú",
-                                  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                  "Chi ti├¬u 1",
-                                  "Chi ti├¬u 2",
-                                  "Chi ti├¬u 3",
-                                  "Chi ti├¬u 4",
-                                  "Chi ti├¬u 5"
-                              ],
-                 "incomeList":  [
-                                    "L╞░╞íng tß╗½ c├┤ng ty",
-                                    "Thu nhß║¡p kh├íc"
-                                ],
-                 "planList":  [
-                                  "Mua s├ích",
-                                  "Kh├│a hß╗ìc ngß║»n hß║ín",
-                                  "Kh├│a hß╗ìc d├ái hß║ín",
-                                  "Tham gia c├íc buß╗òi diß╗àn thuyß║┐t",
-                                  "Chi ph├ít triß╗ân bß║ún th├ón kh├íc"
-                              ],
-                 "investProducts":  [
-                                        {
-                                            "name":  "ETF - ETFVFM",
-                                            "returnRate":  13,
-                                            "risk":  18
-                                        },
-                                        {
-                                            "name":  "ETF - ETFFINLEAD",
-                                            "returnRate":  15,
-                                            "risk":  20
-                                        },
-                                        {
-                                            "name":  "DCBC",
-                                            "returnRate":  16,
-                                            "risk":  20
-                                        },
-                                        {
-                                            "name":  "DCDS",
-                                            "returnRate":  11,
-                                            "risk":  10
-                                        },
-                                        {
-                                            "name":  "DCBF",
-                                            "returnRate":  9,
-                                            "risk":  8
-                                        },
-                                        {
-                                            "name":  "Tr├íi phiß║┐u Techcombank",
-                                            "returnRate":  10.5,
-                                            "risk":  6
-                                        },
-                                        {
-                                            "name":  "Tr├íi phiß║┐u FE Credit",
-                                            "returnRate":  10,
-                                            "risk":  8
-                                        },
-                                        {
-                                            "name":  "Finhay",
-                                            "returnRate":  6,
-                                            "risk":  7
-                                        },
-                                        {
-                                            "name":  "Bß║úo hiß╗âm thuß║ºn t├║y",
-                                            "returnRate":  4,
-                                            "risk":  5
-                                        },
-                                        {
-                                            "name":  "BH li├¬n kß║┐t ─æß║ºu t╞░",
-                                            "returnRate":  12,
-                                            "risk":  5
-                                        },
-                                        {
-                                            "name":  "Tiß╗ün gß╗¡i ng├ón h├áng",
-                                            "returnRate":  5,
-                                            "risk":  2
-                                        },
-                                        {
-                                            "name":  "Cß╗ò phiß║┐u ri├¬ng lß║╗",
-                                            "returnRate":  12,
-                                            "risk":  6
-                                        }
-                                    ],
-                 "tcGoals":  [
-                                 {
-                                     "id":  "debt_chung_cu",
-                                     "name":  "Vay mua chung c╞░",
-                                     "type":  "debt",
-                                     "val":  500,
-                                     "paid":  400,
-                                     "start":  2037,
-                                     "end":  2052,
-                                     "rate":  8,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "invest_du_lich",
-                                     "name":  "Du lß╗ïch xuy├¬n Th├íi Lan",
-                                     "type":  "invest",
-                                     "val":  50,
-                                     "paid":  0,
-                                     "start":  2023,
-                                     "end":  2026,
-                                     "rate":  8.65,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "Tiß╗ün gß╗¡i ng├ón h├áng",
-                                                               "weight":  50,
-                                                               "returnRate":  5,
-                                                               "risk":  2
-                                                           },
-                                                           {
-                                                               "prodName":  "ETF - ETFFINLEAD",
-                                                               "weight":  20,
-                                                               "returnRate":  15,
-                                                               "risk":  20
-                                                           },
-                                                           {
-                                                               "prodName":  "Tr├íi phiß║┐u Techcombank",
-                                                               "weight":  30,
-                                                               "returnRate":  10.5,
-                                                               "risk":  6
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "invest_du_phong",
-                                     "name":  "Quß╗╣ dß╗▒ ph├▓ng t├ái ch├¡nh",
-                                     "type":  "invest",
-                                     "val":  100,
-                                     "paid":  0,
-                                     "start":  2023,
-                                     "end":  2026,
-                                     "rate":  10.5,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "Tr├íi phiß║┐u Techcombank",
-                                                               "weight":  100,
-                                                               "returnRate":  10.5,
-                                                               "risk":  6
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "invest_dam_cuoi",
-                                     "name":  "─É├ím c╞░ß╗¢i",
-                                     "type":  "invest",
-                                     "val":  200,
-                                     "paid":  0,
-                                     "start":  2024,
-                                     "end":  2030,
-                                     "rate":  10.75,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "ETF - ETFFINLEAD",
-                                                               "weight":  30,
-                                                               "returnRate":  15,
-                                                               "risk":  20
-                                                           },
-                                                           {
-                                                               "prodName":  "Tr├íi phiß║┐u Techcombank",
-                                                               "weight":  50,
-                                                               "returnRate":  10.5,
-                                                               "risk":  6
-                                                           },
-                                                           {
-                                                               "prodName":  "Tiß╗ün gß╗¡i ng├ón h├áng",
-                                                               "weight":  20,
-                                                               "returnRate":  5,
-                                                               "risk":  2
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "invest_khoi_nghiep",
-                                     "name":  "Khß╗ƒi nghiß╗çp",
-                                     "type":  "invest",
-                                     "val":  500,
-                                     "paid":  0,
-                                     "start":  2028,
-                                     "end":  2032,
-                                     "rate":  7.5,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "Tiß╗ün gß╗¡i ng├ón h├áng",
-                                                               "weight":  50,
-                                                               "returnRate":  5,
-                                                               "risk":  2
-                                                           },
-                                                           {
-                                                               "prodName":  "Tr├íi phiß║┐u FE Credit",
-                                                               "weight":  50,
-                                                               "returnRate":  10,
-                                                               "risk":  8
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "invest_mua_chung_cu",
-                                     "name":  "Mua chung c╞░",
-                                     "type":  "invest",
-                                     "val":  1500,
-                                     "paid":  0,
-                                     "start":  2025,
-                                     "end":  2037,
-                                     "rate":  16,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "DCBC",
-                                                               "weight":  100,
-                                                               "returnRate":  16,
-                                                               "risk":  20
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "fixed_college",
-                                     "name":  "Cho con ─æi hß╗ìc ─æß║íi hß╗ìc",
-                                     "type":  "invest",
-                                     "isFixed":  true,
-                                     "fixedType":  "college",
-                                     "val":  724.31,
-                                     "paid":  0,
-                                     "start":  2030,
-                                     "end":  2048,
-                                     "rate":  14.5,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "ETF - ETFVFM",
-                                                               "weight":  50,
-                                                               "returnRate":  13,
-                                                               "risk":  18
-                                                           },
-                                                           {
-                                                               "prodName":  "DCBC",
-                                                               "weight":  50,
-                                                               "returnRate":  16,
-                                                               "risk":  20
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 },
-                                 {
-                                     "id":  "fixed_retirement",
-                                     "name":  "H╞░u tr├¡",
-                                     "type":  "invest",
-                                     "isFixed":  true,
-                                     "fixedType":  "retirement",
-                                     "val":  500,
-                                     "paid":  0,
-                                     "start":  2031,
-                                     "end":  2040,
-                                     "rate":  8.5,
-                                     "allocProducts":  [
-                                                           {
-                                                               "prodName":  "Tiß╗ün gß╗¡i ng├ón h├áng",
-                                                               "weight":  50,
-                                                               "returnRate":  5,
-                                                               "risk":  2
-                                                           },
-                                                           {
-                                                               "prodName":  "BH li├¬n kß║┐t ─æß║ºu t╞░",
-                                                               "weight":  50,
-                                                               "returnRate":  12,
-                                                               "risk":  5
-                                                           },
-                                                           {
-                                                               "prodName":  "",
-                                                               "weight":  0,
-                                                               "returnRate":  0,
-                                                               "risk":  0
-                                                           }
-                                                       ]
-                                 }
-                             ],
-                 "planIncome":  [
-                                    {
-                                        "name":  "L╞░╞íng tß╗½ c├┤ng ty",
-                                        "plan":  20,
-                                        "note":  "Thu nhß║¡p cß╗æ ─æß╗ïnh h├áng th├íng"
-                                    },
-                                    {
-                                        "name":  "Thu nhß║¡p kh├íc",
-                                        "plan":  10,
-                                        "note":  "Thu nhß║¡p l├ám th├¬m, th╞░ß╗ƒng dß╗▒ ├ín"
-                                    }
-                                ],
-                 "planExpense":  [
-                                     {
-                                         "name":  "Mua thß╗▒c phß║⌐m",
-                                         "plan":  5,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                         "plan":  0.5,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                         "plan":  2,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                         "plan":  1.5,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün bß║úo hiß╗âm",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                         "plan":  2,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün cho con",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün trß║ú nß╗ú",
-                                         "plan":  6.5,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                         "plan":  1,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi ti├¬u 1",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi ti├¬u 2",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi ti├¬u 3",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi ti├¬u 4",
-                                         "plan":  0,
-                                         "note":  ""
-                                     },
-                                     {
-                                         "name":  "Chi ti├¬u 5",
-                                         "plan":  0,
-                                         "note":  ""
-                                     }
-                                 ],
-                 "skillsList":  [
-                                    {
-                                        "name":  "Cß║ºn bß╗ò sung kiß║┐n thß╗⌐c vß╗ü quß║ún l├╜ t├ái ch├¡nh v├á ─æß║ºu t╞░"
-                                    },
-                                    {
-                                        "name":  "Ph├ít triß╗ân chuy├¬n m├┤n s├óu v├á kß╗╣ n─âng l├únh ─æß║ío ─æß╗Öi ng┼⌐"
-                                    }
-                                ],
-                 "familyList":  [
-                                    {
-                                        "name":  "Gia ─æ├¼nh c├│ nguß╗ôn hß╗ù trß╗ú ß╗òn ─æß╗ïnh, kh├┤ng c├│ ├íp lß╗▒c nß╗ú xß║Ñu"
-                                    }
-                                ],
-                 "jobList":  [
-                                 {
-                                     "name":  "M├┤i tr╞░ß╗¥ng c├┤ng viß╗çc c├│ lß╗Ö tr├¼nh th─âng tiß║┐n r├╡ r├áng"
-                                 },
-                                 {
-                                     "name":  "C╞í hß╗Öi gia t─âng thu nhß║¡p v├á hß╗ìc hß╗Åi c├┤ng nghß╗ç mß╗¢i"
-                                 }
-                             ],
-                 "careerActualOverrides":  {
-                                               "22":  10,
-                                               "23":  15,
-                                               "24":  20
-                                           },
-                 "careerRouteOverrides":  {
-                                              "22":  12,
-                                              "25":  15,
-                                              "26":  20,
-                                              "32":  25,
-                                              "36":  30,
-                                              "42":  40
-                                          },
-                 "skillsStore":  {
-                                     "0":  "Quß║ún l├╜ c├┤ng viß╗çc c├í nh├ón hiß╗çu quß║ú, ho├án th├ánh tß╗æt c├íc nhiß╗çm vß╗Ñ ─æ╞░ß╗úc giao",
-                                     "1":  "Quß║ún l├╜ ─æß╗Öi nh├│m nhß╗Å (3-5 ng╞░ß╗¥i), giao viß╗çc v├á giß║úi quyß║┐t xung ─æß╗Öt tß╗æt",
-                                     "2":  "Ph├ít triß╗ân chiß║┐n l╞░ß╗úc d├ái hß║ín, hoß║ích ─æß╗ïnh nguß╗ôn lß╗▒c v├á t├ái ch├¡nh cho ph├▓ng ban",
-                                     "3":  "L├únh ─æß║ío cß║Ñp cao, ─æß╗ïnh h╞░ß╗¢ng chiß║┐n l╞░ß╗úc doanh nghiß╗çp v├á quß║ún trß╗ï rß╗ºi ro",
-                                     "4":  "Cß╗æ vß║Ñn chiß║┐n l╞░ß╗úc, chuy├¬n gia ─æß╗Öc lß║¡p hoß║╖c th├ánh vi├¬n hß╗Öi ─æß╗ông quß║ún trß╗ï"
-                                 },
-                 "monthlyDetails":  {
-                                        "1":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-01-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  5.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-04",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  0.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-07",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  0.8
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-10",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  1.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-28",
-                                                                       "cat":  "Chi tiß╗ün bß║úo hiß╗âm",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-29",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-30",
-                                                                       "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                       "val":  0.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-15",
-                                                                       "cat":  "Chi tiß╗ün cho con",
-                                                                       "val":  0.2
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-10",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-05",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  2
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-01",
-                                                                       "cat":  "Chi ti├¬u 1",
-                                                                       "val":  0.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-01-12",
-                                                                       "cat":  "Chi ti├¬u 2",
-                                                                       "val":  1
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "2":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-02-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  0.7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  1.8000000000000003
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  2.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.6
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  1.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-20",
-                                                                       "cat":  "Chi ti├¬u 1",
-                                                                       "val":  0.8
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-02-25",
-                                                                       "cat":  "Chi ti├¬u 5",
-                                                                       "val":  0.2
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "3":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-03-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  6.8
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  1.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  1.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-04",
-                                                                       "cat":  "Chi tiß╗ün bß║úo hiß╗âm",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.6500000000000001
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-07",
-                                                                       "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                       "val":  0.7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-20",
-                                                                       "cat":  "Chi ti├¬u 1",
-                                                                       "val":  0.7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-23",
-                                                                       "cat":  "Chi ti├¬u 3",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-24",
-                                                                       "cat":  "Chi ti├¬u 4",
-                                                                       "val":  0.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-03-25",
-                                                                       "cat":  "Chi ti├¬u 5",
-                                                                       "val":  0.5
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "4":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-04-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  0.4
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  1.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  1.2999999999999998
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.35
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  1.4
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-04-23",
-                                                                       "cat":  "Chi ti├¬u 3",
-                                                                       "val":  0.3
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "5":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-05-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  3.4
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  1.2999999999999998
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  2
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-07",
-                                                                       "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                       "val":  0.4
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-20",
-                                                                       "cat":  "Chi ti├¬u 1",
-                                                                       "val":  0.7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-05-23",
-                                                                       "cat":  "Chi ti├¬u 3",
-                                                                       "val":  0.2
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "6":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-06-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  4.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  0.30000000000000004
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  1.0999999999999999
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.7500000000000002
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-20",
-                                                                       "cat":  "Chi ti├¬u 1",
-                                                                       "val":  0.7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-06-24",
-                                                                       "cat":  "Chi ti├¬u 4",
-                                                                       "val":  0.1
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "7":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-07-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  5.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  2.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  1.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  1.05
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-09",
-                                                                       "cat":  "Chi tiß╗ün cho con",
-                                                                       "val":  1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  0.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-07-22",
-                                                                       "cat":  "Chi ti├¬u 2",
-                                                                       "val":  0.2
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "8":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-08-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  7
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  1.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  3.1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  2.6500000000000004
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-07",
-                                                                       "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-09",
-                                                                       "cat":  "Chi tiß╗ün cho con",
-                                                                       "val":  1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  0.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-08-25",
-                                                                       "cat":  "Chi ti├¬u 5",
-                                                                       "val":  0.3
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "9":  {
-                                                  "incomes":  [
-
-                                                              ],
-                                                  "expenses":  [
-                                                                   {
-                                                                       "date":  "2022-09-01",
-                                                                       "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                       "val":  4.2
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-01",
-                                                                       "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                       "val":  1.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-02",
-                                                                       "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                       "val":  1
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-03",
-                                                                       "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                       "val":  0.8
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-05",
-                                                                       "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                       "val":  2.55
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-07",
-                                                                       "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                       "val":  0.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-09",
-                                                                       "cat":  "Chi tiß╗ün cho con",
-                                                                       "val":  0.3
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-11",
-                                                                       "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                       "val":  6.5
-                                                                   },
-                                                                   {
-                                                                       "date":  "2022-09-12",
-                                                                       "cat":  "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
-                                                                       "val":  0.5
-                                                                   }
-                                                               ],
-                                                  "learningDetails":  [
-
-                                                                      ],
-                                                  "reconIncomeNotes":  {
-
-                                                                       },
-                                                  "reconExpenseNotes":  {
-
-                                                                        }
-                                              },
-                                        "10":  {
-                                                   "incomes":  [
-
-                                                               ],
-                                                   "expenses":  [
-                                                                    {
-                                                                        "date":  "2022-10-01",
-                                                                        "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                        "val":  5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-10-01",
-                                                                        "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                        "val":  1.1
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-10-02",
-                                                                        "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                        "val":  1.9
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-10-03",
-                                                                        "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                        "val":  2.1
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-10-05",
-                                                                        "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                        "val":  1.35
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-10-11",
-                                                                        "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                        "val":  6.5
-                                                                    }
-                                                                ],
-                                                   "learningDetails":  [
-
-                                                                       ],
-                                                   "reconIncomeNotes":  {
-
-                                                                        },
-                                                   "reconExpenseNotes":  {
-
-                                                                         }
-                                               },
-                                        "11":  {
-                                                   "incomes":  [
-
-                                                               ],
-                                                   "expenses":  [
-                                                                    {
-                                                                        "date":  "2022-11-01",
-                                                                        "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                        "val":  5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-01",
-                                                                        "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                        "val":  0.4
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-02",
-                                                                        "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                        "val":  2.5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-03",
-                                                                        "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                        "val":  1.5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-05",
-                                                                        "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                        "val":  1.35
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-07",
-                                                                        "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                        "val":  0.5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-11-11",
-                                                                        "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                        "val":  6.5
-                                                                    }
-                                                                ],
-                                                   "learningDetails":  [
-
-                                                                       ],
-                                                   "reconIncomeNotes":  {
-
-                                                                        },
-                                                   "reconExpenseNotes":  {
-
-                                                                         }
-                                               },
-                                        "12":  {
-                                                   "incomes":  [
-
-                                                               ],
-                                                   "expenses":  [
-                                                                    {
-                                                                        "date":  "2022-12-01",
-                                                                        "cat":  "Mua thß╗▒c phß║⌐m",
-                                                                        "val":  5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-01",
-                                                                        "cat":  "Mua ─æß╗ô d├╣ng trong nh├á",
-                                                                        "val":  4.5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-02",
-                                                                        "cat":  "─Éi ─ân ß╗ƒ ngo├ái",
-                                                                        "val":  3
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-03",
-                                                                        "cat":  "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
-                                                                        "val":  2
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-05",
-                                                                        "cat":  "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
-                                                                        "val":  1.55
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-07",
-                                                                        "cat":  "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
-                                                                        "val":  2.5
-                                                                    },
-                                                                    {
-                                                                        "date":  "2022-12-11",
-                                                                        "cat":  "Chi tiß╗ün trß║ú nß╗ú",
-                                                                        "val":  6.5
-                                                                    }
-                                                                ],
-                                                   "learningDetails":  [
-
-                                                                       ],
-                                                   "reconIncomeNotes":  {
-
-                                                                        },
-                                                   "reconExpenseNotes":  {
-
-                                                                         }
-                                               }
-                                    },
-                 "surveyP1Choices":  {
-                                         "1":  1,
-                                         "2":  5,
-                                         "3":  3,
-                                         "4":  3,
-                                         "5":  2,
-                                         "6":  2,
-                                         "7":  3,
-                                         "8":  2,
-                                         "9":  1,
-                                         "10":  2
-                                     },
-                 "surveyP2Choices":  {
-                                         "1":  3,
-                                         "2":  3,
-                                         "3":  1,
-                                         "4":  5,
-                                         "5":  3,
-                                         "6":  5,
-                                         "7":  5,
-                                         "8":  4,
-                                         "9":  2,
-                                         "10":  2,
-                                         "11":  3
-                                     },
-                 "yearEndBalanceSheet":  {
-                                             "assets":  [
-
-                                                        ],
-                                             "liabilities":  [
-
-                                                             ]
-                                         },
-                 "milestonesStore":  {
-
-                                     }
-             }
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            },
+            {
+                "id": "invest_du_lich",
+                "name": "Du lß╗ïch xuy├¬n Th├íi Lan",
+                "type": "invest",
+                "val": 50,
+                "paid": 0,
+                "start": 2023,
+                "end": 2026,
+                "rate": 8.65,
+                "allocProducts": [
+                    {
+                        "prodName": "Tiß╗ün gß╗¡i ng├ón h├áng",
+                        "weight": 50,
+                        "returnRate": 5,
+                        "risk": 2
+                    },
+                    {
+                        "prodName": "ETF - ETFFINLEAD",
+                        "weight": 20,
+                        "returnRate": 15,
+                        "risk": 20
+                    },
+                    {
+                        "prodName": "Tr├íi phiß║┐u Techcombank",
+                        "weight": 30,
+                        "returnRate": 10.5,
+                        "risk": 6
+                    }
+                ]
+            },
+            {
+                "id": "invest_du_phong",
+                "name": "Quß╗╣ dß╗▒ ph├▓ng t├ái ch├¡nh",
+                "type": "invest",
+                "val": 100,
+                "paid": 0,
+                "start": 2023,
+                "end": 2026,
+                "rate": 10.5,
+                "allocProducts": [
+                    {
+                        "prodName": "Tr├íi phiß║┐u Techcombank",
+                        "weight": 100,
+                        "returnRate": 10.5,
+                        "risk": 6
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            },
+            {
+                "id": "invest_dam_cuoi",
+                "name": "─É├ím c╞░ß╗¢i",
+                "type": "invest",
+                "val": 200,
+                "paid": 0,
+                "start": 2024,
+                "end": 2030,
+                "rate": 10.75,
+                "allocProducts": [
+                    {
+                        "prodName": "ETF - ETFFINLEAD",
+                        "weight": 30,
+                        "returnRate": 15,
+                        "risk": 20
+                    },
+                    {
+                        "prodName": "Tr├íi phiß║┐u Techcombank",
+                        "weight": 50,
+                        "returnRate": 10.5,
+                        "risk": 6
+                    },
+                    {
+                        "prodName": "Tiß╗ün gß╗¡i ng├ón h├áng",
+                        "weight": 20,
+                        "returnRate": 5,
+                        "risk": 2
+                    }
+                ]
+            },
+            {
+                "id": "invest_khoi_nghiep",
+                "name": "Khß╗ƒi nghiß╗çp",
+                "type": "invest",
+                "val": 500,
+                "paid": 0,
+                "start": 2028,
+                "end": 2032,
+                "rate": 7.5,
+                "allocProducts": [
+                    {
+                        "prodName": "Tiß╗ün gß╗¡i ng├ón h├áng",
+                        "weight": 50,
+                        "returnRate": 5,
+                        "risk": 2
+                    },
+                    {
+                        "prodName": "Tr├íi phiß║┐u FE Credit",
+                        "weight": 50,
+                        "returnRate": 10,
+                        "risk": 8
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            },
+            {
+                "id": "invest_mua_chung_cu",
+                "name": "Mua chung c╞░",
+                "type": "invest",
+                "val": 1500,
+                "paid": 0,
+                "start": 2025,
+                "end": 2037,
+                "rate": 16,
+                "allocProducts": [
+                    {
+                        "prodName": "DCBC",
+                        "weight": 100,
+                        "returnRate": 16,
+                        "risk": 20
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            },
+            {
+                "id": "fixed_retirement",
+                "name": "H╞░u tr├¡",
+                "type": "invest",
+                "isFixed": true,
+                "fixedType": "retirement",
+                "val": 500,
+                "paid": 0,
+                "start": 2031,
+                "end": 2040,
+                "rate": 8.5,
+                "allocProducts": [
+                    {
+                        "prodName": "Tiß╗ün gß╗¡i ng├ón h├áng",
+                        "weight": 50,
+                        "returnRate": 5,
+                        "risk": 2
+                    },
+                    {
+                        "prodName": "BH li├¬n kß║┐t ─æß║ºu t╞░",
+                        "weight": 50,
+                        "returnRate": 12,
+                        "risk": 5
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            },
+            {
+                "id": "fixed_college",
+                "name": "Cho con ─æi hß╗ìc ─æß║íi hß╗ìc",
+                "type": "invest",
+                "isFixed": true,
+                "fixedType": "college",
+                "val": 724.31,
+                "paid": 0,
+                "start": 2030,
+                "end": 2048,
+                "rate": 14.5,
+                "allocProducts": [
+                    {
+                        "prodName": "ETF - ETFVFM",
+                        "weight": 50,
+                        "returnRate": 13,
+                        "risk": 18
+                    },
+                    {
+                        "prodName": "DCBC",
+                        "weight": 50,
+                        "returnRate": 16,
+                        "risk": 20
+                    },
+                    {
+                        "prodName": "",
+                        "weight": 0,
+                        "returnRate": 0,
+                        "risk": 0
+                    }
+                ]
+            }
+        ],
+        "planIncome": [
+            {
+                "name": "L╞░╞íng tß╗½ c├┤ng ty",
+                "plan": 20,
+                "note": "Thu nhß║¡p cß╗æ ─æß╗ïnh h├áng th├íng"
+            },
+            {
+                "name": "Thu nhß║¡p kh├íc",
+                "plan": 10,
+                "note": "Thu nhß║¡p l├ám th├¬m, th╞░ß╗ƒng dß╗▒ ├ín"
+            }
+        ],
+        "planExpense": [
+            {
+                "name": "Mua thß╗▒c phß║⌐m",
+                "plan": 5,
+                "note": ""
+            },
+            {
+                "name": "Mua ─æß╗ô d├╣ng trong nh├á",
+                "plan": 0.5,
+                "note": ""
+            },
+            {
+                "name": "─Éi ─ân ß╗ƒ ngo├ái",
+                "plan": 2,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                "plan": 1.5,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün bß║úo hiß╗âm",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                "plan": 2,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün cho con",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün trß║ú nß╗ú",
+                "plan": 6.5,
+                "note": ""
+            },
+            {
+                "name": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                "plan": 1,
+                "note": ""
+            },
+            {
+                "name": "Chi ti├¬u 1",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi ti├¬u 2",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi ti├¬u 3",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi ti├¬u 4",
+                "plan": 0,
+                "note": ""
+            },
+            {
+                "name": "Chi ti├¬u 5",
+                "plan": 0,
+                "note": ""
+            }
+        ],
+        "skillsList": [
+            {
+                "name": "Cß║ºn bß╗ò sung kiß║┐n thß╗⌐c vß╗ü quß║ún l├╜ t├ái ch├¡nh v├á ─æß║ºu t╞░"
+            },
+            {
+                "name": "Ph├ít triß╗ân chuy├¬n m├┤n s├óu v├á kß╗╣ n─âng l├únh ─æß║ío ─æß╗Öi ng┼⌐"
+            }
+        ],
+        "familyList": [
+            {
+                "name": "Gia ─æ├¼nh c├│ nguß╗ôn hß╗ù trß╗ú ß╗òn ─æß╗ïnh, kh├┤ng c├│ ├íp lß╗▒c nß╗ú xß║Ñu"
+            }
+        ],
+        "jobList": [
+            {
+                "name": "M├┤i tr╞░ß╗¥ng c├┤ng viß╗çc c├│ lß╗Ö tr├¼nh th─âng tiß║┐n r├╡ r├áng"
+            },
+            {
+                "name": "C╞í hß╗Öi gia t─âng thu nhß║¡p v├á hß╗ìc hß╗Åi c├┤ng nghß╗ç mß╗¢i"
+            }
+        ],
+        "careerActualOverrides": {
+            "22": 10,
+            "23": 15,
+            "24": 20
+        },
+        "careerRouteOverrides": {
+            "22": 12,
+            "25": 15,
+            "26": 20,
+            "32": 25,
+            "36": 30,
+            "42": 40
+        },
+        "skillsStore": {
+            "0": "Quß║ún l├╜ c├┤ng viß╗çc c├í nh├ón hiß╗çu quß║ú, ho├án th├ánh tß╗æt c├íc nhiß╗çm vß╗Ñ ─æ╞░ß╗úc giao",
+            "1": "Quß║ún l├╜ ─æß╗Öi nh├│m nhß╗Å (3-5 ng╞░ß╗¥i), giao viß╗çc v├á giß║úi quyß║┐t xung ─æß╗Öt tß╗æt",
+            "2": "Ph├ít triß╗ân chiß║┐n l╞░ß╗úc d├ái hß║ín, hoß║ích ─æß╗ïnh nguß╗ôn lß╗▒c v├á t├ái ch├¡nh cho ph├▓ng ban",
+            "3": "L├únh ─æß║ío cß║Ñp cao, ─æß╗ïnh h╞░ß╗¢ng chiß║┐n l╞░ß╗úc doanh nghiß╗çp v├á quß║ún trß╗ï rß╗ºi ro",
+            "4": "Cß╗æ vß║Ñn chiß║┐n l╞░ß╗úc, chuy├¬n gia ─æß╗Öc lß║¡p hoß║╖c th├ánh vi├¬n hß╗Öi ─æß╗ông quß║ún trß╗ï"
+        },
+        "monthlyDetails": {
+            "1": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-01-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5.5
+                    },
+                    {
+                        "date": "2022-01-04",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 0.3
+                    },
+                    {
+                        "date": "2022-01-07",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 0.8
+                    },
+                    {
+                        "date": "2022-01-10",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.1
+                    },
+                    {
+                        "date": "2022-01-28",
+                        "cat": "Chi tiß╗ün bß║úo hiß╗âm",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-01-29",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.3
+                    },
+                    {
+                        "date": "2022-01-30",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.3
+                    },
+                    {
+                        "date": "2022-01-15",
+                        "cat": "Chi tiß╗ün cho con",
+                        "val": 0.2
+                    },
+                    {
+                        "date": "2022-01-10",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-01-05",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 2
+                    },
+                    {
+                        "date": "2022-01-01",
+                        "cat": "Chi ti├¬u 1",
+                        "val": 0.1
+                    },
+                    {
+                        "date": "2022-01-12",
+                        "cat": "Chi ti├¬u 2",
+                        "val": 1
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "2": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-02-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5
+                    },
+                    {
+                        "date": "2022-02-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 0.7
+                    },
+                    {
+                        "date": "2022-02-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1.8000000000000003
+                    },
+                    {
+                        "date": "2022-02-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 2.3
+                    },
+                    {
+                        "date": "2022-02-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.6
+                    },
+                    {
+                        "date": "2022-02-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-02-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 1.3
+                    },
+                    {
+                        "date": "2022-02-20",
+                        "cat": "Chi ti├¬u 1",
+                        "val": 0.8
+                    },
+                    {
+                        "date": "2022-02-25",
+                        "cat": "Chi ti├¬u 5",
+                        "val": 0.2
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "3": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-03-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 6.8
+                    },
+                    {
+                        "date": "2022-03-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 1.1
+                    },
+                    {
+                        "date": "2022-03-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-03-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.5
+                    },
+                    {
+                        "date": "2022-03-04",
+                        "cat": "Chi tiß╗ün bß║úo hiß╗âm",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-03-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.6500000000000001
+                    },
+                    {
+                        "date": "2022-03-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.7
+                    },
+                    {
+                        "date": "2022-03-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-03-20",
+                        "cat": "Chi ti├¬u 1",
+                        "val": 0.7
+                    },
+                    {
+                        "date": "2022-03-23",
+                        "cat": "Chi ti├¬u 3",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-03-24",
+                        "cat": "Chi ti├¬u 4",
+                        "val": 0.3
+                    },
+                    {
+                        "date": "2022-03-25",
+                        "cat": "Chi ti├¬u 5",
+                        "val": 0.5
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "4": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-04-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5
+                    },
+                    {
+                        "date": "2022-04-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 0.4
+                    },
+                    {
+                        "date": "2022-04-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1.3
+                    },
+                    {
+                        "date": "2022-04-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.2999999999999998
+                    },
+                    {
+                        "date": "2022-04-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.35
+                    },
+                    {
+                        "date": "2022-04-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-04-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 1.4
+                    },
+                    {
+                        "date": "2022-04-23",
+                        "cat": "Chi ti├¬u 3",
+                        "val": 0.3
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "5": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-05-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 3.4
+                    },
+                    {
+                        "date": "2022-05-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 1
+                    },
+                    {
+                        "date": "2022-05-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1.2999999999999998
+                    },
+                    {
+                        "date": "2022-05-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 2
+                    },
+                    {
+                        "date": "2022-05-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.5
+                    },
+                    {
+                        "date": "2022-05-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.4
+                    },
+                    {
+                        "date": "2022-05-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-05-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-05-20",
+                        "cat": "Chi ti├¬u 1",
+                        "val": 0.7
+                    },
+                    {
+                        "date": "2022-05-23",
+                        "cat": "Chi ti├¬u 3",
+                        "val": 0.2
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "6": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-06-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 4.3
+                    },
+                    {
+                        "date": "2022-06-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 0.30000000000000004
+                    },
+                    {
+                        "date": "2022-06-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1
+                    },
+                    {
+                        "date": "2022-06-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.0999999999999999
+                    },
+                    {
+                        "date": "2022-06-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.7500000000000002
+                    },
+                    {
+                        "date": "2022-06-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-06-20",
+                        "cat": "Chi ti├¬u 1",
+                        "val": 0.7
+                    },
+                    {
+                        "date": "2022-06-24",
+                        "cat": "Chi ti├¬u 4",
+                        "val": 0.1
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "7": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-07-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5.5
+                    },
+                    {
+                        "date": "2022-07-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 2.5
+                    },
+                    {
+                        "date": "2022-07-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-07-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.1
+                    },
+                    {
+                        "date": "2022-07-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.05
+                    },
+                    {
+                        "date": "2022-07-09",
+                        "cat": "Chi tiß╗ün cho con",
+                        "val": 1
+                    },
+                    {
+                        "date": "2022-07-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-07-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 0.1
+                    },
+                    {
+                        "date": "2022-07-22",
+                        "cat": "Chi ti├¬u 2",
+                        "val": 0.2
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "8": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-08-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 7
+                    },
+                    {
+                        "date": "2022-08-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 1.3
+                    },
+                    {
+                        "date": "2022-08-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 3.1
+                    },
+                    {
+                        "date": "2022-08-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 2.6500000000000004
+                    },
+                    {
+                        "date": "2022-08-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-08-09",
+                        "cat": "Chi tiß╗ün cho con",
+                        "val": 1
+                    },
+                    {
+                        "date": "2022-08-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-08-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-08-25",
+                        "cat": "Chi ti├¬u 5",
+                        "val": 0.3
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "9": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-09-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 4.2
+                    },
+                    {
+                        "date": "2022-09-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 1.3
+                    },
+                    {
+                        "date": "2022-09-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1
+                    },
+                    {
+                        "date": "2022-09-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 0.8
+                    },
+                    {
+                        "date": "2022-09-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 2.55
+                    },
+                    {
+                        "date": "2022-09-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.3
+                    },
+                    {
+                        "date": "2022-09-09",
+                        "cat": "Chi tiß╗ün cho con",
+                        "val": 0.3
+                    },
+                    {
+                        "date": "2022-09-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    },
+                    {
+                        "date": "2022-09-12",
+                        "cat": "Chi tiß╗ün cho tß║╖ng gia ─æ├¼nh",
+                        "val": 0.5
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "10": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-10-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5
+                    },
+                    {
+                        "date": "2022-10-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 1.1
+                    },
+                    {
+                        "date": "2022-10-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 1.9
+                    },
+                    {
+                        "date": "2022-10-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 2.1
+                    },
+                    {
+                        "date": "2022-10-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.35
+                    },
+                    {
+                        "date": "2022-10-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "11": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-11-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5
+                    },
+                    {
+                        "date": "2022-11-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 0.4
+                    },
+                    {
+                        "date": "2022-11-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 2.5
+                    },
+                    {
+                        "date": "2022-11-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 1.5
+                    },
+                    {
+                        "date": "2022-11-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.35
+                    },
+                    {
+                        "date": "2022-11-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 0.5
+                    },
+                    {
+                        "date": "2022-11-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            },
+            "12": {
+                "incomes": [],
+                "expenses": [
+                    {
+                        "date": "2022-12-01",
+                        "cat": "Mua thß╗▒c phß║⌐m",
+                        "val": 5
+                    },
+                    {
+                        "date": "2022-12-01",
+                        "cat": "Mua ─æß╗ô d├╣ng trong nh├á",
+                        "val": 4.5
+                    },
+                    {
+                        "date": "2022-12-02",
+                        "cat": "─Éi ─ân ß╗ƒ ngo├ái",
+                        "val": 3
+                    },
+                    {
+                        "date": "2022-12-03",
+                        "cat": "Chi tiß╗ün ph├ít triß╗ân bß║ún th├ón",
+                        "val": 2
+                    },
+                    {
+                        "date": "2022-12-05",
+                        "cat": "Chi tiß╗ün ─æiß╗çn, n╞░ß╗¢c, internet, ─æiß╗çn thoß║íi, x─âng xe",
+                        "val": 1.55
+                    },
+                    {
+                        "date": "2022-12-07",
+                        "cat": "Chi tiß╗ün giß║úi tr├¡, qu├á tß║╖ng",
+                        "val": 2.5
+                    },
+                    {
+                        "date": "2022-12-11",
+                        "cat": "Chi tiß╗ün trß║ú nß╗ú",
+                        "val": 6.5
+                    }
+                ],
+                "learningDetails": [],
+                "reconIncomeNotes": {},
+                "reconExpenseNotes": {}
+            }
+        },
+        "surveyP1Choices": {
+            "1": 1,
+            "2": 5,
+            "3": 3,
+            "4": 3,
+            "5": 2,
+            "6": 2,
+            "7": 3,
+            "8": 2,
+            "9": 1,
+            "10": 2
+        },
+        "surveyP2Choices": {
+            "1": 3,
+            "2": 3,
+            "3": 1,
+            "4": 5,
+            "5": 3,
+            "6": 5,
+            "7": 5,
+            "8": 4,
+            "9": 2,
+            "10": 2,
+            "11": 3
+        },
+        "yearEndBalanceSheet": {
+            "assets": [],
+            "liabilities": []
+        },
+        "milestonesStore": {}
+    }
 }
   </script>
   <script>
@@ -13612,24 +13510,6 @@ function ensureFixedInvestmentGoals() {
   if (!Array.isArray(AppState.tcGoals)) {
     AppState.tcGoals = [];
   }
-  let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
-  if (!collegeGoal) {
-    collegeGoal = createFixedCollegeGoal();
-  } else {
-    const tpl = createFixedCollegeGoal();
-    Object.keys(tpl).forEach(k => {
-      if (collegeGoal[k] === undefined || collegeGoal[k] === null) {
-        collegeGoal[k] = tpl[k];
-      }
-    });
-    collegeGoal.id = "fixed_college";
-    collegeGoal.fixedType = "college";
-    collegeGoal.isFixed = true;
-    collegeGoal.name = "Cho con đi học đại học";
-    collegeGoal.type = "invest";
-    normalizeGoalNumericFields(collegeGoal, tpl);
-  }
-
   let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
   if (!retireGoal) {
     retireGoal = createFixedRetirementGoal();
@@ -13648,8 +13528,26 @@ function ensureFixedInvestmentGoals() {
     normalizeGoalNumericFields(retireGoal, tpl);
   }
 
+  let collegeGoal = AppState.tcGoals.find(isCollegeFixedGoal);
+  if (!collegeGoal) {
+    collegeGoal = createFixedCollegeGoal();
+  } else {
+    const tpl = createFixedCollegeGoal();
+    Object.keys(tpl).forEach(k => {
+      if (collegeGoal[k] === undefined || collegeGoal[k] === null) {
+        collegeGoal[k] = tpl[k];
+      }
+    });
+    collegeGoal.id = "fixed_college";
+    collegeGoal.fixedType = "college";
+    collegeGoal.isFixed = true;
+    collegeGoal.name = "Cho con đi học đại học";
+    collegeGoal.type = "invest";
+    normalizeGoalNumericFields(collegeGoal, tpl);
+  }
+
   const regularGoals = AppState.tcGoals.filter(g => !isFixedInvestmentGoal(g));
-  AppState.tcGoals = [...regularGoals, collegeGoal, retireGoal];
+  AppState.tcGoals = [...regularGoals, retireGoal, collegeGoal];
 }
 
 function createEmptyAppState() {
@@ -13676,8 +13574,8 @@ function createEmptyAppState() {
     planList: [],
     investProducts: [],
     tcGoals: [
-      createFixedCollegeGoal(),
-      createFixedRetirementGoal()
+      createFixedRetirementGoal(),
+      createFixedCollegeGoal()
     ],
     skillsList: [],
     familyList: [],
@@ -14558,8 +14456,8 @@ function renderPortfolioT1Table() {
           <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT6: Đám cưới</th>
           <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT7: Khởi nghiệp</th>
           <th colspan="1" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT8: Mua chung cư</th>
-          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Cho con học ĐH</th>
-          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Hưu trí</th>
+          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Hưu trí</th>
+          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Cho con học ĐH</th>
         </tr>
         <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">
           <th>Tiền gửi NH</th><th>ETF FINLEAD</th><th>TP Techcom</th>
@@ -14567,8 +14465,8 @@ function renderPortfolioT1Table() {
           <th>ETF FINLEAD</th><th>TP Techcom</th><th>Tiền gửi NH</th>
           <th>Tiền gửi NH</th><th>TP FE Credit</th>
           <th>DCBC</th>
-          <th>ETF ETFVFM</th><th>DCBC</th>
           <th>Tiền gửi NH</th><th>BH liên kết ĐT</th>
+          <th>ETF ETFVFM</th><th>DCBC</th>
         </tr>
       `;
     }
@@ -14589,10 +14487,10 @@ function renderPortfolioT1Table() {
         <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
         <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
+        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
       </tr>`;
     }).join('');
   }
@@ -20626,7 +20524,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Cho con đi học đại học", "Hưu trí"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -20732,16 +20630,16 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
 
   if (Array.isArray(cleanImport.tcGoals)) {
     ensureFixedInvestmentGoals();
-    const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
     const currentRetire = AppState.tcGoals.find(isRetirementFixedGoal);
+    const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
 
     if (mode === 'replace') {
       AppState.tcGoals = cleanImport.tcGoals.filter(g => g && typeof g === 'object');
-      if (!AppState.tcGoals.find(isCollegeFixedGoal) && currentCollege) {
-        AppState.tcGoals.unshift(currentCollege);
-      }
       if (!AppState.tcGoals.find(isRetirementFixedGoal) && currentRetire) {
         AppState.tcGoals.push(currentRetire);
+      }
+      if (!AppState.tcGoals.find(isCollegeFixedGoal) && currentCollege) {
+        AppState.tcGoals.push(currentCollege);
       }
     } else {
       cleanImport.tcGoals.forEach(g => {
@@ -22671,7 +22569,7 @@ window.renderAdminGroupsList = async function() {
             <div class="group-meta-badges">
               <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
                 <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i>
-                <span>${isPriv ? 'Nhóm Kín (Private)' : 'Nhóm Mở (Global)'}</span>
+                <span>${isPriv ? 'Nhóm riêng tư' : 'Nhóm mở'}</span>
               </span>
               <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${c.code}')" title="Bấm để sao chép mã">
                 <code>${c.code}</code> <i class="fa-regular fa-copy"></i>
@@ -22844,7 +22742,7 @@ window.renderAdminRequestsTable = async function() {
 
   if (groupFilter) {
     const curVal = groupFilter.value;
-    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm Kín</option>';
+    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm riêng tư</option>';
     classes.filter(c => c.isPrivate !== false).forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
@@ -23822,7 +23720,7 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += 'Chỉ số,Giá trị,Mô tả / Đơn vị\n';
   csv += `Tổng số Nhóm / Lớp học,${classes.length},Nhóm đang hoạt động trên hệ thống\n`;
   csv += `Tổng số Học viên chính thức,${totalMembers},Học viên đã tham gia vào các nhóm\n`;
-  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm Kín (Private)\n`;
+  csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm riêng tư\n`;
   csv += `Tỷ lệ hoàn thành ma trận học tập,${totalMembers > 0 ? '78.5%' : '0%'},Đánh giá trên 4 phân hệ cốt lõi M1-M4\n`;
   csv += 'Tỷ lệ tiết kiệm bình quân hệ thống,38.2%,Tỷ lệ tiết kiệm trên tổng thu nhập hàng tháng\n';
   csv += 'Tỷ lệ trả nợ bình quân (DSR),14.6%,Khuyến nghị chuẩn an toàn DSR < 35%\n';
