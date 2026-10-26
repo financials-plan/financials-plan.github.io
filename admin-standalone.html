@@ -14578,11 +14578,11 @@ function calculateAgeMilestones() {
       age,
       year,
       incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
-      stocks: (userStore.stocks !== undefined && userStore.stocks !== null && !isNaN(userStore.stocks)) ? Number(userStore.stocks) : rec.stocks,
-      bonds: (userStore.bonds !== undefined && userStore.bonds !== null && !isNaN(userStore.bonds)) ? Number(userStore.bonds) : rec.bonds,
-      ins: (userStore.ins !== undefined && userStore.ins !== null && !isNaN(userStore.ins)) ? Number(userStore.ins) : rec.ins,
-      cash: (userStore.cash !== undefined && userStore.cash !== null && !isNaN(userStore.cash)) ? Number(userStore.cash) : rec.cash,
-      returnNeed: (userStore.returnNeed !== undefined && userStore.returnNeed !== null && !isNaN(userStore.returnNeed)) ? Number(userStore.returnNeed) : rec.returnNeed,
+      stocks: rec.stocks,
+      bonds: rec.bonds,
+      ins: rec.ins,
+      cash: rec.cash,
+      returnNeed: rec.returnNeed,
       skills: skillVal
     };
   });
@@ -17199,31 +17199,11 @@ function renderCareerTables() {
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
         <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'stocks', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Cổ phiếu (tuổi ${item.age})">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'bonds', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Trái phiếu (tuổi ${item.age})">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'ins', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Bảo hiểm (tuổi ${item.age})">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'cash', this.innerText)"
-            title="Nhấn để chỉnh sửa tỷ trọng Tiền gửi NH (tuổi ${item.age})">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-success font-mono cell-blue"
-            contenteditable="true" spellcheck="false"
-            onfocus="if (this.innerText.includes('%')) this.innerText = this.innerText.replace('%','').trim()"
-            onblur="updateCareerMilestoneField(${idx}, 'returnNeed', this.innerText)"
-            title="Nhấn để chỉnh sửa Mức sinh lời cần thiết (tuổi ${item.age})">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-right font-semibold font-mono">${item.stocks.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.bonds.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
+        <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
+        <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
         <td>
           <input type="text"
                  class="input-inline-cell font-semibold"
