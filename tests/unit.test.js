@@ -163,8 +163,8 @@ test("2. Backend API - Admin Codes & Role Assignment", async () => {
 test("3. Backend API - Class & Group Management", async () => {
   const listRes = await makeRequest("GET", "/api/classes");
   assert.strictEqual(listRes.status, 200);
-  assert.ok(listRes.data.classes.length >= 1);
-  assert.strictEqual(listRes.data.classes[0].code, "TC-K48");
+  assert.ok(Array.isArray(listRes.data.classes));
+  assert.strictEqual(listRes.data.classes.length, 0);
 
   const createRes = await makeRequest("POST", "/api/classes", {
     name: "Lớp Tài Chính K49 Nâng Cao",
@@ -227,6 +227,12 @@ test("3. Backend API - Class & Group Management", async () => {
   });
   assert.strictEqual(archiveRes.status, 200);
   assert.strictEqual(archiveRes.data.class.status, "archived");
+
+  const deleteRes = await makeRequest("POST", "/api/classes/delete", {
+    classId: createNoLimitRes.data.class.id
+  });
+  assert.strictEqual(deleteRes.status, 200);
+  assert.strictEqual(deleteRes.data.success, true);
 });
 
 test("4. Financial Data & Code Parity Preservation", () => {
@@ -275,7 +281,7 @@ test("5. Backend QTV / Admin APIs", async () => {
   assert.strictEqual(ovRes.status, 200);
   assert.strictEqual(ovRes.data.success, true);
   assert.ok(ovRes.data.overview.users.total >= 4);
-  assert.ok(ovRes.data.overview.classes.total >= 1);
+  assert.ok(ovRes.data.overview.classes.total >= 0);
   assert.ok(ovRes.data.overview.adminCodes.total >= 2);
 
   const usersRes = await makeRequest("GET", "/api/admin/users");
@@ -317,9 +323,16 @@ test("5. Backend QTV / Admin APIs", async () => {
   });
   assert.strictEqual(initDupRes.status, 409);
 
+  const updateTargetCls = await makeRequest("POST", "/api/classes", {
+    name: "Lớp Tài Chính Test Update",
+    code: "TC-UPD-TEST",
+    instructorUsername: "dinh_anh_quan",
+    maxMembers: 50,
+    isPrivate: true
+  });
   const updateClassRes = await makeRequest("POST", "/api/classes/update", {
-    classId: "cls_k48",
-    name: "Lớp Tài Chính Cá Nhân K48 Mở Rộng",
+    classId: updateTargetCls.data.class.id,
+    name: "Lớp Tài Chính Cá Nhân Mở Rộng",
     maxMembers: 100,
     isPrivate: true,
     description: "Nhóm kín thực hành đầu tư và tài chính cá nhân"

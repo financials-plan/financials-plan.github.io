@@ -313,22 +313,7 @@
     }
 
     if (cachedClasses.length === 0) {
-      cachedClasses = [
-        {
-          id: "cls_k48",
-          name: "Lớp Tài Chính Cá Nhân K48",
-          code: "TC-K48",
-          isPrivate: true,
-          isAccepting: true,
-          maxMembers: 60,
-          members: [
-            { username: "dinh_anh_quan", name: "Đinh Anh Quân", status: "approved", joinedAt: "2026-10-20" },
-            { username: "hst", name: "Học Viên HST", status: "approved", joinedAt: "2026-10-21" },
-            { username: "nguyen_van_a", name: "Nguyễn Văn A", status: "approved", joinedAt: "2026-10-22" },
-            { username: "tran_thi_b", name: "Trần Thị B", status: "pending", joinedAt: "2026-10-25" }
-          ]
-        }
-      ];
+      cachedClasses = [];
     }
 
     const select = document.getElementById("admin-class-select");

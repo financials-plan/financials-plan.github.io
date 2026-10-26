@@ -6377,9 +6377,19 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
 
 .admin-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 22px;
+}
+@media (max-width: 992px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 576px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .admin-kpi-card {
   background: var(--bg-card);
@@ -8009,6 +8019,33 @@ select.admin-select-styled:focus {
 .btn-archive-group-danger:hover {
   background: #ef4444;
   color: #fff;
+}
+.btn-delete-group-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-delete-group-danger:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+.straight-line-radio {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
 }
 
 .system-pref-card {
@@ -10859,14 +10896,14 @@ input::-ms-clear {
           <div class="privacy-selector-group">
             <label class="privacy-radio-label">
               <input type="radio" name="custom-group-privacy" value="private">
-              <span class="privacy-radio-card">
-                <i class="fa-solid fa-lock"></i> <strong>Nhóm Kín (Private)</strong> — Cần QTV duyệt
+              <span class="privacy-radio-card straight-line-radio">
+                <i class="fa-solid fa-lock"></i> <strong>Nhóm Riêng tư - phê duyệt</strong>
               </span>
             </label>
             <label class="privacy-radio-label">
               <input type="radio" name="custom-group-privacy" value="global">
-              <span class="privacy-radio-card">
-                <i class="fa-solid fa-globe"></i> <strong>Nhóm Mở (Global)</strong> — Vào tự do
+              <span class="privacy-radio-card straight-line-radio">
+                <i class="fa-solid fa-globe"></i> <strong>Nhóm Mở (Global) — Vào tự do</strong>
               </span>
             </label>
           </div>
@@ -10879,9 +10916,14 @@ input::-ms-clear {
       </div>
 
       <div class="modal-footer" style="justify-content: space-between;">
-        <button type="button" class="btn-archive-group-danger" onclick="archiveCurrentCustomGroup()">
-          <i class="fa-solid fa-box-archive"></i> <span>Đóng / Lưu trữ nhóm</span>
-        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-archive-group-danger" onclick="archiveCurrentCustomGroup()">
+            <i class="fa-solid fa-box-archive"></i> <span>Lưu trữ</span>
+          </button>
+          <button type="button" class="btn-delete-group-danger" onclick="deleteCurrentCustomGroup()">
+            <i class="fa-solid fa-trash-can"></i> <span>Xóa nhóm</span>
+          </button>
+        </div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn-modal-cancel" onclick="closeCustomGroupModal()">Hủy</button>
           <button type="button" class="btn-modal-submit" onclick="saveCustomGroupSettings()">
@@ -12500,25 +12542,14 @@ const StandaloneStorageEngine = (function() {
       currentCodes["INST-2026-K48A"] = seedCodes["INST-2026-K48A"];
       localStorage.setItem("FIN_ADMIN_CODES_STORE", JSON.stringify(currentCodes));
 
-      if (!localStorage.getItem("FIN_CLASSES_STORE")) {
-        const seedClasses = {
-          "cls_k48": {
-            id: "cls_k48",
-            name: "Lớp Tài Chính Cá Nhân K48",
-            code: "TC-K48",
-            instructorUsername: "admin",
-            instructorName: "Quản trị viên",
-            maxMembers: 50,
-            isPrivate: true,
-            status: "active",
-            createdAt: "2026-10-01T00:00:00.000Z",
-            members: [
-              { username: "hst", name: "Học viên HST", status: "approved", joinedAt: "2026-10-05T00:00:00.000Z" },
-              { username: "demo", name: "Demo User", status: "pending", joinedAt: "2026-10-20T00:00:00.000Z" }
-            ]
-          }
-        };
-        localStorage.setItem("FIN_CLASSES_STORE", JSON.stringify(seedClasses));
+      let currentClasses = {};
+      try {
+        const rawCls = localStorage.getItem("FIN_CLASSES_STORE");
+        if (rawCls) currentClasses = JSON.parse(rawCls);
+      } catch (e) {}
+      if (currentClasses["cls_k48"]) {
+        delete currentClasses["cls_k48"];
+        localStorage.setItem("FIN_CLASSES_STORE", JSON.stringify(currentClasses));
       }
 
       const sample = getEmbeddedSampleData();
@@ -12811,6 +12842,20 @@ const StandaloneStorageEngine = (function() {
         return { success: true, class: classes[classId] };
       }
       return { success: false, error: "Không tìm thấy lớp" };
+    },
+
+    deleteClass: async function(classId) {
+      let classes = {};
+      try {
+        const raw = localStorage.getItem("FIN_CLASSES_STORE");
+        if (raw) classes = JSON.parse(raw);
+      } catch (e) {}
+      if (classes[classId]) {
+        delete classes[classId];
+        try { localStorage.setItem("FIN_CLASSES_STORE", JSON.stringify(classes)); } catch (e) {}
+        return { success: true, message: "Đã xóa nhóm thành công." };
+      }
+      return { success: false, error: "Không tìm thấy lớp học." };
     },
 
     getStudentClassProgress: async function(classId) {
@@ -22766,6 +22811,28 @@ window.archiveCurrentCustomGroup = async function() {
   }
 };
 
+window.deleteCurrentCustomGroup = async function() {
+  const classId = document.getElementById('custom-group-id')?.value;
+  if (!classId) return;
+  if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhóm này không? Toàn bộ danh sách thành viên trong nhóm sẽ bị xóa.')) return;
+
+  if (window.CloudDB && typeof window.CloudDB.deleteClass === 'function') {
+    await window.CloudDB.deleteClass(classId);
+    showToast('Đã xóa nhóm thành công.');
+    closeCustomGroupModal();
+    if (currentSelectedClassId === classId) {
+      currentSelectedClassId = null;
+    }
+    await renderAdminGroupsList();
+    if (document.getElementById('tab-admin-students')?.classList.contains('active')) {
+      renderAdminStudentsTable();
+    }
+    if (document.getElementById('tab-admin-analytics')?.classList.contains('active')) {
+      renderAdminAnalyticsView();
+    }
+  }
+};
+
 window.renderAdminRequestsTable = async function() {
   const tbody = document.getElementById('tbody-admin-requests');
   const emptyBox = document.getElementById('empty-admin-requests');
@@ -22978,6 +23045,7 @@ window.renderAdminStudentsTable = async function() {
   if (classes.length === 0) {
     if (groupSelect) groupSelect.innerHTML = '<option value="">Chưa có nhóm nào</option>';
     tbody.innerHTML = '';
+    if (metaBox) metaBox.innerHTML = '';
     if (emptyBox) emptyBox.style.display = 'block';
     return;
   }
@@ -23409,6 +23477,13 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   const classes = await window.CloudDB.getClasses();
   cachedClassesList = classes;
+
+  if (classes.length === 0) {
+    if (groupSel) groupSel.innerHTML = '<option value="">Chưa có nhóm nào</option>';
+    if (barsContainer) barsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-chart-pie"></i></div><h3>Chưa có dữ liệu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để tổng hợp phân bổ danh mục.</p></div>';
+    if (goalsContainer) goalsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-bullseye"></i></div><h3>Chưa có mục tiêu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để đo lường tiến độ mục tiêu.</p></div>';
+    return;
+  }
 
   if (groupSel) {
     groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === (classId || currentSelectedClassId) ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');

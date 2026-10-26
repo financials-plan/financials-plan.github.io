@@ -2682,14 +2682,14 @@
           <div class="privacy-selector-group">
             <label class="privacy-radio-label">
               <input type="radio" name="custom-group-privacy" value="private">
-              <span class="privacy-radio-card">
-                <i class="fa-solid fa-lock"></i> <strong>Nhóm Kín (Private)</strong> — Cần QTV duyệt
+              <span class="privacy-radio-card straight-line-radio">
+                <i class="fa-solid fa-lock"></i> <strong>Nhóm Riêng tư - phê duyệt</strong>
               </span>
             </label>
             <label class="privacy-radio-label">
               <input type="radio" name="custom-group-privacy" value="global">
-              <span class="privacy-radio-card">
-                <i class="fa-solid fa-globe"></i> <strong>Nhóm Mở (Global)</strong> — Vào tự do
+              <span class="privacy-radio-card straight-line-radio">
+                <i class="fa-solid fa-globe"></i> <strong>Nhóm Mở (Global) — Vào tự do</strong>
               </span>
             </label>
           </div>
@@ -2702,9 +2702,14 @@
       </div>
 
       <div class="modal-footer" style="justify-content: space-between;">
-        <button type="button" class="btn-archive-group-danger" onclick="archiveCurrentCustomGroup()">
-          <i class="fa-solid fa-box-archive"></i> <span>Đóng / Lưu trữ nhóm</span>
-        </button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn-archive-group-danger" onclick="archiveCurrentCustomGroup()">
+            <i class="fa-solid fa-box-archive"></i> <span>Lưu trữ</span>
+          </button>
+          <button type="button" class="btn-delete-group-danger" onclick="deleteCurrentCustomGroup()">
+            <i class="fa-solid fa-trash-can"></i> <span>Xóa nhóm</span>
+          </button>
+        </div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn-modal-cancel" onclick="closeCustomGroupModal()">Hủy</button>
           <button type="button" class="btn-modal-submit" onclick="saveCustomGroupSettings()">

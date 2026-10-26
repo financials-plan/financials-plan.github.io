@@ -9936,6 +9936,28 @@ window.archiveCurrentCustomGroup = async function() {
   }
 };
 
+window.deleteCurrentCustomGroup = async function() {
+  const classId = document.getElementById('custom-group-id')?.value;
+  if (!classId) return;
+  if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhóm này không? Toàn bộ danh sách thành viên trong nhóm sẽ bị xóa.')) return;
+
+  if (window.CloudDB && typeof window.CloudDB.deleteClass === 'function') {
+    await window.CloudDB.deleteClass(classId);
+    showToast('Đã xóa nhóm thành công.');
+    closeCustomGroupModal();
+    if (currentSelectedClassId === classId) {
+      currentSelectedClassId = null;
+    }
+    await renderAdminGroupsList();
+    if (document.getElementById('tab-admin-students')?.classList.contains('active')) {
+      renderAdminStudentsTable();
+    }
+    if (document.getElementById('tab-admin-analytics')?.classList.contains('active')) {
+      renderAdminAnalyticsView();
+    }
+  }
+};
+
 window.renderAdminRequestsTable = async function() {
   const tbody = document.getElementById('tbody-admin-requests');
   const emptyBox = document.getElementById('empty-admin-requests');
@@ -10148,6 +10170,7 @@ window.renderAdminStudentsTable = async function() {
   if (classes.length === 0) {
     if (groupSelect) groupSelect.innerHTML = '<option value="">Chưa có nhóm nào</option>';
     tbody.innerHTML = '';
+    if (metaBox) metaBox.innerHTML = '';
     if (emptyBox) emptyBox.style.display = 'block';
     return;
   }
@@ -10579,6 +10602,13 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   const classes = await window.CloudDB.getClasses();
   cachedClassesList = classes;
+
+  if (classes.length === 0) {
+    if (groupSel) groupSel.innerHTML = '<option value="">Chưa có nhóm nào</option>';
+    if (barsContainer) barsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-chart-pie"></i></div><h3>Chưa có dữ liệu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để tổng hợp phân bổ danh mục.</p></div>';
+    if (goalsContainer) goalsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-bullseye"></i></div><h3>Chưa có mục tiêu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để đo lường tiến độ mục tiêu.</p></div>';
+    return;
+  }
 
   if (groupSel) {
     groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === (classId || currentSelectedClassId) ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');

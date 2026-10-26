@@ -3,7 +3,8 @@ import {
   getFirestore,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth,
@@ -355,23 +356,7 @@ const DEFAULT_ADMIN_CODES = {
   "INST-2026-K48A": { code: "INST-2026-K48A", role: "instructor", maxUses: 2, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
 };
 
-const DEFAULT_CLASSES = {
-  "cls_k48": {
-    id: "cls_k48",
-    name: "Lớp Tài Chính Cá Nhân K48",
-    code: "TC-K48",
-    instructorUsername: "dinh_anh_quan",
-    instructorName: "Đinh Anh Quân",
-    maxMembers: 50,
-    isPrivate: true,
-    status: "active",
-    createdAt: "2026-10-01T00:00:00.000Z",
-    members: [
-      { username: "hst", name: "HST", status: "approved", joinedAt: "2026-10-05T00:00:00.000Z" },
-      { username: "demo", name: "Demo User", status: "pending", joinedAt: "2026-10-20T00:00:00.000Z" }
-    ]
-  }
-};
+const DEFAULT_CLASSES = {};
 
 function getLocalAdminCodes() {
   let codes = {};
@@ -415,6 +400,10 @@ function getLocalClasses() {
     classes = {};
   }
   let modified = false;
+  if (classes["cls_k48"]) {
+    delete classes["cls_k48"];
+    modified = true;
+  }
   Object.keys(DEFAULT_CLASSES).forEach(k => {
     if (!classes[k]) {
       classes[k] = JSON.parse(JSON.stringify(DEFAULT_CLASSES[k]));
@@ -1727,6 +1716,19 @@ const FirestoreService = {
       setDoc(doc(db, CLASSES_COLLECTION, classId), targetClass, { merge: true }).catch(() => {});
     }
     return { success: true, message: "Đã lưu trữ và kết thúc học kỳ an toàn.", class: targetClass };
+  },
+
+  async deleteClass(classId) {
+    const classes = getLocalClasses();
+    if (!classes[classId]) {
+      return { success: false, error: "Không tìm thấy lớp học." };
+    }
+    delete classes[classId];
+    saveLocalClasses(classes);
+    if (isFirebaseReady && db) {
+      deleteDoc(doc(db, CLASSES_COLLECTION, classId)).catch(() => {});
+    }
+    return { success: true, message: "Đã xóa nhóm thành công." };
   },
 
   async getStudentClassProgress(studentUsername) {

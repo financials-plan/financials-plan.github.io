@@ -6360,9 +6360,19 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
 
 .admin-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 22px;
+}
+@media (max-width: 992px) {
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 576px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .admin-kpi-card {
   background: var(--bg-card);
@@ -7992,6 +8002,33 @@ select.admin-select-styled:focus {
 .btn-archive-group-danger:hover {
   background: #ef4444;
   color: #fff;
+}
+.btn-delete-group-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-delete-group-danger:hover {
+  background: #dc2626;
+  color: #fff;
+  border-color: #dc2626;
+}
+.straight-line-radio {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
 }
 
 .system-pref-card {

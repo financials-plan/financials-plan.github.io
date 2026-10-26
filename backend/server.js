@@ -56,22 +56,6 @@ function seedInitialData() {
     { code: "INST-2026-K48A", role: "instructor", maxUses: 2, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
   ];
   sampleCodes.forEach(c => adminCodesStore.set(c.code, { ...c }));
-
-  classesStore.set("cls_k48", {
-    id: "cls_k48",
-    name: "Lớp Tài Chính Cá Nhân K48",
-    code: "TC-K48",
-    instructorUsername: "dinh_anh_quan",
-    instructorName: "Đinh Anh Quân",
-    maxMembers: 50,
-    isPrivate: true,
-    status: "active",
-    createdAt: "2026-10-01T00:00:00.000Z",
-    members: [
-      { username: "hst", name: "HST", status: "approved", joinedAt: "2026-10-05T00:00:00.000Z" },
-      { username: "demo", name: "Demo User", status: "pending", joinedAt: "2026-10-20T00:00:00.000Z" }
-    ]
-  });
 }
 seedInitialData();
 
@@ -874,6 +858,19 @@ const server = http.createServer(async (req, res) => {
       targetClass.status = "archived";
       targetClass.archivedAt = new Date().toISOString();
       sendJson(res, 200, { success: true, message: "Đã lưu trữ và đóng học kỳ an toàn.", class: targetClass });
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/classes/delete") {
+      const body = await parseJsonBody(req);
+      const classId = sanitizeInput(body.classId, 32);
+      const targetClass = classesStore.get(classId);
+      if (!targetClass) {
+        sendJson(res, 404, { success: false, error: "Không tìm thấy lớp học." });
+        return;
+      }
+      classesStore.delete(classId);
+      sendJson(res, 200, { success: true, message: "Đã xóa nhóm thành công." });
       return;
     }
 
