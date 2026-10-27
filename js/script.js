@@ -1933,7 +1933,7 @@ window.switchTab = function(tabId) {
     'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
     'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
     'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN',
-    'tab-admin-groups': 'TỔNG QUAN CÁC NHÓM ĐƯỢC TẠO',
+    'tab-admin-groups': 'TỔNG QUAN CÁC NHÓM',
     'tab-admin-requests': 'YÊU CẦU VÀO NHÓM (PRIVATE)',
     'tab-admin-students': 'QUẢN LÍ SINH VIÊN & THÀNH VIÊN',
     'tab-admin-analytics': 'PHÂN TÍCH CHUYÊN SÂU NHÓM'
