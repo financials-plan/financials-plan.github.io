@@ -6262,7 +6262,7 @@ function createCardHtmlCollege(g, num) {
               <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%</td>
             </tr>
             <tr>
-              <td>LS ước tính (năm)</td>
+              <td>Lãi suất ước tính (năm)</td>
               <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
               <td colspan="6" class="bg-neutral-gray"></td>
             </tr>
