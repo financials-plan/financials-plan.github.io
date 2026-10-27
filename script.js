@@ -5650,14 +5650,14 @@ function syncDebtGoalToOverallData() {
   let debtPlanItem = AppState.planExpense.find(p => p.name === "Chi tiền trả nợ");
   if (totalMonthlyDebtNeed > 0) {
     if (!debtPlanItem) {
-      debtPlanItem = { name: "Chi tiền trả nợ", plan: parseFloat(totalMonthlyDebtNeed.toFixed(2)), note: "Tự động đồng bộ từ Mục tiêu trả nợ" };
+      debtPlanItem = { name: "Chi tiền trả nợ", plan: parseFloat(totalMonthlyDebtNeed.toFixed(2)), note: "" };
       AppState.planExpense.push(debtPlanItem);
     } else {
       debtPlanItem.plan = parseFloat(totalMonthlyDebtNeed.toFixed(2));
-      debtPlanItem.note = "Tự động đồng bộ từ Mục tiêu trả nợ";
+      debtPlanItem.note = "";
     }
     renderPlanTables();
-  } else if (debtPlanItem && debtPlanItem.note === "Tự động đồng bộ từ Mục tiêu trả nợ") {
+  } else if (debtPlanItem && debtPlanItem.note === "") {
     debtPlanItem.plan = 0;
     renderPlanTables();
   }
