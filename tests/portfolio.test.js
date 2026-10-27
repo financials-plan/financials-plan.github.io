@@ -32,7 +32,8 @@ const FN_NAMES = [
   "calculateMonthlyNeed", "getTargetSavingsRatePct", "getEffectiveSavingsRateRatio",
   "computeIncomeNeedForGoalSavings", "getMatrixIncomeNeed", "simulatePersonalPortfolio",
   "describePortfolioIssues", "getPortfolioAllocationAtAge", "getPortfolio30YrData", "calculateAgeMilestones",
-  "getCareerBase"
+  "yearsToGoalDate", "inflateToGoalDate", "accumulationMonthsOf", "singleRateOfGoal", "applyFixedGoalValEdit",
+  "migrateLegacyRetirementReserve"
 ].filter(n => new RegExp("^function " + n + "\\(", "m").test(src));
 
 function makeEnv(state) {
@@ -40,7 +41,7 @@ function makeEnv(state) {
     FM_SRC,
     ...FN_NAMES.map(n => extractTopLevel(src, "function " + n + "(")),
     "return { FinancialMath, calculateMonthlyNeed, simulatePersonalPortfolio, getPortfolio30YrData, getMatrixIncomeNeed, " +
-    "calculateAgeMilestones, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge };"
+    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge };"
   ].join("\n");
   const factory = new Function("AppState", "window", code);
   return factory(state, {});
@@ -336,4 +337,61 @@ test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script
     src,
     "script.js phải trùng js/script.js"
   );
+});
+
+test("K. Hưu trí: số kỳ theo NĂM, lạm phát và lợi suất giai đoạn nghỉ hưu thận trọng", () => {
+  const ret = goal("Hưu trí", {
+    id: "fixed_retirement", fixedType: "retirement", isFixed: true, layoutV: 2,
+    start: 2030, end: 2040, yearsRetire: 30, monthlyRetire: 10, inflation: 4, retireReturnRate: 6.5, deathFund: 0,
+    allocProducts: [
+      { prodName: "Tiền gửi C", weight: 100, _explicitSelected: true },
+      { prodName: "", weight: 0 }, { prodName: "", weight: 0 }
+    ]
+  });
+  const env = makeEnv(baseState({ tcGoals: [ret] }));
+  env.calculateMonthlyNeed(ret);
+  // kỳ vọng độc lập: chi tiêu năm đầu nghỉ hưu quy đổi lạm phát 11 năm, tăng 4%/năm, chiết khấu 6,5%/năm, 30 NĂM
+  const first = 120 * Math.pow(1.04, 11);
+  let cap = 0;
+  for (let t = 1; t <= 30; t++) cap += first * Math.pow(1.04, t - 1) / Math.pow(1.065, t);
+  assert.ok(Math.abs(ret.val - cap) < 0.01, `vốn hưu trí ${ret.val} vs ${cap}`);
+  // nếu nhầm 30 là 30 tháng (2,5 năm) thì thấp hơn rất nhiều
+  let wrong = 0;
+  for (let t = 1; t <= 2.5; t++) wrong += first * Math.pow(1.04, t - 1) / Math.pow(1.065, t);
+  assert.ok(ret.val > wrong * 5);
+  // khoản góp khớp mục tiêu theo lợi suất sản phẩm 5%
+  const r = effMonthly(5), n = 132;
+  const A = ret.calculatedTargetFV / ((Math.pow(1 + r, n) - 1) / r);
+  assert.ok(Math.abs(ret.monthly - A) < 1e-6);
+});
+
+test("L. Lạm phát mục tiêu thường; 0% giữ nguyên kết quả cũ", () => {
+  const g1 = goal("Mua nhà", { val: 1500, start: 2030, end: 2036, inflation: 4,
+    allocProducts: [{ prodName: "Tiền gửi C", weight: 100, _explicitSelected: true }, { prodName: "", weight: 0 }, { prodName: "", weight: 0 }] });
+  const g0 = JSON.parse(JSON.stringify(g1)); g0.inflation = 0;
+  const env = makeEnv(baseState({ tcGoals: [g1, g0] }));
+  env.calculateMonthlyNeed(g1); env.calculateMonthlyNeed(g0);
+  assert.ok(Math.abs(g1.calculatedTargetFV - 1500 * Math.pow(1.04, 7)) < 1e-6);
+  assert.ok(Math.abs(g0.calculatedTargetFV - 1500) < 1e-9);
+  assert.ok(g1.monthly > g0.monthly);
+});
+
+test("M. Di chuyển dữ liệu cũ: khối Hưu trí chứa quỹ dự phòng -> mục tiêu 'Quỹ dự phòng', không mất dữ liệu", () => {
+  const legacyRet = goal("Hưu trí", { id: "fixed_retirement", fixedType: "retirement", isFixed: true, val: 500, start: 2030, end: 2035,
+    reserveMonths: 10, monthlyCostEstimate: 50, annualCostEstimate: 600, paid: 20 });
+  const goals = [legacyRet];
+  const env = makeEnv(baseState({ tcGoals: goals }));
+  env.migrateLegacyRetirementReserve(goals);
+  assert.strictEqual(goals.length, 2);
+  const moved = goals[0];
+  assert.strictEqual(moved.name, "Quỹ dự phòng");
+  assert.strictEqual(moved.val, 500);
+  assert.strictEqual(moved.paid, 20);
+  assert.strictEqual(moved.start, 2030);
+  assert.strictEqual(moved.isFixed, false);
+  assert.strictEqual(legacyRet.name, "Hưu trí");
+  assert.strictEqual(legacyRet.val, 0);
+  assert.strictEqual(legacyRet.layoutV, 2);
+  env.migrateLegacyRetirementReserve(goals);
+  assert.strictEqual(goals.length, 2, "chạy lại không nhân đôi");
 });

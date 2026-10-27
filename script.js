@@ -660,7 +660,7 @@ function createFixedCollegeGoal() {
     id: "fixed_college",
     fixedType: "college",
     isFixed: true,
-    name: "Quỹ dự phòng Tài chính",
+    name: "Cho con đi học đại học",
     type: "invest",
     start: 0,
     end: 0,
@@ -730,7 +730,7 @@ function normalizeGoalNumericFields(goal, template) {
     "start", "end", "val", "paid", "inflation", "rate", "monthly", "annual",
     "accumulationYears", "collegePeriods", "monthlyTuition", "supportFund",
     "reserveMonths", "annualCostEstimate", "monthlyCostEstimate", "estimatedRate",
-    "yearsRetire", "monthlyRetire", "deathFund"
+    "yearsRetire", "monthlyRetire", "deathFund", "retireReturnRate"
   ];
   numericKeys.forEach(k => {
     if (k in template || k in goal) {
@@ -771,10 +771,42 @@ function normalizeGoalNumericFields(goal, template) {
   return goal;
 }
 
+// Trước đây mục tiêu "Hưu trí" chứa dữ liệu của quỹ dự phòng (số tháng dự phòng, chi phí chi tiêu). Di chuyển một lần:
+// dữ liệu đó thành mục tiêu thường "Quỹ dự phòng" (không mất dữ liệu), mục tiêu Hưu trí được đặt lại để nhập công
+// thức hưu trí đúng (số năm nghỉ hưu, chi tiêu, lạm phát...). Đánh dấu layoutV = 2.
+function migrateLegacyRetirementReserve(goals) {
+  if (!Array.isArray(goals)) return;
+  const ret = goals.find(g => g && (g.id === 'fixed_retirement' || isRetirementFixedGoal(g)));
+  if (!ret || ret.layoutV === 2) return;
+  ret.layoutV = 2;
+  const hasReserve = (Number(ret.reserveMonths) || 0) > 0;
+  if (!hasReserve) return;
+  const monthly = Number(ret.monthlyCostEstimate) || ((Number(ret.annualCostEstimate) || 0) / 12);
+  const todayTarget = monthly > 0 ? monthly * Number(ret.reserveMonths) : (Number(ret.val) || 0);
+  const moved = createFixedRetirementGoal();
+  Object.keys(moved).forEach(k => { if (ret[k] !== undefined) moved[k] = ret[k]; });
+  moved.id = 'g_reserve_' + Date.now();
+  moved.fixedType = undefined;
+  moved.isFixed = false;
+  delete moved.fixedType;
+  moved.name = 'Quỹ dự phòng';
+  moved.type = 'invest';
+  moved.val = Number(todayTarget.toFixed(2));
+  moved.fundUsage = 'hold';
+  delete moved.layoutV;
+  delete moved.reserveMonths; delete moved.annualCostEstimate; delete moved.monthlyCostEstimate;
+  const fresh = createFixedRetirementGoal();
+  Object.keys(fresh).forEach(k => { if (k !== 'id' && k !== 'fixedType' && k !== 'isFixed' && k !== 'name' && k !== 'type') ret[k] = fresh[k]; });
+  delete ret.reserveMonths; delete ret.annualCostEstimate; delete ret.monthlyCostEstimate;
+  ret.layoutV = 2;
+  goals.unshift(moved);
+}
+
 function ensureFixedInvestmentGoals() {
   if (!Array.isArray(AppState.tcGoals)) {
     AppState.tcGoals = [];
   }
+  migrateLegacyRetirementReserve(AppState.tcGoals);
   let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
   if (!retireGoal) {
     retireGoal = createFixedRetirementGoal();
@@ -809,7 +841,7 @@ function ensureFixedInvestmentGoals() {
     collegeGoal.fixedType = "college";
     collegeGoal.isFixed = true;
     if (!collegeGoal.name || typeof collegeGoal.name !== "string" || collegeGoal.name.trim() === "") {
-      collegeGoal.name = "Quỹ dự phòng Tài chính";
+      collegeGoal.name = "Cho con đi học đại học";
     }
     collegeGoal.type = "invest";
     normalizeGoalNumericFields(collegeGoal, tpl);
@@ -1581,21 +1613,48 @@ function computeGoalPMT(goal, targetFV, nMonths, singleRatePct) {
   return FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, singleRatePct, nMonths);
 }
 
-function calculateCollegeGoal(goal) {
-  normalizeGoalNumericFields(goal, createFixedCollegeGoal());
-  const portfolio = computeGoalPortfolioMetrics(goal);
+// Lợi suất mặc định giai đoạn nghỉ hưu (%/năm): thận trọng hơn giai đoạn tích lũy vì tiền chuyển sang sản phẩm an toàn.
+// Người dùng có thể nhập giá trị riêng ở trường retireReturnRate của mục tiêu Hưu trí.
+const RETIREMENT_PHASE_DEFAULT_RETURN_PCT = 6.5;
 
+// Số năm từ năm tham chiếu đến cuối năm hoàn tất mục tiêu (dùng để quy đổi lạm phát)
+function yearsToGoalDate(goal) {
+  const base = getBaseYearAndAge().year;
+  const end = Number(goal && goal.end) || 0;
+  return end > 0 ? Math.max(0, end - base + 1) : 0;
+}
+
+// Giá trị theo giá hôm nay -> danh nghĩa tại thời điểm hoàn tất: amount * (1 + lạm phát)^số năm
+function inflateToGoalDate(amount, goal) {
+  const infl = Number(goal && goal.inflation);
+  const a = Number(amount) || 0;
+  if (!isFinite(infl) || infl <= -100 || a <= 0) return a;
+  return a * Math.pow(1 + infl / 100, yearsToGoalDate(goal));
+}
+
+function accumulationMonthsOf(goal) {
   const startYr = Number(goal.start) || 0;
   const endYr = Number(goal.end) || 0;
   const nYears = (startYr > 0 && endYr >= startYr)
     ? (endYr - startYr + 1)
     : (Number(goal.accumulationYears) > 0 ? Number(goal.accumulationYears) : 0);
-  const nMonths = nYears * 12;
   goal.accumulationYears = nYears;
+  return nYears * 12;
+}
 
-  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
+function singleRateOfGoal(goal, portfolio) {
+  return (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
     ? Number(goal.rate)
     : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
+}
+
+// Mục tiêu "Cho con đi học đại học": giá trị hiện tại của học phí các kỳ (kỳ = THÁNG, lãi suất tháng hiệu dụng)
+// cộng quỹ hỗ trợ; chi phí nhập theo giá hôm nay và được quy đổi lạm phát đến năm hoàn tất tích lũy.
+function calculateCollegeGoal(goal) {
+  normalizeGoalNumericFields(goal, createFixedCollegeGoal());
+  const portfolio = computeGoalPortfolioMetrics(goal);
+  const nMonths = accumulationMonthsOf(goal);
+  const rAnnualPct = singleRateOfGoal(goal, portfolio);
 
   const periods = Number(goal.collegePeriods || goal.yearsRetire) || 0;
   const periodicNeed = Number(goal.monthlyTuition || goal.monthlyRetire) || 0;
@@ -1614,7 +1673,7 @@ function calculateCollegeGoal(goal) {
       : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
     const pvMonthly = FinancialMath.monthlyRateFromAnnualPct(pvRateAnnual);
     const pvRateMonthlyPct = isFinite(pvMonthly) ? pvMonthly * 100 : 0;
-    targetFV = FinancialMath.calculateEducationCapitalNeeded(periods, periodicNeed, supportFund, pvRateMonthlyPct);
+    targetFV = FinancialMath.calculateEducationCapitalNeeded(periods, inflateToGoalDate(periodicNeed, goal), supportFund, pvRateMonthlyPct);
     if (!goal._manualValOverride) {
       goal.val = Number(targetFV.toFixed(2));
     } else {
@@ -1630,69 +1689,63 @@ function calculateCollegeGoal(goal) {
     goal.annual = 0;
     return 0;
   }
-
-  const pmt = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
-  goal.monthly = pmt;
+  goal.monthly = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
 
+// Mục tiêu "Hưu trí": vốn cần có lúc nghỉ hưu = giá trị hiện tại (lãi suất giai đoạn nghỉ hưu, lạm phát) của
+// chi tiêu hưu trí trong yearsRetire NĂM + số tiền để lại cuối đời. Số kỳ tính theo năm, lãi suất theo năm.
 function calculateRetirementGoal(goal) {
   normalizeGoalNumericFields(goal, createFixedRetirementGoal());
   const portfolio = computeGoalPortfolioMetrics(goal);
+  const nMonths = accumulationMonthsOf(goal);
+  const rAnnualPct = singleRateOfGoal(goal, portfolio);
 
-  const startYr = Number(goal.start) || 0;
-  const endYr = Number(goal.end) || 0;
-  const nYears = (startYr > 0 && endYr >= startYr)
-    ? (endYr - startYr + 1)
-    : (Number(goal.accumulationYears) > 0 ? Number(goal.accumulationYears) : 0);
-  const nMonths = nYears * 12;
-  goal.accumulationYears = nYears;
+  const years = Number(goal.yearsRetire || goal.collegePeriods) || 0;
+  const monthlyCost = Number(goal.monthlyRetire || goal.monthlyTuition) || 0;
+  const leftover = Number(goal.deathFund || goal.supportFund) || 0;
+  goal.collegePeriods = years;
+  goal.yearsRetire = years;
+  goal.monthlyTuition = monthlyCost;
+  goal.monthlyRetire = monthlyCost;
+  goal.supportFund = leftover;
+  goal.deathFund = leftover;
 
-  const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
-    ? Number(goal.rate)
-    : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
+  const retireRate = Number(goal.retireReturnRate) > 0 ? Number(goal.retireReturnRate) : RETIREMENT_PHASE_DEFAULT_RETURN_PCT;
+  const infl = Number(goal.inflation) || 0;
 
-  const reserveMonths = Number(goal.reserveMonths) || 0;
-  let annualCost = Number(goal.annualCostEstimate) || 0;
-  let monthlyCost = Number(goal.monthlyCostEstimate) || 0;
-
-  if (reserveMonths > 0) {
-    const reserveMetrics = FinancialMath.calculateEmergencyReserveGoal(monthlyCost, annualCost, reserveMonths);
-    monthlyCost = reserveMetrics.monthlyCost;
-    annualCost = reserveMetrics.annualCost;
-    goal.monthlyCostEstimate = Number(monthlyCost.toFixed(2));
-    goal.annualCostEstimate = Number(annualCost.toFixed(2));
-  }
-
-  let baseTarget = Number(goal.val) || 0;
-  if (baseTarget === 0 && annualCost > 0) {
-    const retireYears = Number(goal.yearsRetire) || Number(goal.retirementYears) || 0;
-    const inflationRate = Number(goal.inflationRate) || Number(goal.inflation) || 0;
-    if (retireYears > 0) {
-      baseTarget = FinancialMath.calculateRetirementCapitalNeeded(annualCost, rAnnualPct, inflationRate, retireYears);
+  let targetFV = 0;
+  if (years > 0 && (monthlyCost > 0 || leftover > 0)) {
+    const firstYearCost = inflateToGoalDate(monthlyCost * 12, goal);
+    const capital = FinancialMath.calculateRetirementCapitalNeeded(firstYearCost, retireRate, infl, years);
+    const leftoverPV = leftover / Math.pow(1 + retireRate / 100, years);
+    targetFV = capital + leftoverPV;
+    if (!goal._manualValOverride) {
+      goal.val = Number(targetFV.toFixed(2));
     } else {
-      baseTarget = annualCost;
+      targetFV = Number(goal.val) || 0;
     }
-    goal.val = Number(baseTarget.toFixed(2));
-  } else if (baseTarget > 0 && annualCost === 0 && reserveMonths > 0) {
-    goal.annualCostEstimate = baseTarget;
-    goal.monthlyCostEstimate = Number((baseTarget / 12).toFixed(2));
+  } else {
+    targetFV = Number(goal.val) || 0;
   }
 
-  const targetFV = baseTarget;
   goal.calculatedTargetFV = targetFV;
-
   if (nMonths <= 0 || targetFV <= 0) {
     goal.monthly = 0;
     goal.annual = 0;
     return 0;
   }
-
-  const pmt = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
-  goal.monthly = pmt;
+  goal.monthly = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.annual = goal.monthly * 12;
   return goal.monthly;
+}
+
+// Người dùng sửa trực tiếp "Mục tiêu tiết kiệm cần đạt" của mục tiêu cố định
+function applyFixedGoalValEdit(g, val) {
+  const v = Number(val) || 0;
+  const periods = Number(g.yearsRetire || g.collegePeriods) || 0;
+  g._manualValOverride = (v > 0 && periods === 0);
 }
 
 function calculateMonthlyNeed(goal) {
@@ -1735,7 +1788,9 @@ function calculateMonthlyNeed(goal) {
         ? Number(goal.rate)
         : (Number(goal.estimatedRate) || 0));
 
-  const targetFV = Number(goal.val) || 0;
+  // Giá trị mục tiêu nhập theo giá hôm nay; quy đổi sang danh nghĩa tại thời điểm hoàn tất theo lạm phát
+  const targetFV = inflateToGoalDate(Number(goal.val) || 0, goal);
+  goal.calculatedTargetFV = targetFV;
   const pmtInvest = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.monthly = pmtInvest;
   goal.annual = goal.monthly * 12;
@@ -5811,6 +5866,14 @@ function renderTcGoalsFormTable() {
         <td>
           ${g.type === 'debt'
             ? `<span class="text-muted" style="padding:0 8px;">—</span>`
+            : `<input type="number" step="any" class="text-right font-mono" value="${Number(g.inflation) || 0}" placeholder="0" title="Lạm phát bình quân (%/năm) dùng để quy đổi giá trị mục tiêu (nhập theo giá hôm nay) sang giá tại năm hoàn tất"
+                 oninput="onGoalFieldInput(${idx}, 'inflation', parseFloat(this.value)||0)"
+                 onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">`
+          }
+        </td>
+        <td>
+          ${g.type === 'debt'
+            ? `<span class="text-muted" style="padding:0 8px;">—</span>`
             : `<select class="select-inline-cell" aria-label="Khi hoàn tất mục tiêu" title="Chi vốn: tiền được sử dụng khi mục tiêu hoàn tất, không còn nằm trong danh mục. Giữ đầu tư: vốn tiếp tục được đầu tư." onchange="onGoalFieldChange(${idx}, 'fundUsage', this.value)">
                  <option value="spend" ${getGoalFundUsage(g) === 'spend' ? 'selected' : ''}>Chi vốn</option>
                  <option value="hold" ${getGoalFundUsage(g) === 'hold' ? 'selected' : ''}>Giữ đầu tư</option>
@@ -5843,15 +5906,7 @@ window.onGoalFieldInput = function(idx, field, val) {
     if (isRetirementFixedGoal(g) && retTitle) retTitle.textContent = val || 'Hưu trí';
   }
   if (field === 'val') {
-    if (isCollegeFixedGoal(g)) {
-      g._manualValOverride = (Number(val) > 0);
-    } else if (isRetirementFixedGoal(g)) {
-      g.annualCostEstimate = Number(val) || 0;
-      const rMonths = Number(g.reserveMonths) || 0;
-      if (rMonths > 0) {
-        g.monthlyCostEstimate = Number(((Number(val) || 0) / rMonths).toFixed(2));
-      }
-    }
+    applyFixedGoalValEdit(g, val);
   }
   g[field] = val;
   g.monthly = calculateMonthlyNeed(g);
@@ -5873,15 +5928,7 @@ window.onGoalFieldChange = function(idx, field, val) {
     return;
   }
   if (field === 'val') {
-    if (isCollegeFixedGoal(g)) {
-      g._manualValOverride = (Number(val) > 0);
-    } else if (isRetirementFixedGoal(g)) {
-      g.annualCostEstimate = Number(val) || 0;
-      const rMonths = Number(g.reserveMonths) || 0;
-      if (rMonths > 0) {
-        g.monthlyCostEstimate = Number(((Number(val) || 0) / rMonths).toFixed(2));
-      }
-    }
+    applyFixedGoalValEdit(g, val);
   }
   g[field] = val;
   g.monthly = calculateMonthlyNeed(g);
@@ -6003,6 +6050,109 @@ function renderGoalProductSelectHtml(g, pIndex) {
   `;
 }
 
+function createCardHtmlRetirement(g, num) {
+  calculateRetirementGoal(g);
+  const portfolio = computeGoalPortfolioMetrics(g);
+  const prods = g.allocProducts;
+  const nYears = Number(g.accumulationYears) || 0;
+  const targetVal = Number(g.val) || 0;
+  const mVal = Number(g.monthly) || 0;
+  const yVal = Number(g.annual) || (mVal * 12);
+  const periods = Number(g.collegePeriods || g.yearsRetire) || 0;
+  const periodicNeed = Number(g.monthlyTuition || g.monthlyRetire) || 0;
+  const supportFund = Number(g.supportFund || g.deathFund) || 0;
+  const estRate = Number(g.estimatedRate) || 0;
+  const effectiveReturn = portfolio.expectedAvgReturn > 0
+    ? portfolio.expectedAvgReturn
+    : (Number(g.estimatedRate) || Number(g.rate) || 0);
+
+  return `
+    <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="retirement">
+      <div class="tc-card-h4-title">
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-retirement" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Hưu trí')}</strong></span>
+        <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
+      </div>
+      <div class="tc-card-table-scroll">
+        <table class="tc-card-h4-table">
+          <thead>
+            <tr class="bg-header-sub">
+              <th colspan="2" style="width: 31%;">Thông số thời gian &amp; Hưu trí</th>
+              <th colspan="2" style="width: 29%;">Mục tiêu tích lũy</th>
+              <th colspan="4" style="width: 40%;">Phân bổ sản phẩm đầu tư</th>
+            </tr>
+            <tr class="bg-col-head">
+              <th>Chỉ tiêu</th><th style="width: 55px;">Giá trị</th>
+              <th>Chỉ tiêu</th><th style="width: 65px;">Số tiền</th>
+              <th>Sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi DK</th><th style="width: 45px;">Rủi ro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Năm bắt đầu</td>
+              <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
+              <td>Mục tiêu tiết kiệm cần đạt</td>
+              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td>${renderGoalProductSelectHtml(g, 0)}</td>
+              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Năm kết thúc</td>
+              <td class="cell-green-val font-mono" id="college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
+              <td class="font-bold">Tổng số năm tích lũy</td>
+              <td class="cell-green-val font-bold font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
+              <td>${renderGoalProductSelectHtml(g, 1)}</td>
+              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Số năm sống sau nghỉ hưu</td>
+              <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
+              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
+              <td>${renderGoalProductSelectHtml(g, 2)}</td>
+              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
+              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+            </tr>
+            <tr>
+              <td>Chi tiêu hưu trí mỗi tháng (giá hôm nay)</td>
+              <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
+              <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
+              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
+              <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
+            </tr>
+            <tr class="bg-neutral-gray font-semibold">
+              <td>Số tiền để lại (cuối đời):</td>
+              <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
+              <td style="text-align: right;">LS ước tính:</td>
+              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
+              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
+              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+            </tr>
+            <tr>
+              <td>Lạm phát (%/năm)</td>
+              <td class="cell-green-val font-mono" id="retire-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
+              <td>Lợi suất giai đoạn nghỉ hưu (%/năm)</td>
+              <td class="cell-green-val font-mono" id="retire-phase-return" contenteditable="true" spellcheck="false" title="Giai đoạn nghỉ hưu nên chuyển sang sản phẩm an toàn; để 0 = dùng mặc định ${RETIREMENT_PHASE_DEFAULT_RETURN_PCT}%" onblur="updateGoalCardField('${g.id}', 'retireReturnRate', this.innerText)">${(Number(g.retireReturnRate) || RETIREMENT_PHASE_DEFAULT_RETURN_PCT).toFixed(1)}%</td>
+              <td colspan="4" class="text-muted" style="font-size: 11px;">Tiền sẵn có, lãi suất ước tính và số năm/chi tiêu hưu trí nhập theo giá hôm nay; hệ thống quy đổi lạm phát đến năm nghỉ hưu.</td>
+            </tr>
+            ${!portfolio.isWeightValid ? `
+            <tr>
+              <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
+                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
+              </td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function createCardHtmlCollege(g, num) {
   calculateCollegeGoal(g);
   const portfolio = computeGoalPortfolioMetrics(g);
@@ -6022,7 +6172,7 @@ function createCardHtmlCollege(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="college">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Quỹ dự phòng Tài chính')}</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Cho con đi học đại học')}</strong></span>
         <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
       </div>
       <div class="tc-card-table-scroll">
@@ -6061,7 +6211,7 @@ function createCardHtmlCollege(g, num) {
               <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Số kỳ / năm chi trả dự kiến</td>
+              <td>Số tháng chi trả học phí (kỳ = tháng)</td>
               <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
               <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
@@ -6071,7 +6221,7 @@ function createCardHtmlCollege(g, num) {
               <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Chi phí định kỳ cần mỗi tháng</td>
+              <td>Chi phí học tập mỗi tháng (giá hôm nay)</td>
               <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
               <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
@@ -6086,105 +6236,14 @@ function createCardHtmlCollege(g, num) {
               <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
               <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
+            <tr>
+              <td>Lạm phát (%/năm)</td>
+              <td class="cell-green-val font-mono" id="college-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
+              <td colspan="6" class="text-muted" style="font-size: 11px;">Chi phí học tập nhập theo giá hôm nay; hệ thống quy đổi lạm phát đến năm hoàn tất tích lũy.</td>
+            </tr>
             ${!portfolio.isWeightValid ? `
             <tr>
               <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
-                <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
-              </td>
-            </tr>` : ''}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-}
-
-function createCardHtmlRetirement(g, num) {
-  calculateRetirementGoal(g);
-  const portfolio = computeGoalPortfolioMetrics(g);
-  const prods = g.allocProducts;
-  const nYears = Number(g.accumulationYears) || 0;
-  const targetVal = Number(g.val) || 0;
-  const mVal = Number(g.monthly) || 0;
-  const yVal = Number(g.annual) || (mVal * 12);
-  const reserveMonths = Number(g.reserveMonths) || 0;
-  const annualCost = Number(g.annualCostEstimate) || 0;
-  const monthlyCost = Number(g.monthlyCostEstimate) || 0;
-  const estRate = Number(g.estimatedRate) || 0;
-  const effectiveReturn = portfolio.expectedAvgReturn > 0
-    ? portfolio.expectedAvgReturn
-    : (Number(g.estimatedRate) || Number(g.rate) || 0);
-
-  return `
-    <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="retirement">
-      <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-retirement" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Hưu trí')}</strong></span>
-        <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
-      </div>
-      <div class="tc-card-table-scroll">
-        <table class="tc-card-h4-table">
-          <thead>
-            <tr class="bg-header-sub">
-              <th colspan="2" style="width: 31%;">Thông số thời gian &amp; Dự phòng</th>
-              <th colspan="2" style="width: 29%;">Mục tiêu tích lũy hưu trí</th>
-              <th colspan="4" style="width: 40%;">Phân bổ sản phẩm đầu tư</th>
-            </tr>
-            <tr class="bg-col-head">
-              <th>Chỉ tiêu</th><th style="width: 55px;">Giá trị</th>
-              <th>Chỉ tiêu</th><th style="width: 65px;">Số tiền</th>
-              <th>Sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi DK</th><th style="width: 45px;">Rủi ro</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Năm bắt đầu</td>
-              <td class="cell-green-val font-mono" id="retire-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
-              <td>Mục tiêu tiết kiệm cần đạt</td>
-              <td class="cell-orange-val font-mono" id="retire-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
-              <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" id="retire-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
-            </tr>
-            <tr>
-              <td>Năm kết thúc</td>
-              <td class="cell-green-val font-mono" id="retire-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
-              <td class="font-bold">Tổng số năm tích lũy</td>
-              <td class="cell-green-val font-bold font-mono" id="retire-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
-              <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" id="retire-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
-            </tr>
-            <tr>
-              <td>Số tháng dự phòng</td>
-              <td class="cell-green-val font-mono" id="retire-reserve-months" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'reserveMonths', this.innerText)">${reserveMonths}</td>
-              <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
-              <td class="cell-orange-val font-mono" id="retire-monthly-need">${mVal.toFixed(2)}</td>
-              <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" id="retire-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="retire-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
-            </tr>
-            <tr>
-              <td>Tổng ước tính chi phí (năm)</td>
-              <td class="cell-green-val font-mono" id="retire-annual-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'annualCostEstimate', this.innerText)">${annualCost}</td>
-              <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
-              <td class="cell-orange-val font-mono" id="retire-annual-need">${yVal.toFixed(2)}</td>
-              <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
-              <td colspan="2" class="cell-gold-val text-center font-mono" id="retire-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
-            </tr>
-            <tr class="bg-neutral-gray font-semibold">
-              <td>Chi phí chi tiêu / tháng:</td>
-              <td class="font-bold text-right text-danger font-mono" id="retire-monthly-cost" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyCostEstimate', this.innerText)">${monthlyCost}</td>
-              <td style="text-align: right;">LS ước tính:</td>
-              <td class="cell-green-val font-mono" id="retire-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
-              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
-              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="retire-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
-            </tr>
-            ${!portfolio.isWeightValid ? `
-            <tr>
-              <td colspan="8" class="goal-weight-warning" id="retire-weight-warning">
                 <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
               </td>
             </tr>` : ''}
@@ -6503,15 +6562,7 @@ window.updateGoalCardField = function(goalId, field, rawText) {
       }
     } else if (field === 'val') {
       g.val = safeVal;
-      if (isCollegeFixedGoal(g)) {
-        g._manualValOverride = (safeVal > 0 && (Number(g.collegePeriods || g.yearsRetire) === 0));
-      } else if (isRetirementFixedGoal(g)) {
-        g.annualCostEstimate = safeVal;
-        const rMonths = Number(g.reserveMonths) || 0;
-        if (rMonths > 0) {
-          g.monthlyCostEstimate = Number((safeVal / rMonths).toFixed(2));
-        }
-      }
+      applyFixedGoalValEdit(g, safeVal);
     } else if (field === 'collegePeriods' || field === 'yearsRetire') {
       g.collegePeriods = safeVal;
       g.yearsRetire = safeVal;
@@ -6525,29 +6576,14 @@ window.updateGoalCardField = function(goalId, field, rawText) {
       g.deathFund = safeVal;
       if (safeVal > 0) g._manualValOverride = false;
     } else if (field === 'annualCostEstimate') {
+      // Chi phí năm <-> tháng quy đổi bằng 12; mục tiêu quỹ dự phòng được tính lại từ chi phí × số tháng
       g.annualCostEstimate = safeVal;
-      g.val = safeVal;
-      const rMonths = Number(g.reserveMonths) || 0;
-      if (rMonths > 0) {
-        g.monthlyCostEstimate = Number((safeVal / rMonths).toFixed(2));
-      }
+      g.monthlyCostEstimate = Number((safeVal / 12).toFixed(2));
     } else if (field === 'monthlyCostEstimate') {
       g.monthlyCostEstimate = safeVal;
-      const rMonths = Number(g.reserveMonths) || 0;
-      if (rMonths > 0) {
-        g.annualCostEstimate = Number((safeVal * rMonths).toFixed(2));
-        g.val = g.annualCostEstimate;
-      }
+      g.annualCostEstimate = Number((safeVal * 12).toFixed(2));
     } else if (field === 'reserveMonths') {
       g.reserveMonths = safeVal;
-      const aCost = Number(g.annualCostEstimate) || 0;
-      const mCost = Number(g.monthlyCostEstimate) || 0;
-      if (safeVal > 0 && aCost > 0) {
-        g.monthlyCostEstimate = Number((aCost / safeVal).toFixed(2));
-      } else if (safeVal > 0 && mCost > 0) {
-        g.annualCostEstimate = Number((mCost * safeVal).toFixed(2));
-        g.val = g.annualCostEstimate;
-      }
     } else if (field === 'estimatedRate') {
       g.estimatedRate = safeVal;
       g.rate = safeVal;
@@ -8435,7 +8471,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Quỹ dự phòng Tài chính"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -8542,6 +8578,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
   }
 
   if (Array.isArray(cleanImport.tcGoals)) {
+    migrateLegacyRetirementReserve(cleanImport.tcGoals);
     ensureFixedInvestmentGoals();
     const currentRetire = AppState.tcGoals.find(isRetirementFixedGoal);
     const currentCollege = AppState.tcGoals.find(isCollegeFixedGoal);
@@ -8559,7 +8596,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         if (!g || typeof g !== 'object') return;
         if (isCollegeFixedGoal(g)) {
           if (mode === 'update' && currentCollege) {
-            Object.assign(currentCollege, g, { id: 'fixed_college', name: g.name || currentCollege.name || 'Quỹ dự phòng Tài chính', type: 'invest', isFixed: true, fixedType: 'college' });
+            Object.assign(currentCollege, g, { id: 'fixed_college', name: g.name || currentCollege.name || 'Cho con đi học đại học', type: 'invest', isFixed: true, fixedType: 'college' });
           }
           return;
         }
@@ -9240,7 +9277,6 @@ window.confirmCsvImport = function() {
           col.start = item.start;
           col.end = item.end;
           col.rate = item.rate;
-          col.inflation = 0;
         }
         return;
       }
@@ -9252,7 +9288,6 @@ window.confirmCsvImport = function() {
           ret.start = item.start;
           ret.end = item.end;
           ret.rate = item.rate;
-          ret.inflation = 0;
         }
         return;
       }
