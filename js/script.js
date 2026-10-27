@@ -6276,7 +6276,7 @@ function createCardHtmlCollege(g, num) {
             </tr>
             <tr>
               <td>Tổng ước chi phí</td>
-              <td class="cell-orange-val font-mono" id="college-total-cost" title="Số tháng dự phòng × chi phí mỗi tháng">${(periods * periodicNeed).toFixed(0)}</td>
+              <td class="cell-orange-val font-mono" id="college-total-cost" contenteditable="true" spellcheck="false" title="Mặc định = số tháng dự phòng × chi phí mỗi tháng; có thể gõ số khác" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
               <td>Số tiền thanh toán hằng năm</td>
               <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Mức sinh lời kỳ vọng trung bình</td>
