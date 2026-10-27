@@ -3167,7 +3167,8 @@ function renderDashboardAllCharts() {
       const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
       actuals.push(act);
       const monthlyVariance = Number(planExp || 0) - Number(act || 0);
-      runningDiff += monthlyVariance;
+      // Lũy kế độ lệch theo độ lớn: M_m = M_(m-1) + |kế hoạch - thực tế| (không giảm, đường luôn đi lên)
+      runningDiff += Math.abs(monthlyVariance);
       cumDiff.push(runningDiff);
     }
     dashChartInstances.variance = new Chart(cv5.getContext('2d'), {
@@ -3175,7 +3176,7 @@ function renderDashboardAllCharts() {
       data: {
         labels: months,
         datasets: [
-          { type: 'line', label: 'Lũy kế chênh lệch', data: cumDiff, borderColor: '#7960F8', borderWidth: 2.5, fill: false, tension: 0.2, pointRadius: 3, pointBackgroundColor: '#7960F8' },
+          { type: 'line', label: 'Lũy kế độ lệch (|kế hoạch − thực tế|)', data: cumDiff, borderColor: '#7960F8', borderWidth: 2.5, fill: false, tension: 0.2, pointRadius: 3, pointBackgroundColor: '#7960F8' },
           { label: 'Chi thực tế', data: actuals, backgroundColor: '#F06E78', borderRadius: 4 },
           { label: 'Kế hoạch', data: Array(12).fill(planExp), backgroundColor: themeTokens.planBar, borderRadius: 4 }
         ]

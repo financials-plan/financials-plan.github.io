@@ -582,7 +582,7 @@ test("11. Task B — Dashboard Variance Cumulative Calculation Verification", ()
 
   // Verify chartDashVariance formula in script.js: plannedExpense - actualExpense
   assert.ok(scriptContent.includes("const monthlyVariance = Number(planExp || 0) - Number(act || 0);"), "Calculates planned minus actual");
-  assert.ok(scriptContent.includes("runningDiff += monthlyVariance;"), "Accumulates monthlyVariance correctly");
+  assert.ok(scriptContent.includes("runningDiff += Math.abs(monthlyVariance);"), "Accumulates absolute deviation");
 
   function calculateVarianceLine(planMonthly, actualsMonthly) {
     const planExp = Number(planMonthly) || 0;
@@ -591,7 +591,7 @@ test("11. Task B — Dashboard Variance Cumulative Calculation Verification", ()
     for (let m = 0; m < 12; m++) {
       const act = Number(actualsMonthly[m]) || 0;
       const monthlyVariance = planExp - act;
-      runningDiff += monthlyVariance;
+      runningDiff += Math.abs(monthlyVariance);
       cumDiff.push(runningDiff);
     }
     return cumDiff;
@@ -610,15 +610,15 @@ test("11. Task B — Dashboard Variance Cumulative Calculation Verification", ()
 
   // Ca C: Thực tế cao hơn kế hoạch (Kế hoạch = 50, Thực tế = 60)
   const caC = calculateVarianceLine(50, Array(12).fill(60));
-  assert.deepStrictEqual(caC, [-10, -20, -30, -40, -50, -60, -70, -80, -90, -100, -110, -120]);
+  assert.deepStrictEqual(caC, [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]);
   for (let i = 1; i < caC.length; i++) {
-    assert.ok(caC[i] < caC[i - 1], `Ca C: cumulative variance strictly decreases at month ${i + 1}`);
+    assert.ok(caC[i] > caC[i - 1], `Ca C: cumulative deviation increases at month ${i + 1}`);
   }
 
   // Ca D: Chênh lệch thay đổi giữa các tháng
   const actualsD = [20, 20, 20, 70, 50, 40, 60, 50, 30, 50, 80, 20];
   const caD = calculateVarianceLine(50, actualsD);
-  assert.deepStrictEqual(caD, [30, 60, 90, 70, 70, 80, 70, 70, 90, 90, 60, 90]);
+  assert.deepStrictEqual(caD, [30, 60, 90, 110, 110, 120, 130, 130, 150, 150, 180, 210]);
 
   // Ca E: Dữ liệu rỗng, chuỗi số, undefined và null
   const actualsE = ["20", null, undefined, "60", "", 0, "40.5", NaN, "abc", 50, "10", 30];
