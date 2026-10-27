@@ -2933,8 +2933,8 @@ function renderDashboardAllCharts() {
   const startAge = Number(AppState.currentAge) || 21;
   if (startYrEl) startYrEl.textContent = startYr;
 
-  const validGoals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
-  const totalVal = validGoals.reduce((s, g) => s + (Number(g.val) || Number(g.calculatedTargetFV) || 0), 0);
+  // Tổng tiết kiệm cần đạt = cộng cột "Giá trị mục tiêu" của tất cả mục tiêu trong bảng (gồm cả khoản nợ)
+  const totalVal = (AppState.tcGoals || []).reduce((s, g) => s + (g ? (Number(g.val) || 0) : 0), 0);
   if (totalSavEl) {
     totalSavEl.textContent = Number.isInteger(totalVal)
       ? totalVal.toLocaleString('vi-VN')
