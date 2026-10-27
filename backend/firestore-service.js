@@ -12,7 +12,8 @@ import {
   query,
   where,
   limit,
-  runTransaction
+  runTransaction,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth,
@@ -47,6 +48,7 @@ try {
     isFirebaseReady = true;
     setTimeout(() => {
       syncSeedAccountsToFirestore();
+      setupClassesRealtimeListener();
     }, 100);
   }
 } catch (error) {
@@ -483,6 +485,46 @@ function mergeClassRecord(c1, c2) {
     members: mergedMembers,
     updatedAt: new Date(Math.max(date1, date2, Date.now())).toISOString()
   };
+}
+
+let classesRealtimeUnsubscribe = null;
+
+function setupClassesRealtimeListener() {
+  if (!isFirebaseReady || !db) return;
+  if (classesRealtimeUnsubscribe) {
+    try { classesRealtimeUnsubscribe(); } catch (e) {}
+    classesRealtimeUnsubscribe = null;
+  }
+
+  try {
+    const q = collection(db, CLASSES_COLLECTION);
+    classesRealtimeUnsubscribe = onSnapshot(q, (snapshot) => {
+      const remote = {};
+      snapshot.forEach(d => {
+        const data = { ...d.data(), id: d.id };
+        if (isRealClassRecord(data)) {
+          remote[d.id] = data;
+        }
+      });
+
+      const local = getLocalClasses();
+      const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
+      const cache = {};
+      allIds.forEach(id => {
+        cache[id] = mergeClassRecord(local[id], remote[id]);
+      });
+      saveLocalClasses(cache);
+
+      const classesList = Object.values(cache);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cloud-classes-updated", { detail: classesList }));
+      }
+    }, (error) => {
+      console.warn("[CloudDB] onSnapshot classes realtime error:", error);
+    });
+  } catch (err) {
+    console.warn("[CloudDB] Khong the khoi tao realtime listener cho classes:", err);
+  }
 }
 
 async function findClassesByCode(cleanCode) {
@@ -2215,7 +2257,10 @@ const FirestoreService = {
     const remote = {};
 
     try {
-      const snap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)), 8000).catch(() => null);
+      const snap = await withTimeout(getDocs(collection(db, CLASSES_COLLECTION)), 8000).catch((err) => {
+        console.warn("[CloudDB] getClasses CLASSES_COLLECTION error:", err);
+        return null;
+      });
       if (snap) {
         snap.forEach(d => {
           const data = { ...d.data(), id: d.id };
@@ -2224,10 +2269,15 @@ const FirestoreService = {
           }
         });
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn("[CloudDB] getClasses CLASSES_COLLECTION catch:", err);
+    }
 
     try {
-      const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 8000).catch(() => null);
+      const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 8000).catch((err) => {
+        console.warn("[CloudDB] getClasses GROUPS_COLLECTION error:", err);
+        return null;
+      });
       if (gSnap) {
         gSnap.forEach(d => {
           const data = { ...d.data(), id: d.id };
@@ -2236,7 +2286,9 @@ const FirestoreService = {
           }
         });
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn("[CloudDB] getClasses GROUPS_COLLECTION catch:", err);
+    }
 
     const aggRefs = [
       doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
@@ -2450,7 +2502,15 @@ const FirestoreService = {
       return result;
     });
     if (!res.success) return res;
-    return result || res;
+    if (res.localOnly) {
+      return {
+        ...(result || res),
+        localOnly: true,
+        cloudSynced: false,
+        warning: res.warning || "Dữ liệu chỉ mới lưu trên thiết bị này, chưa đồng bộ lên Cloud."
+      };
+    }
+    return { ...(result || res), cloudSynced: true };
   },
 
   async approveClassMember(classId, studentUsername, action) {
@@ -2481,7 +2541,97 @@ const FirestoreService = {
         action
       };
     });
-    return res;
+    if (res.localOnly) {
+      return {
+        ...res,
+        cloudSynced: false,
+        warning: res.warning || "Thao tác chỉ mới lưu cục bộ trên máy này, chưa đồng bộ lên Cloud."
+      };
+    }
+    return { ...res, cloudSynced: true };
+  },
+
+  subscribeToClasses(callback) {
+    if (typeof callback !== "function") return () => {};
+    const initial = Object.values(getLocalClasses());
+    if (initial.length > 0) {
+      try { callback(initial); } catch (e) {}
+    }
+    const handler = (e) => {
+      try { callback(e.detail || []); } catch (err) {
+        console.warn("[CloudDB] subscribeToClasses callback error:", err);
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("cloud-classes-updated", handler);
+      return () => {
+        window.removeEventListener("cloud-classes-updated", handler);
+      };
+    }
+    return () => {};
+  },
+
+  subscribeToClass(classId, callback) {
+    if (!classId || typeof callback !== "function") return () => {};
+    if (!isFirebaseReady || !db) {
+      const local = getLocalClasses();
+      if (local[classId]) callback(local[classId]);
+      return () => {};
+    }
+    try {
+      const cRef = doc(db, CLASSES_COLLECTION, classId);
+      return onSnapshot(cRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = { ...docSnap.data(), id: docSnap.id };
+          cacheClassLocally(data);
+          callback(data);
+        } else {
+          callback(null);
+        }
+      }, (err) => {
+        console.warn(`[CloudDB] subscribeToClass error (${classId}):`, err);
+      });
+    } catch (e) {
+      console.warn(`[CloudDB] subscribeToClass catch (${classId}):`, e);
+      return () => {};
+    }
+  },
+
+  async migrateGuestToAccount(guestId, newUsername, newDisplayName) {
+    const cleanGuest = normalizeUsername(guestId);
+    const cleanNew = normalizeUsername(newUsername);
+    if (!cleanGuest || !cleanNew || cleanGuest === cleanNew) return { success: true, updatedCount: 0 };
+
+    const local = getLocalClasses();
+    const updated = [];
+
+    for (const cid of Object.keys(local)) {
+      const cls = local[cid];
+      if (Array.isArray(cls.members)) {
+        let changed = false;
+        cls.members = cls.members.map(m => {
+          if (normalizeUsername(m.username) === cleanGuest) {
+            changed = true;
+            return {
+              ...m,
+              username: cleanNew,
+              name: newDisplayName || m.name || cleanNew,
+              updatedAt: new Date().toISOString()
+            };
+          }
+          return m;
+        });
+        if (changed) {
+          cls.updatedAt = new Date().toISOString();
+          updated.push(cls);
+          if (isFirebaseReady && db) {
+            await syncClassesStoreToFirestore(cid, cls, false).catch(() => {});
+          }
+        }
+      }
+    }
+    saveLocalClasses(local);
+    return { success: true, updatedCount: updated.length };
   },
 
   async updateClass(classId, updates = {}) {

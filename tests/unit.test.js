@@ -500,6 +500,9 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   const firestoreService = fs.readFileSync(path.join(__dirname, "../backend/firestore-service.js"), "utf8");
   assert.ok(firestoreService.includes("getDocs"));
   assert.ok(firestoreService.includes("collection"));
+  assert.ok(firestoreService.includes("onSnapshot"));
+  assert.ok(firestoreService.includes("subscribeToClasses"));
+  assert.ok(firestoreService.includes("migrateGuestToAccount"));
   assert.ok(firestoreService.includes("activateAdminCode"));
   assert.ok(firestoreService.includes("revokeAdminCode"));
   assert.ok(firestoreService.includes("syncClassesStoreToFirestore"));
@@ -508,6 +511,9 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(firestoreService.includes("loadUserData"));
   assert.ok(firestoreService.includes("saveUserData"));
   assert.ok(firestoreService.includes("submissions"));
+
+  assert.ok(scriptJs.includes("initCloudClassesRealtimeSync"));
+  assert.ok(scriptJs.includes("cloud-classes-updated"));
 
   const { execSync } = require("child_process");
   assert.doesNotThrow(() => {

@@ -301,6 +301,19 @@ const UserSession = {
     }
     if (user) {
       this.addProfile(user);
+      if (user.normalizedUsername) {
+        try {
+          const guestId = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID');
+          if (guestId && guestId !== user.normalizedUsername && window.CloudDB && typeof window.CloudDB.migrateGuestToAccount === 'function') {
+            window.CloudDB.migrateGuestToAccount(guestId, user.normalizedUsername, user.displayUsername || user.rawName)
+              .then(() => {
+                localStorage.removeItem('FIN_APP_GUEST_STUDENT_ID');
+                localStorage.removeItem('FIN_APP_GUEST_STUDENT_NAME');
+              })
+              .catch(e => console.warn('[CloudDB] migrateGuestToAccount error:', e));
+          }
+        } catch (e) {}
+      }
     }
     this.updateUI();
   },
@@ -9746,6 +9759,21 @@ window.openStudentJoinClassModal = async function() {
   if (!overlay) return;
   overlay.style.display = 'flex';
   overlay.classList.add('active');
+
+  const curUser = UserSession.currentUser;
+  const fb = document.getElementById('student-join-feedback');
+  if (!curUser || !curUser.normalizedUsername) {
+    if (fb) {
+      fb.style.display = 'block';
+      fb.className = 'text-warning';
+      fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber"></i> Bạn chưa đăng nhập. Vui lòng <a href="javascript:void(0)" onclick="goToAuthPage(\'login\')" style="font-weight: 700; text-decoration: underline; color: inherit;">Đăng nhập / Đăng ký</a> để nhóm và bài làm của bạn được đồng bộ trên mọi thiết bị.';
+    }
+  } else {
+    if (fb && fb.className === 'text-warning' && fb.innerHTML.includes('Bạn chưa đăng nhập')) {
+      fb.style.display = 'none';
+    }
+  }
+
   await renderStudentEnrolledClasses();
 };
 
@@ -9764,18 +9792,24 @@ window.submitStudentJoinClass = async function() {
     return;
   }
   const curUser = UserSession.currentUser;
-  let username = curUser ? curUser.normalizedUsername : '';
-  let dispName = curUser ? curUser.displayUsername : '';
-  if (!username) {
-    let localGuestId = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID');
-    let localGuestName = localStorage.getItem('FIN_APP_GUEST_STUDENT_NAME');
-    if (!localGuestId) {
-      localGuestId = 'hv_' + Math.random().toString(36).substring(2, 8);
-      localStorage.setItem('FIN_APP_GUEST_STUDENT_ID', localGuestId);
+  if (!curUser || !curUser.normalizedUsername) {
+    showToast("Vui lòng đăng nhập tài khoản trước khi tham gia nhóm để được đồng bộ trên mọi thiết bị!", "warning");
+    const fb = document.getElementById('student-join-feedback');
+    if (fb) {
+      fb.style.display = 'block';
+      fb.className = 'text-warning';
+      fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber"></i> Bạn cần <a href="javascript:void(0)" onclick="goToAuthPage(\'login\')" style="font-weight: 700; text-decoration: underline; color: inherit;">đăng nhập hoặc đăng ký tài khoản</a> để giảng viên nhận diện đúng bạn và đồng bộ bài làm trên mọi thiết bị.';
     }
-    username = localGuestId;
-    dispName = localGuestName || (AppState.ho_ten ? AppState.ho_ten.trim() : ('Học viên ' + localGuestId.slice(-4)));
+    setTimeout(() => {
+      if (typeof window.goToAuthPage === 'function') {
+        window.goToAuthPage('login');
+      }
+    }, 1200);
+    return;
   }
+
+  const username = curUser.normalizedUsername;
+  const dispName = curUser.displayUsername || curUser.rawName || curUser.username || username;
 
   const btnSubmit = document.querySelector('#student-join-class-modal-overlay .btn-modal-submit');
   const originalBtnHtml = btnSubmit ? btnSubmit.innerHTML : '';
@@ -9794,7 +9828,22 @@ window.submitStudentJoinClass = async function() {
   try {
     const res = await window.CloudDB.joinClass(code, username, dispName);
     if (res.success) {
-      showToast(res.message);
+      if (res.localOnly || res.cloudSynced === false) {
+        showToast("Cảnh báo: Yêu cầu chỉ mới lưu trên thiết bị này (chưa lên Cloud do lỗi mạng/kết nối).", "warning");
+        if (fb) {
+          fb.style.display = 'block';
+          fb.className = 'text-warning';
+          fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber"></i> ' + res.message + '<br><small style="color: #d97706;">(Chưa đồng bộ lên máy chủ: ' + (res.warning || 'Vui lòng kiểm tra mạng') + ' - Thiết bị khác chưa thể thấy yêu cầu này)</small>';
+        }
+      } else {
+        showToast(res.message);
+        if (fb) {
+          fb.style.display = 'block';
+          fb.className = res.status === 'approved' ? 'text-success' : 'text-warning';
+          fb.innerHTML = (res.status === 'approved' ? '<i class="fa-solid fa-circle-check text-emerald"></i> ' : '<i class="fa-solid fa-clock text-amber"></i> ') + res.message;
+        }
+      }
+
       if (res.isAdminUpgrade) {
         if (UserSession.currentUser) {
           UserSession.currentUser.role = res.role;
@@ -9805,11 +9854,7 @@ window.submitStudentJoinClass = async function() {
         window.toggleAdminManagerMode(true);
         return;
       }
-      if (fb) {
-        fb.style.display = 'block';
-        fb.className = res.status === 'approved' ? 'text-success' : 'text-warning';
-        fb.innerHTML = (res.status === 'approved' ? '<i class="fa-solid fa-circle-check text-emerald"></i> ' : '<i class="fa-solid fa-clock text-amber"></i> ') + res.message;
-      }
+
       if (input) input.value = '';
       await renderStudentEnrolledClasses();
       if (typeof window.updateStudentClassStatusUI === 'function') {
@@ -9846,17 +9891,21 @@ window.updateStudentClassStatusUI = async function() {
   if (!username) {
     username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
   }
-  if (!username) return;
+  if (!username) {
+    btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
+    btn.title = 'Cài đặt lớp học';
+    return;
+  }
   try {
     const allClasses = await window.CloudDB.getClasses();
-    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
+    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => normalizeUsername(m.username) === normalizeUsername(username)));
     if (enrolled.length === 0) {
       btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
       btn.title = 'Cài đặt lớp học';
       return;
     }
     const approved = enrolled.find(c => {
-      const m = c.members.find(x => x.username === username);
+      const m = c.members.find(x => normalizeUsername(x.username) === normalizeUsername(username));
       return m && m.status === 'approved';
     });
     if (approved) {
@@ -9866,7 +9915,7 @@ window.updateStudentClassStatusUI = async function() {
       return;
     }
     const pending = enrolled.find(c => {
-      const m = c.members.find(x => x.username === username);
+      const m = c.members.find(x => normalizeUsername(x.username) === normalizeUsername(username));
       return m && m.status === 'pending';
     });
     if (pending) {
@@ -9885,8 +9934,15 @@ async function renderStudentEnrolledClasses() {
   if (!username) {
     username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
   }
+  if (!username) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell" style="padding: 16px 12px; color: #b45309;"><i class="fa-solid fa-circle-info"></i> Bạn chưa đăng nhập. Vui lòng <a href="javascript:void(0)" onclick="goToAuthPage(\'login\')" style="text-decoration: underline; font-weight: 600; color: inherit;">đăng nhập</a> để xem các nhóm của bạn.</td></tr>';
+    if (typeof window.updateStudentClassStatusUI === 'function') {
+      window.updateStudentClassStatusUI();
+    }
+    return;
+  }
   const allClasses = await window.CloudDB.getClasses();
-  const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
+  const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => normalizeUsername(m.username) === normalizeUsername(username)));
 
   if (enrolled.length === 0) {
     tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>';
@@ -9896,7 +9952,7 @@ async function renderStudentEnrolledClasses() {
     return;
   }
   tbody.innerHTML = enrolled.map(c => {
-    const member = c.members.find(m => m.username === username);
+    const member = c.members.find(m => normalizeUsername(m.username) === normalizeUsername(username));
     const isApproved = member?.status === 'approved';
     const isRejected = member?.status === 'rejected';
     let badgeHtml = '';
@@ -9918,6 +9974,57 @@ async function renderStudentEnrolledClasses() {
   if (typeof window.updateStudentClassStatusUI === 'function') {
     window.updateStudentClassStatusUI();
   }
+}
+
+function initCloudClassesRealtimeSync() {
+  if (window.__CLOUD_CLASSES_SYNC_INITIALIZED__) return;
+  window.__CLOUD_CLASSES_SYNC_INITIALIZED__ = true;
+
+  window.addEventListener('cloud-classes-updated', async () => {
+    if (typeof window.updateStudentClassStatusUI === 'function') {
+      try { await window.updateStudentClassStatusUI(); } catch (err) {}
+    }
+
+    const studentJoinOverlay = document.getElementById('student-join-class-modal-overlay');
+    if (studentJoinOverlay && (studentJoinOverlay.classList.contains('active') || studentJoinOverlay.style.display === 'flex')) {
+      if (typeof renderStudentEnrolledClasses === 'function') {
+        try { await renderStudentEnrolledClasses(); } catch (err) {}
+      }
+    }
+
+    const classMgrOverlay = document.getElementById('class-manager-modal-overlay');
+    if (classMgrOverlay && (classMgrOverlay.classList.contains('active') || classMgrOverlay.style.display === 'flex')) {
+      if (typeof window.renderAdminRequestsTable === 'function') {
+        try { await window.renderAdminRequestsTable(); } catch (err) {}
+      }
+      if (typeof window.updateAdminPendingBadge === 'function') {
+        try { await window.updateAdminPendingBadge(); } catch (err) {}
+      }
+      if (typeof window.renderAdminStudentsTable === 'function') {
+        try { await window.renderAdminStudentsTable(); } catch (err) {}
+      }
+      if (typeof window.renderAdminAnalyticsView === 'function') {
+        try { await window.renderAdminAnalyticsView(); } catch (err) {}
+      }
+      if (typeof loadClassManagerData === 'function') {
+        try { await loadClassManagerData(); } catch (err) {}
+      }
+    } else {
+      if (typeof window.updateAdminPendingBadge === 'function') {
+        try { await window.updateAdminPendingBadge(); } catch (err) {}
+      }
+    }
+  });
+
+  if (window.CloudDB && typeof window.CloudDB.subscribeToClasses === 'function') {
+    window.CloudDB.subscribeToClasses(() => {});
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCloudClassesRealtimeSync);
+} else {
+  initCloudClassesRealtimeSync();
 }
 
 window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
@@ -10555,24 +10662,6 @@ window.updateAdminPendingBadge = async function(count) {
     const classes = await window.CloudDB.getClasses();
     classes.forEach(c => {
       if (Array.isArray(c.members)) {
-        totalPending += c.members.filter(m => m.status === 'pending').length;
-      }
-    });
-  }
-  if (totalPending > 0) {
-    badge.textContent = totalPending;
-    badge.style.display = 'inline-block';
-  } else {
-    badge.style.display = 'none';
-  }
-};
-  const badge = document.getElementById('admin-pending-badge');
-  if (!badge) return;
-  let totalPending = typeof count === 'number' ? count : 0;
-  if (typeof count !== 'number' && window.CloudDB && typeof window.CloudDB.getClasses === 'function') {
-    const classes = await window.CloudDB.getClasses();
-    classes.forEach(c => {
-      if (c.isPrivate !== false && Array.isArray(c.members)) {
         totalPending += c.members.filter(m => m.status === 'pending').length;
       }
     });
