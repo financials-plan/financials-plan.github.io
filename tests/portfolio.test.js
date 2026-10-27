@@ -322,7 +322,7 @@ test("I. Dữ liệu cũ chưa có investmentType: giữ nguyên, tự nhận di
   assert.deepStrictEqual(reloaded.map(p => p.investmentType), ["stocks", "bank_deposit", "insurance"]);
 });
 
-test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script.js", () => {
+test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, một file nguồn", () => {
   const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
   assert.ok(html.includes("Loại đầu tư</th>"));
   assert.ok(html.includes("Mức sinh lời cần thiết"));
@@ -333,11 +333,7 @@ test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script
     ["Cổ phiếu", "Trái phiếu", "Bảo hiểm", "Tiền gửi"]
   );
   assert.ok(!src.includes("DEFAULT_PORTFOLIO_30YR_BENCHMARK"));
-  assert.strictEqual(
-    fs.readFileSync(path.join(__dirname, "../script.js"), "utf8"),
-    src,
-    "script.js phải trùng js/script.js"
-  );
+  assert.ok(!fs.existsSync(path.join(__dirname, "../script.js")), "không còn bản sao script.js ở thư mục gốc");
 });
 
 test("K. Hưu trí: số kỳ theo NĂM, chưa tính lạm phát, lợi suất giai đoạn nghỉ hưu thận trọng", () => {

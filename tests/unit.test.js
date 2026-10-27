@@ -245,9 +245,7 @@ test("3. Backend API - Class & Group Management", async () => {
 });
 
 test("4. Financial Data & Code Parity Preservation", () => {
-  const hash1 = crypto.createHash("sha256").update(fs.readFileSync("js/script.js")).digest("hex");
-  const hash2 = crypto.createHash("sha256").update(fs.readFileSync("script.js")).digest("hex");
-  assert.strictEqual(hash1, hash2, "js/script.js and script.js must be 100% byte-for-byte identical");
+  assert.ok(!fs.existsSync("script.js"), "chỉ còn một file nguồn js/script.js (không còn bản sao ở thư mục gốc)");
 
   const scriptContent = fs.readFileSync("js/script.js", "utf8");
   assert.ok(scriptContent.includes("Cho con đi học đại học"), "Fixed goal 1 preserved");
@@ -358,7 +356,7 @@ test("5. Backend QTV / Admin APIs", async () => {
 });
 
 test("6. Recommended Portfolio Allocation & Milestone Benchmark Verification", () => {
-  const scriptContent = fs.readFileSync("script.js", "utf8");
+  const scriptContent = fs.readFileSync("js/script.js", "utf8");
   assert.ok(scriptContent.includes("CAREER_MILESTONES_RECOMMENDED"), "CAREER_MILESTONES_RECOMMENDED defined in script.js");
   assert.ok(scriptContent.includes("calculateAgeMilestones"), "calculateAgeMilestones function defined");
 
@@ -484,11 +482,7 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(mainHtml.includes('id="chart-dashboard-tc-goals-pie"'));
   assert.ok(mainHtml.includes('id="chart-dashboard-tc-timeline-dual"'));
 
-  const scriptJs = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
-  const jsScriptJs = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
-  const hash1 = crypto.createHash("sha256").update(scriptJs).digest("hex");
-  const hash2 = crypto.createHash("sha256").update(jsScriptJs).digest("hex");
-  assert.strictEqual(hash1, hash2);
+  const scriptJs = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
   assert.ok(scriptJs.includes("chart-dashboard-tc-goals-pie"));
   assert.ok(scriptJs.includes("chart-dashboard-tc-timeline-dual"));
   assert.ok(scriptJs.includes("const portfolio30Yr = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];"));
@@ -538,7 +532,7 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
 
 test("10. Task A — Enrolled Classes & Member Identity Verification", () => {
   const { normalizeUsername } = require("../backend/security.js");
-  const scriptContent = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
+  const scriptContent = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
 
   // 1. Verify normalizeUserName & normalizeUsername definition in script.js
   assert.ok(scriptContent.includes("function normalizeUserName(rawName)"), "normalizeUserName defined in script.js");
@@ -578,7 +572,7 @@ test("10. Task A — Enrolled Classes & Member Identity Verification", () => {
 });
 
 test("11. Task B — Dashboard Variance Cumulative Calculation Verification", () => {
-  const scriptContent = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
+  const scriptContent = fs.readFileSync(path.join(__dirname, "../js/script.js"), "utf8");
 
   // Verify chartDashVariance formula in script.js: plannedExpense - actualExpense
   assert.ok(scriptContent.includes("const monthlyVariance = Number(planExp || 0) - Number(act || 0);"), "Calculates planned minus actual");
@@ -635,12 +629,7 @@ test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Veri
   const fs = require("fs");
   const path = require("path");
 
-  // 1. Verify 100% SHA-256 byte parity between js/script.js and script.js
   const jsScriptBuf = fs.readFileSync(path.join(__dirname, "../js/script.js"));
-  const rootScriptBuf = fs.readFileSync(path.join(__dirname, "../script.js"));
-  const h1 = crypto.createHash("sha256").update(jsScriptBuf).digest("hex");
-  const h2 = crypto.createHash("sha256").update(rootScriptBuf).digest("hex");
-  assert.strictEqual(h1, h2, "js/script.js and script.js must have 100% SHA-256 byte parity");
 
   const scriptContent = jsScriptBuf.toString("utf8");
 
@@ -840,7 +829,7 @@ test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Veri
 
 test("13. Financial Calculations & Standardization Audit (Tests A - P)", () => {
   const fs = require("fs");
-  const scriptContent = fs.readFileSync("script.js", "utf8");
+  const scriptContent = fs.readFileSync("js/script.js", "utf8");
 
   // 1. Verify FinancialMath definition and exposure
   assert.ok(scriptContent.includes("const FinancialMath = {"), "FinancialMath object must be defined");

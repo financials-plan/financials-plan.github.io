@@ -14,7 +14,7 @@ nên **không cần trình duyệt**. Kỳ vọng được tính bằng phép to
 
 ## Khi sửa mã
 
-1. Sửa `js/script.js`, rồi sao chép sang `script.js` ở thư mục gốc (test kiểm tra hai file trùng byte).
+1. Sửa `js/script.js` (file nguồn duy nhất).
 2. Nếu đổi giao diện, tăng số phiên bản `?v=` của `script.js` trong `main.html` (test `unit.test.js` kiểm tra số phiên bản này).
 3. Chạy `npm test` trước khi commit.
 

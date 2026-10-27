@@ -29,7 +29,6 @@ Công thức đang dùng được mô tả tại [docs/reference/CONG_THUC_HIEN_
 .
 ├── index.html, main.html, 404.html   # Điểm vào và giao diện chính (GitHub Pages phục vụ từ thư mục gốc)
 ├── js/script.js                      # Toàn bộ logic ứng dụng và thư viện FinancialMath
-├── script.js                         # Bản sao y hệt js/script.js (bài test kiểm tra hai file trùng byte)
 ├── css/style.css                     # Giao diện
 ├── config/firebase-config.js         # Cấu hình Firebase của web app
 ├── auth/                             # Màn hình đăng nhập / đăng ký
@@ -73,7 +72,7 @@ Chạy `tests/unit.test.js` (backend, bảo mật, cấu trúc giao diện) và 
 
 Mỗi lần push lên `main`, workflow `pages.yml` xuất bản toàn bộ thư mục gốc lên GitHub Pages
 (**Settings → Pages → Source: GitHub Actions**). Workflow `ci.yml` kiểm tra các file cốt lõi và cú pháp backend.
-Khi sửa `js/script.js`, hãy đồng bộ `script.js` và tăng số phiên bản trong thẻ `<script src="./js/script.js?v=…">` của `main.html` để trình duyệt tải bản mới.
+Khi sửa `js/script.js`, hãy tăng số phiên bản trong thẻ `<script src="./js/script.js?v=…">` của `main.html` để trình duyệt tải bản mới.
 
 ## Quy ước dữ liệu
 

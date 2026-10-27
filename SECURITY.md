@@ -281,7 +281,7 @@ Nếu triển khai thuần túy trên GitHub Pages (không thể tùy chỉnh Re
 
 ## 7. Cơ chế phòng thủ phía Client (Client-Side Hardening)
 
-Mã nguồn trong [`script.js`](./script.js) và [`style.css`](./style.css) đã được gia cố với các tiêu chuẩn an toàn:
+Mã nguồn trong [`js/script.js`](./js/script.js) và [`css/style.css`](./css/style.css) đã được gia cố với các tiêu chuẩn an toàn:
 
 ### 7.1. Chống chèn mã độc (XSS Prevention)
 
