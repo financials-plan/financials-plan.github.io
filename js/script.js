@@ -907,7 +907,7 @@ function createEmptyAppState() {
     currentAge: 21,
     birthYear: 2005,
     currentMonth: 1,
-    targetSavingsRate: 35,
+    targetSavingsRate: '',
     visionAge: "",
     visionDesc: "",
     expenses: [
@@ -1048,7 +1048,7 @@ window.resetAppStateToEmpty = function() {
   const tSav = document.getElementById('target-savings-rate-val');
   if (vAge) vAge.innerText = AppState.visionAge || '';
   if (vDesc) vDesc.innerText = AppState.visionDesc || '';
-  if (tSav) tSav.innerText = `${getTargetSavingsRatePct()}%`;
+  if (tSav) tSav.innerText = formatSavingsRateText();
 
   renderSetupTables();
   renderPlanTables();
@@ -1842,16 +1842,27 @@ function calculateMonthlyNeed(goal) {
   return goal.monthly;
 }
 
-// Tỷ lệ tiết kiệm mục tiêu (%) — giữ nguyên 0%; chỉ dùng mặc định 35% khi chưa có dữ liệu
+// Tỷ lệ tiết kiệm mục tiêu (%) do người dùng nhập — giữ nguyên 0%; chưa nhập/không hợp lệ -> null (không có mặc định)
 function getTargetSavingsRatePct() {
   const raw = AppState.targetSavingsRate;
-  if (raw === undefined || raw === null || raw === '') return 35;
+  if (raw === undefined || raw === null || raw === '') return null;
   const pct = parseFloat(raw);
-  return (isNaN(pct) || pct < 0 || pct > 100) ? 35 : pct;
+  return (isNaN(pct) || pct < 0 || pct > 100) ? null : pct;
+}
+
+function formatSavingsRateText() {
+  const pct = getTargetSavingsRatePct();
+  return pct === null ? '' : `${pct}%`;
 }
 
 function getEffectiveSavingsRateRatio() {
-  return getTargetSavingsRatePct() / 100;
+  const pct = getTargetSavingsRatePct();
+  return pct === null ? null : pct / 100;
+}
+
+// Nhãn khi không tính được thu nhập cần: chưa nhập tỷ lệ tiết kiệm, hoặc tỷ lệ 0% không khả thi
+function incomeNeedInfeasibleText() {
+  return getTargetSavingsRatePct() === null ? 'Nhập tỷ lệ tiết kiệm' : 'Không khả thi';
 }
 
 // Thu nhập cần để khoản góp mục tiêu chiếm đúng tỷ lệ tiết kiệm: G / S.
@@ -5187,7 +5198,7 @@ function renderCareerTables() {
   const milestones = calculateAgeMilestones();
   const tb1 = document.getElementById('tbody-career-overview');
   if (tb1) {
-    const incomeCell = v => (v === null ? '<span title="Không khả thi: tỷ lệ tiết kiệm 0% không thể đáp ứng khoản góp mục tiêu">Không khả thi</span>' : v.toFixed(1));
+    const incomeCell = v => (v === null ? `<span title="Không tính được: chưa nhập tỷ lệ tiết kiệm hoặc tỷ lệ 0% không thể đáp ứng khoản góp mục tiêu">${incomeNeedInfeasibleText()}</span>` : v.toFixed(1));
     tb1.innerHTML = milestones.map((item, idx) => `
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
@@ -5230,7 +5241,7 @@ function renderCareerTables() {
           </td>
 
           <td class="text-right font-bold text-primary font-mono">
-            ${hasTarget ? item.target.toFixed(1) : (item.targetInfeasible ? '<span title="Tỷ lệ tiết kiệm 0% không thể đáp ứng khoản góp mục tiêu">Không khả thi</span>' : '<span class="dash-null">-</span>')}
+            ${hasTarget ? item.target.toFixed(1) : (item.targetInfeasible ? `<span title="Chưa nhập tỷ lệ tiết kiệm hoặc tỷ lệ 0% không thể đáp ứng khoản góp mục tiêu">${incomeNeedInfeasibleText()}</span>` : '<span class="dash-null">-</span>')}
           </td>
 
           <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}"
@@ -6693,7 +6704,7 @@ function renderTcMatrixTable() {
 
     const incNeedRaw = computeIncomeNeedForGoalSavings(sSum, rate);
     const incNeed = incNeedRaw === null ? 0 : incNeedRaw;
-    const incNeedText = incNeedRaw === null ? 'Không khả thi' : (incNeed > 0 ? incNeed.toFixed(1) : '-');
+    const incNeedText = incNeedRaw === null ? incomeNeedInfeasibleText() : (incNeed > 0 ? incNeed.toFixed(1) : '-');
     rows += `
       <tr id="mtr-row-${y}">
         <td class="text-center font-bold font-mono bg-neutral-gray">${yr}</td>
@@ -6732,7 +6743,7 @@ window.onMatrixCellChange = function(td, rIdx) {
   const savCell = document.getElementById(`mtr-sav-${rIdx}`);
   const incCell = document.getElementById(`mtr-inc-${rIdx}`);
   if (savCell) savCell.textContent = rSum > 0 ? rSum.toFixed(1) : '-';
-  if (incCell) incCell.textContent = incRaw === null ? 'Không khả thi' : (inc > 0 ? inc.toFixed(1) : '-');
+  if (incCell) incCell.textContent = incRaw === null ? incomeNeedInfeasibleText() : (inc > 0 ? inc.toFixed(1) : '-');
   updateMatrixChartData();
 
   renderCareerTables();
@@ -7020,7 +7031,7 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
     const sRateEl = document.getElementById('target-savings-rate-val');
-    if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
+    if (sRateEl) sRateEl.innerText = formatSavingsRateText();
     const vAgeEl = document.getElementById('vision-age-cell');
     if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
     const vDescEl = document.getElementById('vision-desc-cell');
@@ -7468,7 +7479,7 @@ window.executeConfirmedAction = async function() {
       document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
       const sRateEl = document.getElementById('target-savings-rate-val');
-      if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
+      if (sRateEl) sRateEl.innerText = formatSavingsRateText();
       const vAgeEl = document.getElementById('vision-age-cell');
       if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
       const vDescEl = document.getElementById('vision-desc-cell');
@@ -9648,7 +9659,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const sRateEl = document.getElementById('target-savings-rate-val');
-  if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
+  if (sRateEl) sRateEl.innerText = formatSavingsRateText();
   const vAgeEl = document.getElementById('vision-age-cell');
   if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
   const vDescEl = document.getElementById('vision-desc-cell');
@@ -9763,6 +9774,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const parsed = parseFloat(sRateEl.innerText.replace(/[^0-9.-]/g, ''));
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
         AppState.targetSavingsRate = parsed;
+      } else if (sRateEl.innerText.trim() === '') {
+        AppState.targetSavingsRate = '';
       }
       renderTcMatrixTable();
       renderCareerTables();
@@ -9770,7 +9783,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     sRateEl.addEventListener('input', handleSavingsRateUpdate);
     sRateEl.addEventListener('blur', () => {
-      sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
+      sRateEl.innerText = formatSavingsRateText();
       handleSavingsRateUpdate();
     });
   }
