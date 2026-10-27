@@ -9651,20 +9651,18 @@ async function renderClassAnalyticsDashboard() {
       totalDSR += dsr;
 
       if (plan.portfolioAllocation) {
-        totalStocks += parseFloat(plan.portfolioAllocation.stocks || 35);
-        totalBonds += parseFloat(plan.portfolioAllocation.bonds || 25);
-        totalInsurance += parseFloat(plan.portfolioAllocation.insurance || 20);
-        totalCash += parseFloat(plan.portfolioAllocation.cash || 20);
-      } else {
-        totalStocks += 35; totalBonds += 25; totalInsurance += 20; totalCash += 20;
+        totalStocks += parseFloat(plan.portfolioAllocation.stocks || 0);
+        totalBonds += parseFloat(plan.portfolioAllocation.bonds || 0);
+        totalInsurance += parseFloat(plan.portfolioAllocation.insurance || 0);
+        totalCash += parseFloat(plan.portfolioAllocation.cash || 0);
       }
     }
   }
 
   const avgCompletion = members.length > 0 ? Math.round(totalPercent / members.length) : 0;
-  const avgSavings = countWithData > 0 ? (totalSavingsRate / countWithData).toFixed(1) : 18.5;
-  const avgNet = countWithData > 0 ? (totalNetCashflow / countWithData).toFixed(1) : 4.2;
-  const avgDSR = countWithData > 0 ? (totalDSR / countWithData).toFixed(1) : 12.0;
+  const avgSavings = countWithData > 0 ? (totalSavingsRate / countWithData).toFixed(1) : 0;
+  const avgNet = countWithData > 0 ? (totalNetCashflow / countWithData).toFixed(1) : 0;
+  const avgDSR = countWithData > 0 ? (totalDSR / countWithData).toFixed(1) : 0;
 
   const compRateEl = document.getElementById('ana-completion-rate');
   const compHintEl = document.getElementById('ana-completion-hint');
@@ -9673,16 +9671,16 @@ async function renderClassAnalyticsDashboard() {
   const dsrRatioEl = document.getElementById('ana-dsr-ratio');
 
   if (compRateEl) compRateEl.textContent = `${avgCompletion}%`;
-  if (compHintEl) compHintEl.textContent = `${members.length} học viên chính thức trong lớp`;
-  if (savRateEl) savRateEl.textContent = `${avgSavings}%`;
-  if (netCashEl) netCashEl.textContent = `${avgNet} tr/tháng`;
-  if (dsrRatioEl) dsrRatioEl.textContent = `${avgDSR}%`;
+  if (compHintEl) compHintEl.textContent = members.length > 0 ? `${members.length} học viên chính thức trong lớp` : 'Chưa có học viên nào trong lớp';
+  if (savRateEl) savRateEl.textContent = countWithData > 0 ? `${avgSavings}%` : '---';
+  if (netCashEl) netCashEl.textContent = countWithData > 0 ? `${avgNet} tr/tháng` : '---';
+  if (dsrRatioEl) dsrRatioEl.textContent = countWithData > 0 ? `${avgDSR}%` : '---';
 
-  const sTotal = (totalStocks + totalBonds + totalInsurance + totalCash) || 100;
-  const pStocks = Math.round((totalStocks || 35) / sTotal * 100);
-  const pBonds = Math.round((totalBonds || 25) / sTotal * 100);
-  const pIns = Math.round((totalInsurance || 20) / sTotal * 100);
-  const pCash = 100 - (pStocks + pBonds + pIns);
+  const sTotal = (totalStocks + totalBonds + totalInsurance + totalCash);
+  const pStocks = sTotal > 0 ? Math.round(totalStocks / sTotal * 100) : 0;
+  const pBonds = sTotal > 0 ? Math.round(totalBonds / sTotal * 100) : 0;
+  const pIns = sTotal > 0 ? Math.round(totalInsurance / sTotal * 100) : 0;
+  const pCash = sTotal > 0 ? Math.max(0, 100 - (pStocks + pBonds + pIns)) : 0;
 
   const segStocks = document.getElementById('seg-ana-stocks');
   const segBonds = document.getElementById('seg-ana-bonds');
@@ -9699,10 +9697,10 @@ async function renderClassAnalyticsDashboard() {
   const lblIns = document.getElementById('lbl-ana-insurance');
   const lblCash = document.getElementById('lbl-ana-cash');
 
-  if (lblStocks) lblStocks.textContent = `${pStocks}%`;
-  if (lblBonds) lblBonds.textContent = `${pBonds}%`;
-  if (lblIns) lblIns.textContent = `${pIns}%`;
-  if (lblCash) lblCash.textContent = `${pCash}%`;
+  if (lblStocks) lblStocks.textContent = sTotal > 0 ? `${pStocks}%` : '---';
+  if (lblBonds) lblBonds.textContent = sTotal > 0 ? `${pBonds}%` : '---';
+  if (lblIns) lblIns.textContent = sTotal > 0 ? `${pIns}%` : '---';
+  if (lblCash) lblCash.textContent = sTotal > 0 ? `${pCash}%` : '---';
 }
 
 async function renderAdminCodesList() {
@@ -10778,11 +10776,11 @@ window.renderAdminStudentsTable = async function() {
         allocCash = Number(studentPlan.portfolioAllocation.cash || allocCash);
       }
     } else if (m.status === 'approved') {
-      percent = 50;
-      statusLabel = "Đang lập lộ trình";
+      percent = 0;
+      statusLabel = "Chưa nộp bài làm";
     } else {
-      percent = 20;
-      statusLabel = "Chưa hoàn thiện";
+      percent = 0;
+      statusLabel = "Chờ duyệt";
     }
 
     let colorClass = "prog-fill-red";
@@ -10806,11 +10804,15 @@ window.renderAdminStudentsTable = async function() {
       pendingCount++;
     }
 
-    let healthBadge = '<span class="financial-metric-chip chip-safe"><i class="fa-solid fa-circle-check"></i> Lành mạnh</span>';
-    if (dsrVal > 40 || netCashflow < 0) {
-      healthBadge = '<span class="financial-metric-chip chip-danger"><i class="fa-solid fa-triangle-exclamation"></i> Báo động nợ</span>';
-    } else if (savingsRate < 15 || percent < 50) {
-      healthBadge = '<span class="financial-metric-chip chip-warning"><i class="fa-solid fa-circle-exclamation"></i> Cần cân đối</span>';
+    let healthBadge = '<span class="financial-metric-chip chip-pending"><i class="fa-solid fa-clock"></i> Chưa có dữ liệu</span>';
+    if (studentPlan) {
+      if (dsrVal > 40 || netCashflow < 0) {
+        healthBadge = '<span class="financial-metric-chip chip-danger"><i class="fa-solid fa-triangle-exclamation"></i> Báo động nợ</span>';
+      } else if (savingsRate < 15 || percent < 50) {
+        healthBadge = '<span class="financial-metric-chip chip-warning"><i class="fa-solid fa-circle-exclamation"></i> Cần cân đối</span>';
+      } else {
+        healthBadge = '<span class="financial-metric-chip chip-safe"><i class="fa-solid fa-circle-check"></i> Lành mạnh</span>';
+      }
     }
 
     return {
@@ -11111,116 +11113,409 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   if (classes.length === 0) {
     if (groupSel) groupSel.innerHTML = '<option value="">Chưa có nhóm nào</option>';
-    if (barsContainer) barsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-chart-pie"></i></div><h3>Chưa có dữ liệu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để tổng hợp phân bổ danh mục.</p></div>';
-    if (goalsContainer) goalsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 30px;"><div class="empty-icon text-muted"><i class="fa-solid fa-bullseye"></i></div><h3>Chưa có mục tiêu nhóm</h3><p class="text-muted">Chưa có nhóm nào được tạo để đo lường tiến độ mục tiêu.</p></div>';
+    if (barsContainer) barsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 40px 20px; text-align: center;"><div class="empty-icon text-muted" style="font-size: 38px; color: #94a3b8; margin-bottom: 12px;"><i class="fa-solid fa-chart-pie"></i></div><h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 15px; font-weight: 700;">Chưa có dữ liệu nhóm</h4><p class="text-muted" style="margin: 0; font-size: 13px; color: #64748b;">Chưa có nhóm nào được tạo để tổng hợp phân bổ danh mục.</p></div>';
+    if (goalsContainer) goalsContainer.innerHTML = '<div class="admin-empty-state" style="padding: 40px 20px; text-align: center;"><div class="empty-icon text-muted" style="font-size: 38px; color: #94a3b8; margin-bottom: 12px;"><i class="fa-solid fa-bullseye"></i></div><h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 15px; font-weight: 700;">Chưa có mục tiêu nhóm</h4><p class="text-muted" style="margin: 0; font-size: 13px; color: #64748b;">Chưa có nhóm nào được tạo để đo lường tiến độ mục tiêu.</p></div>';
     return;
   }
 
   if (groupSel) {
-    groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === (classId || currentSelectedClassId) ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
+    const curId = classId || currentSelectedClassId || classes[0].id;
+    groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === curId ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
   }
 
-  const target = classes.find(c => c.id === (classId || currentSelectedClassId)) || classes[0];
+  const selectedClassId = classId || (groupSel ? groupSel.value : null) || currentSelectedClassId || classes[0].id;
+  currentSelectedClassId = selectedClassId;
+  const target = classes.find(c => c.id === selectedClassId) || classes[0];
   if (!target) return;
 
-  if (barsContainer) {
-    barsContainer.innerHTML = `
-      <div class="analytics-donut-container">
-        <div class="analytics-donut-wrap">
-          <svg class="analytics-donut-svg" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r="70" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="26" />
-            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#3b82f6" stroke-width="26" stroke-dasharray="197.92 439.82" stroke-dashoffset="0" />
-            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#10b981" stroke-width="26" stroke-dasharray="109.96 439.82" stroke-dashoffset="-197.92" />
-            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#f59e0b" stroke-width="26" stroke-dasharray="79.17 439.82" stroke-dashoffset="-307.88" />
-            <circle cx="100" cy="100" r="70" fill="transparent" stroke="#8b5cf6" stroke-width="26" stroke-dasharray="52.78 439.82" stroke-dashoffset="-387.05" />
-          </svg>
-          <div class="donut-circle-center">
-            <div class="donut-center-val">100%</div>
-            <div class="donut-center-sub">Danh mục</div>
+  const approvedMembers = (Array.isArray(target.members) ? target.members : []).filter(m => m.status === 'approved');
+
+  // TRƯỜNG HỢP 1: Chưa có học viên nào được duyệt vào lớp!
+  if (approvedMembers.length === 0) {
+    if (barsContainer) {
+      barsContainer.innerHTML = `
+        <div class="admin-empty-state" style="padding: 40px 20px; text-align: center;">
+          <div class="empty-icon text-muted" style="font-size: 42px; color: #94a3b8; margin-bottom: 12px;">
+            <i class="fa-solid fa-chart-pie"></i>
           </div>
+          <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Chưa có học viên trong nhóm</h4>
+          <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
+            Nhóm <strong>${target.name}</strong> (<code>${target.code}</code>) hiện chưa có học viên nào được phê duyệt vào lớp. Cơ cấu phân bổ tài sản sẽ tự động tổng hợp khi có học viên tham gia.
+          </p>
         </div>
-
-        <div class="analytics-donut-legend">
-          <div class="donut-legend-item">
-            <div class="donut-legend-label">
-              <span class="donut-color-dot" style="background: #3b82f6;"></span>
-              <span>Cổ phiếu &amp; Chứng khoán</span>
-            </div>
-            <span class="donut-legend-pct" style="color: #2563eb;">45.0%</span>
+      `;
+    }
+    if (goalsContainer) {
+      goalsContainer.innerHTML = `
+        <div class="admin-empty-state" style="padding: 40px 20px; text-align: center;">
+          <div class="empty-icon text-muted" style="font-size: 42px; color: #94a3b8; margin-bottom: 12px;">
+            <i class="fa-solid fa-bullseye"></i>
           </div>
-
-          <div class="donut-legend-item">
-            <div class="donut-legend-label">
-              <span class="donut-color-dot" style="background: #10b981;"></span>
-              <span>Trái phiếu &amp; Thu nhập cố định</span>
-            </div>
-            <span class="donut-legend-pct" style="color: #059669;">25.0%</span>
-          </div>
-
-          <div class="donut-legend-item">
-            <div class="donut-legend-label">
-              <span class="donut-color-dot" style="background: #f59e0b;"></span>
-              <span>Tiền gửi tiết kiệm</span>
-            </div>
-            <span class="donut-legend-pct" style="color: #d97706;">18.0%</span>
-          </div>
-
-          <div class="donut-legend-item">
-            <div class="donut-legend-label">
-              <span class="donut-color-dot" style="background: #8b5cf6;"></span>
-              <span>Bảo hiểm &amp; Quỹ an toàn</span>
-            </div>
-            <span class="donut-legend-pct" style="color: #7c3aed;">12.0%</span>
-          </div>
+          <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Chưa có dữ liệu mục tiêu</h4>
+          <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
+            Chưa có thành viên chính thức nào để tính toán tỷ lệ hoàn thành mục tiêu tài chính (Quỹ khẩn cấp, Hưu trí, Kiểm soát nợ DSR).
+          </p>
         </div>
-      </div>
-
-      <div class="analytics-research-box">
-        <div class="research-box-header">
-          <i class="fa-solid fa-graduation-cap"></i>
-          <span>Chỉ số Phân tích Danh mục Markowitz MPT (Phục vụ nghiên cứu)</span>
-        </div>
-        <div class="research-grid">
-          <div class="research-metric-pill">
-            <span class="research-metric-title">Lợi suất kỳ vọng E(Rp)</span>
-            <span class="research-metric-val" style="color: #2563eb;">9.65%/năm</span>
-            <span class="research-metric-desc">Tổng hợp tỷ trọng gia quyền theo mô hình CAPM thị trường Việt Nam</span>
-          </div>
-          <div class="research-metric-pill">
-            <span class="research-metric-title">Độ lệch chuẩn rủi ro (σp)</span>
-            <span class="research-metric-val" style="color: #059669;">11.20%</span>
-            <span class="research-metric-desc">Đã giảm thiểu 38% rủi ro phi hệ thống nhờ tương quan nghịch giữa các lớp</span>
-          </div>
-          <div class="research-metric-pill">
-            <span class="research-metric-title">Tỷ số Sharpe (Sp)</span>
-            <span class="research-metric-val" style="color: #7c3aed;">0.72</span>
-            <span class="research-metric-desc">Lãi suất phi rủi ro Rf = 4.5%, hiệu suất sinh lời thặng dư trên mỗi đơn vị rủi ro</span>
-          </div>
-          <div class="research-metric-pill">
-            <span class="research-metric-title">Tăng trưởng / Phòng thủ</span>
-            <span class="research-metric-val" style="color: #d97706;">45% : 55%</span>
-            <span class="research-metric-desc">Khẩu vị rủi ro cân bằng tối ưu theo khuyến nghị CFP Board cho học viên</span>
-          </div>
-        </div>
-      </div>
-    `;
+      `;
+    }
+    return;
   }
 
+  // TRƯỜNG HỢP 2: Đã có học viên -> Thu thập bài làm thực tế của từng học viên
+  const memberPlans = [];
+  for (const m of approvedMembers) {
+    let plan = m.plan || null;
+    if (!plan && window.CloudDB && typeof window.CloudDB.loadUserData === 'function') {
+      try {
+        const res = await window.CloudDB.loadUserData('user_' + m.username);
+        if (res && res.success && res.data) plan = res.data;
+      } catch (e) {}
+    }
+    if (!plan) {
+      try {
+        const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
+        if (raw) plan = JSON.parse(raw);
+      } catch (e) {}
+    }
+    if (plan) {
+      memberPlans.push({ member: m, plan });
+    }
+  }
+
+  // Nếu học viên trong lớp nhưng chưa ai nhập/lưu kế hoạch tài chính
+  if (memberPlans.length === 0) {
+    if (barsContainer) {
+      barsContainer.innerHTML = `
+        <div class="admin-empty-state" style="padding: 40px 20px; text-align: center;">
+          <div class="empty-icon text-muted" style="font-size: 42px; color: #94a3b8; margin-bottom: 12px;">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+          <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Chưa có bài nộp kế hoạch tài chính</h4>
+          <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
+            Nhóm có ${approvedMembers.length} thành viên nhưng các học viên chưa hoàn thành hoặc lưu kế hoạch tài chính. Dữ liệu sẽ tự động tính toán ngay khi học viên lưu bài.
+          </p>
+        </div>
+      `;
+    }
+    if (goalsContainer) {
+      goalsContainer.innerHTML = `
+        <div class="admin-empty-state" style="padding: 40px 20px; text-align: center;">
+          <div class="empty-icon text-muted" style="font-size: 42px; color: #94a3b8; margin-bottom: 12px;">
+            <i class="fa-solid fa-hourglass-start"></i>
+          </div>
+          <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Đang chờ học viên thiết lập mục tiêu</h4>
+          <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
+            Chưa có học viên nào thiết lập mục tiêu cụ thể trong nhóm. Tiến độ mục tiêu sẽ hiển thị khi học viên nhập dữ liệu.
+          </p>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // TRƯỜNG HỢP 3: Có dữ liệu thực tế -> Tính toán trung bình toàn nhóm từ data thực tế
+  let sumStocks = 0, sumBonds = 0, sumCash = 0, sumIns = 0;
+  let membersWithAlloc = 0;
+
+  let totalEmergencyPct = 0;
+  let countEmergency = 0;
+  let totalRetirePct = 0;
+  let countRetire = 0;
+  let totalDsrPct = 0;
+  let countDsr = 0;
+
+  let totalSavingsRate = 0;
+  let countSavings = 0;
+  let totalDebtVal = 0;
+
+  memberPlans.forEach(({ plan }) => {
+    let mStocks = 0, mBonds = 0, mCash = 0, mIns = 0;
+    let hasAlloc = false;
+
+    if (Array.isArray(plan.tcGoals)) {
+      plan.tcGoals.forEach(g => {
+        if (Array.isArray(g.allocProducts)) {
+          g.allocProducts.forEach(ap => {
+            const w = Number(ap.weight) || 0;
+            if (w > 0) {
+              hasAlloc = true;
+              const pName = String(ap.prodName || '').toLowerCase();
+              if (pName.includes('cổ phiếu') || pName.includes('chứng khoán') || pName.includes('stock') || pName.includes('etf')) {
+                mStocks += w;
+              } else if (pName.includes('trái phiếu') || pName.includes('bond')) {
+                mBonds += w;
+              } else if (pName.includes('bảo hiểm') || pName.includes('an toàn') || pName.includes('insurance')) {
+                mIns += w;
+              } else {
+                mCash += w;
+              }
+            }
+          });
+        }
+      });
+    }
+
+    if (!hasAlloc && plan.portfolioAllocation) {
+      mStocks = Number(plan.portfolioAllocation.stocks || 0);
+      mBonds = Number(plan.portfolioAllocation.bonds || 0);
+      mIns = Number(plan.portfolioAllocation.insurance || 0);
+      mCash = Number(plan.portfolioAllocation.cash || 0);
+      if (mStocks + mBonds + mIns + mCash > 0) hasAlloc = true;
+    }
+
+    if (!hasAlloc && plan.yearEndBalanceSheet && Array.isArray(plan.yearEndBalanceSheet.assets)) {
+      plan.yearEndBalanceSheet.assets.forEach(a => {
+        const v = Number(a.value) || 0;
+        if (v > 0) {
+          hasAlloc = true;
+          const cat = String(a.category || a.type || '').toLowerCase();
+          const aName = String(a.name || '').toLowerCase();
+          if (cat.includes('stock') || aName.includes('cổ phiếu') || aName.includes('chứng khoán')) {
+            mStocks += v;
+          } else if (cat.includes('bond') || aName.includes('trái phiếu')) {
+            mBonds += v;
+          } else if (cat.includes('insurance') || aName.includes('bảo hiểm')) {
+            mIns += v;
+          } else {
+            mCash += v;
+          }
+        }
+      });
+    }
+
+    if (hasAlloc) {
+      const totalM = mStocks + mBonds + mCash + mIns;
+      if (totalM > 0) {
+        sumStocks += (mStocks / totalM) * 100;
+        sumBonds += (mBonds / totalM) * 100;
+        sumCash += (mCash / totalM) * 100;
+        sumIns += (mIns / totalM) * 100;
+        membersWithAlloc++;
+      }
+    }
+
+    const inc = Number(plan.monthlyIncome || plan.incomeMonthly || 0);
+    let exp = Number(plan.monthlyExpense || plan.expenseMonthly || 0);
+    if (exp === 0 && Array.isArray(plan.planExpense)) {
+      exp = plan.planExpense.reduce((s, x) => s + (Number(x.plan) || 0), 0);
+    }
+    if (exp === 0 && plan.monthlyDetails && typeof plan.monthlyDetails === 'object') {
+      Object.values(plan.monthlyDetails).forEach(v => {
+        if (typeof v === 'number') exp += v;
+        else if (v && typeof v.plan === 'number') exp += v.plan;
+      });
+    }
+
+    // Quỹ khẩn cấp
+    const emgGoal = Array.isArray(plan.tcGoals) ? plan.tcGoals.find(g => g && (g.type === 'emergency' || String(g.name || '').toLowerCase().includes('khẩn cấp'))) : null;
+    if (emgGoal) {
+      const targetEmg = Number(emgGoal.targetAmount || 0) || (exp * 6) || 1;
+      const curEmg = Number(emgGoal.currentAmount || emgGoal.accumulated || 0);
+      const emgPct = targetEmg > 0 ? Math.min(100, Math.round((curEmg / targetEmg) * 100)) : 0;
+      totalEmergencyPct += emgPct;
+      countEmergency++;
+    } else if (exp > 0) {
+      const cashAssets = (plan.yearEndBalanceSheet && Array.isArray(plan.yearEndBalanceSheet.assets))
+        ? plan.yearEndBalanceSheet.assets.filter(a => String(a.category || a.name || '').toLowerCase().includes('tiền') || String(a.category || a.name || '').toLowerCase().includes('tiết kiệm')).reduce((s, a) => s + (Number(a.value) || 0), 0)
+        : 0;
+      const emgPct = Math.min(100, Math.round((cashAssets / (exp * 6)) * 100));
+      totalEmergencyPct += emgPct;
+      countEmergency++;
+    }
+
+    // Hưu trí
+    const retGoal = Array.isArray(plan.tcGoals) ? plan.tcGoals.find(g => g && (g.type === 'retirement' || String(g.name || '').toLowerCase().includes('hưu trí'))) : null;
+    if (retGoal) {
+      const targetRet = Number(retGoal.targetAmount || 0) || 1;
+      const curRet = Number(retGoal.currentAmount || retGoal.accumulated || 0);
+      const retPct = targetRet > 0 ? Math.min(100, Math.round((curRet / targetRet) * 100)) : 0;
+      totalRetirePct += retPct;
+      countRetire++;
+    } else {
+      const curAge = Number(plan.currentAge || 21);
+      const retAge = Number(plan.retireAge || 60);
+      const startAge = 20;
+      const retPct = retAge > startAge ? Math.min(100, Math.max(0, Math.round(((curAge - startAge) / (retAge - startAge)) * 100))) : 0;
+      totalRetirePct += retPct;
+      countRetire++;
+    }
+
+    // Kiểm soát nợ DSR
+    const debtService = Number(plan.monthlyDebtService || 0);
+    totalDebtVal += debtService;
+    if (inc > 0) {
+      const dsr = (debtService / inc) * 100;
+      const dsrScore = dsr <= 30 ? 100 : Math.max(0, Math.round(100 - (dsr - 30) * 2));
+      totalDsrPct += dsrScore;
+      countDsr++;
+    }
+
+    // Tiết kiệm
+    if (inc > 0 && exp >= 0) {
+      const sr = Math.max(0, Math.round(((inc - exp) / inc) * 100));
+      totalSavingsRate += sr;
+      countSavings++;
+    }
+  });
+
+  // Render Card 1: Cơ cấu phân bổ tài sản
+  if (barsContainer) {
+    if (membersWithAlloc === 0) {
+      barsContainer.innerHTML = `
+        <div class="admin-empty-state" style="padding: 40px 20px; text-align: center;">
+          <div class="empty-icon text-muted" style="font-size: 40px; margin-bottom: 12px; color: #94a3b8;">
+            <i class="fa-solid fa-chart-pie"></i>
+          </div>
+          <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Chưa có dữ liệu phân bổ danh mục</h4>
+          <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
+            Các học viên chưa thực hiện phân bổ tỷ trọng vào các kênh tài sản (Cổ phiếu, Trái phiếu, Tiền gửi, Bảo hiểm).
+          </p>
+        </div>
+      `;
+    } else {
+      const avgStocks = Math.round((sumStocks / membersWithAlloc) * 10) / 10;
+      const avgBonds = Math.round((sumBonds / membersWithAlloc) * 10) / 10;
+      const avgCash = Math.round((sumCash / membersWithAlloc) * 10) / 10;
+      let avgIns = Math.round((100 - avgStocks - avgBonds - avgCash) * 10) / 10;
+      if (avgIns < 0) avgIns = 0;
+
+      const circ = 439.82;
+      const cStocks = (avgStocks / 100) * circ;
+      const cBonds = (avgBonds / 100) * circ;
+      const cCash = (avgCash / 100) * circ;
+      const cIns = (avgIns / 100) * circ;
+
+      const oStocks = 0;
+      const oBonds = -cStocks;
+      const oCash = -(cStocks + cBonds);
+      const oIns = -(cStocks + cBonds + cCash);
+
+      const expReturn = Math.round((avgStocks * 0.12 + avgBonds * 0.08 + avgCash * 0.05 + avgIns * 0.06) * 10) / 10;
+      const riskStd = Math.round((avgStocks * 0.18 + avgBonds * 0.06 + avgCash * 0.01 + avgIns * 0.02) * 10) / 10;
+      const sharpe = riskStd > 0 ? ((expReturn - 4.5) / riskStd).toFixed(2) : '0.00';
+
+      barsContainer.innerHTML = `
+        <div class="analytics-donut-container">
+          <div class="analytics-donut-wrap">
+            <svg class="analytics-donut-svg" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="70" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="26" />
+              <circle cx="100" cy="100" r="70" fill="transparent" stroke="#3b82f6" stroke-width="26" stroke-dasharray="${cStocks.toFixed(2)} ${circ}" stroke-dashoffset="${oStocks.toFixed(2)}" />
+              <circle cx="100" cy="100" r="70" fill="transparent" stroke="#10b981" stroke-width="26" stroke-dasharray="${cBonds.toFixed(2)} ${circ}" stroke-dashoffset="${oBonds.toFixed(2)}" />
+              <circle cx="100" cy="100" r="70" fill="transparent" stroke="#f59e0b" stroke-width="26" stroke-dasharray="${cCash.toFixed(2)} ${circ}" stroke-dashoffset="${oCash.toFixed(2)}" />
+              <circle cx="100" cy="100" r="70" fill="transparent" stroke="#8b5cf6" stroke-width="26" stroke-dasharray="${cIns.toFixed(2)} ${circ}" stroke-dashoffset="${oIns.toFixed(2)}" />
+            </svg>
+            <div class="donut-circle-center">
+              <div class="donut-center-val">100%</div>
+              <div class="donut-center-sub">Danh mục</div>
+            </div>
+          </div>
+
+          <div class="analytics-donut-legend">
+            <div class="donut-legend-item">
+              <div class="donut-legend-label">
+                <span class="donut-color-dot" style="background: #3b82f6;"></span>
+                <span>Cổ phiếu &amp; Chứng khoán</span>
+              </div>
+              <span class="donut-legend-pct" style="color: #2563eb;">${avgStocks.toFixed(1)}%</span>
+            </div>
+
+            <div class="donut-legend-item">
+              <div class="donut-legend-label">
+                <span class="donut-color-dot" style="background: #10b981;"></span>
+                <span>Trái phiếu &amp; Thu nhập cố định</span>
+              </div>
+              <span class="donut-legend-pct" style="color: #059669;">${avgBonds.toFixed(1)}%</span>
+            </div>
+
+            <div class="donut-legend-item">
+              <div class="donut-legend-label">
+                <span class="donut-color-dot" style="background: #f59e0b;"></span>
+                <span>Tiền gửi tiết kiệm</span>
+              </div>
+              <span class="donut-legend-pct" style="color: #d97706;">${avgCash.toFixed(1)}%</span>
+            </div>
+
+            <div class="donut-legend-item">
+              <div class="donut-legend-label">
+                <span class="donut-color-dot" style="background: #8b5cf6;"></span>
+                <span>Bảo hiểm &amp; Quỹ an toàn</span>
+              </div>
+              <span class="donut-legend-pct" style="color: #7c3aed;">${avgIns.toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-research-box">
+          <div class="research-box-header">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>Chỉ số Phân tích Danh mục Nhóm (Dữ liệu thực tế từ ${membersWithAlloc} học viên)</span>
+          </div>
+          <div class="research-grid">
+            <div class="research-metric-pill">
+              <span class="research-metric-title">Lợi suất kỳ vọng bình quân E(Rp)</span>
+              <span class="research-metric-val" style="color: #2563eb;">${expReturn}%/năm</span>
+              <span class="research-metric-desc">Tổng hợp tỷ trọng gia quyền theo danh mục tài sản thực tế của nhóm</span>
+            </div>
+            <div class="research-metric-pill">
+              <span class="research-metric-title">Độ lệch chuẩn danh mục (σp)</span>
+              <span class="research-metric-val" style="color: #059669;">${riskStd}%</span>
+              <span class="research-metric-desc">Mức độ rủi ro trung bình dựa trên cơ cấu tài sản của các thành viên</span>
+            </div>
+            <div class="research-metric-pill">
+              <span class="research-metric-title">Tỷ số Sharpe (Sp)</span>
+              <span class="research-metric-val" style="color: #7c3aed;">${sharpe}</span>
+              <span class="research-metric-desc">Lãi suất phi rủi ro Rf = 4.5%, đo lường hiệu suất sinh lời trên mỗi đơn vị rủi ro</span>
+            </div>
+            <div class="research-metric-pill">
+              <span class="research-metric-title">Tăng trưởng / Phòng thủ</span>
+              <span class="research-metric-val" style="color: #d97706;">${Math.round(avgStocks)}% : ${Math.round(100 - avgStocks)}%</span>
+              <span class="research-metric-desc">Tỷ lệ phân bổ giữa tài sản tăng trưởng (cổ phiếu) và phòng thủ (bảo hiểm, tiền gửi, trái phiếu)</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Render Card 2: Mục tiêu tài chính
   if (goalsContainer) {
+    const avgEmg = countEmergency > 0 ? Math.round(totalEmergencyPct / countEmergency) : 0;
+    const avgRet = countRetire > 0 ? Math.round(totalRetirePct / countRetire) : 0;
+    const avgDsr = countDsr > 0 ? Math.round(totalDsrPct / countDsr) : 0;
+
+    const radCirc = 238.76;
+    const radEmg = (avgEmg / 100 * radCirc).toFixed(2);
+    const radRet = (avgRet / 100 * radCirc).toFixed(2);
+    const radDsr = (avgDsr / 100 * radCirc).toFixed(2);
+
+    const emgBadge = avgEmg >= 70
+      ? '<span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">Đạt chuẩn</span>'
+      : (avgEmg >= 40 ? '<span class="badge-prog badge-prog-doing" style="font-size: 11px; margin-top: 4px;">Đang tích lũy</span>' : '<span class="badge-prog" style="font-size: 11px; margin-top: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">Cần bổ sung</span>');
+
+    const retBadge = avgRet >= 70
+      ? '<span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">Đạt tiến độ</span>'
+      : (avgRet >= 40 ? '<span class="badge-prog badge-prog-doing" style="font-size: 11px; margin-top: 4px;">Đang tích lũy</span>' : '<span class="badge-prog" style="font-size: 11px; margin-top: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">Mới bắt đầu</span>');
+
+    const dsrBadge = avgDsr >= 80
+      ? '<span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">An toàn cao</span>'
+      : (avgDsr >= 60 ? '<span class="badge-prog badge-prog-doing" style="font-size: 11px; margin-top: 4px;">Mức vừa phải</span>' : '<span class="badge-prog" style="font-size: 11px; margin-top: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">Cảnh báo nợ</span>');
+
+    const avgSavingsText = countSavings > 0 ? (totalSavingsRate / countSavings).toFixed(1) + '%' : '---';
+
     goalsContainer.innerHTML = `
       <div class="analytics-radial-grid">
         <div class="radial-circle-card">
           <div class="radial-svg-wrap">
             <svg class="radial-circle-svg" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
-              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="186.23 238.76" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#10b981" stroke-width="9" stroke-linecap="round" stroke-dasharray="${radEmg} ${radCirc}" />
             </svg>
-            <div class="radial-pct-center text-emerald">78%</div>
+            <div class="radial-pct-center text-emerald">${avgEmg}%</div>
           </div>
           <div class="radial-card-info">
             <span class="radial-card-title">Quỹ khẩn cấp</span>
             <span class="radial-card-sub">&ge; 6 tháng chi tiêu</span>
-            <span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">Đạt chuẩn</span>
+            ${emgBadge}
           </div>
         </div>
 
@@ -11228,14 +11523,14 @@ window.renderAdminAnalyticsView = async function(classId) {
           <div class="radial-svg-wrap">
             <svg class="radial-circle-svg" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
-              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="9" stroke-linecap="round" stroke-dasharray="152.81 238.76" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#3b82f6" stroke-width="9" stroke-linecap="round" stroke-dasharray="${radRet} ${radCirc}" />
             </svg>
-            <div class="radial-pct-center" style="color: #2563eb;">64%</div>
+            <div class="radial-pct-center" style="color: #2563eb;">${avgRet}%</div>
           </div>
           <div class="radial-card-info">
             <span class="radial-card-title">Hưu trí an nhàn</span>
-            <span class="radial-card-sub">Lộ trình tuổi 50</span>
-            <span class="badge-prog badge-prog-doing" style="font-size: 11px; margin-top: 4px;">Đang tích lũy</span>
+            <span class="radial-card-sub">Lộ trình theo tuổi</span>
+            ${retBadge}
           </div>
         </div>
 
@@ -11243,14 +11538,14 @@ window.renderAdminAnalyticsView = async function(classId) {
           <div class="radial-svg-wrap">
             <svg class="radial-circle-svg" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="38" fill="transparent" stroke="var(--border-soft, #e2e8f0)" stroke-width="9" />
-              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#8b5cf6" stroke-width="9" stroke-linecap="round" stroke-dasharray="219.66 238.76" />
+              <circle cx="50" cy="50" r="38" fill="transparent" stroke="#8b5cf6" stroke-width="9" stroke-linecap="round" stroke-dasharray="${radDsr} ${radCirc}" />
             </svg>
-            <div class="radial-pct-center" style="color: #7c3aed;">92%</div>
+            <div class="radial-pct-center" style="color: #7c3aed;">${avgDsr}%</div>
           </div>
           <div class="radial-card-info">
             <span class="radial-card-title">Kiểm soát nợ DSR</span>
             <span class="radial-card-sub">Dòng tiền nợ &lt; 35%</span>
-            <span class="badge-prog badge-prog-done" style="font-size: 11px; margin-top: 4px;">An toàn cao</span>
+            ${dsrBadge}
           </div>
         </div>
       </div>
@@ -11258,28 +11553,28 @@ window.renderAdminAnalyticsView = async function(classId) {
       <div class="analytics-research-box">
         <div class="research-box-header">
           <i class="fa-solid fa-microscope"></i>
-          <span>Dữ liệu Thực nghiệm Hành vi Tài chính Mẫu Cohort</span>
+          <span>Dữ liệu Thực nghiệm Hành vi Tài chính Nhóm (${memberPlans.length} học viên có bài làm)</span>
         </div>
         <div class="research-grid">
           <div class="research-metric-pill">
-            <span class="research-metric-title">Tỷ lệ Tiết kiệm Thực tế (Median)</span>
-            <span class="research-metric-val" style="color: #059669;">35.2%</span>
-            <span class="research-metric-desc">Trung vị mẫu khảo sát cao hơn khuyến nghị chuẩn lý thuyết (20% - 35%)</span>
+            <span class="research-metric-title">Tỷ lệ Tiết kiệm Thực tế (Trung bình)</span>
+            <span class="research-metric-val" style="color: #059669;">${avgSavingsText}</span>
+            <span class="research-metric-desc">Tỷ lệ tiết kiệm thực tế tính trên thu nhập bình quân của nhóm</span>
           </div>
           <div class="research-metric-pill">
-            <span class="research-metric-title">Hệ số Đảm bảo Thanh khoản (LCR)</span>
-            <span class="research-metric-val" style="color: #2563eb;">1.45x</span>
-            <span class="research-metric-desc">Tài sản thanh khoản tức thời trên nghĩa vụ 30 ngày (vượt chuẩn Basel III 1.0x)</span>
+            <span class="research-metric-title">Học viên Đã Thiết lập Mục tiêu</span>
+            <span class="research-metric-val" style="color: #2563eb;">${memberPlans.length} / ${approvedMembers.length}</span>
+            <span class="research-metric-desc">${Math.round((memberPlans.length / approvedMembers.length) * 100)}% thành viên chính thức đã có kế hoạch</span>
           </div>
           <div class="research-metric-pill">
-            <span class="research-metric-title">Hệ số Pearson Kế hoạch - Mục tiêu</span>
-            <span class="research-metric-val" style="color: #7c3aed;">r = 0.81</span>
-            <span class="research-metric-desc">Ý nghĩa thống kê p &lt; 0.01: Mức độ chi tiết kế hoạch tỷ lệ thuận trực tiếp với độ hoàn thành</span>
+            <span class="research-metric-title">Nghĩa vụ trả nợ bình quân</span>
+            <span class="research-metric-val" style="color: #7c3aed;">${countDsr > 0 ? (totalDebtVal / countDsr).toFixed(1) + ' tr/tháng' : '0 tr/tháng'}</span>
+            <span class="research-metric-desc">Mức nghĩa vụ dòng tiền nợ trung bình hàng tháng của thành viên</span>
           </div>
           <div class="research-metric-pill">
-            <span class="research-metric-title">Chỉ số Sức khỏe Tài chính Mẫu</span>
-            <span class="research-metric-val" style="color: #d97706;">81.4 / 100</span>
-            <span class="research-metric-desc">Thuộc phân vị thứ 84 theo thang điểm đánh giá toàn diện năng lực tài chính</span>
+            <span class="research-metric-title">Tỷ lệ Hoàn thành Mục tiêu TB</span>
+            <span class="research-metric-val" style="color: #d97706;">${Math.round((avgEmg + avgRet + avgDsr) / 3)}%</span>
+            <span class="research-metric-desc">Chỉ số sức khỏe và mức độ hoàn thiện mục tiêu trung bình toàn nhóm</span>
           </div>
         </div>
       </div>
