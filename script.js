@@ -1055,6 +1055,375 @@ const surveyQuestionsPart2 = [
   { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
 
+// ==========================================
+// THƯ VIỆN TOÁN TÀI CHÍNH CHUẨN HOÁ (FinancialMath)
+// Tuân thủ nghiêm ngặt các công thức tài chính A-P
+// ==========================================
+const FinancialMath = {
+  safeNumber: function(val, defaultVal = 0) {
+    if (val === null || val === undefined || val === '') return defaultVal;
+    const n = Number(val);
+    return (!isNaN(n) && isFinite(n)) ? n : defaultVal;
+  },
+
+  // Test A & Test B: Loan PMT (Niên kim trả dần nợ gốc + lãi)
+  calculateLoanPMT: function(principal, annualRatePct, totalPeriods) {
+    const P = Math.max(0, this.safeNumber(principal, 0));
+    const n = Math.max(0, Math.round(this.safeNumber(totalPeriods, 0)));
+    const annualRate = Math.max(0, this.safeNumber(annualRatePct, 0)) / 100;
+    const r = annualRate / 12;
+
+    if (P <= 0 || n <= 0) return 0;
+    if (r === 0) {
+      return P / n;
+    }
+    const factor = Math.pow(1 + r, n);
+    const pmt = (P * r * factor) / (factor - 1);
+    return (!isNaN(pmt) && isFinite(pmt) && pmt > 0) ? pmt : 0;
+  },
+
+  // Test C, Test D, Test M: Investment PMT (Niên kim tích lũy định kỳ cho mục tiêu tương lai)
+  calculateInvestmentPMT: function(targetFV, initialBalance, annualReturnPct, totalPeriods) {
+    const F = Math.max(0, this.safeNumber(targetFV, 0));
+    const B0 = Math.max(0, this.safeNumber(initialBalance, 0));
+    const n = Math.max(0, Math.round(this.safeNumber(totalPeriods, 0)));
+    const annualReturn = this.safeNumber(annualReturnPct, 0) / 100;
+    const r = annualReturn / 12;
+
+    if (F <= 0 || n <= 0) return 0;
+
+    // Test D: Nếu số dư hiện tại sau tăng trưởng đủ đạt hoặc vượt mục tiêu, PMT = 0 (không âm)
+    const paidFV = (r > -1) ? (B0 * Math.pow(1 + r, n)) : B0;
+    const deficitFV = Math.max(0, F - paidFV);
+    if (deficitFV <= 0) return 0;
+
+    // Test C & Test M: Xử lý r = 0 và r != 0 (kể cả r âm > -1)
+    if (Math.abs(r) < 1e-9) {
+      return deficitFV / n;
+    }
+    const factor = Math.pow(1 + r, n);
+    const denom = factor - 1;
+    if (Math.abs(denom) < 1e-12) {
+      return deficitFV / n;
+    }
+    const pmt = (deficitFV * r) / denom;
+    return (!isNaN(pmt) && isFinite(pmt) && pmt > 0) ? pmt : 0;
+  },
+
+  // Test E: Quỹ dự phòng khẩn cấp
+  calculateEmergencyReserveGoal: function(monthlyCost, annualCost, reserveMonths) {
+    const M = Math.max(0, this.safeNumber(reserveMonths, 0));
+    let mCost = Math.max(0, this.safeNumber(monthlyCost, 0));
+    let aCost = Math.max(0, this.safeNumber(annualCost, 0));
+
+    if (mCost === 0 && aCost > 0) {
+      mCost = aCost / 12;
+    } else if (mCost > 0 && aCost === 0) {
+      aCost = mCost * 12;
+    }
+
+    const target = mCost * M;
+    return {
+      monthlyCost: mCost,
+      annualCost: aCost,
+      reserveMonths: M,
+      targetFund: target
+    };
+  },
+
+  // Test F: Bảng cân đối tài sản - nợ cá nhân (Stock-only, không cộng gộp cashflow thu/chi)
+  calculateBalanceSheet: function(assetsList, liabilitiesList) {
+    let totalAssets = 0;
+    if (Array.isArray(assetsList)) {
+      assetsList.forEach(a => {
+        totalAssets += Math.max(0, this.safeNumber(a?.val, 0));
+      });
+    }
+
+    let totalLiabilities = 0;
+    if (Array.isArray(liabilitiesList)) {
+      liabilitiesList.forEach(l => {
+        totalLiabilities += Math.max(0, this.safeNumber(l?.val, 0));
+      });
+    }
+
+    const netWorth = totalAssets - totalLiabilities;
+    const debtRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+
+    return {
+      totalAssets,
+      totalLiabilities,
+      netWorth,
+      debtRatio
+    };
+  },
+
+  // Test G: Phân bổ danh mục & Lợi suất kỳ vọng bình quân gia quyền
+  computePortfolioMetrics: function(allocProducts, validCatalog = []) {
+    let totalWeight = 0;
+    let expectedAvgReturn = 0;
+    let expectedAvgRisk = 0;
+    let activeCount = 0;
+
+    if (Array.isArray(allocProducts)) {
+      allocProducts.forEach(ap => {
+        if (!ap) return;
+        const w = this.safeNumber(ap.weight, 0);
+        if (w <= 0) return;
+
+        let retRate = this.safeNumber(ap.returnRate, 0);
+        let riskRate = this.safeNumber(ap.risk, 0);
+
+        if (Array.isArray(validCatalog) && validCatalog.length > 0 && ap.prodName) {
+          const match = validCatalog.find(p => p && p.name && p.name.trim() === String(ap.prodName).trim());
+          if (match) {
+            retRate = this.safeNumber(match.returnRate, retRate);
+            riskRate = this.safeNumber(match.risk, riskRate);
+          }
+        }
+
+        activeCount++;
+        totalWeight += w;
+        expectedAvgReturn += (w / 100) * retRate;
+        expectedAvgRisk += (w / 100) * riskRate;
+      });
+    }
+
+    const isWeightValid = (totalWeight === 0) || (Math.abs(totalWeight - 100) < 0.01);
+    return {
+      totalWeight,
+      expectedAvgReturn,
+      expectedAvgRisk,
+      activeCount,
+      isWeightValid
+    };
+  },
+
+  // Test H & Test I: Thu nhập tối thiểu cần có
+  calculateMinimumIncomeNeed: function(livingExpense, debtPayment, goalSavings, savingsRateRatio) {
+    const E = Math.max(0, this.safeNumber(livingExpense, 0));
+    const D = Math.max(0, this.safeNumber(debtPayment, 0));
+    const G = Math.max(0, this.safeNumber(goalSavings, 0));
+
+    let S = this.safeNumber(savingsRateRatio, 0.35);
+    if (S <= 0) S = 0.35;
+    if (S >= 1) S = 0.99;
+
+    const nonSavings = E + D;
+    if (nonSavings > 0) {
+      const cashflowMin = nonSavings + G;
+      const savingsRuleMin = nonSavings / (1 - S);
+      return Math.max(cashflowMin, savingsRuleMin);
+    }
+
+    if (G > 0) {
+      return G / S;
+    }
+
+    return 0;
+  },
+
+  // Test J: Nhận diện & phân loại tài sản
+  classifyProduct: function(rawName, returnRate = 0, risk = 0) {
+    let name = String(rawName || "").toLowerCase().trim();
+    name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+    name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+    name = name.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+    name = name.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+    name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+    name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+    name = name.replace(/đ/g, 'd');
+
+    if (!name) return 'unknown';
+
+    if (name.includes("co phieu") || name.includes("chung khoan") || name.includes("stock") || name.includes("equity") || name.includes("co phan")) {
+      return 'stocks';
+    }
+    if (name.includes("trai phieu") || name.includes("bond") || name.includes("fixed income") || name.includes("tpdn") || name.includes("debenture")) {
+      return 'bonds';
+    }
+    if (name.includes("bao hiem") || name.includes("bhnt") || name.includes("nhan tho") || name.includes("suc khoe") || name.includes("y te") || name.includes("insurance") || name.includes("life insurance")) {
+      return 'ins';
+    }
+    if (name.includes("tien gui") || name.includes("tiet kiem") || name.includes("ngan hang") || name.includes("deposit") || name.includes("savings") || name.includes("tien mat")) {
+      return 'cash';
+    }
+
+    if (
+      name.includes("etf") || name.includes("dcbc") || name.includes("dcds") ||
+      name.includes("vesaf") || name.includes("vfmvf") || name.includes("vn30") ||
+      name.includes("vnindex") || name.includes("vn100") || name.includes("diamond") ||
+      name.includes("finlead") || name.includes("ssiam")
+    ) {
+      return 'stocks';
+    }
+
+    if (
+      name.includes("dcbf") || name.includes("vfmvfb") || name.includes("tcbond") ||
+      name.includes("ssibf") || name.includes("vbond")
+    ) {
+      return 'bonds';
+    }
+
+    if (
+      name.includes("manulife") || name.includes("prudential") || name.includes("dai-ichi") ||
+      name.includes("daiichi") || name.includes("chubb") || name.includes("fwd") ||
+      name.includes("sun life") || name.includes("sunlife") || name.includes("aia") ||
+      name.includes("generali") || name.includes("bao viet") || name.includes("mb ageas") ||
+      name.includes("hanwha") || name.includes("lien ket dau tu") || name.includes("lien ket don vi") ||
+      name.includes("tu ky")
+    ) {
+      return 'ins';
+    }
+
+    if (
+      name.includes("finhay") || name.includes("tikop") || name.includes("fmarket") ||
+      name.includes("chung chi tien gui") || name.includes("cctg") || name.includes("vi dien tu") ||
+      name.includes("momo") || name.includes("zalopay") || name.includes("thanh khoan") ||
+      name.includes("du phong")
+    ) {
+      return 'cash';
+    }
+
+    if (
+      name.includes("fpt") || name.includes("hpg") || name.includes("vnm") ||
+      name.includes("mwg") || name.includes("vic") || name.includes("vhm") ||
+      name.includes("ssi") || name.includes("vnd")
+    ) {
+      return 'stocks';
+    }
+
+    const r = this.safeNumber(returnRate, 0);
+    const k = this.safeNumber(risk, 0);
+    if (r >= 12 || k >= 12) return 'stocks';
+    if (r >= 7.5 || (k >= 4 && k < 12)) return 'bonds';
+    if (r >= 6.0 && k > 0 && k < 4) return 'ins';
+    if (r > 0 && k > 0 && k <= 2) return 'cash';
+
+    return 'unknown';
+  },
+
+  // Test K: Khảo sát trắc nghiệm tâm lý & hoàn cảnh
+  evaluateSurvey: function(choices, questions, scoreThresholds = []) {
+    let rawScore = 0;
+    let count = 0;
+    let maxPossibleAnswered = 0;
+    const total = Array.isArray(questions) ? questions.length : 0;
+
+    if (Array.isArray(questions) && choices && typeof choices === 'object') {
+      questions.forEach((q, idx) => {
+        const qNum = idx + 1;
+        const choiceIdx = choices[qNum];
+        if (choiceIdx !== undefined && q.weights && q.weights[choiceIdx] !== undefined) {
+          const w = Number(q.weights[choiceIdx]);
+          rawScore += w;
+          count++;
+          maxPossibleAnswered += Math.max(...q.weights);
+        }
+      });
+    }
+
+    const isComplete = (count === total && total > 0);
+    const normalizedScore = (count > 0 && maxPossibleAnswered > 0)
+      ? (rawScore / maxPossibleAnswered) * 100
+      : 0;
+
+    let classification = "Chưa đánh giá";
+    let description = "";
+
+    if (count === 0) {
+      classification = "Chưa đánh giá";
+      description = "Chưa có dữ liệu khảo sát.";
+    } else if (!isComplete) {
+      classification = `Chưa hoàn thành (${count}/${total} câu)`;
+      description = `Bạn mới trả lời ${count}/${total} câu hỏi. Cần hoàn thành toàn bộ khảo sát để có xếp loại chính thức.`;
+    } else {
+      for (const t of scoreThresholds) {
+        if (rawScore <= t.maxScore) {
+          classification = t.title;
+          description = t.desc;
+          break;
+        }
+      }
+    }
+
+    return {
+      rawScore,
+      count,
+      total,
+      isComplete,
+      normalizedScore,
+      classification,
+      description
+    };
+  },
+
+  // Test L: Vốn hóa quỹ hưu trí (Annuity with inflation)
+  calculateRetirementCapitalNeeded: function(firstYearExpense, annualReturnPct, annualInflationPct, years) {
+    const C1 = Math.max(0, this.safeNumber(firstYearExpense, 0));
+    const N = Math.max(0, Math.round(this.safeNumber(years, 0)));
+    const r = this.safeNumber(annualReturnPct, 0) / 100;
+    const i = this.safeNumber(annualInflationPct, 0) / 100;
+
+    if (C1 <= 0 || N <= 0) return 0;
+
+    const diff = r - i;
+    if (Math.abs(diff) < 1e-9) {
+      return (N * C1) / (1 + r);
+    }
+
+    const growthRatio = (1 + i) / (1 + r);
+    const capital = (C1 / diff) * (1 - Math.pow(growthRatio, N));
+    return (!isNaN(capital) && isFinite(capital) && capital > 0) ? capital : 0;
+  },
+
+  // Test N: Mục tiêu giáo dục (Học phí theo kỳ và Quỹ hỗ trợ ban đầu)
+  calculateEducationCapitalNeeded: function(periods, periodicTuition, supportFund, periodDiscountRatePct = 0) {
+    const n = Math.max(0, Math.round(this.safeNumber(periods, 0)));
+    const pmt = Math.max(0, this.safeNumber(periodicTuition, 0));
+    const fund = Math.max(0, this.safeNumber(supportFund, 0));
+    const r = this.safeNumber(periodDiscountRatePct, 0) / 100;
+
+    if (n <= 0) return fund;
+
+    let pvTuition = 0;
+    if (Math.abs(r) < 1e-9) {
+      pvTuition = pmt * n;
+    } else {
+      pvTuition = pmt * ((1 - Math.pow(1 + r, -n)) / r);
+    }
+
+    const totalPV = pvTuition + fund;
+    return (!isNaN(totalPV) && isFinite(totalPV) && totalPV > 0) ? totalPV : 0;
+  },
+
+  // Test O: Giao dịch chuyển tiền nội bộ
+  evaluateInternalTransfer: function(fromAccountBalance, toAccountBalance, transferAmount) {
+    const fromBal = this.safeNumber(fromAccountBalance, 0);
+    const toBal = this.safeNumber(toAccountBalance, 0);
+    const amt = Math.max(0, this.safeNumber(transferAmount, 0));
+
+    const totalBefore = fromBal + toBal;
+    const newFrom = fromBal - amt;
+    const newTo = toBal + amt;
+    const totalAfter = newFrom + newTo;
+
+    return {
+      incomeCreated: 0,
+      expenseCreated: 0,
+      totalNetWorthChange: 0,
+      isBalanced: Math.abs(totalAfter - totalBefore) < 1e-6
+    };
+  }
+};
+
+if (typeof window !== 'undefined') {
+  window.FinancialMath = FinancialMath;
+}
+if (typeof global !== 'undefined') {
+  global.FinancialMath = FinancialMath;
+}
+
 function computeGoalPortfolioMetrics(goal) {
   if (!goal || typeof goal !== "object") {
     return { totalWeight: 0, expectedAvgReturn: 0, expectedAvgRisk: 0, activeCount: 0, isWeightValid: true };
@@ -1067,12 +1436,8 @@ function computeGoalPortfolioMetrics(goal) {
   }
 
   const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
-  let totalWeight = 0;
-  let expectedAvgReturn = 0;
-  let expectedAvgRisk = 0;
-  let activeCount = 0;
 
-  goal.allocProducts.forEach((ap, idx) => {
+  goal.allocProducts.forEach(ap => {
     const w = Number(ap.weight);
     ap.weight = (isNaN(w) || !isFinite(w) || w < 0) ? 0 : w;
     ap.prodName = typeof ap.prodName === "string" ? ap.prodName.trim() : "";
@@ -1088,23 +1453,9 @@ function computeGoalPortfolioMetrics(goal) {
 
     ap.returnRate = Number(matched.returnRate) || 0;
     ap.risk = Number(matched.risk) || 0;
-
-    if (ap.weight > 0 && ap.prodName !== "") {
-      activeCount++;
-      totalWeight += ap.weight;
-      expectedAvgReturn += (ap.weight / 100) * ap.returnRate;
-      expectedAvgRisk += (ap.weight / 100) * ap.risk;
-    }
   });
 
-  const isWeightValid = (totalWeight === 0) || (Math.abs(totalWeight - 100) < 0.01);
-  return {
-    totalWeight,
-    expectedAvgReturn,
-    expectedAvgRisk,
-    activeCount,
-    isWeightValid
-  };
+  return FinancialMath.computePortfolioMetrics(goal.allocProducts, validProducts);
 }
 
 function calculateCollegeGoal(goal) {
@@ -1122,7 +1473,6 @@ function calculateCollegeGoal(goal) {
   const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
     ? Number(goal.rate)
     : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
-  const rMonthly = (rAnnualPct / 100) / 12;
 
   const periods = Number(goal.collegePeriods || goal.yearsRetire) || 0;
   const periodicNeed = Number(goal.monthlyTuition || goal.monthlyRetire) || 0;
@@ -1139,13 +1489,8 @@ function calculateCollegeGoal(goal) {
     const pvRateAnnual = portfolio.expectedAvgReturn > 0
       ? portfolio.expectedAvgReturn
       : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
-    const pvRateMonthly = (pvRateAnnual / 100) / 12;
-    if (pvRateMonthly > 0) {
-      targetFV = periodicNeed * ((1 - Math.pow(1 + pvRateMonthly, -periods)) / pvRateMonthly)
-               + supportFund * Math.pow(1 + pvRateMonthly, -periods);
-    } else {
-      targetFV = (periodicNeed * periods) + supportFund;
-    }
+    const pvRateMonthlyPct = pvRateAnnual / 12;
+    targetFV = FinancialMath.calculateEducationCapitalNeeded(periods, periodicNeed, supportFund, pvRateMonthlyPct);
     if (!goal._manualValOverride) {
       goal.val = Number(targetFV.toFixed(2));
     } else {
@@ -1162,19 +1507,8 @@ function calculateCollegeGoal(goal) {
     return 0;
   }
 
-  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - paidFV);
-  if (deficitFV <= 0) {
-    goal.monthly = 0;
-    goal.annual = 0;
-    return 0;
-  }
-
-  const pmt = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  const pmt = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  goal.monthly = pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1194,27 +1528,32 @@ function calculateRetirementGoal(goal) {
   const rAnnualPct = (goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
     ? Number(goal.rate)
     : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
-  const rMonthly = (rAnnualPct / 100) / 12;
 
   const reserveMonths = Number(goal.reserveMonths) || 0;
   let annualCost = Number(goal.annualCostEstimate) || 0;
   let monthlyCost = Number(goal.monthlyCostEstimate) || 0;
 
-  if (reserveMonths > 0 && annualCost > 0) {
-    monthlyCost = annualCost / reserveMonths;
+  if (reserveMonths > 0) {
+    const reserveMetrics = FinancialMath.calculateEmergencyReserveGoal(monthlyCost, annualCost, reserveMonths);
+    monthlyCost = reserveMetrics.monthlyCost;
+    annualCost = reserveMetrics.annualCost;
     goal.monthlyCostEstimate = Number(monthlyCost.toFixed(2));
-  } else if (reserveMonths > 0 && monthlyCost > 0 && annualCost === 0) {
-    annualCost = monthlyCost * reserveMonths;
     goal.annualCostEstimate = Number(annualCost.toFixed(2));
   }
 
   let baseTarget = Number(goal.val) || 0;
   if (baseTarget === 0 && annualCost > 0) {
-    baseTarget = annualCost;
-    goal.val = annualCost;
+    const retireYears = Number(goal.yearsRetire) || Number(goal.retirementYears) || 0;
+    const inflationRate = Number(goal.inflationRate) || Number(goal.inflation) || 0;
+    if (retireYears > 0) {
+      baseTarget = FinancialMath.calculateRetirementCapitalNeeded(annualCost, rAnnualPct, inflationRate, retireYears);
+    } else {
+      baseTarget = annualCost;
+    }
+    goal.val = Number(baseTarget.toFixed(2));
   } else if (baseTarget > 0 && annualCost === 0 && reserveMonths > 0) {
     goal.annualCostEstimate = baseTarget;
-    goal.monthlyCostEstimate = Number((baseTarget / reserveMonths).toFixed(2));
+    goal.monthlyCostEstimate = Number((baseTarget / 12).toFixed(2));
   }
 
   const targetFV = baseTarget;
@@ -1226,19 +1565,8 @@ function calculateRetirementGoal(goal) {
     return 0;
   }
 
-  const paidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - paidFV);
-  if (deficitFV <= 0) {
-    goal.monthly = 0;
-    goal.annual = 0;
-    return 0;
-  }
-
-  const pmt = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-
-  goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+  const pmt = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  goal.monthly = pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1264,18 +1592,14 @@ function calculateMonthlyNeed(goal) {
   }
 
   if (goal.type === 'debt') {
-    const rAnnual = (Number(goal.rate) || 0) / 100;
-    const rMonthly = rAnnual / 12;
     const loanBalance = Math.max(0, (Number(goal.val) || 0) - (Number(goal.paid) || 0));
     if (loanBalance <= 0) {
       goal.monthly = 0;
       goal.annual = 0;
       return 0;
     }
-    const pmt = rMonthly === 0
-      ? (loanBalance / nMonths)
-      : ((loanBalance * rMonthly * Math.pow(1 + rMonthly, nMonths)) / (Math.pow(1 + rMonthly, nMonths) - 1));
-    goal.monthly = (isNaN(pmt) || !isFinite(pmt)) ? 0 : pmt;
+    const pmt = FinancialMath.calculateLoanPMT(loanBalance, goal.rate, nMonths);
+    goal.monthly = pmt;
     goal.annual = goal.monthly * 12;
     return goal.monthly;
   }
@@ -1286,21 +1610,10 @@ function calculateMonthlyNeed(goal) {
     : ((goal.rate !== undefined && goal.rate !== null && !isNaN(Number(goal.rate)) && Number(goal.rate) !== 0)
         ? Number(goal.rate)
         : (Number(goal.estimatedRate) || 0));
-  const rMonthly = (rAnnualPct / 100) / 12;
+
   const targetFV = Number(goal.val) || 0;
-  const currentPaidFV = (Number(goal.paid) || 0) * Math.pow(1 + rMonthly, nMonths);
-  const deficitFV = Math.max(0, targetFV - currentPaidFV);
-
-  if (deficitFV <= 0) {
-    goal.monthly = 0;
-    goal.annual = 0;
-    return 0;
-  }
-
-  const pmtInvest = rMonthly === 0
-    ? (deficitFV / nMonths)
-    : ((deficitFV * rMonthly) / (Math.pow(1 + rMonthly, nMonths) - 1));
-  goal.monthly = (isNaN(pmtInvest) || !isFinite(pmtInvest)) ? 0 : pmtInvest;
+  const pmtInvest = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  goal.monthly = pmtInvest;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
@@ -1313,13 +1626,13 @@ function getEffectiveSavingsRateRatio() {
   return 0.35;
 }
 
-function getMatrixIncomeNeed(yearOffset) {
+function getMatrixIncomeNeed(yearOffset, explicitLivingExpense, explicitDebt) {
   let sSum = 0;
-  const yr = AppState.currentYear + yearOffset;
+  const yr = (Number(AppState.currentYear) || new Date().getFullYear()) + yearOffset;
   if (AppState.matrixOverrides && AppState.matrixOverrides[yearOffset] !== undefined) {
     sSum = Number(AppState.matrixOverrides[yearOffset]) || 0;
   } else {
-    AppState.tcGoals.forEach(g => {
+    (AppState.tcGoals || []).forEach(g => {
       if (yr >= g.start && yr <= g.end) {
         const mNeed = calculateMonthlyNeed(g);
         g.monthly = mNeed;
@@ -1327,89 +1640,27 @@ function getMatrixIncomeNeed(yearOffset) {
       }
     });
   }
+
+  let E = 0;
+  if (explicitLivingExpense !== undefined) {
+    E = Number(explicitLivingExpense) || 0;
+  }
+
+  let D = 0;
+  if (explicitDebt !== undefined) {
+    D = Number(explicitDebt) || 0;
+  }
+
   const rate = getEffectiveSavingsRateRatio();
-  return sSum > 0 ? (sSum / rate) : 0;
+  return FinancialMath.calculateMinimumIncomeNeed(E, D, sSum, rate);
 }
 
 function detectAssetCategory(rawName, returnRate = 0, risk = 0) {
-  let name = String(rawName || "").toLowerCase().trim();
-  name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-  name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-  name = name.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-  name = name.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-  name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-  name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-  name = name.replace(/đ/g, 'd');
-
-  if (name.includes("co phieu") || name.includes("chung khoan") || name.includes("stock") || name.includes("equity") || name.includes("co phan")) {
-    return 'stocks';
-  }
-  if (name.includes("trai phieu") || name.includes("bond") || name.includes("fixed income") || name.includes("tpdn") || name.includes("debenture")) {
-    return 'bonds';
-  }
-  if (name.includes("bao hiem") || name.includes("bhnt") || name.includes("nhan tho") || name.includes("suc khoe") || name.includes("y te") || name.includes("insurance") || name.includes("life insurance")) {
-    return 'ins';
-  }
-  if (name.includes("tien gui") || name.includes("tiet kiem") || name.includes("ngan hang") || name.includes("deposit") || name.includes("savings") || name.includes("tien mat")) {
-    return 'cash';
-  }
-
-  if (
-    name.includes("etf") || name.includes("dcbc") || name.includes("dcds") ||
-    name.includes("vesaf") || name.includes("vfmvf") || name.includes("vn30") ||
-    name.includes("vnindex") || name.includes("vn100") || name.includes("diamond") ||
-    name.includes("finlead") || name.includes("ssiam")
-  ) {
-    return 'stocks';
-  }
-
-  if (
-    name.includes("dcbf") || name.includes("vfmvfb") || name.includes("tcbond") ||
-    name.includes("ssibf") || name.includes("vbond")
-  ) {
-    return 'bonds';
-  }
-
-  if (
-    name.includes("manulife") || name.includes("prudential") || name.includes("dai-ichi") ||
-    name.includes("daiichi") || name.includes("chubb") || name.includes("fwd") ||
-    name.includes("sun life") || name.includes("sunlife") || name.includes("aia") ||
-    name.includes("generali") || name.includes("bao viet") || name.includes("mb ageas") ||
-    name.includes("hanwha") || name.includes("lien ket dau tu") || name.includes("lien ket don vi") ||
-    name.includes("tu ky")
-  ) {
-    return 'ins';
-  }
-
-  if (
-    name.includes("finhay") || name.includes("tikop") || name.includes("fmarket") ||
-    name.includes("chung chi tien gui") || name.includes("cctg") || name.includes("vi dien tu") ||
-    name.includes("momo") || name.includes("zalopay") || name.includes("thanh khoan") ||
-    name.includes("du phong")
-  ) {
-    return 'cash';
-  }
-
-  if (
-    name.includes("fpt") || name.includes("hpg") || name.includes("vnm") ||
-    name.includes("mwg") || name.includes("vic") || name.includes("vhm") ||
-    name.includes("ssi") || name.includes("vnd")
-  ) {
-    return 'stocks';
-  }
-
-  const r = Number(returnRate) || 0;
-  const k = Number(risk) || 0;
-  if (r >= 12 || k >= 12) return 'stocks';
-  if (r >= 7.5 || (k >= 4 && k < 12)) return 'bonds';
-  if (r >= 6.0 && k < 4) return 'ins';
-  if (r > 0 || k <= 2) return 'cash';
-
-  return 'stocks';
+  return FinancialMath.classifyProduct(rawName, returnRate, risk);
 }
 
 function classifyProductType(rawName) {
-  return detectAssetCategory(rawName, 0, 0);
+  return FinancialMath.classifyProduct(rawName, 0, 0);
 }
 
 function getAssetCategoryRates() {
@@ -1424,6 +1675,7 @@ function getAssetCategoryRates() {
   prods.forEach(p => {
     if (!p || !p.name) return;
     const cat = detectAssetCategory(p.name, p.returnRate, p.risk);
+    if (!rates[cat]) return;
     const r = Number(p.returnRate);
     if (!isNaN(r) && r > 0) {
       rates[cat].sum += r;
@@ -1562,10 +1814,10 @@ const DEFAULT_PORTFOLIO_30YR_BENCHMARK = [
   {"off":23,"etf":5.58,"stockFund":21.77,"bondFund":0,"ins":51.4,"finhay":0,"savings":21.25,"other":0,"total":100,"ret":8.89,"stockTot":27.35,"bondTot":0,"insTot":51.4,"cashTot":21.25},
   {"off":24,"etf":0.28,"stockFund":19.35,"bondFund":0,"ins":57.92,"finhay":0,"savings":22.45,"other":0,"total":100,"ret":8.41,"stockTot":19.63,"bondTot":0,"insTot":57.92,"cashTot":22.45},
   {"off":25,"etf":0.51,"stockFund":20.31,"bondFund":0,"ins":58.07,"finhay":0,"savings":21.11,"other":0,"total":100,"ret":8.51,"stockTot":20.82,"bondTot":0,"insTot":58.07,"cashTot":21.11},
-  {"off":26,"etf":-4.83,"stockFund":18.05,"bondFund":0,"ins":64.72,"finhay":0,"savings":22.05,"other":0,"total":100,"ret":8.04,"stockTot":13.23,"bondTot":0,"insTot":64.72,"cashTot":22.05},
-  {"off":27,"etf":-4.69,"stockFund":18.97,"bondFund":0,"ins":64.97,"finhay":0,"savings":20.75,"other":0,"total":100,"ret":8.14,"stockTot":14.27,"bondTot":0,"insTot":64.97,"cashTot":20.75},
-  {"off":28,"etf":-9.98,"stockFund":16.9,"bondFund":0,"ins":71.64,"finhay":0,"savings":21.45,"other":0,"total":100,"ret":7.69,"stockTot":6.91,"bondTot":0,"insTot":71.64,"cashTot":21.45},
-  {"off":29,"etf":-9.95,"stockFund":17.76,"bondFund":0,"ins":71.98,"finhay":0,"savings":20.21,"other":0,"total":100,"ret":7.77,"stockTot":7.81,"bondTot":0,"insTot":71.98,"cashTot":20.21}
+  {"off":26,"etf":0,"stockFund":13.23,"bondFund":0,"ins":64.72,"finhay":0,"savings":22.05,"other":0,"total":100,"ret":8.04,"stockTot":13.23,"bondTot":0,"insTot":64.72,"cashTot":22.05},
+  {"off":27,"etf":0,"stockFund":14.28,"bondFund":0,"ins":64.97,"finhay":0,"savings":20.75,"other":0,"total":100,"ret":8.14,"stockTot":14.28,"bondTot":0,"insTot":64.97,"cashTot":20.75},
+  {"off":28,"etf":0,"stockFund":6.91,"bondFund":0,"ins":71.64,"finhay":0,"savings":21.45,"other":0,"total":100,"ret":7.69,"stockTot":6.91,"bondTot":0,"insTot":71.64,"cashTot":21.45},
+  {"off":29,"etf":0,"stockFund":7.81,"bondFund":0,"ins":71.98,"finhay":0,"savings":20.21,"other":0,"total":100,"ret":7.77,"stockTot":7.81,"bondTot":0,"insTot":71.98,"cashTot":20.21}
 ];
 
 function getPortfolio30YrData() {
@@ -4561,24 +4813,23 @@ function getAnnualActualExpense() {
 
 function updateBalanceSheetCalculations() {
   ensureYearEndBalanceSheet();
-  let assetsSubtotal = 0;
-  AppState.yearEndBalanceSheet.assets.forEach(a => {
-    assetsSubtotal += Number(a.val) || 0;
-  });
+  const bs = FinancialMath.calculateBalanceSheet(
+    AppState.yearEndBalanceSheet.assets,
+    AppState.yearEndBalanceSheet.liabilities
+  );
 
+  const assetsSubtotal = bs.totalAssets;
   const humanCapitalIncome = getAnnualActualIncome();
-  const totalAssets = assetsSubtotal + humanCapitalIncome;
+  // Chuẩn mực kế toán tài chính cá nhân (Test F):
+  // Bảng cân đối đo lường số dư tài sản và nợ tại thời điểm (stock), KHÔNG cộng gộp dòng tiền 1 năm (flow).
+  const totalAssets = assetsSubtotal;
 
-  let liabSubtotal = 0;
-  AppState.yearEndBalanceSheet.liabilities.forEach(l => {
-    liabSubtotal += Number(l.val) || 0;
-  });
-
+  const liabSubtotal = bs.totalLiabilities;
   const obligationsExpense = getAnnualActualExpense();
-  const totalLiabilities = liabSubtotal + obligationsExpense;
+  const totalLiabilities = liabSubtotal;
 
-  const netWorth = totalAssets - totalLiabilities;
-  const debtRatio = totalAssets > 0 ? (totalLiabilities / totalAssets) * 100 : 0;
+  const netWorth = bs.netWorth;
+  const debtRatio = bs.debtRatio;
 
   const footAssetsSub = document.getElementById('tfoot-bs-assets-subtotal');
   if (footAssetsSub) footAssetsSub.textContent = assetsSubtotal.toFixed(1);
@@ -5471,75 +5722,51 @@ function renderSurveyQuestionCharts() {
 }
 
 function evaluateSurveys() {
-  let s1 = 0;
-  let count1 = 0;
-  surveyQuestionsPart1.forEach((q, idx) => {
-    const qNum = idx + 1;
-    const choiceIdx = AppState.surveyP1Choices[qNum];
-    if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
-      s1 += q.weights[choiceIdx];
-      count1++;
-    }
-  });
+  const p1Thresholds = [
+    { maxScore: 20, title: "Thận trọng (Ngại rủi ro)", desc: "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp." },
+    { maxScore: 29, title: "Cân bằng (Trung lập rủi ro)", desc: "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình." },
+    { maxScore: 999, title: "Tăng trưởng (Chấp nhận rủi ro)", desc: "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ rủi ro cao." }
+  ];
+  const res1 = FinancialMath.evaluateSurvey(AppState.surveyP1Choices, surveyQuestionsPart1, p1Thresholds);
 
-  let rTxt = "";
-  let riskTitle = "Chưa đánh giá";
-  if (count1 === 0) {
+  let rTxt = res1.description;
+  let riskTitle = res1.classification;
+  if (res1.count === 0) {
     rTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 1 để xác định khả năng chịu đựng rủi ro.";
     riskTitle = "Chưa đánh giá";
-  } else if (s1 <= 20) {
-    rTxt = "Bạn là người ngại rủi ro, bạn nên duy trì các tài sản rủi ro tại mức thấp.";
-    riskTitle = "Thận trọng (Ngại rủi ro)";
-  } else if (s1 <= 29) {
-    rTxt = "Bạn là người trung lập với rủi ro, bạn nên duy trì các tài sản rủi ro tại mức trung bình.";
-    riskTitle = "Cân bằng (Trung lập rủi ro)";
-  } else {
-    rTxt = "Bạn là người chấp nhận rủi ro, bạn có thể gia tăng tỷ trọng các tài sản có mức độ rủi ro cao.";
-    riskTitle = "Tăng trưởng (Chấp nhận rủi ro)";
+  } else if (!res1.isComplete) {
+    rTxt = `Bạn mới trả lời ${res1.count}/${res1.total} câu hỏi. Vui lòng hoàn thành toàn bộ Phần 1 để xác định chính xác khả năng chịu đựng rủi ro.`;
+    riskTitle = `Chưa hoàn thành (${res1.count}/${res1.total} câu)`;
   }
 
   const p1ResEl = document.getElementById('survey-result-p1-text');
   const risk1 = document.getElementById('survey-result-risk');
   if (p1ResEl) p1ResEl.innerHTML = `<strong>Khả năng chịu đựng rủi ro:</strong> ${rTxt}`;
-  if (risk1) risk1.textContent = count1 === 0 ? rTxt : `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
+  if (risk1) risk1.textContent = res1.count === 0 ? rTxt : `Kết quả khảo sát khả năng chịu đựng rủi ro: ${rTxt}`;
 
-  let s2 = 0;
-  let count2 = 0;
-  surveyQuestionsPart2.forEach((q, idx) => {
-    const qNum = idx + 1;
-    const choiceIdx = AppState.surveyP2Choices[qNum];
-    if (choiceIdx !== undefined && q.weights[choiceIdx] !== undefined) {
-      s2 += q.weights[choiceIdx];
-      count2++;
-    }
-  });
+  const p2Thresholds = [
+    { maxScore: 21, title: "Không thuận lợi", desc: "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn." },
+    { maxScore: 30, title: "Ít thuận lợi", desc: "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn." },
+    { maxScore: 39, title: "Bình thường", desc: "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn." },
+    { maxScore: 48, title: "Thuận lợi", desc: "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn." },
+    { maxScore: 999, title: "Cực kỳ thuận lợi", desc: "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn." }
+  ];
+  const res2 = FinancialMath.evaluateSurvey(AppState.surveyP2Choices, surveyQuestionsPart2, p2Thresholds);
 
-  let cTxt = "";
-  let circumstanceTitle = "Chưa đánh giá";
-  if (count2 === 0) {
+  let cTxt = res2.description;
+  let circumstanceTitle = res2.classification;
+  if (res2.count === 0) {
     cTxt = "Chưa có dữ liệu khảo sát. Vui lòng thực hiện Phần 2 để đánh giá hoàn cảnh tài chính.";
     circumstanceTitle = "Chưa đánh giá";
-  } else if (s2 <= 21) {
-    cTxt = "Bạn trong điều kiện không thuận lợi để phát triển tài chính của bạn trong dài hạn.";
-    circumstanceTitle = "Không thuận lợi";
-  } else if (s2 <= 30) {
-    cTxt = "Bạn trong điều kiện ít thuận lợi để phát triển tài chính của bạn trong dài hạn.";
-    circumstanceTitle = "Ít thuận lợi";
-  } else if (s2 <= 39) {
-    cTxt = "Bạn trong điều kiện bình thường để phát triển tài chính của bạn trong dài hạn.";
-    circumstanceTitle = "Bình thường";
-  } else if (s2 <= 48) {
-    cTxt = "Bạn trong điều kiện thuận lợi để phát triển tài chính của bạn trong dài hạn.";
-    circumstanceTitle = "Thuận lợi";
-  } else {
-    cTxt = "Bạn trong điều kiện cực kỳ thuận lợi để phát triển tài chính của bạn trong dài hạn.";
-    circumstanceTitle = "Cực kỳ thuận lợi";
+  } else if (!res2.isComplete) {
+    cTxt = `Bạn mới trả lời ${res2.count}/${res2.total} câu hỏi. Vui lòng hoàn thành toàn bộ Phần 2 để đánh giá chính xác hoàn cảnh.`;
+    circumstanceTitle = `Chưa hoàn thành (${res2.count}/${res2.total} câu)`;
   }
 
   const p2ResEl = document.getElementById('survey-result-p2-text');
   const ctx2 = document.getElementById('survey-result-context');
   if (p2ResEl) p2ResEl.innerHTML = `<strong>Hoàn cảnh & Môi trường:</strong> ${cTxt}`;
-  if (ctx2) ctx2.textContent = count2 === 0 ? cTxt : `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
+  if (ctx2) ctx2.textContent = res2.count === 0 ? cTxt : `Kết quả khảo sát hoàn cảnh: ${cTxt}`;
 
   const sumRiskTitle = document.getElementById('survey-summary-risk-title');
   const sumRiskDesc = document.getElementById('survey-summary-risk-desc');
@@ -5553,8 +5780,8 @@ function evaluateSurveys() {
 
   const bar1 = document.getElementById('survey-result-bar-1');
   const bar2 = document.getElementById('survey-result-bar-2');
-  if (bar1) bar1.style.width = count1 === 0 ? '0%' : `${Math.min(100, Math.round((s1 / 43) * 100))}%`;
-  if (bar2) bar2.style.width = count2 === 0 ? '0%' : `${Math.min(100, Math.round((s2 / 54) * 100))}%`;
+  if (bar1) bar1.style.width = res1.count === 0 ? '0%' : `${Math.min(100, Math.round(res1.normalizedScore))}%`;
+  if (bar2) bar2.style.width = res2.count === 0 ? '0%' : `${Math.min(100, Math.round(res2.normalizedScore))}%`;
 }
 
 function renderTcGoalsFormTable() {
@@ -12265,4 +12492,11 @@ window.handleAdminSystemRestoreFile = function(input) {
   };
   reader.readAsText(file);
 };
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    ...(module.exports || {}),
+    FinancialMath
+  };
+}
 

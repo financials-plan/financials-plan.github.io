@@ -837,3 +837,122 @@ test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Veri
   assert.strictEqual(emptyProg.percent, 0);
   assert.strictEqual(emptyProg.statusLabel, "Chưa nộp bài làm");
 });
+
+test("13. Financial Calculations & Standardization Audit (Tests A - P)", () => {
+  const fs = require("fs");
+  const scriptContent = fs.readFileSync("script.js", "utf8");
+
+  // 1. Verify FinancialMath definition and exposure
+  assert.ok(scriptContent.includes("const FinancialMath = {"), "FinancialMath object must be defined");
+  assert.ok(scriptContent.includes("window.FinancialMath = FinancialMath"), "FinancialMath must be exposed on window");
+
+  const mathMatch = scriptContent.match(/const FinancialMath = \{([\s\S]*?)\n\};/);
+  assert.ok(mathMatch, "FinancialMath regex match succeeds");
+  const FinancialMath = new Function(mathMatch[0] + "; return FinancialMath;")();
+
+  // Test A: Nợ 0% lãi suất
+  // P = 12 tr, r = 0, n = 12 -> PMT = 1.0 tr/kỳ
+  const pmtA = FinancialMath.calculateLoanPMT(12, 0, 12);
+  assert.strictEqual(pmtA, 1.0, "Test A: 0% interest loan PMT must equal exactly 1.0 tr/kỳ");
+
+  // Test B: Nợ có lãi suất danh nghĩa
+  // P = 120 tr, j = 12%/năm, n = 12 -> r_m = 1%, PMT ≈ 10.661855 tr/kỳ
+  const pmtB = FinancialMath.calculateLoanPMT(120, 12, 12);
+  assert.ok(Math.abs(pmtB - 10.661855) < 0.0001, `Test B: PMT must match 10.661855, got ${pmtB}`);
+
+  // Test C: Đầu tư tích lũy mục tiêu với tỷ suất sinh lời r = 0
+  // F = 120 tr, B0 = 0, n = 12, r = 0 -> PMT = 10.0 tr/tháng
+  const pmtC = FinancialMath.calculateInvestmentPMT(120, 0, 0, 12);
+  assert.strictEqual(pmtC, 10.0, "Test C: 0% return investment PMT must equal 10.0 tr/tháng");
+
+  // Test D: Số dư hiện tại tăng trưởng đủ hoặc vượt mục tiêu
+  // B0*(1+r)^n >= F -> PMT = 0, không được âm
+  const pmtD = FinancialMath.calculateInvestmentPMT(100, 120, 5, 12);
+  assert.strictEqual(pmtD, 0, "Test D: Fully funded goal PMT must be exactly 0, never negative");
+
+  // Test E: Quỹ dự phòng khẩn cấp
+  // E_annual = 120 tr, M = 6 tháng -> E_monthly = 120/12 = 10 tr, Target = 10 * 6 = 60 tr
+  const resE = FinancialMath.calculateEmergencyReserveGoal(0, 120, 6);
+  assert.strictEqual(resE.monthlyCost, 10.0, "Test E: Monthly cost must be annualCost / 12");
+  assert.strictEqual(resE.targetFund, 60.0, "Test E: Emergency target must be 10 * 6 = 60 tr, not 120 tr");
+
+  // Test F: Bảng cân đối tài sản - nợ cá nhân chuẩn mực (Stock-only)
+  // Tài sản = 300 tr, Nợ = 100 tr, Thu nhập năm = 120 tr, Chi phí năm = 80 tr
+  // Net worth = 200 tr, Debt ratio = 33.3333% (không cộng dồn thu/chi 1 năm vào bảng cân đối)
+  const bsF = FinancialMath.calculateBalanceSheet([{ val: 300 }], [{ val: 100 }]);
+  assert.strictEqual(bsF.totalAssets, 300, "Test F: Total assets must equal 300 tr");
+  assert.strictEqual(bsF.totalLiabilities, 100, "Test F: Total liabilities must equal 100 tr");
+  assert.strictEqual(bsF.netWorth, 200, "Test F: Net worth must equal 200 tr (300 - 100)");
+  assert.ok(Math.abs(bsF.debtRatio - 33.333333) < 0.001, "Test F: Debt ratio must equal 33.3333%");
+
+  // Test G: Phân bổ danh mục & lợi suất kỳ vọng bình quân gia quyền
+  // w1 = 60%, w2 = 40%, r1 = 8%, r2 = 4% -> weighted return = 6.4%, isWeightValid = true
+  const portG1 = FinancialMath.computePortfolioMetrics([
+    { weight: 60, returnRate: 8 },
+    { weight: 40, returnRate: 4 }
+  ]);
+  assert.strictEqual(portG1.expectedAvgReturn, 6.4, "Test G: Weighted return must equal 6.4%");
+  assert.strictEqual(portG1.isWeightValid, true, "Test G: 100% allocation is valid");
+
+  const portG2 = FinancialMath.computePortfolioMetrics([
+    { weight: 60, returnRate: 8 },
+    { weight: 30, returnRate: 4 }
+  ]);
+  assert.strictEqual(portG2.isWeightValid, false, "Test G: 90% allocation is flagged invalid");
+
+  // Test H: Thu nhập tối thiểu với chi phí sinh hoạt
+  // E = 15 tr, G = 5 tr, D = 0 tr, S = 35% -> I_min = max(15 + 5, 15 / 0.65) ≈ 23.076923 tr/tháng
+  const incH = FinancialMath.calculateMinimumIncomeNeed(15, 0, 5, 0.35);
+  assert.ok(Math.abs(incH - 23.076923) < 0.0001, `Test H: I_min must equal ~23.076923, got ${incH}`);
+  assert.ok(incH > (5 / 0.35), "Test H: Must be greater than simple G / S = 14.2857 tr");
+
+  // Test I: Thu nhập tối thiểu với trả nợ lớn
+  // E = 5 tr, D = 10 tr, G = 100 tr, S = 35% -> I_min = max(5 + 10 + 100, 15 / 0.65) = 115 tr/tháng
+  const incI = FinancialMath.calculateMinimumIncomeNeed(5, 10, 100, 0.35);
+  assert.strictEqual(incI, 115, "Test I: I_min must equal 115 tr/tháng to cover cashflow");
+
+  // Test J: Phân loại sản phẩm / tài sản không thuộc danh mục nhận diện
+  // Tên: "Sản phẩm thử nghiệm XYZ" -> 'unknown', không ép về 'cash' hoặc 'stocks'
+  const catJ = FinancialMath.classifyProduct("Sản phẩm thử nghiệm XYZ", 0, 0);
+  assert.strictEqual(catJ, "unknown", "Test J: Unrecognized asset must return 'unknown'");
+
+  // Test K: Khảo sát trắc nghiệm chưa hoàn thành
+  // Trả lời 3/10 câu -> isComplete = false, không tự động xếp loại "Thận trọng"
+  const surveyQuestions = Array(10).fill({ weights: [1, 2, 3, 4] });
+  const p1Thresholds = [
+    { maxScore: 20, title: "Thận trọng (Ngại rủi ro)", desc: "Ngại rủi ro" }
+  ];
+  const survK = FinancialMath.evaluateSurvey({ 1: 1, 2: 1, 3: 1 }, surveyQuestions, p1Thresholds);
+  assert.strictEqual(survK.isComplete, false, "Test K: isComplete must be false");
+  assert.strictEqual(survK.count, 3, "Test K: count must be 3");
+  assert.notStrictEqual(survK.classification, "Thận trọng (Ngại rủi ro)", "Test K: Must not classify as Thận trọng when incomplete");
+
+  // Test L: Hưu trí với r = i
+  // C1 = 12 tr, r = 3%, i = 3%, N = 20 năm -> K = N * C1 / (1 + r) = 240 / 1.03 ≈ 233.0097 tr
+  const capL = FinancialMath.calculateRetirementCapitalNeeded(12, 3, 3, 20);
+  assert.ok(Math.abs(capL - 233.0097) < 0.001, `Test L: Capital needed must be ~233.0097, got ${capL}`);
+
+  // Test M: Tỷ suất sinh lời âm an toàn
+  const pmtM = FinancialMath.calculateInvestmentPMT(120, 0, -5, 12);
+  assert.ok(!isNaN(pmtM) && isFinite(pmtM) && pmtM > 0, "Test M: Negative return must be handled safely without crash");
+
+  // Test N: Mục tiêu giáo dục và chu kỳ chiết khấu
+  const eduN = FinancialMath.calculateEducationCapitalNeeded(8, 20, 50, 0);
+  assert.strictEqual(eduN, 210, "Test N: 8 periods * 20 tr + 50 tr support fund = 210 tr");
+
+  // Test O: Giao dịch chuyển tiền nội bộ
+  const transO = FinancialMath.evaluateInternalTransfer(100, 50, 50);
+  assert.strictEqual(transO.incomeCreated, 0, "Test O: Internal transfer creates 0 income");
+  assert.strictEqual(transO.expenseCreated, 0, "Test O: Internal transfer creates 0 expense");
+  assert.strictEqual(transO.totalNetWorthChange, 0, "Test O: Net worth change is 0");
+  assert.strictEqual(transO.isBalanced, true, "Test O: Balances are strictly preserved");
+
+  // Test P: Giá trị biên và dữ liệu đầu vào rác
+  assert.strictEqual(FinancialMath.safeNumber(null), 0, "Test P: null -> 0");
+  assert.strictEqual(FinancialMath.safeNumber(undefined), 0, "Test P: undefined -> 0");
+  assert.strictEqual(FinancialMath.safeNumber(""), 0, "Test P: empty string -> 0");
+  assert.strictEqual(FinancialMath.safeNumber(NaN), 0, "Test P: NaN -> 0");
+  assert.strictEqual(FinancialMath.safeNumber(Infinity), 0, "Test P: Infinity -> 0");
+  assert.strictEqual(FinancialMath.calculateLoanPMT(null, undefined, NaN), 0, "Test P: loan PMT handles trash input");
+  assert.strictEqual(FinancialMath.calculateInvestmentPMT(null, undefined, NaN, 0), 0, "Test P: invest PMT handles trash input");
+});
