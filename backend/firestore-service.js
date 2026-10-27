@@ -186,6 +186,23 @@ function setActiveSessionFromUser(user, sessionToken = "") {
   return activeAuthContext;
 }
 
+function isUserElevated(ctxOrSession) {
+  if (!ctxOrSession) return false;
+  const role = String(ctxOrSession.role || "").toLowerCase();
+  const norm = String(ctxOrSession.normalizedUsername || ctxOrSession.username || ctxOrSession.normalizedName || "").toLowerCase();
+  return (
+    role === "admin" ||
+    role === "instructor" ||
+    role === "teacher" ||
+    role === "quantri" ||
+    norm === "admin" ||
+    norm === "haketo_spec" ||
+    norm.startsWith("admin_") ||
+    norm.includes("instructor") ||
+    norm.includes("teacher")
+  );
+}
+
 function verifyDataAccessPermission(requestedDocId) {
   const storedSessionRaw = (() => {
     try {
@@ -201,8 +218,9 @@ function verifyDataAccessPermission(requestedDocId) {
     setActiveSessionFromUser(storedSessionRaw, fallbackToken);
   }
 
+  const isElevatedRole = isUserElevated(activeAuthContext) || isUserElevated(storedSessionRaw);
+
   if (activeAuthContext) {
-    const isElevatedRole = activeAuthContext.role === "admin" || activeAuthContext.role === "instructor";
     const targetDoc = requestedDocId || activeAuthContext.docId;
     if (targetDoc !== activeAuthContext.docId && !isElevatedRole) {
       return {
@@ -238,7 +256,6 @@ function verifyDataAccessPermission(requestedDocId) {
   if (storedSessionRaw && storedSessionRaw.docId && !storedSessionRaw.uid) {
     const legacyNorm = storedSessionRaw.normalizedUsername || storedSessionRaw.normalizedName || normalizeUsername(storedSessionRaw.username || storedSessionRaw.rawName);
     const expectedLegacyDocId = `user_${legacyNorm}`;
-    const isElevatedRole = storedSessionRaw.role === "admin" || storedSessionRaw.role === "instructor";
     const targetDoc = requestedDocId || storedSessionRaw.docId;
     if (targetDoc !== storedSessionRaw.docId && (legacyNorm && !targetDoc.startsWith(expectedLegacyDocId)) && !isElevatedRole) {
       return {
@@ -1863,7 +1880,20 @@ const FirestoreService = {
               updatedAt: new Date().toISOString(),
               plan: cleanData
             };
-            await setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }).catch(() => {});
+            const kwPayload = {
+              username: studentUser,
+              name: cleanData.ho_ten || studentUser,
+              expenses: cleanData.expenses || [],
+              incomeList: cleanData.incomeList || [],
+              planList: cleanData.planList || [],
+              investProducts: cleanData.investProducts || [],
+              updatedAt: new Date().toISOString()
+            };
+            await Promise.allSettled([
+              setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }),
+              setDoc(doc(db, "setup_keywords", studentUser), kwPayload, { merge: true }),
+              setDoc(doc(db, "student_keywords", studentUser), kwPayload, { merge: true })
+            ]).catch(() => {});
             for (const cid of Object.keys(classes)) {
               const c = classes[cid];
               const isMember = (c.members || []).some(m => m.username === studentUser);
@@ -2688,6 +2718,19 @@ const FirestoreService = {
     const normDocId = "user_" + normUser;
     let res = await this.loadData(normDocId);
     if (res && res.success && res.data) {
+      if (isFirebaseReady && db) {
+        try {
+          const kwRef = doc(db, "setup_keywords", normUser);
+          const kwSnap = await getDoc(kwRef).catch(() => null);
+          if (kwSnap && kwSnap.exists()) {
+            const kwData = kwSnap.data();
+            if (!Array.isArray(res.data.expenses) || res.data.expenses.length === 0) res.data.expenses = kwData.expenses || [];
+            if (!Array.isArray(res.data.incomeList) || res.data.incomeList.length === 0) res.data.incomeList = kwData.incomeList || [];
+            if (!Array.isArray(res.data.planList) || res.data.planList.length === 0) res.data.planList = kwData.planList || [];
+            if (!Array.isArray(res.data.investProducts) || res.data.investProducts.length === 0) res.data.investProducts = kwData.investProducts || [];
+          }
+        } catch (e) {}
+      }
       return res;
     }
     if (isFirebaseReady && db) {
@@ -2785,8 +2828,13 @@ const FirestoreService = {
     };
 
     if (plan) {
-      if (plan.ho_ten || plan.currentAge > 0 || (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) {
-        progress.keywords = (plan.ho_ten && plan.currentAge > 0 && (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) ? "completed" : "in_progress";
+      const hasKeywords = (Array.isArray(plan.expenses) && plan.expenses.length > 0) || (Array.isArray(plan.incomeList) && plan.incomeList.length > 0);
+      if (hasKeywords) {
+        progress.keywords = "completed";
+      } else if (plan.ho_ten && plan.currentAge > 0 && (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) {
+        progress.keywords = "completed";
+      } else if (plan.ho_ten || plan.currentAge > 0) {
+        progress.keywords = "in_progress";
       }
       if (plan.monthlyDetails && Object.keys(plan.monthlyDetails).length > 0) {
         progress.monthlyPlan = "completed";

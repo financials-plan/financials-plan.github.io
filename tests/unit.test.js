@@ -514,6 +514,8 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
 
   assert.ok(scriptJs.includes("initCloudClassesRealtimeSync"));
   assert.ok(scriptJs.includes("cloud-classes-updated"));
+  assert.ok(scriptJs.includes("ensureDefaultKeywords"));
+  assert.ok(scriptJs.includes("window.renderAll"));
 
   const { execSync } = require("child_process");
   assert.doesNotThrow(() => {
@@ -526,6 +528,9 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   const rulesContent = fs.readFileSync(path.join(__dirname, "../backend/firestore.rules"), "utf8");
   assert.ok(rulesContent.includes("match /groups/{groupId}"));
   assert.ok(rulesContent.includes("docId == 'groups'"));
+  assert.ok(rulesContent.includes("match /keywords/{keywordId}"));
+  assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
+  assert.ok(rulesContent.includes("match /student_keywords/{username}"));
   assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
   assert.ok(rulesContent.includes("allow read, write: if true;"));
   assert.ok(!rulesContent.includes("//") && !rulesContent.includes("/*"));

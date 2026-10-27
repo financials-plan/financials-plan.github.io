@@ -100,6 +100,38 @@ service cloud.firestore {
       }
     }
 
+    match /keywords/{keywordId} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
+    match /setup_keywords/{docId} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
+    match /student_keywords/{username} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
+    match /keywords_config/{configId} {
+      allow read, write: if true;
+
+      match /{subcollection=**} {
+        allow read, write: if true;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if true;
     }

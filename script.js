@@ -809,6 +809,43 @@ function ensureFixedInvestmentGoals() {
   AppState.tcGoals = [...regularGoals, retireGoal, collegeGoal];
 }
 
+function ensureDefaultKeywords(state) {
+  if (!state) return;
+  if (!Array.isArray(state.expenses) || state.expenses.length === 0) {
+    state.expenses = [
+      "Tiền ăn uống, sinh hoạt",
+      "Tiền thuê nhà, điện nước",
+      "Mua sắm cá nhân",
+      "Chi phí đi lại, xăng xe",
+      "Quỹ khẩn cấp, y tế"
+    ];
+  }
+  if (!Array.isArray(state.incomeList) || state.incomeList.length === 0) {
+    state.incomeList = [
+      "Lương chính công ty",
+      "Thưởng dự án, hoa hồng",
+      "Thu nhập làm thêm, freelance",
+      "Lợi tức đầu tư, cổ tức"
+    ];
+  }
+  if (!Array.isArray(state.planList) || state.planList.length === 0) {
+    state.planList = [
+      "Chứng chỉ chuyên môn (CFA / ACCA / PMP)",
+      "Ngoại ngữ (IELTS / HSK / JLPT)",
+      "Khóa học quản trị tài chính & đầu tư",
+      "Kỹ năng công nghệ & phân tích dữ liệu"
+    ];
+  }
+  if (!Array.isArray(state.investProducts) || state.investProducts.length === 0) {
+    state.investProducts = [
+      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0 },
+      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0 },
+      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0 },
+      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0 }
+    ];
+  }
+}
+
 function createEmptyAppState() {
   const emptyMonthly = {};
   for (let m = 1; m <= 12; m++) {
@@ -828,10 +865,31 @@ function createEmptyAppState() {
     targetSavingsRate: 35,
     visionAge: "",
     visionDesc: "",
-    expenses: [],
-    incomeList: [],
-    planList: [],
-    investProducts: [],
+    expenses: [
+      "Tiền ăn uống, sinh hoạt",
+      "Tiền thuê nhà, điện nước",
+      "Mua sắm cá nhân",
+      "Chi phí đi lại, xăng xe",
+      "Quỹ khẩn cấp, y tế"
+    ],
+    incomeList: [
+      "Lương chính công ty",
+      "Thưởng dự án, hoa hồng",
+      "Thu nhập làm thêm, freelance",
+      "Lợi tức đầu tư, cổ tức"
+    ],
+    planList: [
+      "Chứng chỉ chuyên môn (CFA / ACCA / PMP)",
+      "Ngoại ngữ (IELTS / HSK / JLPT)",
+      "Khóa học quản trị tài chính & đầu tư",
+      "Kỹ năng công nghệ & phân tích dữ liệu"
+    ],
+    investProducts: [
+      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0 },
+      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0 },
+      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0 },
+      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0 }
+    ],
     tcGoals: [
       createFixedRetirementGoal(),
       createFixedCollegeGoal()
@@ -1963,6 +2021,13 @@ window.switchTab = function(tabId) {
   const targetPane = document.getElementById(tabId);
   if (targetPane) {
     targetPane.classList.add('active');
+    if (tabId === 'tab-tukhoa' && typeof renderSetupTables === 'function') {
+      renderSetupTables();
+    }
+    if (tabId === 'tab-kehoach') {
+      if (typeof renderPlanTables === 'function') renderPlanTables();
+      if (typeof renderMonthView === 'function') renderMonthView(AppState.currentMonth);
+    }
     if (tabId === 'tab-admin-groups' && typeof renderAdminGroupsList === 'function') {
       renderAdminGroupsList();
     }
@@ -2945,6 +3010,26 @@ function renderSetupTables() {
     `).join('');
   }
 }
+window.renderSetupTables = renderSetupTables;
+
+window.renderAll = function() {
+  if (typeof renderSetupTables === 'function') renderSetupTables();
+  if (typeof renderPlanTables === 'function') renderPlanTables();
+  if (typeof renderTcGoalsFormTable === 'function') renderTcGoalsFormTable();
+  if (typeof renderSkillsFamilyJob === 'function') renderSkillsFamilyJob();
+  if (typeof renderGoogleFormSurvey === 'function') renderGoogleFormSurvey();
+  if (typeof evaluateSurveys === 'function') evaluateSurveys();
+  if (typeof updateSurveyProgress === 'function') updateSurveyProgress();
+  if (typeof renderTcMatrixTable === 'function') renderTcMatrixTable();
+  if (typeof renderCareerTables === 'function') renderCareerTables();
+  if (typeof renderMonthView === 'function') renderMonthView(AppState.currentMonth);
+  if (typeof syncGoalsToCards === 'function') syncGoalsToCards();
+  if (typeof recalculateAll === 'function') recalculateAll();
+  if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
+  if (typeof renderYearEndBalanceSheet === 'function') renderYearEndBalanceSheet();
+  if (typeof renderDashboardMatrices === 'function') renderDashboardMatrices();
+  if (typeof renderDashboardAllCharts === 'function') renderDashboardAllCharts();
+};
 
 window.addExpenseRow = function() {
   AppState.expenses.push(`Chi tiêu mới ${AppState.expenses.length + 1}`);
@@ -10063,6 +10148,7 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
         AppState[k] = studentPlan[k];
       }
     });
+    ensureDefaultKeywords(AppState);
     ensureFixedInvestmentGoals();
     syncInvestProductsToGoals();
 
@@ -10077,7 +10163,13 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
     if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
     if (typeof renderAll === 'function') renderAll();
   } else {
-    showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch.`, "warning");
+    ensureDefaultKeywords(AppState);
+    ensureFixedInvestmentGoals();
+    syncInvestProductsToGoals();
+    if (typeof recalculateAll === 'function') recalculateAll();
+    if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
+    if (typeof renderAll === 'function') renderAll();
+    showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch, đang hiển thị các mục từ khóa thiết lập.`, "warning");
   }
 
   const banner = document.getElementById('student-preview-banner');
@@ -10115,6 +10207,7 @@ window.exitStudentPlanReadOnly = function() {
   const btnSave = document.getElementById('btn-cloud-save');
   if (btnSave) btnSave.disabled = false;
 
+  ensureDefaultKeywords(AppState);
   ensureFixedInvestmentGoals();
   syncInvestProductsToGoals();
 
