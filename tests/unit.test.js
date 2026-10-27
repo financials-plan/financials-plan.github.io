@@ -492,7 +492,7 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(scriptJs.includes("chart-dashboard-tc-goals-pie"));
   assert.ok(scriptJs.includes("chart-dashboard-tc-timeline-dual"));
   assert.ok(scriptJs.includes("const portfolio30Yr = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];"));
-  assert.ok(scriptJs.includes("triggerAutoCloudSync"));
+  assert.ok(!scriptJs.includes("triggerAutoCloudSync") && !scriptJs.includes("autoCloudSyncTimer"), "không còn tự động ghi nền");
 
   const authJs = fs.readFileSync(path.join(__dirname, "../auth/auth.js"), "utf8");
   assert.ok(authJs.includes("role: userRole"));

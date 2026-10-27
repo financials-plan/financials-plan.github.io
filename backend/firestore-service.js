@@ -1812,10 +1812,10 @@ const FirestoreService = {
 
     if (!this.isReady()) {
       return {
-        success: true,
+        success: false,
         localOnly: true,
         backupEntry,
-        message: "Đã lưu dữ liệu thành công!"
+        error: "Chưa kết nối được Cloud Firestore. Dữ liệu chỉ được giữ trên thiết bị, hãy bấm Lưu lại khi có kết nối."
       };
     }
 
@@ -1927,11 +1927,10 @@ const FirestoreService = {
       };
     } catch (error) {
       return {
-        success: true,
+        success: false,
         localOnly: true,
         backupEntry,
-        error: error.message,
-        message: "Đã lưu bản sao lưu dữ liệu"
+        error: "Lưu lên Cloud thất bại (" + (error && error.message ? error.message : "lỗi không xác định") + "). Dữ liệu của bạn vẫn được giữ trên màn hình và thiết bị, hãy thử lưu lại."
       };
     }
   },

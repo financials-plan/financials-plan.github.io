@@ -8336,3 +8336,7 @@ input::-ms-clear {
 }
 
 
+
+/* Cân đối lộ trình — trạng thái dữ liệu danh mục */
+.career-status-box { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #f59e0b; background: rgba(245, 158, 11, 0.10); border-radius: 8px; font-size: 13px; }
+.career-status-box .career-status-list { margin: 0; padding-left: 18px; }

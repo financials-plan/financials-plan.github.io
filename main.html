@@ -660,7 +660,7 @@
             <table class="excel-table">
               <thead>
                 <tr class="header-main-info">
-                  <th colspan="5">
+                  <th colspan="6">
                     <div class="table-header-flex">
                       <span class="title"><i class="fa-solid fa-cubes-stacked"></i> Danh mục sản phẩm đầu tư</span>
                       <button class="btn-table-add" onclick="addInvestRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
@@ -668,7 +668,7 @@
                   </th>
                 </tr>
                 <tr class="header-sub">
-                  <th style="width: 40px;">#</th><th>Sản phẩm tài chính</th><th style="width: 130px;">Lãi suất năm (%)</th><th style="width: 90px;">Rủi ro (%)</th><th style="width: 45px;">Xóa</th>
+                  <th style="width: 40px;">#</th><th>Sản phẩm tài chính</th><th style="width: 130px;" title="Lợi suất kỳ vọng hiệu dụng năm (giả định lập kế hoạch, không phải lợi nhuận được bảo đảm)">Lãi suất năm (%)</th><th style="width: 90px;">Rủi ro (%)</th><th style="width: 170px;" title="Nhóm tài sản của kênh đầu tư; dùng để tính tỷ trọng danh mục ở Cân đối lộ trình">Loại đầu tư</th><th style="width: 45px;">Xóa</th>
                 </tr>
               </thead>
               <tbody id="tbody-invest"></tbody>
@@ -941,6 +941,7 @@
                       <th class="th-num">Đã tích lũy</th>
                       <th class="th-year">Năm bắt đầu</th>
                       <th class="th-year">Năm hoàn tất</th>
+                      <th class="th-type" title="Chi vốn: tiền được dùng khi mục tiêu hoàn tất. Giữ đầu tư: vốn tiếp tục được đầu tư (VD: hưu trí).">Khi hoàn tất</th>
                       <th class="th-del">Xóa</th>
                     </tr>
                   </thead>
@@ -1129,7 +1130,7 @@
 
           <div class="career-fixed-chart-wrapper mb-4">
             <div class="tc-chart-card fixed-size-card">
-              <div class="tc-chart-title">So sánh: Thu nhập cần kiếm để đạt mục tiêu và Thu nhập theo lộ trình dự kiến</div>
+              <div class="tc-chart-title">So sánh: Thu nhập cần đáp ứng khoản góp mục tiêu và Thu nhập theo lộ trình dự kiến</div>
               <div class="career-canvas-container"><canvas id="careerChart"></canvas></div>
             </div>
           </div>
@@ -1138,21 +1139,23 @@
             <div class="mb-3">
               <div class="sheet-title-text"><i class="fa-solid fa-layer-group"></i> Lộ trình phân bổ tài sản & Phát triển chuyên môn theo từng giai đoạn</div>
             </div>
+            <div id="career-p1-status" class="career-status-box" style="display: none;"></div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
                 <thead>
                   <tr class="bg-header-primary">
                     <th rowspan="2" style="width: 70px;">Độ tuổi</th>
-                    <th rowspan="2" style="width: 150px;" title="Thu nhập cần có = Tiết kiệm cần có / Tỷ lệ tiết kiệm mục tiêu (Công thức Excel: =AA107/'Mục tiêu bản thân'!$I$24)">Thu nhập cần có / tháng <i class="fa-solid fa-circle-info text-muted" style="font-size: 11px;"></i></th>
-                    <th colspan="4" title="Cơ cấu danh mục đầu tư khuyến nghị theo lý thuyết phân bổ tài sản theo vòng đời (Life-Cycle Asset Allocation)">Cơ cấu danh mục đầu tư khuyến nghị <i class="fa-solid fa-circle-info text-muted" style="font-size: 11px;"></i></th>
-                    <th rowspan="2" style="width: 150px;" title="Lãi suất kỳ vọng bình quân gia quyền theo danh mục tài sản khuyến nghị">Lãi suất kỳ vọng (%/năm)</th>
+                    <th rowspan="2" style="width: 170px;" title="Thu nhập cần đáp ứng khoản góp mục tiêu = Tổng khoản góp mục tiêu hằng tháng / Tỷ lệ tiết kiệm mục tiêu. Chưa gồm chi phí sinh hoạt và nghĩa vụ trả nợ, nên không phải thu nhập đủ trang trải mọi chi phí.">Thu nhập cần đáp ứng khoản góp mục tiêu (triệu đồng/tháng) <i class="fa-solid fa-circle-info text-muted" style="font-size: 11px;"></i></th>
+                    <th colspan="5" title="Tỷ trọng theo số dư danh mục đầu tư tại cuối năm của mốc tuổi, mô phỏng từ các mục tiêu, sản phẩm và Loại đầu tư bạn đã khai báo">Cơ cấu danh mục đầu tư theo số dư (Loại đầu tư) <i class="fa-solid fa-circle-info text-muted" style="font-size: 11px;"></i></th>
+                    <th rowspan="2" style="width: 160px;" title="Bình quân gia quyền theo số dư của lãi suất kỳ vọng từng sản phẩm. Là lợi suất kỳ vọng dựa trên giả định, không phải lợi nhuận được bảo đảm và không phải mức sinh lời tối thiểu cần đạt.">Lợi suất kỳ vọng danh mục/năm</th>
                     <th rowspan="2" style="min-width: 260px;">Kỹ năng cốt lõi cần trui rèn</th>
                   </tr>
                   <tr class="bg-header-sub">
                     <th style="width: 95px;">Cổ phiếu</th>
                     <th style="width: 95px;">Trái phiếu</th>
                     <th style="width: 95px;">Bảo hiểm</th>
-                    <th style="width: 95px;">Tiền gửi NH</th>
+                    <th style="width: 95px;">Tiền gửi Ngân hàng</th>
+                    <th style="width: 95px;" title="Sản phẩm chưa chọn Loại đầu tư">Chưa xác định</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-career-overview"></tbody>
@@ -1168,7 +1171,7 @@
                   <tr class="bg-header-primary">
                     <th style="width: 70px;">Số tuổi</th>
                     <th style="width: 180px;">Thu nhập thực tế<br></th>
-                    <th style="width: 190px;">Mức cần có để đạt mục tiêu<br></th>
+                    <th style="width: 190px;" title="Thu nhập cần đáp ứng khoản góp mục tiêu theo tỷ lệ tiết kiệm; chưa gồm chi phí sinh hoạt và nợ">Thu nhập cần đáp ứng khoản góp mục tiêu<br></th>
                     <th style="width: 220px;">Lộ trình thu nhập kỳ vọng<br></th>
                     <th>Đánh giá khả năng về đích</th>
                   </tr>

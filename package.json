@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "serve": "npx serve -l 8899 .",
-    "test": "node --test tests/unit.test.js",
+    "test": "node --test tests/unit.test.js tests/portfolio.test.js",
     "admin": "node backend/admin-cli.js"
   },
   "repository": {

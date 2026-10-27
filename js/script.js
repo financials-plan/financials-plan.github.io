@@ -748,11 +748,15 @@ function normalizeGoalNumericFields(goal, template) {
   goal.allocProducts = goal.allocProducts.slice(0, 3).map((ap, idx) => {
     const prodName = typeof ap?.prodName === "string" ? ap.prodName.trim() : "";
     const matched = validProducts.find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === prodName && prodName !== "");
-    if (!matched) {
-      return { prodName: "", weight: 0, returnRate: 0, risk: 0 };
-    }
     const w = Number(ap?.weight);
     const weight = (isNaN(w) || !isFinite(w) || w < 0) ? 0 : w;
+    if (!matched) {
+      // Giữ lại phân bổ có tỷ trọng nhưng sản phẩm không còn trong danh mục (không xóa dữ liệu người dùng)
+      if (prodName && weight > 0) {
+        return { prodName, weight, returnRate: 0, risk: 0, _explicitSelected: Boolean(ap?._explicitSelected) };
+      }
+      return { prodName: "", weight: 0, returnRate: 0, risk: 0 };
+    }
     if (weight === 0 && !ap?._explicitSelected) {
       return { prodName: "", weight: 0, returnRate: 0, risk: 0 };
     }
@@ -817,6 +821,9 @@ function ensureFixedInvestmentGoals() {
 
 function ensureDefaultKeywords(state) {
   if (!state) return;
+  if (Array.isArray(state.investProducts)) {
+    state.investProducts.forEach(normalizeInvestProduct);
+  }
   if (!Array.isArray(state.expenses) || state.expenses.length === 0) {
     state.expenses = [
       "Tiền ăn uống, sinh hoạt",
@@ -844,10 +851,10 @@ function ensureDefaultKeywords(state) {
   }
   if (!Array.isArray(state.investProducts) || state.investProducts.length === 0) {
     state.investProducts = [
-      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0 },
-      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0 },
-      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0 },
-      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0 }
+      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0, investmentType: "stocks" },
+      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0, investmentType: "stocks" },
+      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0, investmentType: "bonds" },
+      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0, investmentType: "bank_deposit" }
     ];
   }
 }
@@ -891,10 +898,10 @@ function createEmptyAppState() {
       "Kỹ năng công nghệ & phân tích dữ liệu"
     ],
     investProducts: [
-      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0 },
-      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0 },
-      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0 },
-      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0 }
+      { name: "Cổ phiếu tăng trưởng (VN30)", returnRate: 15.0, risk: 20.0, investmentType: "stocks" },
+      { name: "Chứng chỉ quỹ mở (DCDS / DCBC)", returnRate: 12.0, risk: 15.0, investmentType: "stocks" },
+      { name: "Trái phiếu doanh nghiệp uy tín (DCBF)", returnRate: 9.5, risk: 5.0, investmentType: "bonds" },
+      { name: "Gửi tiết kiệm ngân hàng kỳ hạn", returnRate: 6.5, risk: 1.0, investmentType: "bank_deposit" }
     ],
     tcGoals: [
       createFixedRetirementGoal(),
@@ -1009,7 +1016,7 @@ window.resetAppStateToEmpty = function() {
   const tSav = document.getElementById('target-savings-rate-val');
   if (vAge) vAge.innerText = AppState.visionAge || '';
   if (vDesc) vDesc.innerText = AppState.visionDesc || '';
-  if (tSav) tSav.innerText = `${AppState.targetSavingsRate || 35}%`;
+  if (tSav) tSav.innerText = `${getTargetSavingsRatePct()}%`;
 
   renderSetupTables();
   renderPlanTables();
@@ -1082,32 +1089,112 @@ const FinancialMath = {
     return (!isNaN(pmt) && isFinite(pmt) && pmt > 0) ? pmt : 0;
   },
 
-  // Test C, Test D, Test M: Investment PMT (Niên kim tích lũy định kỳ cho mục tiêu tương lai)
+  // Quy ước lợi suất đầu tư: R là lợi suất HIỆU DỤNG năm (%), lãi suất tháng tương đương
+  // r = (1 + R)^(1/12) - 1. Trả NaN nếu R <= -100% (không hợp lệ).
+  monthlyRateFromAnnualPct: function(annualPct) {
+    const R = this.safeNumber(annualPct, 0) / 100;
+    if (R <= -1) return NaN;
+    return Math.pow(1 + R, 1 / 12) - 1;
+  },
+
+  // Hệ số tích lũy khoản góp cuối kỳ F(n) = ((1+r)^n - 1) / r ; r = 0 -> n
+  annuityFactor: function(r, n) {
+    if (!isFinite(r) || n <= 0) return 0;
+    if (Math.abs(r) < 1e-12) return n;
+    return (Math.pow(1 + r, n) - 1) / r;
+  },
+
+  // Test C, Test D, Test M: Investment PMT (một mức lợi suất hiệu dụng năm cho toàn mục tiêu)
+  // A = max(0, (S - B0*(1+r)^N) / F(N)), khoản góp cuối tháng.
   calculateInvestmentPMT: function(targetFV, initialBalance, annualReturnPct, totalPeriods) {
     const F = Math.max(0, this.safeNumber(targetFV, 0));
     const B0 = Math.max(0, this.safeNumber(initialBalance, 0));
     const n = Math.max(0, Math.round(this.safeNumber(totalPeriods, 0)));
-    const annualReturn = this.safeNumber(annualReturnPct, 0) / 100;
-    const r = annualReturn / 12;
+    const r = this.monthlyRateFromAnnualPct(annualReturnPct);
 
-    if (F <= 0 || n <= 0) return 0;
+    if (F <= 0 || n <= 0 || !isFinite(r)) return 0;
 
     // Test D: Nếu số dư hiện tại sau tăng trưởng đủ đạt hoặc vượt mục tiêu, PMT = 0 (không âm)
-    const paidFV = (r > -1) ? (B0 * Math.pow(1 + r, n)) : B0;
+    const paidFV = B0 * Math.pow(1 + r, n);
     const deficitFV = Math.max(0, F - paidFV);
     if (deficitFV <= 0) return 0;
 
-    // Test C & Test M: Xử lý r = 0 và r != 0 (kể cả r âm > -1)
-    if (Math.abs(r) < 1e-9) {
-      return deficitFV / n;
-    }
-    const factor = Math.pow(1 + r, n);
-    const denom = factor - 1;
-    if (Math.abs(denom) < 1e-12) {
-      return deficitFV / n;
-    }
-    const pmt = (deficitFV * r) / denom;
+    const pmt = deficitFV / this.annuityFactor(r, n);
     return (!isNaN(pmt) && isFinite(pmt) && pmt > 0) ? pmt : 0;
+  },
+
+  // Khoản góp cho danh mục nhiều sản phẩm, mỗi sản phẩm một lợi suất riêng.
+  // products: [{ weight (%), returnRatePct, initialBalance }]; tỷ trọng phải cộng đúng 100%.
+  // A = max(0, (S - Σ B_p0 (1+r_p)^N) / Σ w_p F_p(N)).
+  // Trả { status, pmt, ... }; pmt = null khi dữ liệu không hợp lệ (không giả vờ đã tính đúng).
+  calculateMultiProductPMT: function(targetFV, products, totalPeriods) {
+    const F = Math.max(0, this.safeNumber(targetFV, 0));
+    const n = Math.round(this.safeNumber(totalPeriods, 0));
+    if (!Array.isArray(products) || products.length === 0) {
+      return { status: 'no_portfolio', pmt: null, totalWeight: 0 };
+    }
+    let totalWeight = 0;
+    products.forEach(p => { totalWeight += Math.max(0, this.safeNumber(p && p.weight, 0)); });
+    if (Math.abs(totalWeight - 100) > 0.01) {
+      return { status: 'invalid_weights', pmt: null, totalWeight };
+    }
+    if (n <= 0) {
+      return { status: 'invalid_period', pmt: null, totalWeight };
+    }
+    let initialFV = 0;
+    let weightedFactor = 0;
+    for (const p of products) {
+      const r = this.monthlyRateFromAnnualPct(p && p.returnRatePct);
+      if (!isFinite(r)) {
+        return { status: 'invalid_rate', pmt: null, totalWeight };
+      }
+      const w = Math.max(0, this.safeNumber(p.weight, 0)) / 100;
+      const b0 = Math.max(0, this.safeNumber(p.initialBalance, 0));
+      initialFV += b0 * Math.pow(1 + r, n);
+      weightedFactor += w * this.annuityFactor(r, n);
+    }
+    if (F <= 0) {
+      return { status: 'ok', pmt: 0, totalWeight, initialFV };
+    }
+    const pmt = Math.max(0, (F - initialFV) / weightedFactor);
+    return { status: 'ok', pmt: isFinite(pmt) ? pmt : null, totalWeight, initialFV };
+  },
+
+  // Mô phỏng số dư cuối năm của từng sản phẩm trong MỘT mục tiêu:
+  // B_m = B_(m-1) (1 + r_p) + A * w_p (góp cuối tháng) trong các năm [startYear, endYear].
+  // Hết endYear: nếu spendAtEnd thì toàn bộ vốn được chi (số dư = 0 trong trạng thái cuối kỳ),
+  // ngược lại vốn tiếp tục sinh lời, không góp thêm. Trả snapshot cuối mỗi năm đến lastYear.
+  simulateGoalYearEndBalances: function(cfg) {
+    const empty = { valid: false, years: {}, withdrawn: {} };
+    if (!cfg) return empty;
+    const A = Math.max(0, this.safeNumber(cfg.monthlyContribution, 0));
+    const start = Math.round(this.safeNumber(cfg.startYear, 0));
+    const end = Math.round(this.safeNumber(cfg.endYear, 0));
+    const last = Math.round(this.safeNumber(cfg.lastYear, end));
+    const prods = Array.isArray(cfg.products) ? cfg.products : [];
+    if (!(start > 0) || end < start || last < start || prods.length === 0) return empty;
+
+    const rm = prods.map(p => this.monthlyRateFromAnnualPct(p && p.returnRatePct));
+    if (rm.some(x => !isFinite(x))) return empty;
+    const w = prods.map(p => Math.max(0, this.safeNumber(p && p.weight, 0)) / 100);
+    const bal = prods.map(p => Math.max(0, this.safeNumber(p && p.initialBalance, 0)));
+    const years = {};
+    const withdrawn = {};
+
+    for (let y = start; y <= last; y++) {
+      const active = (y <= end);
+      for (let m = 0; m < 12; m++) {
+        for (let i = 0; i < bal.length; i++) {
+          bal[i] = bal[i] * (1 + rm[i]) + (active ? A * w[i] : 0);
+        }
+      }
+      if (y === end && cfg.spendAtEnd === true) {
+        withdrawn[y] = bal.reduce((s, v) => s + v, 0);
+        for (let i = 0; i < bal.length; i++) bal[i] = 0;
+      }
+      years[y] = bal.slice();
+    }
+    return { valid: true, years, withdrawn };
   },
 
   // Test E: Quỹ dự phòng khẩn cấp
@@ -1205,26 +1292,48 @@ const FinancialMath = {
     const D = Math.max(0, this.safeNumber(debtPayment, 0));
     const G = Math.max(0, this.safeNumber(goalSavings, 0));
 
-    let S = this.safeNumber(savingsRateRatio, 0.35);
-    if (S <= 0) S = 0.35;
-    if (S >= 1) S = 0.99;
+    // Tỷ lệ tiết kiệm thiếu/không hợp lệ -> null (không tự thay bằng 35%/99%).
+    if (savingsRateRatio === null || savingsRateRatio === undefined || savingsRateRatio === '') return null;
+    const S = Number(savingsRateRatio);
+    if (!isFinite(S) || S < 0 || S > 1) return null;
 
     const nonSavings = E + D;
     if (nonSavings > 0) {
+      // I_min = max(E + D + G, (E + D) / (1 - S)); S = 100% với chi phí/nợ dương -> không khả thi
+      if (S >= 1) return null;
       const cashflowMin = nonSavings + G;
       const savingsRuleMin = nonSavings / (1 - S);
       return Math.max(cashflowMin, savingsRuleMin);
     }
 
+    // Chỉ có khoản góp mục tiêu: I = G / S. S = 0% mà G > 0 -> không khả thi (null), G = 0 -> 0 hợp lệ.
     if (G > 0) {
-      return G / S;
+      return S > 0 ? G / S : null;
     }
 
     return 0;
   },
 
-  // Test J: Nhận diện & phân loại tài sản
-  classifyProduct: function(rawName, returnRate = 0, risk = 0) {
+  // Loại đầu tư (bốn nhóm cố định) — giá trị nội bộ và nhãn hiển thị tiếng Việt
+  INVESTMENT_TYPES: ['stocks', 'bonds', 'insurance', 'bank_deposit'],
+  INVESTMENT_TYPE_LABELS: {
+    stocks: 'Cổ phiếu',
+    bonds: 'Trái phiếu',
+    insurance: 'Bảo hiểm',
+    bank_deposit: 'Tiền gửi Ngân hàng'
+  },
+
+  // Chuẩn hóa giá trị loại đầu tư về một trong bốn giá trị nội bộ; không nhận ra -> '' (chưa xác định)
+  normalizeInvestmentType: function(value) {
+    const s = String(value === null || value === undefined ? '' : value).trim().toLowerCase();
+    if (this.INVESTMENT_TYPES.indexOf(s) >= 0) return s;
+    const legacy = { ins: 'insurance', cash: 'bank_deposit', stock: 'stocks', bond: 'bonds' };
+    return legacy[s] || '';
+  },
+
+  // Tự nhận diện loại đầu tư CHỈ khi tên sản phẩm nêu rõ đúng một loại tài sản.
+  // Không suy luận từ tên thương hiệu, mã quỹ, lãi suất hay rủi ro. Mơ hồ/không rõ -> '' (chưa xác định).
+  inferInvestmentType: function(rawName) {
     let name = String(rawName || "").toLowerCase().trim();
     name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
     name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
@@ -1233,74 +1342,21 @@ const FinancialMath = {
     name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
     name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
     name = name.replace(/đ/g, 'd');
+    if (!name) return '';
 
-    if (!name) return 'unknown';
+    const matched = [];
+    if (/\b(co phieu|etf|stock|equity)\b/.test(name)) matched.push('stocks');
+    if (/\b(trai phieu|bond)\b/.test(name)) matched.push('bonds');
+    if (/\b(bao hiem|bhnt|insurance)\b/.test(name)) matched.push('insurance');
+    if (/\b(tien gui|tiet kiem|ngan hang|deposit)\b/.test(name)) matched.push('bank_deposit');
+    return matched.length === 1 ? matched[0] : '';
+  },
 
-    if (name.includes("co phieu") || name.includes("chung khoan") || name.includes("stock") || name.includes("equity") || name.includes("co phan")) {
-      return 'stocks';
-    }
-    if (name.includes("trai phieu") || name.includes("bond") || name.includes("fixed income") || name.includes("tpdn") || name.includes("debenture")) {
-      return 'bonds';
-    }
-    if (name.includes("bao hiem") || name.includes("bhnt") || name.includes("nhan tho") || name.includes("suc khoe") || name.includes("y te") || name.includes("insurance") || name.includes("life insurance")) {
-      return 'ins';
-    }
-    if (name.includes("tien gui") || name.includes("tiet kiem") || name.includes("ngan hang") || name.includes("deposit") || name.includes("savings") || name.includes("tien mat")) {
-      return 'cash';
-    }
-
-    if (
-      name.includes("etf") || name.includes("dcbc") || name.includes("dcds") ||
-      name.includes("vesaf") || name.includes("vfmvf") || name.includes("vn30") ||
-      name.includes("vnindex") || name.includes("vn100") || name.includes("diamond") ||
-      name.includes("finlead") || name.includes("ssiam")
-    ) {
-      return 'stocks';
-    }
-
-    if (
-      name.includes("dcbf") || name.includes("vfmvfb") || name.includes("tcbond") ||
-      name.includes("ssibf") || name.includes("vbond")
-    ) {
-      return 'bonds';
-    }
-
-    if (
-      name.includes("manulife") || name.includes("prudential") || name.includes("dai-ichi") ||
-      name.includes("daiichi") || name.includes("chubb") || name.includes("fwd") ||
-      name.includes("sun life") || name.includes("sunlife") || name.includes("aia") ||
-      name.includes("generali") || name.includes("bao viet") || name.includes("mb ageas") ||
-      name.includes("hanwha") || name.includes("lien ket dau tu") || name.includes("lien ket don vi") ||
-      name.includes("tu ky")
-    ) {
-      return 'ins';
-    }
-
-    if (
-      name.includes("finhay") || name.includes("tikop") || name.includes("fmarket") ||
-      name.includes("chung chi tien gui") || name.includes("cctg") || name.includes("vi dien tu") ||
-      name.includes("momo") || name.includes("zalopay") || name.includes("thanh khoan") ||
-      name.includes("du phong")
-    ) {
-      return 'cash';
-    }
-
-    if (
-      name.includes("fpt") || name.includes("hpg") || name.includes("vnm") ||
-      name.includes("mwg") || name.includes("vic") || name.includes("vhm") ||
-      name.includes("ssi") || name.includes("vnd")
-    ) {
-      return 'stocks';
-    }
-
-    const r = this.safeNumber(returnRate, 0);
-    const k = this.safeNumber(risk, 0);
-    if (r >= 12 || k >= 12) return 'stocks';
-    if (r >= 7.5 || (k >= 4 && k < 12)) return 'bonds';
-    if (r >= 6.0 && k > 0 && k < 4) return 'ins';
-    if (r > 0 && k > 0 && k <= 2) return 'cash';
-
-    return 'unknown';
+  // Test J: Nhận diện & phân loại tài sản (giữ khóa cũ stocks/bonds/ins/cash/unknown cho tương thích)
+  classifyProduct: function(rawName, returnRate = 0, risk = 0) {
+    const t = this.inferInvestmentType(rawName);
+    const legacyKey = { stocks: 'stocks', bonds: 'bonds', insurance: 'ins', bank_deposit: 'cash' };
+    return legacyKey[t] || 'unknown';
   },
 
   // Test K: Khảo sát trắc nghiệm tâm lý & hoàn cảnh
@@ -1444,8 +1500,8 @@ function computeGoalPortfolioMetrics(goal) {
 
     const matched = validProducts.find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === ap.prodName && ap.prodName !== "");
     if (!matched) {
-      ap.prodName = "";
-      ap.weight = 0;
+      // Giữ nguyên tên/tỷ trọng người dùng đã nhập; sản phẩm không còn trong danh mục chỉ bị loại khỏi
+      // các phép tính (danh mục sẽ báo chưa hợp lệ), không bị xóa âm thầm.
       ap.returnRate = 0;
       ap.risk = 0;
       return;
@@ -1455,7 +1511,74 @@ function computeGoalPortfolioMetrics(goal) {
     ap.risk = Number(matched.risk) || 0;
   });
 
-  return FinancialMath.computePortfolioMetrics(goal.allocProducts, validProducts);
+  const calcRows = goal.allocProducts.filter(ap => {
+    return ap && validProducts.some(ip => ip && typeof ip.name === 'string' && ip.name.trim() === ap.prodName && ap.prodName !== "");
+  });
+  const metrics = FinancialMath.computePortfolioMetrics(calcRows, validProducts);
+  const orphanWeight = goal.allocProducts.reduce((s, ap) => {
+    return s + (ap && ap.prodName && !calcRows.includes(ap) ? (Number(ap.weight) || 0) : 0);
+  }, 0);
+  if (orphanWeight > 0) {
+    metrics.totalWeight += orphanWeight;
+    metrics.isWeightValid = false;
+  }
+  return metrics;
+}
+
+// Danh mục phân bổ của một mục tiêu, lấy từ danh mục kênh đầu tư (nguồn duy nhất cho lãi suất và loại đầu tư).
+function getGoalAllocationProducts(goal) {
+  const catalog = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
+  const rows = [];
+  let totalWeight = 0;
+  let allMatched = true;
+  (goal && Array.isArray(goal.allocProducts) ? goal.allocProducts : []).forEach(ap => {
+    const w = Number(ap && ap.weight);
+    if (!ap || !isFinite(w) || w <= 0) return;
+    totalWeight += w;
+    const name = typeof ap.prodName === 'string' ? ap.prodName.trim() : '';
+    const prod = name ? catalog.find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === name) : null;
+    if (!prod) {
+      allMatched = false;
+      return;
+    }
+    rows.push({
+      prodName: name,
+      weight: w,
+      returnRatePct: Number(prod.returnRate) || 0,
+      risk: Number(prod.risk) || 0,
+      investmentType: FinancialMath.normalizeInvestmentType(prod.investmentType)
+    });
+  });
+  return {
+    rows,
+    totalWeight,
+    hasAllocation: totalWeight > 0,
+    allMatched,
+    isValid: totalWeight > 0 && allMatched && Math.abs(totalWeight - 100) <= 0.01
+  };
+}
+
+// Khoản góp hằng tháng của một mục tiêu đầu tư. Khi đã chọn danh mục: tính theo lợi suất riêng của từng
+// sản phẩm (số dư ban đầu goal.paid được phân bổ theo tỷ trọng mục tiêu). Danh mục sai tỷ trọng -> 0 và
+// goal.fundingStatus = 'invalid_portfolio'. Chưa chọn danh mục: dùng một mức lợi suất singleRatePct.
+function computeGoalPMT(goal, targetFV, nMonths, singleRatePct) {
+  const alloc = getGoalAllocationProducts(goal);
+  if (alloc.hasAllocation) {
+    if (!alloc.isValid) {
+      goal.fundingStatus = 'invalid_portfolio';
+      return 0;
+    }
+    const paid = Math.max(0, Number(goal.paid) || 0);
+    const res = FinancialMath.calculateMultiProductPMT(targetFV, alloc.rows.map(r => ({
+      weight: r.weight,
+      returnRatePct: r.returnRatePct,
+      initialBalance: paid * r.weight / 100
+    })), nMonths);
+    goal.fundingStatus = res.status === 'ok' ? 'ok' : res.status;
+    return res.pmt === null ? 0 : res.pmt;
+  }
+  goal.fundingStatus = 'ok';
+  return FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, singleRatePct, nMonths);
 }
 
 function calculateCollegeGoal(goal) {
@@ -1489,7 +1612,8 @@ function calculateCollegeGoal(goal) {
     const pvRateAnnual = portfolio.expectedAvgReturn > 0
       ? portfolio.expectedAvgReturn
       : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
-    const pvRateMonthlyPct = pvRateAnnual / 12;
+    const pvMonthly = FinancialMath.monthlyRateFromAnnualPct(pvRateAnnual);
+    const pvRateMonthlyPct = isFinite(pvMonthly) ? pvMonthly * 100 : 0;
     targetFV = FinancialMath.calculateEducationCapitalNeeded(periods, periodicNeed, supportFund, pvRateMonthlyPct);
     if (!goal._manualValOverride) {
       goal.val = Number(targetFV.toFixed(2));
@@ -1507,7 +1631,7 @@ function calculateCollegeGoal(goal) {
     return 0;
   }
 
-  const pmt = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  const pmt = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.monthly = pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
@@ -1565,7 +1689,7 @@ function calculateRetirementGoal(goal) {
     return 0;
   }
 
-  const pmt = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  const pmt = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.monthly = pmt;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
@@ -1612,18 +1736,28 @@ function calculateMonthlyNeed(goal) {
         : (Number(goal.estimatedRate) || 0));
 
   const targetFV = Number(goal.val) || 0;
-  const pmtInvest = FinancialMath.calculateInvestmentPMT(targetFV, goal.paid, rAnnualPct, nMonths);
+  const pmtInvest = computeGoalPMT(goal, targetFV, nMonths, rAnnualPct);
   goal.monthly = pmtInvest;
   goal.annual = goal.monthly * 12;
   return goal.monthly;
 }
 
+// Tỷ lệ tiết kiệm mục tiêu (%) — giữ nguyên 0%; chỉ dùng mặc định 35% khi chưa có dữ liệu
+function getTargetSavingsRatePct() {
+  const raw = AppState.targetSavingsRate;
+  if (raw === undefined || raw === null || raw === '') return 35;
+  const pct = parseFloat(raw);
+  return (isNaN(pct) || pct < 0 || pct > 100) ? 35 : pct;
+}
+
 function getEffectiveSavingsRateRatio() {
-  const pct = parseFloat(AppState.targetSavingsRate);
-  if (!isNaN(pct) && pct > 0 && pct <= 100) {
-    return pct / 100;
-  }
-  return 0.35;
+  return getTargetSavingsRatePct() / 100;
+}
+
+// Thu nhập cần để khoản góp mục tiêu chiếm đúng tỷ lệ tiết kiệm: G / S.
+// Trả null khi không khả thi (S = 0% mà G > 0); 0 là giá trị hợp lệ khi G = 0.
+function computeIncomeNeedForGoalSavings(monthlySavings, savingsRateRatio) {
+  return FinancialMath.calculateMinimumIncomeNeed(0, 0, monthlySavings, savingsRateRatio);
 }
 
 function getMatrixIncomeNeed(yearOffset, explicitLivingExpense, explicitDebt) {
@@ -1651,217 +1785,258 @@ function getMatrixIncomeNeed(yearOffset, explicitLivingExpense, explicitDebt) {
     D = Number(explicitDebt) || 0;
   }
 
+  // Chỉ phản ánh thu nhập cần để đáp ứng khoản góp mục tiêu theo tỷ lệ tiết kiệm (G/S) khi không có E, D;
+  // không phải thu nhập đủ trang trải mọi chi phí sinh hoạt. Trả null nếu không khả thi.
   const rate = getEffectiveSavingsRateRatio();
   return FinancialMath.calculateMinimumIncomeNeed(E, D, sSum, rate);
 }
 
-function detectAssetCategory(rawName, returnRate = 0, risk = 0) {
-  return FinancialMath.classifyProduct(rawName, returnRate, risk);
+// ==========================================
+// LOẠI ĐẦU TƯ — nguồn dữ liệu duy nhất là trường investmentType của từng kênh đầu tư (Danh mục sản phẩm đầu tư)
+// ==========================================
+function getInvestmentTypeLabel(type) {
+  return FinancialMath.INVESTMENT_TYPE_LABELS[type] || 'Chưa xác định';
+}
+
+// Chuẩn hóa một kênh đầu tư: giữ nguyên tên, lãi suất, rủi ro; chuẩn hóa investmentType.
+// Dữ liệu cũ chưa có loại: chỉ tự nhận diện khi tên nêu rõ đúng một loại (đánh dấu investmentTypeAuto),
+// nếu không đủ căn cứ thì để trống = "Chưa xác định" (không tự gán Tiền gửi Ngân hàng).
+function normalizeInvestProduct(p) {
+  if (!p || typeof p !== 'object') return p;
+  const explicit = FinancialMath.normalizeInvestmentType(p.investmentType);
+  if (explicit) {
+    p.investmentType = explicit;
+    return p;
+  }
+  const inferred = FinancialMath.inferInvestmentType(p.name);
+  p.investmentType = inferred;
+  if (inferred) {
+    p.investmentTypeAuto = true;
+  } else {
+    delete p.investmentTypeAuto;
+  }
+  return p;
+}
+
+// Nhận nhãn tiếng Việt hoặc giá trị nội bộ khi nhập từ file; không nhận ra -> '' (chưa xác định)
+function parseInvestmentTypeInput(raw) {
+  const direct = FinancialMath.normalizeInvestmentType(raw);
+  if (direct) return direct;
+  const text = String(raw === null || raw === undefined ? '' : raw).trim().toLowerCase();
+  const labels = FinancialMath.INVESTMENT_TYPE_LABELS;
+  return FinancialMath.INVESTMENT_TYPES.find(t => labels[t].toLowerCase() === text) || '';
+}
+
+function normalizeInvestProducts(list) {
+  const arr = Array.isArray(list) ? list : (Array.isArray(AppState.investProducts) ? AppState.investProducts : []);
+  arr.forEach(normalizeInvestProduct);
+  return arr;
+}
+
+// Loại đầu tư của một sản phẩm theo tên, tra từ danh mục kênh đầu tư ('' nếu chưa xác định)
+function getProductInvestmentType(prodName) {
+  const name = typeof prodName === 'string' ? prodName.trim() : '';
+  const prod = (AppState.investProducts || []).find(ip => ip && typeof ip.name === 'string' && ip.name.trim() === name);
+  return prod ? FinancialMath.normalizeInvestmentType(prod.investmentType) : '';
+}
+
+function detectAssetCategory(rawName) {
+  return getProductInvestmentType(rawName) || 'unknown';
 }
 
 function classifyProductType(rawName) {
-  return FinancialMath.classifyProduct(rawName, 0, 0);
+  return getProductInvestmentType(rawName) || 'unknown';
 }
 
-function getAssetCategoryRates() {
-  const prods = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
-  const rates = {
-    stocks: { sum: 0, count: 0, defaultRate: 14.5 },
-    bonds: { sum: 0, count: 0, defaultRate: 9.0 },
-    ins: { sum: 0, count: 0, defaultRate: 7.0 },
-    cash: { sum: 0, count: 0, defaultRate: 5.5 }
-  };
+// Mục tiêu hoàn thành thì tiền được chi ('spend') hay tiếp tục được đầu tư ('hold').
+// Chỉ dựa vào trường fundUsage do người dùng chọn; mặc định: Hưu trí giữ vốn, các mục tiêu khác chi vốn.
+function getGoalFundUsage(goal) {
+  if (goal && (goal.fundUsage === 'hold' || goal.fundUsage === 'spend')) return goal.fundUsage;
+  return isRetirementFixedGoal(goal) ? 'hold' : 'spend';
+}
 
-  prods.forEach(p => {
-    if (!p || !p.name) return;
-    const cat = detectAssetCategory(p.name, p.returnRate, p.risk);
-    if (!rates[cat]) return;
-    const r = Number(p.returnRate);
-    if (!isNaN(r) && r > 0) {
-      rates[cat].sum += r;
-      rates[cat].count++;
+function getBaseYearAndAge() {
+  const y = Number(AppState.currentYear);
+  const a = Number(AppState.currentAge);
+  return {
+    year: (isFinite(y) && y > 0) ? y : new Date().getFullYear(),
+    age: (isFinite(a) && a > 0) ? a : null
+  };
+}
+
+function emptyPortfolioTypeBucket() {
+  return { stocks: 0, bonds: 0, insurance: 0, bank_deposit: 0, unknown: 0 };
+}
+
+// Mô phỏng số dư danh mục thực tế theo từng sản phẩm, từng mục tiêu, tại cuối mỗi năm (sau khi xử lý
+// khoản chi của mục tiêu kết thúc trong năm đó). Tỷ trọng nhóm = số dư nhóm / tổng số dư; lợi suất kỳ vọng
+// = bình quân gia quyền theo số dư của lợi suất từng sản phẩm. Không dùng benchmark/tỷ trọng mẫu.
+function simulatePersonalPortfolio(horizonYears) {
+  const horizon = Math.max(1, Math.round(Number(horizonYears) || 30));
+  const base = getBaseYearAndAge();
+  const lastYear = base.year + horizon - 1;
+  const goals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
+  const issues = [];
+  const perYear = {};
+  for (let y = base.year; y <= lastYear; y++) {
+    perYear[y] = { byType: emptyPortfolioTypeBucket(), total: 0, retNumerator: 0 };
+  }
+
+  goals.forEach(g => {
+    if (!(Number(g.val) > 0 || Number(g.paid) > 0)) return;
+    const gName = g.name || 'Mục tiêu';
+    const alloc = getGoalAllocationProducts(g);
+    if (!alloc.hasAllocation) {
+      issues.push({ code: 'no_allocation', goal: gName });
+      return;
     }
+    if (!alloc.isValid) {
+      issues.push({ code: 'invalid_portfolio', goal: gName, totalWeight: alloc.totalWeight });
+      return;
+    }
+    const start = Number(g.start) || 0;
+    const end = Number(g.end) || 0;
+    if (!(start > 0 && end >= start)) {
+      issues.push({ code: 'no_period', goal: gName });
+      return;
+    }
+
+    const monthly = calculateMonthlyNeed(g);
+    if (g.fundingStatus && g.fundingStatus !== 'ok') {
+      issues.push({ code: 'invalid_portfolio', goal: gName, totalWeight: alloc.totalWeight });
+      return;
+    }
+    const paid = Math.max(0, Number(g.paid) || 0);
+    const products = alloc.rows.map(r => ({
+      weight: r.weight,
+      returnRatePct: r.returnRatePct,
+      initialBalance: paid * r.weight / 100
+    }));
+    const sim = FinancialMath.simulateGoalYearEndBalances({
+      startYear: start,
+      endYear: end,
+      monthlyContribution: monthly,
+      products,
+      spendAtEnd: getGoalFundUsage(g) === 'spend',
+      lastYear
+    });
+    if (!sim.valid) {
+      issues.push({ code: 'invalid_portfolio', goal: gName, totalWeight: alloc.totalWeight });
+      return;
+    }
+    Object.keys(sim.years).forEach(yKey => {
+      const bucket = perYear[yKey];
+      if (!bucket) return;
+      sim.years[yKey].forEach((bal, i) => {
+        if (!(bal > 0)) return;
+        const type = alloc.rows[i].investmentType || 'unknown';
+        bucket.byType[type] += bal;
+        bucket.total += bal;
+        bucket.retNumerator += bal * alloc.rows[i].returnRatePct;
+      });
+    });
   });
 
+  const rows = [];
+  for (let i = 0; i < horizon; i++) {
+    const year = base.year + i;
+    const b = perYear[year];
+    const hasData = b.total > 1e-9;
+    const pct = k => (hasData ? (b.byType[k] / b.total) * 100 : null);
+    rows.push({
+      year,
+      age: base.age === null ? null : base.age + i,
+      offset: i,
+      isMilestone: (i % 5 === 0 && i <= 25),
+      hasData,
+      balance: b.total,
+      stocks: pct('stocks'),
+      bonds: pct('bonds'),
+      insurance: pct('insurance'),
+      bank_deposit: pct('bank_deposit'),
+      unknown: pct('unknown'),
+      expectedReturn: hasData ? b.retNumerator / b.total : null
+    });
+  }
+
+  const anyData = rows.some(r => r.hasData);
   return {
-    stocks: rates.stocks.count > 0 ? (rates.stocks.sum / rates.stocks.count) : rates.stocks.defaultRate,
-    bonds: rates.bonds.count > 0 ? (rates.bonds.sum / rates.bonds.count) : rates.bonds.defaultRate,
-    ins: rates.ins.count > 0 ? (rates.ins.sum / rates.ins.count) : rates.ins.defaultRate,
-    cash: rates.cash.count > 0 ? (rates.cash.sum / rates.cash.count) : rates.cash.defaultRate
+    baseYear: base.year,
+    baseAge: base.age,
+    rows,
+    issues,
+    status: !anyData ? 'insufficient' : (issues.length > 0 ? 'partial' : 'ok')
   };
 }
 
-function isDedicatedAssetGoal(g) {
-  if (!g || !g.name) return false;
-  let name = String(g.name).toLowerCase().trim();
-  name = name.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
-  name = name.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
-  name = name.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
-  name = name.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
-  name = name.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
-  name = name.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
-  name = name.replace(/đ/g, 'd');
-
-  return (
-    name.includes('bao hiem') || name.includes('tiet kiem') ||
-    name.includes('tien gui') || name.includes('du phong') ||
-    name.includes('trai phieu') || name.includes('co phieu') ||
-    name.includes('chung khoan') || name.includes('etf') ||
-    name.includes('quy ') || name.includes('finhay') || name.includes('tikop')
-  );
+// Mô tả tiếng Việt về các vấn đề dữ liệu khiến kết quả danh mục chưa đầy đủ
+function describePortfolioIssues(sim) {
+  const s = sim || simulatePersonalPortfolio(30);
+  const msgs = [];
+  s.issues.forEach(is => {
+    if (is.code === 'invalid_portfolio') {
+      msgs.push(`Mục tiêu "${is.goal}": tổng tỷ trọng danh mục là ${Number(is.totalWeight || 0).toFixed(1)}% (cần đúng 100% và sản phẩm còn trong danh mục kênh đầu tư).`);
+    } else if (is.code === 'no_allocation') {
+      msgs.push(`Mục tiêu "${is.goal}": chưa chọn sản phẩm đầu tư nên chưa đưa vào tỷ trọng danh mục.`);
+    } else if (is.code === 'no_period') {
+      msgs.push(`Mục tiêu "${is.goal}": chưa có năm bắt đầu/hoàn tất hợp lệ.`);
+    }
+  });
+  const unknownProducts = (AppState.investProducts || []).filter(p => p && !FinancialMath.normalizeInvestmentType(p.investmentType));
+  if (unknownProducts.length > 0) {
+    msgs.push(`${unknownProducts.length} kênh đầu tư chưa xác định Loại đầu tư (${unknownProducts.map(p => p.name).join(', ')}) — được xếp vào cột "Chưa xác định".`);
+  }
+  return msgs;
 }
 
 function getPortfolioAllocationAtAge(targetAge) {
-  const startYr = Number(AppState.currentYear) || 2026;
-  const startAge = Number(AppState.currentAge) || 21;
-  const targetYear = startYr + (targetAge - startAge);
-  if (targetYear < startYr) return null;
-
-  const goals = Array.isArray(AppState.tcGoals)
-    ? AppState.tcGoals.filter(g => g && g.type !== 'debt')
-    : [];
-  if (goals.length === 0) return null;
-
-  const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
-
-  let flowStocks = 0, flowBonds = 0, flowIns = 0, flowCash = 0;
-  let totalFlow = 0;
-  let weightedReturn = 0;
-
-  goals.forEach(g => {
-    const isActive = (targetYear >= g.start && targetYear <= g.end);
-    if (!isActive) return;
-
-    const mNeed = calculateMonthlyNeed(g);
-    const annualFlow = mNeed * 12;
-    if (annualFlow <= 0) return;
-
-    const validAllocs = Array.isArray(g.allocProducts)
-      ? g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName)
-      : [];
-    const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
-
-    if (totalW > 0) {
-      validAllocs.forEach(ap => {
-        const normWeight = (Number(ap.weight) || 0) / totalW;
-        const prodFlow = annualFlow * normWeight;
-
-        let rRate = Number(ap.returnRate) || 0;
-        if (rRate === 0) {
-          const matched = validProducts.find(ip => ip && ip.name && ip.name.trim() === String(ap.prodName).trim());
-          if (matched) rRate = Number(matched.returnRate) || 0;
-        }
-        if (rRate === 0) rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-
-        const pType = classifyProductType(ap.prodName);
-        totalFlow += prodFlow;
-        weightedReturn += prodFlow * rRate;
-
-        if (pType === 'stocks') flowStocks += prodFlow;
-        else if (pType === 'bonds') flowBonds += prodFlow;
-        else if (pType === 'ins') flowIns += prodFlow;
-        else flowCash += prodFlow;
-      });
-    } else if (isDedicatedAssetGoal(g)) {
-      let rRate = Number(g.rate) || Number(g.estimatedRate) || 0;
-      const pType = detectAssetCategory(g.name, rRate, 0);
-      totalFlow += annualFlow;
-      weightedReturn += annualFlow * rRate;
-
-      if (pType === 'stocks') flowStocks += annualFlow;
-      else if (pType === 'bonds') flowBonds += annualFlow;
-      else if (pType === 'ins') flowIns += annualFlow;
-      else flowCash += annualFlow;
-    }
-  });
-
-  if (totalFlow > 0) {
-    return {
-      stocks: (flowStocks / totalFlow) * 100,
-      bonds: (flowBonds / totalFlow) * 100,
-      ins: (flowIns / totalFlow) * 100,
-      cash: (flowCash / totalFlow) * 100,
-      returnNeed: weightedReturn / totalFlow
-    };
-  }
-  return null;
+  const sim = simulatePersonalPortfolio(30);
+  const row = sim.rows.find(r => r.age !== null && r.age === Number(targetAge));
+  if (!row || !row.hasData) return null;
+  return {
+    stocks: row.stocks,
+    bonds: row.bonds,
+    ins: row.insurance,
+    cash: row.bank_deposit,
+    unknown: row.unknown,
+    returnNeed: row.expectedReturn,
+    expectedReturn: row.expectedReturn,
+    balance: row.balance
+  };
 }
 
-const DEFAULT_PORTFOLIO_30YR_BENCHMARK = [
-  {"off":0,"etf":3.06,"stockFund":20.51,"bondFund":34.54,"ins":8.51,"finhay":0,"savings":33.38,"other":0,"total":100,"ret":8.94,"stockTot":23.57,"bondTot":34.54,"insTot":8.51,"cashTot":33.38},
-  {"off":1,"etf":13.46,"stockFund":5.85,"bondFund":43.93,"ins":13.33,"finhay":0,"savings":23.42,"other":0,"total":100,"ret":9.23,"stockTot":19.32,"bondTot":43.93,"insTot":13.33,"cashTot":23.42},
-  {"off":2,"etf":13.39,"stockFund":19.83,"bondFund":40.9,"ins":8.34,"finhay":0,"savings":17.54,"other":0,"total":100,"ret":10.12,"stockTot":33.22,"bondTot":40.9,"insTot":8.34,"cashTot":17.54},
-  {"off":3,"etf":13.43,"stockFund":26.08,"bondFund":39.4,"ins":6.24,"finhay":0,"savings":14.84,"other":0,"total":100,"ret":10.52,"stockTot":39.51,"bondTot":39.4,"insTot":6.24,"cashTot":14.84},
-  {"off":4,"etf":17.15,"stockFund":48.11,"bondFund":14.75,"ins":8.21,"finhay":0,"savings":11.78,"other":0,"total":100,"ret":11.59,"stockTot":65.26,"bondTot":14.75,"insTot":8.21,"cashTot":11.78},
-  {"off":5,"etf":14.12,"stockFund":42.63,"bondFund":20.57,"ins":5.73,"finhay":0,"savings":16.94,"other":0,"total":100,"ret":11.06,"stockTot":56.76,"bondTot":20.57,"insTot":5.73,"cashTot":16.94},
-  {"off":6,"etf":12.72,"stockFund":40.39,"bondFund":23.33,"ins":4.53,"finhay":0,"savings":19.04,"other":0,"total":100,"ret":10.84,"stockTot":53.1,"bondTot":23.33,"insTot":4.53,"cashTot":19.04},
-  {"off":7,"etf":11.94,"stockFund":39.42,"bondFund":24.87,"ins":3.82,"finhay":0,"savings":19.94,"other":0,"total":100,"ret":10.74,"stockTot":51.37,"bondTot":24.87,"insTot":3.82,"cashTot":19.94},
-  {"off":8,"etf":5.7,"stockFund":46.93,"bondFund":19.55,"ins":5.64,"finhay":0,"savings":22.18,"other":0,"total":100,"ret":10.62,"stockTot":52.63,"bondTot":19.55,"insTot":5.64,"cashTot":22.18},
-  {"off":9,"etf":5.32,"stockFund":45.61,"bondFund":20.1,"ins":6.21,"finhay":0,"savings":22.76,"other":0,"total":100,"ret":10.51,"stockTot":50.93,"bondTot":20.1,"insTot":6.21,"cashTot":22.76},
-  {"off":10,"etf":8.23,"stockFund":73.1,"bondFund":0,"ins":10.74,"finhay":0,"savings":7.93,"other":0,"total":100,"ret":12.28,"stockTot":81.33,"bondTot":0,"insTot":10.74,"cashTot":7.93},
-  {"off":11,"etf":7.93,"stockFund":72.7,"bondFund":0,"ins":11.21,"finhay":0,"savings":8.17,"other":0,"total":100,"ret":12.23,"stockTot":80.62,"bondTot":0,"insTot":11.21,"cashTot":8.17},
-  {"off":12,"etf":7.68,"stockFund":72.57,"bondFund":0,"ins":11.52,"finhay":0,"savings":8.23,"other":0,"total":100,"ret":12.2,"stockTot":80.25,"bondTot":0,"insTot":11.52,"cashTot":8.23},
-  {"off":13,"etf":7.47,"stockFund":72.64,"bondFund":0,"ins":11.73,"finhay":0,"savings":8.17,"other":0,"total":100,"ret":12.2,"stockTot":80.11,"bondTot":0,"insTot":11.73,"cashTot":8.17},
-  {"off":14,"etf":7.28,"stockFund":72.86,"bondFund":0,"ins":11.85,"finhay":0,"savings":8.01,"other":0,"total":100,"ret":12.2,"stockTot":80.14,"bondTot":0,"insTot":11.85,"cashTot":8.01},
-  {"off":15,"etf":19.72,"stockFund":25.74,"bondFund":0,"ins":32.97,"finhay":0,"savings":21.57,"other":0,"total":100,"ret":9.95,"stockTot":45.45,"bondTot":0,"insTot":32.97,"cashTot":21.57},
-  {"off":16,"etf":19.52,"stockFund":26.04,"bondFund":0,"ins":33.36,"finhay":0,"savings":21.08,"other":0,"total":100,"ret":9.97,"stockTot":45.56,"bondTot":0,"insTot":33.36,"cashTot":21.08},
-  {"off":17,"etf":19.39,"stockFund":26.43,"bondFund":0,"ins":33.68,"finhay":0,"savings":20.51,"other":0,"total":100,"ret":10,"stockTot":45.81,"bondTot":0,"insTot":33.68,"cashTot":20.51},
-  {"off":18,"etf":14.67,"stockFund":23.76,"bondFund":0,"ins":39.19,"finhay":0,"savings":22.38,"other":0,"total":100,"ret":9.52,"stockTot":38.43,"bondTot":0,"insTot":39.19,"cashTot":22.38},
-  {"off":19,"etf":15.07,"stockFund":24.86,"bondFund":0,"ins":39.13,"finhay":0,"savings":20.94,"other":0,"total":100,"ret":9.64,"stockTot":39.93,"bondTot":0,"insTot":39.13,"cashTot":20.94},
-  {"off":20,"etf":10.09,"stockFund":22.24,"bondFund":0,"ins":45.06,"finhay":0,"savings":22.61,"other":0,"total":100,"ret":9.15,"stockTot":32.33,"bondTot":0,"insTot":45.06,"cashTot":22.61},
-  {"off":21,"etf":10.45,"stockFund":23.3,"bondFund":0,"ins":45.05,"finhay":0,"savings":21.2,"other":0,"total":100,"ret":9.27,"stockTot":33.75,"bondTot":0,"insTot":45.05,"cashTot":21.2},
-  {"off":22,"etf":5.28,"stockFund":20.76,"bondFund":0,"ins":51.33,"finhay":0,"savings":22.64,"other":0,"total":100,"ret":8.78,"stockTot":26.03,"bondTot":0,"insTot":51.33,"cashTot":22.64},
-  {"off":23,"etf":5.58,"stockFund":21.77,"bondFund":0,"ins":51.4,"finhay":0,"savings":21.25,"other":0,"total":100,"ret":8.89,"stockTot":27.35,"bondTot":0,"insTot":51.4,"cashTot":21.25},
-  {"off":24,"etf":0.28,"stockFund":19.35,"bondFund":0,"ins":57.92,"finhay":0,"savings":22.45,"other":0,"total":100,"ret":8.41,"stockTot":19.63,"bondTot":0,"insTot":57.92,"cashTot":22.45},
-  {"off":25,"etf":0.51,"stockFund":20.31,"bondFund":0,"ins":58.07,"finhay":0,"savings":21.11,"other":0,"total":100,"ret":8.51,"stockTot":20.82,"bondTot":0,"insTot":58.07,"cashTot":21.11},
-  {"off":26,"etf":0,"stockFund":13.23,"bondFund":0,"ins":64.72,"finhay":0,"savings":22.05,"other":0,"total":100,"ret":8.04,"stockTot":13.23,"bondTot":0,"insTot":64.72,"cashTot":22.05},
-  {"off":27,"etf":0,"stockFund":14.28,"bondFund":0,"ins":64.97,"finhay":0,"savings":20.75,"other":0,"total":100,"ret":8.14,"stockTot":14.28,"bondTot":0,"insTot":64.97,"cashTot":20.75},
-  {"off":28,"etf":0,"stockFund":6.91,"bondFund":0,"ins":71.64,"finhay":0,"savings":21.45,"other":0,"total":100,"ret":7.69,"stockTot":6.91,"bondTot":0,"insTot":71.64,"cashTot":21.45},
-  {"off":29,"etf":0,"stockFund":7.81,"bondFund":0,"ins":71.98,"finhay":0,"savings":20.21,"other":0,"total":100,"ret":7.77,"stockTot":7.81,"bondTot":0,"insTot":71.98,"cashTot":20.21}
+// Dữ liệu 30 năm của danh mục CÁ NHÂN (từ mô phỏng số dư). Hàng chưa đủ dữ liệu có các tỷ trọng = null.
+function getPortfolio30YrData() {
+  const sim = simulatePersonalPortfolio(30);
+  return sim.rows.map(r => ({
+    year: r.year,
+    age: r.age,
+    isMilestone: r.isMilestone,
+    hasData: r.hasData,
+    total: r.hasData ? 100 : null,
+    balance: r.balance,
+    ret: r.expectedReturn,
+    stockTot: r.stocks,
+    bondTot: r.bonds,
+    insTot: r.insurance,
+    cashTot: r.bank_deposit,
+    unknownTot: r.unknown,
+    partial: sim.status === 'partial'
+  }));
+}
+
+// Dữ liệu tham khảo (KHÔNG phải kết quả cá nhân hóa): tỷ trọng mẫu của báo cáo P1. Không được dùng để lấp chỗ trống.
+const REFERENCE_PORTFOLIO_30YR_BENCHMARK = [
+  {"off":0,"stockTot":23.57,"bondTot":34.54,"insTot":8.51,"cashTot":33.38,"ret":8.94},
+  {"off":5,"stockTot":56.76,"bondTot":20.57,"insTot":5.73,"cashTot":16.94,"ret":11.06},
+  {"off":10,"stockTot":81.33,"bondTot":0,"insTot":10.74,"cashTot":7.93,"ret":12.28},
+  {"off":15,"stockTot":45.45,"bondTot":0,"insTot":32.97,"cashTot":21.57,"ret":9.95},
+  {"off":20,"stockTot":32.33,"bondTot":0,"insTot":45.06,"cashTot":22.61,"ret":9.15},
+  {"off":25,"stockTot":20.82,"bondTot":0,"insTot":58.07,"cashTot":21.11,"ret":8.51}
 ];
 
-function getPortfolio30YrData() {
-  const startYr = Number(AppState.currentYear) || 2026;
-  const startAge = Number(AppState.currentAge) || 21;
-
-  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type !== 'debt');
-  const hasDynamicAlloc = activeGoals.some(g => {
-    return (Number(g.val) > 0 || Number(g.paid) > 0) && (
-      (Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName)) ||
-      isDedicatedAssetGoal(g)
-    );
-  });
-
-  return DEFAULT_PORTFOLIO_30YR_BENCHMARK.map((b, i) => {
-    const yr = startYr + i;
-    const age = startAge + i;
-    const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
-
-    if (hasDynamicAlloc) {
-      const dyn = getPortfolioAllocationAtAge(age);
-      if (dyn && (dyn.stocks > 0 || dyn.bonds > 0 || dyn.ins > 0 || dyn.cash > 0)) {
-        return {
-          ...b,
-          year: yr,
-          age: age,
-          isMilestone: isMilestone,
-          total: 100,
-          ret: dyn.returnNeed,
-          stockTot: dyn.stocks,
-          bondTot: dyn.bonds,
-          insTot: dyn.ins,
-          cashTot: dyn.cash
-        };
-      }
-    }
-
-    return {
-      ...b,
-      year: yr,
-      age: age,
-      isMilestone: isMilestone
-    };
-  });
+function fmtPortfolioPct(v, digits) {
+  return (v === null || v === undefined || !isFinite(v)) ? '—' : `${Number(v).toFixed(digits === undefined ? 1 : digits)}%`;
 }
 
 function renderPortfolio30YrTable() {
@@ -1869,269 +2044,33 @@ function renderPortfolio30YrTable() {
   if (!tb) return;
   const list = getPortfolio30YrData();
   let sumRet = 0;
+  let cntRet = 0;
   tb.innerHTML = list.map(item => {
-    sumRet += Number(item.ret) || 0;
-    const rowClass = item.isMilestone ? 'bg-milestone-highlight font-semibold' : '';
+    if (item.ret !== null) { sumRet += item.ret; cntRet++; }
     const rowStyle = item.isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-    return `<tr class="${rowClass}" style="${rowStyle}">
+    return `<tr class="${item.isMilestone ? 'bg-milestone-highlight font-semibold' : ''}" style="${rowStyle}">
       <td class="text-center font-mono">${item.year}</td>
-      <td class="text-right font-mono">${item.etf.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.stockFund.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.bondFund.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.ins.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.finhay.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.savings.toFixed(1)}%</td>
-      <td class="text-right font-mono">${item.other.toFixed(1)}%</td>
-      <td class="text-center font-mono font-bold">${item.total}%</td>
-      <td class="text-right font-mono font-bold text-success">${item.ret.toFixed(2)}%</td>
-      <td class="text-center font-mono font-bold" style="background-color: #e0e7ff; color: #1e3a8a;">${item.age}</td>
-      <td class="text-right font-mono font-bold">${item.stockTot.toFixed(1)}%</td>
-      <td class="text-right font-mono font-bold">${item.bondTot.toFixed(1)}%</td>
-      <td class="text-right font-mono font-bold">${item.insTot.toFixed(1)}%</td>
-      <td class="text-right font-mono font-bold">${item.cashTot.toFixed(1)}%</td>
+      <td class="text-center font-mono font-bold" style="background-color: #e0e7ff; color: #1e3a8a;">${item.age === null ? '—' : item.age}</td>
+      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.stockTot)}</td>
+      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.bondTot)}</td>
+      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.insTot)}</td>
+      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.cashTot)}</td>
+      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.unknownTot)}</td>
+      <td class="text-right font-mono font-bold text-success">${fmtPortfolioPct(item.ret, 2)}</td>
     </tr>`;
   }).join('');
   const avgEl = document.getElementById('cell-avg-portfolio-ret');
-  if (avgEl && list.length > 0) {
-    avgEl.textContent = (sumRet / list.length).toFixed(2) + '%';
+  if (avgEl) {
+    avgEl.textContent = cntRet > 0 ? (sumRet / cntRet).toFixed(2) + '%' : '—';
   }
 }
-
-const DEFAULT_INTERMEDIATE_T2 = [{"off":0,"vfm":3.6,"finlead":2.1,"dcbc":38.4,"dcds":0,"dcbf":0,"tcb":23.4,"fe":41.4,"finhay":0,"insPure":0,"insInv":15.9,"cash":62.6,"tot":187.4},{"off":1,"vfm":7.7,"finlead":10.3,"dcbc":7.8,"dcds":0,"dcbf":0,"tcb":58.8,"fe":0,"finhay":0,"insPure":0,"insInv":17.9,"cash":31.4,"tot":134},{"off":2,"vfm":12.4,"finlead":19.7,"dcbc":47.5,"dcds":0,"dcbf":0,"tcb":98,"fe":0,"finhay":0,"insPure":0,"insInv":20,"cash":42,"tot":239.7},{"off":3,"vfm":17.6,"finlead":30.6,"dcbc":93.6,"dcds":0,"dcbf":0,"tcb":141.4,"fe":0,"finhay":0,"insPure":0,"insInv":22.4,"cash":53.3,"tot":358.8},{"off":4,"vfm":23.5,"finlead":28.9,"dcbc":147,"dcds":0,"dcbf":0,"tcb":45.1,"fe":0,"finhay":0,"insPure":0,"insInv":25.1,"cash":36,"tot":305.6},{"off":5,"vfm":30.2,"finlead":39,"dcbc":208.9,"dcds":0,"dcbf":0,"tcb":59.4,"fe":41.4,"finhay":0,"insPure":0,"insInv":28.1,"cash":83,"tot":490.1},{"off":6,"vfm":37.8,"finlead":50.6,"dcbc":280.8,"dcds":0,"dcbf":0,"tcb":75.3,"fe":86.9,"finhay":0,"insPure":0,"insInv":31.5,"cash":132.4,"tot":695.3},{"off":7,"vfm":46.3,"finlead":64,"dcbc":364.2,"dcds":0,"dcbf":0,"tcb":92.9,"fe":136.9,"finhay":0,"insPure":0,"insInv":35.3,"cash":184.2,"tot":923.8},{"off":8,"vfm":56,"finlead":0,"dcbc":460.9,"dcds":0,"dcbf":0,"tcb":0,"fe":192,"finhay":0,"insPure":0,"insInv":55.4,"cash":217.8,"tot":982},{"off":9,"vfm":66.9,"finlead":0,"dcbc":573.1,"dcds":0,"dcbf":0,"tcb":0,"fe":252.5,"finhay":0,"insPure":0,"insInv":78,"cash":286,"tot":1256.5},{"off":10,"vfm":79.2,"finlead":0,"dcbc":703.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":103.3,"cash":76.2,"tot":962},{"off":11,"vfm":93.1,"finlead":0,"dcbc":854.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":131.7,"cash":96,"tot":1174.9},{"off":12,"vfm":108.9,"finlead":0,"dcbc":1029.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":163.4,"cash":116.7,"tot":1418.3},{"off":13,"vfm":126.6,"finlead":0,"dcbc":1232.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":199,"cash":138.5,"tot":1696.5},{"off":14,"vfm":146.7,"finlead":0,"dcbc":1468,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":238.8,"cash":161.4,"tot":2014.9},{"off":15,"vfm":169.4,"finlead":0,"dcbc":221.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":283.4,"cash":185.4,"tot":859.5},{"off":16,"vfm":195.1,"finlead":0,"dcbc":260.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":333.4,"cash":210.6,"tot":999.3},{"off":17,"vfm":224.1,"finlead":0,"dcbc":305.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":389.3,"cash":237.1,"tot":1156},{"off":18,"vfm":163.2,"finlead":0,"dcbc":264.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":436,"cash":249,"tot":1112.6},{"off":19,"vfm":188.1,"finlead":0,"dcbc":310.3,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":488.4,"cash":261.4,"tot":1248.1},{"off":20,"vfm":122.5,"finlead":0,"dcbc":269.9,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":547,"cash":274.5,"tot":1213.9},{"off":21,"vfm":142.1,"finlead":0,"dcbc":316.8,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":612.6,"cash":288.2,"tot":1359.7},{"off":22,"vfm":70.6,"finlead":0,"dcbc":277.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":686.1,"cash":302.6,"tot":1336.7},{"off":23,"vfm":83.4,"finlead":0,"dcbc":325.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":768.4,"cash":317.8,"tot":1495},{"off":24,"vfm":4.2,"finlead":0,"dcbc":287.5,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":860.6,"cash":333.6,"tot":1486},{"off":25,"vfm":8.4,"finlead":0,"dcbc":337.2,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":963.9,"cash":350.3,"tot":1659.8},{"off":26,"vfm":-80.5,"finlead":0,"dcbc":301.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1079.6,"cash":367.8,"tot":1668},{"off":27,"vfm":-87.4,"finlead":0,"dcbc":352.9,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1209.1,"cash":386.2,"tot":1860.9},{"off":28,"vfm":-188.7,"finlead":0,"dcbc":319.4,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1354.2,"cash":405.5,"tot":1890.5},{"off":29,"vfm":-209.6,"finlead":0,"dcbc":374.1,"dcds":0,"dcbf":0,"tcb":0,"fe":0,"finhay":0,"insPure":0,"insInv":1516.7,"cash":425.8,"tot":2107.1}];
-
-const DEFAULT_INTERMEDIATE_T1 = [{"off":0,"g4_cash":5.3,"g4_finlead":2.1,"g4_tcb":3.2,"g5_tcb":20.2,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":41.4,"g7_fe":41.4,"g8_dcbc":34.8,"g9_vfm":3.6,"g9_dcbc":3.6,"g10_cash":15.9,"g10_insInv":15.9},{"off":1,"g4_cash":10.8,"g4_finlead":4.5,"g4_tcb":6.6,"g5_tcb":42.6,"g6_finlead":5.8,"g6_tcb":9.6,"g6_cash":3.9,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":7.7,"g9_dcbc":7.8,"g10_cash":16.7,"g10_insInv":17.9},{"off":2,"g4_cash":16.6,"g4_finlead":7.3,"g4_tcb":10.5,"g5_tcb":67.3,"g6_finlead":12.4,"g6_tcb":20.3,"g6_cash":8.1,"g7_cash":0,"g7_fe":0,"g8_dcbc":34.8,"g9_vfm":12.4,"g9_dcbc":12.7,"g10_cash":17.5,"g10_insInv":20},{"off":3,"g4_cash":22.6,"g4_finlead":10.5,"g4_tcb":14.7,"g5_tcb":94.6,"g6_finlead":20.1,"g6_tcb":32.1,"g6_cash":12.7,"g7_cash":0,"g7_fe":0,"g8_dcbc":75.2,"g9_vfm":17.6,"g9_dcbc":18.4,"g10_cash":18.5,"g10_insInv":22.4},{"off":4,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":28.9,"g6_tcb":45.1,"g6_cash":17.6,"g7_cash":0,"g7_fe":0,"g8_dcbc":122.8,"g9_vfm":23.5,"g9_dcbc":25.8,"g10_cash":19.4,"g10_insInv":25.1},{"off":5,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":39,"g6_tcb":59.4,"g6_cash":21.3,"g7_cash":41.4,"g7_fe":41.4,"g8_dcbc":176.3,"g9_vfm":30.2,"g9_dcbc":32.6,"g10_cash":20.4,"g10_insInv":28.1},{"off":6,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":50.6,"g6_tcb":75.3,"g6_cash":26.2,"g7_cash":84.8,"g7_fe":86.9,"g8_dcbc":239.4,"g9_vfm":37.8,"g9_dcbc":41.4,"g10_cash":21.4,"g10_insInv":31.5},{"off":7,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":64,"g6_tcb":92.9,"g6_cash":31.4,"g7_cash":130.4,"g7_fe":136.9,"g8_dcbc":312.5,"g9_vfm":46.3,"g9_dcbc":51.7,"g10_cash":22.4,"g10_insInv":35.3},{"off":8,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":178.3,"g7_fe":192,"g8_dcbc":397.3,"g9_vfm":56,"g9_dcbc":63.6,"g10_cash":39.5,"g10_insInv":55.4},{"off":9,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":228.6,"g7_fe":252.5,"g8_dcbc":495.7,"g9_vfm":66.9,"g9_dcbc":77.4,"g10_cash":57.4,"g10_insInv":78},{"off":10,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":609.8,"g9_vfm":79.2,"g9_dcbc":93.4,"g10_cash":76.2,"g10_insInv":103.3},{"off":11,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":742.1,"g9_vfm":93.1,"g9_dcbc":112,"g10_cash":96,"g10_insInv":131.7},{"off":12,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":895.7,"g9_vfm":108.9,"g9_dcbc":133.6,"g10_cash":116.7,"g10_insInv":163.4},{"off":13,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":1073.8,"g9_vfm":126.6,"g9_dcbc":158.6,"g10_cash":138.5,"g10_insInv":199},{"off":14,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":1280.4,"g9_vfm":146.7,"g9_dcbc":187.6,"g10_cash":161.4,"g10_insInv":238.8},{"off":15,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":169.4,"g9_dcbc":221.2,"g10_cash":185.4,"g10_insInv":283.4},{"off":16,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":195.1,"g9_dcbc":260.2,"g10_cash":210.6,"g10_insInv":333.4},{"off":17,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":224.1,"g9_dcbc":305.5,"g10_cash":237.1,"g10_insInv":389.3},{"off":18,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":163.2,"g9_dcbc":264.4,"g10_cash":249,"g10_insInv":436},{"off":19,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":188.1,"g9_dcbc":310.3,"g10_cash":261.4,"g10_insInv":488.4},{"off":20,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":122.5,"g9_dcbc":269.9,"g10_cash":274.5,"g10_insInv":547},{"off":21,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":142.1,"g9_dcbc":316.8,"g10_cash":288.2,"g10_insInv":612.6},{"off":22,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":70.6,"g9_dcbc":277.4,"g10_cash":302.6,"g10_insInv":686.1},{"off":23,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":83.4,"g9_dcbc":325.5,"g10_cash":317.8,"g10_insInv":768.4},{"off":24,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":4.2,"g9_dcbc":287.5,"g10_cash":333.6,"g10_insInv":860.6},{"off":25,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":8.4,"g9_dcbc":337.2,"g10_cash":350.3,"g10_insInv":963.9},{"off":26,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-80.5,"g9_dcbc":301.1,"g10_cash":367.8,"g10_insInv":1079.6},{"off":27,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-87.4,"g9_dcbc":352.9,"g10_cash":386.2,"g10_insInv":1209.1},{"off":28,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-188.7,"g9_dcbc":319.4,"g10_cash":405.5,"g10_insInv":1354.2},{"off":29,"g4_cash":0,"g4_finlead":0,"g4_tcb":0,"g5_tcb":0,"g6_finlead":0,"g6_tcb":0,"g6_cash":0,"g7_cash":0,"g7_fe":0,"g8_dcbc":0,"g9_vfm":-209.6,"g9_dcbc":374.1,"g10_cash":425.8,"g10_insInv":1516.7}];
 
 function switchPortfolioModalTab(tabIndex) {
   for (let i = 1; i <= 3; i++) {
     const btn = document.getElementById(`btn-p30-tab${i}`);
     const pane = document.getElementById(`p30-pane-${i}`);
-    if (btn) {
-      if (i === tabIndex) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    }
-    if (pane) {
-      pane.style.display = (i === tabIndex) ? 'block' : 'none';
-    }
-  }
-}
-
-function renderPortfolioT2Table() {
-  const tb = document.getElementById('tbody-portfolio-t2');
-  const thead = document.getElementById('thead-portfolio-t2');
-  if (!tb) return;
-  const startYr = Number(AppState.currentYear) || 2026;
-
-  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type === 'invest' && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName));
-  const prods = Array.isArray(AppState.investProducts) && AppState.investProducts.length > 0 ? AppState.investProducts : [];
-
-  if (activeGoals.length > 0 && prods.length > 0 && thead) {
-    let subH = `<th style="width: 60px;">Năm</th>`;
-    prods.forEach(p => {
-      subH += `<th style="padding: 6px 8px;" title="${escapeHtml(p.name)} (${p.returnRate || 0}%/năm)">${escapeHtml(p.name)}</th>`;
-    });
-    subH += `<th style="width: 90px; background-color: #fef08a; color: #854d0e;">Tổng cộng</th>`;
-
-    thead.innerHTML = `
-      <tr class="bg-header-primary">
-        <th colspan="${prods.length + 2}" style="text-align: center; background-color: #0f766e; color: #fff; font-weight: 700;">Theo dõi sản phẩm đầu tư chi tiết (Dòng tiền theo năm - ĐVT: Triệu VNĐ)</th>
-      </tr>
-      <tr class="bg-header-sub" style="background-color: #f1f5f9; font-weight: 600;">${subH}</tr>
-    `;
-
-    let rowsHtml = '';
-    for (let i = 0; i < 30; i++) {
-      const yr = startYr + i;
-      const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
-      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-
-      const flows = {};
-      prods.forEach(p => { flows[p.name] = 0; });
-
-      activeGoals.forEach(g => {
-        if (yr >= g.start && yr <= g.end) {
-          const mNeed = calculateMonthlyNeed(g);
-          const annualFlow = mNeed * 12;
-          const validAllocs = g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName);
-          const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
-          if (totalW > 0) {
-            validAllocs.forEach(ap => {
-              const normWeight = (Number(ap.weight) || 0) / totalW;
-              const pFlow = annualFlow * normWeight;
-              if (flows[ap.prodName] !== undefined) {
-                flows[ap.prodName] += pFlow;
-              } else {
-                flows[ap.prodName] = pFlow;
-              }
-            });
-          }
-        }
-      });
-
-      let cells = `<td class="text-center font-mono">${yr}</td>`;
-      let totalYr = 0;
-      prods.forEach(p => {
-        const val = flows[p.name] || 0;
-        totalYr += val;
-        cells += `<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`;
-      });
-      cells += `<td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${totalYr > 0 ? totalYr.toFixed(1) : '-'}</td>`;
-      rowsHtml += `<tr class="${rowClass}" style="${rowStyle}">${cells}</tr>`;
-    }
-    tb.innerHTML = rowsHtml;
-  } else {
-    if (thead) {
-      thead.innerHTML = `
-        <tr class="bg-header-primary">
-          <th colspan="13" style="text-align: center; background-color: #0f766e; color: #fff; font-weight: 700;">Theo dõi sản phẩm đầu tư chi tiết (Dòng tiền theo năm - ĐVT: Triệu VNĐ)</th>
-        </tr>
-        <tr class="bg-header-sub" style="background-color: #f1f5f9; font-weight: 600;">
-          <th style="width: 60px;">Năm</th>
-          <th style="width: 90px;">ETF-ETFVFM</th>
-          <th style="width: 90px;">ETF-FINLEAD</th>
-          <th style="width: 85px;">DCBC</th>
-          <th style="width: 70px;">DCDS</th>
-          <th style="width: 70px;">DCBF</th>
-          <th style="width: 100px;">TP Techcombank</th>
-          <th style="width: 95px;">TP FE Credit</th>
-          <th style="width: 70px;">Finhay</th>
-          <th style="width: 80px;">BH thuần túy</th>
-          <th style="width: 95px;">BH liên kết ĐT</th>
-          <th style="width: 90px;">Tiền gửi NH</th>
-          <th style="width: 90px; background-color: #fef08a; color: #854d0e;">Tổng cộng</th>
-        </tr>
-      `;
-    }
-    tb.innerHTML = DEFAULT_INTERMEDIATE_T2.map((item, idx) => {
-      const yr = startYr + idx;
-      const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
-      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-      return `<tr class="${rowClass}" style="${rowStyle}">
-        <td class="text-center font-mono">${yr}</td>
-        <td class="text-right font-mono">${item.vfm !== 0 ? item.vfm.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.finlead !== 0 ? item.finlead.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.dcbc !== 0 ? item.dcbc.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.dcds !== 0 ? item.dcds.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.dcbf !== 0 ? item.dcbf.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.tcb !== 0 ? item.tcb.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.fe !== 0 ? item.fe.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.finhay !== 0 ? item.finhay.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.insPure !== 0 ? item.insPure.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.insInv !== 0 ? item.insInv.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.cash !== 0 ? item.cash.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono font-bold" style="background-color: #fef08a; color: #854d0e;">${item.tot.toFixed(1)}</td>
-      </tr>`;
-    }).join('');
-  }
-}
-
-function renderPortfolioT1Table() {
-  const tb = document.getElementById('tbody-portfolio-t1');
-  const thead = document.getElementById('thead-portfolio-t1');
-  if (!tb) return;
-  const startYr = Number(AppState.currentYear) || 2026;
-
-  const activeGoals = (AppState.tcGoals || []).filter(g => g && g.type === 'invest' && Array.isArray(g.allocProducts) && g.allocProducts.some(p => p && Number(p.weight) > 0 && p.prodName));
-
-  if (activeGoals.length > 0 && thead) {
-    const goalColors = ['#0369a1', '#0284c7', '#0891b2', '#0d9488', '#059669', '#16a34a', '#4f46e5', '#7c3aed'];
-    let h1 = `<th style="width: 60px;" rowspan="2">Năm</th>`;
-    let h2 = '';
-    const colDefs = [];
-
-    activeGoals.forEach((g, gIdx) => {
-      const validAllocs = g.allocProducts.filter(p => p && Number(p.weight) > 0 && p.prodName);
-      const totalW = validAllocs.reduce((s, p) => s + (Number(p.weight) || 0), 0);
-      const color = goalColors[gIdx % goalColors.length];
-      h1 += `<th colspan="${validAllocs.length}" style="text-align: center; background-color: ${color}; color: #fff; font-weight: 700; padding: 6px 8px;">${escapeHtml(g.name)}</th>`;
-      validAllocs.forEach(ap => {
-        h2 += `<th style="padding: 4px 6px; font-size: 11px;" title="${escapeHtml(ap.prodName)} (${ap.weight}%)">${escapeHtml(ap.prodName)}</th>`;
-        colDefs.push({
-          goal: g,
-          prodName: ap.prodName,
-          normWeight: totalW > 0 ? (Number(ap.weight) || 0) / totalW : 0
-        });
-      });
-    });
-
-    thead.innerHTML = `
-      <tr class="bg-header-primary">${h1}</tr>
-      <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">${h2}</tr>
-    `;
-
-    let rowsHtml = '';
-    for (let i = 0; i < 30; i++) {
-      const yr = startYr + i;
-      const isMilestone = (i === 0 || i === 5 || i === 10 || i === 15 || i === 20 || i === 25);
-      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-
-      let cells = `<td class="text-center font-mono">${yr}</td>`;
-      colDefs.forEach(cd => {
-        const g = cd.goal;
-        if (yr >= g.start && yr <= g.end) {
-          const mNeed = calculateMonthlyNeed(g);
-          const annualFlow = mNeed * 12;
-          const val = annualFlow * cd.normWeight;
-          cells += `<td class="text-right font-mono">${val > 0 ? val.toFixed(1) : '-'}</td>`;
-        } else {
-          cells += `<td class="text-right font-mono text-muted">-</td>`;
-        }
-      });
-      rowsHtml += `<tr class="${rowClass}" style="${rowStyle}">${cells}</tr>`;
-    }
-    tb.innerHTML = rowsHtml;
-  } else {
-    if (thead) {
-      thead.innerHTML = `
-        <tr class="bg-header-primary">
-          <th style="width: 60px;" rowspan="2">Năm</th>
-          <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT4: Du lịch Thái Lan</th>
-          <th colspan="1" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT5: Dự phòng</th>
-          <th colspan="3" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT6: Đám cưới</th>
-          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT7: Khởi nghiệp</th>
-          <th colspan="1" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT8: Mua chung cư</th>
-          <th colspan="2" style="text-align: center; background-color: #0284c7; color: #fff; font-weight: 700;">MT9: Hưu trí</th>
-          <th colspan="2" style="text-align: center; background-color: #0369a1; color: #fff; font-weight: 700;">MT10: Cho con học ĐH</th>
-        </tr>
-        <tr class="bg-header-sub" style="background-color: #f1f5f9; font-size: 11px; font-weight: 600;">
-          <th>Tiền gửi NH</th><th>ETF FINLEAD</th><th>TP Techcom</th>
-          <th>TP Techcom</th>
-          <th>ETF FINLEAD</th><th>TP Techcom</th><th>Tiền gửi NH</th>
-          <th>Tiền gửi NH</th><th>TP FE Credit</th>
-          <th>DCBC</th>
-          <th>Tiền gửi NH</th><th>BH liên kết ĐT</th>
-          <th>ETF ETFVFM</th><th>DCBC</th>
-        </tr>
-      `;
-    }
-    tb.innerHTML = DEFAULT_INTERMEDIATE_T1.map((item, idx) => {
-      const yr = startYr + idx;
-      const isMilestone = (idx === 0 || idx === 5 || idx === 10 || idx === 15 || idx === 20 || idx === 25);
-      const rowClass = isMilestone ? 'bg-milestone-highlight font-semibold' : '';
-      const rowStyle = isMilestone ? 'background-color: #f0fdf4; font-weight: 600;' : '';
-      return `<tr class="${rowClass}" style="${rowStyle}">
-        <td class="text-center font-mono">${yr}</td>
-        <td class="text-right font-mono">${item.g4_cash !== 0 ? item.g4_cash.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g4_finlead !== 0 ? item.g4_finlead.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g4_tcb !== 0 ? item.g4_tcb.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g5_tcb !== 0 ? item.g5_tcb.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g6_finlead !== 0 ? item.g6_finlead.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g6_tcb !== 0 ? item.g6_tcb.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g6_cash !== 0 ? item.g6_cash.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g7_cash !== 0 ? item.g7_cash.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g7_fe !== 0 ? item.g7_fe.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g8_dcbc !== 0 ? item.g8_dcbc.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g10_cash !== 0 ? item.g10_cash.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g10_insInv !== 0 ? item.g10_insInv.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_vfm !== 0 ? item.g9_vfm.toFixed(1) : '-'}</td>
-        <td class="text-right font-mono">${item.g9_dcbc !== 0 ? item.g9_dcbc.toFixed(1) : '-'}</td>
-      </tr>`;
-    }).join('');
+    if (btn) btn.classList.toggle('active', i === tabIndex);
+    if (pane) pane.style.display = (i === tabIndex) ? 'block' : 'none';
   }
 }
 
@@ -2140,8 +2079,6 @@ function openPortfolio30YrModal() {
   if (modal) {
     modal.style.display = 'flex';
     renderPortfolio30YrTable();
-    renderPortfolioT2Table();
-    renderPortfolioT1Table();
     switchPortfolioModalTab(1);
   }
 }
@@ -2153,6 +2090,7 @@ function closePortfolio30YrModal() {
   }
 }
 
+
 const CAREER_MILESTONES_RECOMMENDED = [
   { stocks: 10.0, bonds: 40.0, ins: 0.0, cash: 50.0, returnNeed: 6.05 },
   { stocks: 20.0, bonds: 40.0, ins: 0.0, cash: 40.0, returnNeed: 6.60 },
@@ -2163,8 +2101,9 @@ const CAREER_MILESTONES_RECOMMENDED = [
 ];
 
 function calculateAgeMilestones() {
-  const baseAge = Number(AppState.currentAge) || 21;
-  const startYr = Number(AppState.currentYear) || 2026;
+  const baseInfo = getBaseYearAndAge();
+  const baseAge = baseInfo.age === null ? 0 : baseInfo.age;
+  const startYr = baseInfo.year;
   const offsets = [0, 5, 10, 15, 20, 25];
 
   if (!AppState.milestonesStore || typeof AppState.milestonesStore !== 'object') {
@@ -2204,15 +2143,17 @@ function calculateAgeMilestones() {
     const age = baseAge + off;
     const year = startYr + off;
     const incNeedFromMatrix = getMatrixIncomeNeed(off);
-    const recFallback = CAREER_MILESTONES_RECOMMENDED[idx] || { stocks: 25, bonds: 25, ins: 25, cash: 25, returnNeed: 10 };
 
-    const matchedP = (portfolio30Yr && portfolio30Yr.find(p => Number(p.age) === Number(age))) || (portfolio30Yr && portfolio30Yr[off]);
+    // Tỷ trọng và lợi suất lấy từ mô phỏng số dư danh mục cá nhân; chưa đủ dữ liệu -> null, không dùng giá trị mẫu.
+    const matchedP = portfolio30Yr && portfolio30Yr[off];
+    const hasPortfolio = Boolean(matchedP && matchedP.hasData);
 
-    const stocks = matchedP ? (Number(matchedP.stockTot) || 0) : recFallback.stocks;
-    const bonds = matchedP ? (Number(matchedP.bondTot) || 0) : recFallback.bonds;
-    const ins = matchedP ? (Number(matchedP.insTot) || 0) : recFallback.ins;
-    const cash = matchedP ? (Number(matchedP.cashTot) || 0) : recFallback.cash;
-    const returnNeed = matchedP ? (Number(matchedP.ret) || 0) : recFallback.returnNeed;
+    const stocks = hasPortfolio ? matchedP.stockTot : null;
+    const bonds = hasPortfolio ? matchedP.bondTot : null;
+    const ins = hasPortfolio ? matchedP.insTot : null;
+    const cash = hasPortfolio ? matchedP.cashTot : null;
+    const unknown = hasPortfolio ? matchedP.unknownTot : null;
+    const returnNeed = hasPortfolio ? matchedP.ret : null;
 
     const userStore = AppState.milestonesStore[idx] || {};
 
@@ -2226,12 +2167,15 @@ function calculateAgeMilestones() {
     return {
       age,
       year,
-      incomeNeed: incNeedFromMatrix > 0 ? incNeedFromMatrix : 0,
+      incomeNeed: incNeedFromMatrix,
+      hasPortfolio,
       stocks,
       bonds,
       ins,
       cash,
+      unknown,
       returnNeed,
+      expectedReturn: returnNeed,
       skills: skillVal
     };
   });
@@ -2271,7 +2215,9 @@ function calculateCareerDetails() {
   return ages.map((age) => {
     const yearOffset = age - baseAge;
     const year = startTrackingYear + yearOffset;
-    const targetVal = getMatrixIncomeNeed(yearOffset) || 0;
+    const targetRaw = getMatrixIncomeNeed(yearOffset);
+    const targetInfeasible = (targetRaw === null);
+    const targetVal = targetInfeasible ? 0 : targetRaw;
 
     const exist = existingMap[age];
     const overrideActual = AppState.careerActualOverrides ? AppState.careerActualOverrides[age] : undefined;
@@ -2306,6 +2252,7 @@ function calculateCareerDetails() {
       manualActual: hasManualActual,
       canEditActual: true,
       target: targetVal,
+      targetInfeasible,
       route: currentRoute,
       manualRoute: hasManualRoute
     };
@@ -2886,11 +2833,12 @@ function renderDashboardAllCharts() {
 
   const p30 = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];
   let avgP30Ret = 0;
-  if (p30 && p30.length > 0) {
-    avgP30Ret = p30.reduce((s, p) => s + (Number(p.ret) || 0), 0) / p30.length;
+  const p30WithData = (p30 || []).filter(p => p && p.ret !== null && p.ret !== undefined);
+  if (p30WithData.length > 0) {
+    avgP30Ret = p30WithData.reduce((s, p) => s + Number(p.ret), 0) / p30WithData.length;
   }
   if (avgRetEl) {
-    avgRetEl.textContent = avgP30Ret.toFixed(2).replace('.', ',') + '%';
+    avgRetEl.textContent = p30WithData.length > 0 ? (avgP30Ret.toFixed(2).replace('.', ',') + '%') : '—';
   }
 
   const cvTcPie = document.getElementById('chart-dashboard-tc-goals-pie');
@@ -2985,11 +2933,11 @@ function renderDashboardAllCharts() {
       });
       savingNeeds.push(Number(sSum.toFixed(1)));
       const inc = getMatrixIncomeNeed(i);
-      incomeNeeds.push(Number(inc.toFixed(1)));
+      incomeNeeds.push(inc === null ? null : Number(inc.toFixed(1)));
 
       const pRow = (p30 && p30[i]) || (p30 && p30.find(p => p.age === age));
-      const retVal = pRow ? (Number(pRow.ret) || 0) : 0;
-      expectedReturns.push(Number(retVal.toFixed(2)));
+      const retVal = (pRow && pRow.ret !== null && pRow.ret !== undefined) ? Number(pRow.ret) : null;
+      expectedReturns.push(retVal === null ? null : Number(retVal.toFixed(2)));
     }
 
     dashChartInstances.tcTimelineDual = new Chart(cvTcDual.getContext('2d'), {
@@ -3009,7 +2957,7 @@ function renderDashboardAllCharts() {
             yAxisID: 'y'
           },
           {
-            label: 'Thu nhập cần có',
+            label: 'Thu nhập cần đáp ứng khoản góp mục tiêu',
             data: incomeNeeds,
             borderColor: '#b71c1c',
             backgroundColor: '#b71c1c',
@@ -3328,6 +3276,13 @@ function renderSetupTables() {
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'name', this.innerText)">${escapeHtml(p.name)}</td>
         <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.returnRate || 0).toFixed(1)}%</td>
         <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.risk || 0).toFixed(1)}%</td>
+        <td>
+          <select class="select-inline-cell" aria-label="Loại đầu tư" onchange="updateInvestField(${idx}, 'investmentType', this.value)">
+            <option value="" ${FinancialMath.normalizeInvestmentType(p.investmentType) ? '' : 'selected'}>-- Chưa xác định --</option>
+            ${FinancialMath.INVESTMENT_TYPES.map(t => `<option value="${t}" ${FinancialMath.normalizeInvestmentType(p.investmentType) === t ? 'selected' : ''}>${FinancialMath.INVESTMENT_TYPE_LABELS[t]}</option>`).join('')}
+          </select>
+          ${p.investmentTypeAuto ? '<div class="text-muted" style="font-size:10px;" title="Hệ thống tự nhận diện từ tên sản phẩm. Hãy xác nhận hoặc chọn lại.">tự nhận diện</div>' : ''}
+        </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteInvestItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -3474,6 +3429,7 @@ window.updatePlanListItem = function(idx, val) {
 };
 
 function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
+  normalizeInvestProducts(AppState.investProducts);
   const validProducts = Array.isArray(AppState.investProducts) ? AppState.investProducts : [];
   (AppState.tcGoals || []).forEach(g => {
     if (g.type !== 'invest') return;
@@ -3486,6 +3442,7 @@ function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
 
     let avgRate = 0;
     let totalWeight = 0;
+    let hasOrphan = false;
     g.allocProducts.forEach(ap => {
       if (oldProdName && newProdName && ap.prodName === oldProdName) {
         ap.prodName = newProdName;
@@ -3498,14 +3455,14 @@ function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
         totalWeight += w;
         avgRate += (w / 100) * (Number(ap.returnRate) || 0);
       } else {
-        ap.prodName = "";
-        ap.weight = 0;
+        // Sản phẩm không còn trong danh mục: giữ tên và tỷ trọng để người dùng sửa, không tính vào lợi suất
         ap.returnRate = 0;
         ap.risk = 0;
+        if (ap.prodName && Number(ap.weight) > 0) hasOrphan = true;
       }
     });
 
-    if (totalWeight > 0 && avgRate > 0) {
+    if (!hasOrphan && totalWeight > 0 && avgRate > 0) {
       g.effectivePortfolioRate = parseFloat(avgRate.toFixed(2));
     } else {
       g.effectivePortfolioRate = 0;
@@ -3516,7 +3473,7 @@ function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
 
 window.addInvestRow = function() {
   if (!assertWritePermission("Thêm sản phẩm đầu tư")) return;
-  AppState.investProducts.push({ name: `Sản phẩm mới ${AppState.investProducts.length + 1}`, returnRate: 10.0, risk: 8.0 });
+  AppState.investProducts.push({ name: `Sản phẩm mới ${AppState.investProducts.length + 1}`, returnRate: 10.0, risk: 8.0, investmentType: '' });
   syncInvestProductsToGoals();
   renderSetupTables();
   renderTcGoalsFormTable();
@@ -3540,10 +3497,15 @@ window.updateInvestField = function(idx, field, val) {
   if (!assertWritePermission("Cập nhật sản phẩm đầu tư")) return;
   if (!AppState.investProducts[idx]) return;
   const oldName = field === 'name' ? AppState.investProducts[idx].name : null;
-  const cleanVal = field === 'name' ? (val || '').trim() : val;
+  let cleanVal = field === 'name' ? (val || '').trim() : val;
   if (field === 'name' && !cleanVal) {
     renderSetupTables();
     return;
+  }
+  if (field === 'investmentType') {
+    // Chỉ nhận bốn loại hợp lệ hoặc rỗng (chưa xác định); người dùng đã chọn thì không còn là "tự nhận diện"
+    cleanVal = FinancialMath.normalizeInvestmentType(cleanVal);
+    delete AppState.investProducts[idx].investmentTypeAuto;
   }
   AppState.investProducts[idx][field] = cleanVal;
   if (oldName && field === 'name' && cleanVal && AppState.yearEndBalanceSheet?.assets) {
@@ -5124,15 +5086,17 @@ function renderCareerTables() {
   const milestones = calculateAgeMilestones();
   const tb1 = document.getElementById('tbody-career-overview');
   if (tb1) {
+    const incomeCell = v => (v === null ? '<span title="Không khả thi: tỷ lệ tiết kiệm 0% không thể đáp ứng khoản góp mục tiêu">Không khả thi</span>' : v.toFixed(1));
     tb1.innerHTML = milestones.map((item, idx) => `
       <tr>
         <td class="text-center font-bold font-mono bg-neutral-gray">${item.age}</td>
-        <td class="text-right font-bold text-primary font-mono">${item.incomeNeed.toFixed(1)}</td>
-        <td class="text-right font-semibold font-mono">${item.stocks.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.bonds.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.ins.toFixed(1)}%</td>
-        <td class="text-right font-semibold font-mono">${item.cash.toFixed(1)}%</td>
-        <td class="text-right font-bold text-success font-mono">${item.returnNeed.toFixed(2)}%</td>
+        <td class="text-right font-bold text-primary font-mono">${incomeCell(item.incomeNeed)}</td>
+        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.stocks)}</td>
+        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.bonds)}</td>
+        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.ins)}</td>
+        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.cash)}</td>
+        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.unknown)}</td>
+        <td class="text-right font-bold text-success font-mono">${fmtPortfolioPct(item.returnNeed, 2)}</td>
         <td>
           <input type="text"
                  class="input-inline-cell font-semibold"
@@ -5144,6 +5108,19 @@ function renderCareerTables() {
         </td>
       </tr>
     `).join('');
+  }
+
+  const statusEl = document.getElementById('career-p1-status');
+  if (statusEl) {
+    const sim = simulatePersonalPortfolio(30);
+    const msgs = describePortfolioIssues(sim);
+    if (sim.status === 'insufficient') {
+      msgs.unshift('Chưa đủ dữ liệu để tính tỷ trọng và lợi suất danh mục: cần mục tiêu có số dư/khoản góp, chọn sản phẩm và tổng tỷ trọng đúng 100%.');
+    }
+    statusEl.innerHTML = msgs.length > 0
+      ? `<ul class="career-status-list">${msgs.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
+      : '';
+    statusEl.style.display = msgs.length > 0 ? 'block' : 'none';
   }
 
   AppState.careerDetailList = calculateCareerDetails();
@@ -5166,7 +5143,7 @@ function renderCareerTables() {
           </td>
 
           <td class="text-right font-bold text-primary font-mono">
-            ${hasTarget ? item.target.toFixed(1) : '<span class="dash-null">-</span>'}
+            ${hasTarget ? item.target.toFixed(1) : (item.targetInfeasible ? '<span title="Tỷ lệ tiết kiệm 0% không thể đáp ứng khoản góp mục tiêu">Không khả thi</span>' : '<span class="dash-null">-</span>')}
           </td>
 
           <td class="text-right font-bold cell-blue font-mono ${isDeficit ? 'text-danger' : 'text-success'}"
@@ -5178,7 +5155,7 @@ function renderCareerTables() {
 
           <td class="text-center">
             ${!hasTarget
-              ? `<span class="dash-null">-</span>`
+              ? (item.targetInfeasible ? `<span class="deficit-badge">⚠ Không khả thi</span>` : `<span class="dash-null">-</span>`)
               : (isDeficit
                   ? `<span class="deficit-badge">⚠ Cần thêm (${diffVal})</span>`
                   : `<span class="success-badge">✅ Vững tâm (Đạt)</span>`
@@ -5308,7 +5285,7 @@ function renderCareerChart() {
           tension: 0.28
         },
         {
-          label: "Thu nhập cần kiếm để đạt mục tiêu",
+          label: "Thu nhập cần đáp ứng khoản góp mục tiêu",
           data: targets,
           borderColor: themeTokens.isDark ? '#FBBF24' : '#D97706',
           backgroundColor: 'transparent',
@@ -5840,6 +5817,15 @@ function renderTcGoalsFormTable() {
                  oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
         </td>
+        <td>
+          ${g.type === 'debt'
+            ? `<span class="text-muted" style="padding:0 8px;">—</span>`
+            : `<select class="select-inline-cell" aria-label="Khi hoàn tất mục tiêu" title="Chi vốn: tiền được sử dụng khi mục tiêu hoàn tất, không còn nằm trong danh mục. Giữ đầu tư: vốn tiếp tục được đầu tư." onchange="onGoalFieldChange(${idx}, 'fundUsage', this.value)">
+                 <option value="spend" ${getGoalFundUsage(g) === 'spend' ? 'selected' : ''}>Chi vốn</option>
+                 <option value="hold" ${getGoalFundUsage(g) === 'hold' ? 'selected' : ''}>Giữ đầu tư</option>
+               </select>`
+          }
+        </td>
         <td class="text-center">
           ${isFixed
             ? `<span class="badge-fixed-goal" title="Mục tiêu cố định không được xóa"><i class="fa-solid fa-shield-halved"></i></span>`
@@ -6015,7 +6001,8 @@ function renderGoalProductSelectHtml(g, pIndex) {
 
   return `
     <select class="select-inline-cell" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
-      <option value="" ${(!curName || !isSelectedValid) ? 'selected' : ''}>-- Chưa chọn (0%) --</option>
+      <option value="" ${(!curName) ? 'selected' : ''}>-- Chưa chọn (0%) --</option>
+      ${(curName && !isSelectedValid) ? `<option value="${escapeHtml(curName)}" selected>⚠ ${escapeHtml(curName)} (không còn trong danh mục)</option>` : ''}
       ${validProducts.map(p => {
         const pName = p.name.trim();
         const isSel = (pName === curName);
@@ -6624,7 +6611,7 @@ function renderTcMatrixTable() {
     ${debts.map((g, i) => `<th style="min-width: 95px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
     ${invests.map((g, i) => `<th style="min-width: 95px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
     <th style="min-width: 90px;" class="col-highlight-gold">Tiết kiệm cần / tháng</th>
-    <th style="min-width: 95px;" class="col-highlight-orange">Thu nhập cần có / tháng</th>
+    <th style="min-width: 95px;" class="col-highlight-orange" title="Thu nhập cần đáp ứng khoản góp mục tiêu = Tiết kiệm cần có / Tỷ lệ tiết kiệm mục tiêu. Chưa gồm chi phí sinh hoạt và nghĩa vụ trả nợ.">Thu nhập cần đáp ứng khoản góp mục tiêu (triệu đồng/tháng)</th>
   `;
 
   const startY = AppState.currentYear;
@@ -6656,14 +6643,16 @@ function renderTcMatrixTable() {
       sSum = Number(AppState.matrixOverrides[y]) || 0;
     }
 
-    const incNeed = sSum > 0 ? (sSum / rate) : 0;
+    const incNeedRaw = computeIncomeNeedForGoalSavings(sSum, rate);
+    const incNeed = incNeedRaw === null ? 0 : incNeedRaw;
+    const incNeedText = incNeedRaw === null ? 'Không khả thi' : (incNeed > 0 ? incNeed.toFixed(1) : '-');
     rows += `
       <tr id="mtr-row-${y}">
         <td class="text-center font-bold font-mono bg-neutral-gray">${yr}</td>
         <td class="text-center font-bold font-mono bg-neutral-gray">${age}</td>
         ${cells}
         <td class="text-right val-gold cell-readonly" id="mtr-sav-${y}">${sSum > 0 ? sSum.toFixed(1) : '-'}</td>
-        <td class="text-right val-orange cell-readonly" id="mtr-inc-${y}">${incNeed > 0 ? incNeed.toFixed(1) : '-'}</td>
+        <td class="text-right val-orange cell-readonly" id="mtr-inc-${y}">${incNeedText}</td>
       </tr>
     `;
   }
@@ -6690,11 +6679,12 @@ window.onMatrixCellChange = function(td, rIdx) {
   AppState.matrixOverrides[rIdx] = rSum;
 
   const rate = (typeof getEffectiveSavingsRateRatio === 'function') ? getEffectiveSavingsRateRatio() : 0.40;
-  const inc = rSum > 0 ? (rSum / rate) : 0;
+  const incRaw = computeIncomeNeedForGoalSavings(rSum, rate);
+  const inc = incRaw === null ? 0 : incRaw;
   const savCell = document.getElementById(`mtr-sav-${rIdx}`);
   const incCell = document.getElementById(`mtr-inc-${rIdx}`);
   if (savCell) savCell.textContent = rSum > 0 ? rSum.toFixed(1) : '-';
-  if (incCell) incCell.textContent = inc > 0 ? inc.toFixed(1) : '-';
+  if (incCell) incCell.textContent = incRaw === null ? 'Không khả thi' : (inc > 0 ? inc.toFixed(1) : '-');
   updateMatrixChartData();
 
   renderCareerTables();
@@ -6738,7 +6728,7 @@ function renderTcMatrixChart() {
     data: {
       labels: labels,
       datasets: [
-        { label: "Thu nhập cần có / tháng", data: incData, borderColor: "#6258F5", backgroundColor: "rgba(98, 88, 245, 0.1)", borderWidth: 2.5, fill: true, tension: 0.25 },
+        { label: "Thu nhập cần đáp ứng khoản góp mục tiêu / tháng", data: incData, borderColor: "#6258F5", backgroundColor: "rgba(98, 88, 245, 0.1)", borderWidth: 2.5, fill: true, tension: 0.25 },
         { label: "Tiết kiệm cần có / tháng", data: savData, borderColor: "#31CDB1", backgroundColor: "rgba(49, 205, 177, 0.12)", borderWidth: 2.5, fill: true, tension: 0.25 }
       ]
     },
@@ -6982,7 +6972,7 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
     document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
     const sRateEl = document.getElementById('target-savings-rate-val');
-    if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
+    if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
     const vAgeEl = document.getElementById('vision-age-cell');
     if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
     const vDescEl = document.getElementById('vision-desc-cell');
@@ -7430,7 +7420,7 @@ window.executeConfirmedAction = async function() {
       document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = AppState.currentYear);
 
       const sRateEl = document.getElementById('target-savings-rate-val');
-      if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
+      if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
       const vAgeEl = document.getElementById('vision-age-cell');
       if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
       const vDescEl = document.getElementById('vision-desc-cell');
@@ -7866,13 +7856,14 @@ const CSV_TABLE_SCHEMAS = {
     fields: [
       { key: "name", label: "Sản phẩm tài chính", required: true },
       { key: "returnRate", label: "Lãi suất (%/năm)", required: true, type: "number" },
-      { key: "risk", label: "Rủi ro (%)", required: false, type: "number" }
+      { key: "risk", label: "Rủi ro (%)", required: false, type: "number" },
+      { key: "investmentType", label: "Loại đầu tư", required: false }
     ],
     sampleRows: [
-      ["Cổ phiếu tăng trưởng (VN30)", "15.0", "20.0"],
-      ["Chứng chỉ quỹ mở (DCDS / DCBC)", "12.0", "15.0"],
-      ["Trái phiếu doanh nghiệp uy tín (DCBF)", "9.5", "5.0"],
-      ["Gửi tiết kiệm ngân hàng kỳ hạn", "6.5", "1.0"]
+      ["Cổ phiếu tăng trưởng (VN30)", "15.0", "20.0", "Cổ phiếu"],
+      ["Chứng chỉ quỹ mở (DCDS / DCBC)", "12.0", "15.0", "Cổ phiếu"],
+      ["Trái phiếu doanh nghiệp uy tín (DCBF)", "9.5", "5.0", "Trái phiếu"],
+      ["Gửi tiết kiệm ngân hàng kỳ hạn", "6.5", "1.0", "Tiền gửi Ngân hàng"]
     ]
   },
   career_route: {
@@ -8500,11 +8491,13 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         const rsk = (typeof prod.risk === 'string')
           ? (parseFloat(prod.risk.replace(/[^0-9.-]/g, '')) || 0)
           : (Number(prod.risk) || 0);
-        return {
+        const itype = FinancialMath.normalizeInvestmentType(prod.investmentType);
+        return normalizeInvestProduct({
           name: String(prod.name).trim(),
           returnRate: ret,
-          risk: rsk
-        };
+          risk: rsk,
+          investmentType: itype
+        });
       }).filter(Boolean);
 
       if (mode === 'replace') {
@@ -8872,7 +8865,8 @@ window.exportCurrentTableToCsv = function() {
       rows.push([
         `"${String(p.name || '').replace(/"/g, '""')}"`,
         `"${Number(p.returnRate || 0).toFixed(1)}"`,
-        `"${Number(p.risk || 0).toFixed(1)}"`
+        `"${Number(p.risk || 0).toFixed(1)}"`,
+        `"${FinancialMath.INVESTMENT_TYPE_LABELS[FinancialMath.normalizeInvestmentType(p.investmentType)] || ''}"`
       ]);
     });
   } else if (tableKey === 'career_route') {
@@ -9316,12 +9310,17 @@ window.confirmCsvImport = function() {
       if (!name) return;
       const retRate = parseFloat(r.returnRate) || 0;
       const riskVal = parseFloat(r.risk) || 0;
+      const typeVal = parseInvestmentTypeInput(r.investmentType);
       const idx = AppState.investProducts.findIndex(p => p.name === name);
       if (idx >= 0 && mode === 'update') {
         AppState.investProducts[idx].returnRate = retRate;
         AppState.investProducts[idx].risk = riskVal;
+        if (typeVal) {
+          AppState.investProducts[idx].investmentType = typeVal;
+          delete AppState.investProducts[idx].investmentTypeAuto;
+        }
       } else if (idx === -1) {
-        AppState.investProducts.push({ name: name, returnRate: retRate, risk: riskVal });
+        AppState.investProducts.push(normalizeInvestProduct({ name: name, returnRate: retRate, risk: riskVal, investmentType: typeVal }));
       }
     });
     renderSetupTables();
@@ -9396,29 +9395,10 @@ window.hasAppStateData = function() {
   return false;
 };
 
-let autoCloudSyncTimer = null;
-function triggerAutoCloudSync() {
-  if (window.isReadOnlyStudentView) return;
-  if (!UserSession.currentUser || !window.CloudDB) return;
-  if (autoCloudSyncTimer) clearTimeout(autoCloudSyncTimer);
-  autoCloudSyncTimer = setTimeout(async () => {
-    try {
-      const userDocId = UserSession.currentUser.docId;
-      const res = await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
-      if (res && res.success) {
-        window.hasUnsavedChanges = false;
-        window.hasSavedInSession = true;
-        updateCloudStatus('ready', 'Đã tự động đồng bộ lúc ' + new Date().toLocaleTimeString('vi-VN'));
-      }
-    } catch (e) {}
-  }, 1500);
-}
-
 window.markUnsavedChanges = function() {
   window.hasUnsavedChanges = true;
   window.allowExitWithoutSave = false;
-  updateCloudStatus('ready', 'Đang chờ đồng bộ...');
-  triggerAutoCloudSync();
+  updateCloudStatus('ready', 'Có thay đổi chưa lưu — bấm Lưu để ghi lên Cloud');
 };
 
 window.openExitSaveModal = function(onProceedCallback = null) {
@@ -9617,7 +9597,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const sRateEl = document.getElementById('target-savings-rate-val');
-  if (sRateEl) sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
+  if (sRateEl) sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
   const vAgeEl = document.getElementById('vision-age-cell');
   if (vAgeEl) vAgeEl.innerText = AppState.visionAge || '';
   const vDescEl = document.getElementById('vision-desc-cell');
@@ -9730,7 +9710,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sRateEl) {
     const handleSavingsRateUpdate = () => {
       const parsed = parseFloat(sRateEl.innerText.replace(/[^0-9.-]/g, ''));
-      if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
         AppState.targetSavingsRate = parsed;
       }
       renderTcMatrixTable();
@@ -9739,7 +9719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     sRateEl.addEventListener('input', handleSavingsRateUpdate);
     sRateEl.addEventListener('blur', () => {
-      sRateEl.innerText = `${AppState.targetSavingsRate || 35}%`;
+      sRateEl.innerText = `${getTargetSavingsRatePct()}%`;
       handleSavingsRateUpdate();
     });
   }
@@ -9809,8 +9789,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.openPortfolio30YrModal = openPortfolio30YrModal;
   window.closePortfolio30YrModal = closePortfolio30YrModal;
   window.renderPortfolio30YrTable = renderPortfolio30YrTable;
-  window.renderPortfolioT2Table = renderPortfolioT2Table;
-  window.renderPortfolioT1Table = renderPortfolioT1Table;
   window.switchPortfolioModalTab = switchPortfolioModalTab;
   window.getPortfolio30YrData = getPortfolio30YrData;
 
