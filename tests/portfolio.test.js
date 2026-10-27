@@ -323,7 +323,6 @@ test("I. Dữ liệu cũ chưa có investmentType: giữ nguyên, tự nhận di
 test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script.js", () => {
   const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
   assert.ok(html.includes("Loại đầu tư</th>"));
-  assert.ok(html.includes('id="career-p1-status"'));
   assert.ok(html.includes("Lợi suất kỳ vọng danh mục/năm"));
   assert.ok(src.includes("FinancialMath.INVESTMENT_TYPE_LABELS[t]"));
   const { FinancialMath } = makeEnv({});

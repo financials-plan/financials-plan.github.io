@@ -5111,19 +5111,6 @@ function renderCareerTables() {
     `).join('');
   }
 
-  const statusEl = document.getElementById('career-p1-status');
-  if (statusEl) {
-    const sim = simulatePersonalPortfolio(30);
-    const msgs = describePortfolioIssues(sim);
-    if (sim.status === 'insufficient') {
-      msgs.unshift('Chưa đủ dữ liệu để tính tỷ trọng và lợi suất danh mục: cần mục tiêu có số dư/khoản góp, chọn sản phẩm và tổng tỷ trọng đúng 100%.');
-    }
-    statusEl.innerHTML = msgs.length > 0
-      ? `<ul class="career-status-list">${msgs.map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
-      : '';
-    statusEl.style.display = msgs.length > 0 ? 'block' : 'none';
-  }
-
   AppState.careerDetailList = calculateCareerDetails();
   const tb2 = document.getElementById('tbody-career-detail');
   if (tb2) {
