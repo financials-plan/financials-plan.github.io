@@ -11695,7 +11695,7 @@ window.exportGroupMembersCsv = function() {
       pct = '100%';
       m3 = 'Hoàn thành';
       m4 = 'Hoàn thành';
-      sRate = (studentPlan.targetSavingsRate || 35) + '.0%';
+      sRate = (studentPlan.targetSavingsRate !== undefined && studentPlan.targetSavingsRate !== null && studentPlan.targetSavingsRate !== '') ? Number(studentPlan.targetSavingsRate).toFixed(1) + '%' : '—';
     } else if (m.status !== 'approved') {
       m1 = 'Chưa bắt đầu';
       m2 = 'Chưa bắt đầu';
@@ -12453,7 +12453,7 @@ window.exportAdminComprehensiveCsv = async function() {
         pct = '100%';
         m3 = 'Hoàn thành';
         m4 = 'Hoàn thành';
-        sRate = (studentPlan.targetSavingsRate || 35) + '.0%';
+        sRate = (studentPlan.targetSavingsRate !== undefined && studentPlan.targetSavingsRate !== null && studentPlan.targetSavingsRate !== '') ? Number(studentPlan.targetSavingsRate).toFixed(1) + '%' : '—';
       } else if (m.status !== 'approved') {
         m1 = 'Chưa bắt đầu';
         m2 = 'Chưa bắt đầu';
