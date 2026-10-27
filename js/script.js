@@ -1145,8 +1145,24 @@ const FinancialMath = {
     return (Math.pow(1 + R, years) - 1) / R;
   },
 
-  // Test C, Test D, Test M: khoản góp hằng tháng cho một mức lợi suất hiệu dụng năm
-  // A = max(0, (S - B0 (1+R)^Y) / (12 F(Y)))
+  // Cách tính khoản góp hằng tháng của mục tiêu:
+  //  'excel_monthly' (mặc định, khớp bảng tính gốc): lãi suất mục tiêu = bình quân gia quyền lợi suất các sản phẩm,
+  //     lãi tháng = lãi năm / 12, góp cuối tháng: A = (S - B0 (1+r)^N) * r / ((1+r)^N - 1).
+  //  'annual': góp dồn 12A cuối năm, lãi hiệu dụng năm (khớp tuyệt đối với mô phỏng số dư theo năm).
+  PMT_CONVENTION: 'excel_monthly',
+
+  // Niên kim góp cuối tháng với lãi suất danh nghĩa năm Rpct (r = Rpct/12), N tháng
+  monthlyPMT: function(F, B0, Rpct, n) {
+    const r = this.safeNumber(Rpct, 0) / 1200;
+    if (F <= 0 || n <= 0 || r <= -1) return 0;
+    const deficit = Math.max(0, F - B0 * Math.pow(1 + r, n));
+    if (deficit <= 0) return 0;
+    if (Math.abs(r) < 1e-12) return deficit / n;
+    const pmt = deficit * r / (Math.pow(1 + r, n) - 1);
+    return (isFinite(pmt) && pmt > 0) ? pmt : 0;
+  },
+
+  // Test C, Test D, Test M: khoản góp hằng tháng cho một mức lợi suất năm
   calculateInvestmentPMT: function(targetFV, initialBalance, annualReturnPct, totalPeriods) {
     const F = Math.max(0, this.safeNumber(targetFV, 0));
     const B0 = Math.max(0, this.safeNumber(initialBalance, 0));
@@ -1154,6 +1170,9 @@ const FinancialMath = {
     const R = this.safeNumber(annualReturnPct, 0) / 100;
 
     if (F <= 0 || n <= 0 || R <= -1) return 0;
+    if (this.PMT_CONVENTION === 'excel_monthly') {
+      return this.monthlyPMT(F, B0, this.safeNumber(annualReturnPct, 0), n);
+    }
     const years = n / 12;
 
     // Test D: Nếu số dư hiện tại sau tăng trưởng đủ đạt hoặc vượt mục tiêu, PMT = 0 (không âm)
@@ -1181,6 +1200,16 @@ const FinancialMath = {
     }
     if (n <= 0) {
       return { status: 'invalid_period', pmt: null, totalWeight };
+    }
+    if (this.PMT_CONVENTION === 'excel_monthly') {
+      let rate = 0;
+      let b0 = 0;
+      for (const p of products) {
+        rate += Math.max(0, this.safeNumber(p && p.weight, 0)) / 100 * this.safeNumber(p && p.returnRatePct, 0);
+        b0 += Math.max(0, this.safeNumber(p && p.initialBalance, 0));
+      }
+      if (rate <= -100) return { status: 'invalid_rate', pmt: null, totalWeight };
+      return { status: 'ok', pmt: this.monthlyPMT(F, b0, rate, n), totalWeight, weightedRatePct: rate };
     }
     const years = n / 12;
     let initialFV = 0;
@@ -1387,8 +1416,8 @@ const FinancialMath = {
     const matched = [];
     // Mã quỹ/sản phẩm được xếp nhóm theo báo cáo Phần 1: DCBC, DCDS = quỹ cổ phiếu; DCBF = quỹ trái phiếu; Finhay = tiền gửi
     if (/\b(co phieu|etf|stock|equity|dcbc|dcds)\b/.test(name)) matched.push('stocks');
-    if (/\b(trai phieu|bond|dcbf)\b/.test(name)) matched.push('bonds');
-    if (/\b(bao hiem|bhnt|insurance)\b/.test(name)) matched.push('insurance');
+    if (/\b(trai phieu|bond|dcbf|tp)\b/.test(name)) matched.push('bonds');
+    if (/\b(bao hiem|bhnt|bh|insurance)\b/.test(name)) matched.push('insurance');
     if (/\b(tien gui|tiet kiem|ngan hang|deposit|finhay)\b/.test(name)) matched.push('bank_deposit');
     return matched.length === 1 ? matched[0] : '';
   },
