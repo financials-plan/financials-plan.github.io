@@ -535,3 +535,97 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(rulesContent.includes("allow read, write: if true;"));
   assert.ok(!rulesContent.includes("//") && !rulesContent.includes("/*"));
 });
+
+test("10. Task A — Enrolled Classes & Member Identity Verification", () => {
+  const { normalizeUsername } = require("../backend/security.js");
+  const scriptContent = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
+
+  // 1. Verify normalizeUserName & normalizeUsername definition in script.js
+  assert.ok(scriptContent.includes("function normalizeUserName(rawName)"), "normalizeUserName defined in script.js");
+  assert.ok(scriptContent.includes("window.normalizeUsername = normalizeUserName"), "normalizeUsername alias exposed");
+  assert.ok(scriptContent.includes("window.normalizeUserName = normalizeUserName"), "normalizeUserName alias exposed");
+  assert.ok(!scriptContent.includes("normalizeUsername(m.username)"), "All calls in script.js unified to normalizeUserName");
+
+  // 2. Case-insensitivity and accents normalization
+  const u1 = normalizeUsername("  Nguyễn Văn A  ");
+  const u2 = normalizeUsername("nguyen_van_a");
+  const u3 = normalizeUsername("NGUYEN.VAN.A");
+  assert.strictEqual(u1, "nguyen_van_a");
+  assert.strictEqual(u2, "nguyen_van_a");
+  assert.strictEqual(u3, "nguyen.van.a");
+
+  // 3. Member schema resilience: matching against username, normalizedUsername, studentId, id
+  const members = [
+    { username: "hoc_vien_1", status: "approved" },
+    { normalizedUsername: "hoc_vien_2", status: "pending" },
+    { studentId: "hoc_vien_3", status: "rejected" },
+    { id: "hoc_vien_4", status: "approved" }
+  ];
+
+  const getMemberUser = (m) => m?.username || m?.normalizedUsername || m?.studentId || m?.id || "";
+  assert.strictEqual(getMemberUser(members[0]), "hoc_vien_1");
+  assert.strictEqual(getMemberUser(members[1]), "hoc_vien_2");
+  assert.strictEqual(getMemberUser(members[2]), "hoc_vien_3");
+  assert.strictEqual(getMemberUser(members[3]), "hoc_vien_4");
+
+  // 4. Verify post-join error boundary & try/catch separation in script.js
+  assert.ok(scriptContent.includes("Lỗi khi render danh sách lớp học viên"), "Render failure logged without falsifying join success");
+  assert.ok(scriptContent.includes("Không thể tải dữ liệu nhóm"), "Failure to load classes displays explicit error, not empty state");
+
+  // 5. Verify cache-busting in main.html
+  const mainHtml = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(mainHtml.includes("script.js?v=3.3.0"), "main.html uses updated cache-busting version v=3.3.0");
+});
+
+test("11. Task B — Dashboard Variance Cumulative Calculation Verification", () => {
+  const scriptContent = fs.readFileSync(path.join(__dirname, "../script.js"), "utf8");
+
+  // Verify chartDashVariance formula in script.js: plannedExpense - actualExpense
+  assert.ok(scriptContent.includes("const monthlyVariance = Number(planExp || 0) - Number(act || 0);"), "Calculates planned minus actual");
+  assert.ok(scriptContent.includes("runningDiff += monthlyVariance;"), "Accumulates monthlyVariance correctly");
+
+  function calculateVarianceLine(planMonthly, actualsMonthly) {
+    const planExp = Number(planMonthly) || 0;
+    const cumDiff = [];
+    let runningDiff = 0;
+    for (let m = 0; m < 12; m++) {
+      const act = Number(actualsMonthly[m]) || 0;
+      const monthlyVariance = planExp - act;
+      runningDiff += monthlyVariance;
+      cumDiff.push(runningDiff);
+    }
+    return cumDiff;
+  }
+
+  // Ca A: Thực tế thấp hơn kế hoạch ở tất cả các tháng (Kế hoạch = 50, Thực tế = 20)
+  const caA = calculateVarianceLine(50, Array(12).fill(20));
+  assert.deepStrictEqual(caA, [30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360]);
+  for (let i = 1; i < caA.length; i++) {
+    assert.ok(caA[i] > caA[i - 1], `Ca A: cumulative variance strictly increases at month ${i + 1}`);
+  }
+
+  // Ca B: Thực tế bằng kế hoạch (Kế hoạch = 50, Thực tế = 50)
+  const caB = calculateVarianceLine(50, Array(12).fill(50));
+  assert.deepStrictEqual(caB, Array(12).fill(0));
+
+  // Ca C: Thực tế cao hơn kế hoạch (Kế hoạch = 50, Thực tế = 60)
+  const caC = calculateVarianceLine(50, Array(12).fill(60));
+  assert.deepStrictEqual(caC, [-10, -20, -30, -40, -50, -60, -70, -80, -90, -100, -110, -120]);
+  for (let i = 1; i < caC.length; i++) {
+    assert.ok(caC[i] < caC[i - 1], `Ca C: cumulative variance strictly decreases at month ${i + 1}`);
+  }
+
+  // Ca D: Chênh lệch thay đổi giữa các tháng
+  const actualsD = [20, 20, 20, 70, 50, 40, 60, 50, 30, 50, 80, 20];
+  const caD = calculateVarianceLine(50, actualsD);
+  assert.deepStrictEqual(caD, [30, 60, 90, 70, 70, 80, 70, 70, 90, 90, 60, 90]);
+
+  // Ca E: Dữ liệu rỗng, chuỗi số, undefined và null
+  const actualsE = ["20", null, undefined, "60", "", 0, "40.5", NaN, "abc", 50, "10", 30];
+  const caE = calculateVarianceLine("50", actualsE);
+  assert.strictEqual(caE.length, 12);
+  caE.forEach((val, idx) => {
+    assert.ok(!isNaN(val), `Month ${idx + 1} must not be NaN`);
+    assert.strictEqual(typeof val, "number");
+  });
+});

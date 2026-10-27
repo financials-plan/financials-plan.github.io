@@ -110,6 +110,11 @@ function normalizeUserName(rawName) {
     .replace(/^[_.]+|[_.]+$/g, '');
 }
 
+if (typeof window !== 'undefined') {
+  window.normalizeUserName = normalizeUserName;
+  window.normalizeUsername = normalizeUserName;
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -322,6 +327,7 @@ const UserSession = {
     this.currentUser = null;
     try {
       localStorage.removeItem(this.STORAGE_KEY);
+      localStorage.removeItem('FIN_APP_ACTIVE_STUDENT_CLASS');
     } catch (e) {}
     this.updateUI();
   },
@@ -2896,11 +2902,8 @@ function renderDashboardAllCharts() {
     for (let m = 1; m <= 12; m++) {
       const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
       actuals.push(act);
-      
-      // Tính chênh lệch và đổi dấu (nhân -1) để đường lũy kế đảo chiều hiển thị hướng lên trên
-      const diff = act - planExp;
-      runningDiff += (-diff); 
-      
+      const monthlyVariance = Number(planExp || 0) - Number(act || 0);
+      runningDiff += monthlyVariance;
       cumDiff.push(runningDiff);
     }
     dashChartInstances.variance = new Chart(cv5.getContext('2d'), {
@@ -9945,9 +9948,17 @@ window.submitStudentJoinClass = async function() {
       }
 
       if (input) input.value = '';
-      await renderStudentEnrolledClasses();
+      try {
+        await renderStudentEnrolledClasses();
+      } catch (renderErr) {
+        console.error("Lỗi khi render danh sách lớp học viên:", renderErr);
+      }
       if (typeof window.updateStudentClassStatusUI === 'function') {
-        window.updateStudentClassStatusUI();
+        try {
+          await window.updateStudentClassStatusUI();
+        } catch (uiErr) {
+          console.error("Lỗi khi cập nhật trạng thái lớp học:", uiErr);
+        }
       }
     } else {
       showToast(res.error || "Không thể tham gia nhóm.", "error");
@@ -9976,92 +9987,123 @@ window.updateStudentClassStatusUI = async function() {
   const btn = document.getElementById('btn-floating-switch-class');
   if (!btn || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
   const curUser = UserSession.currentUser;
-  let username = curUser ? curUser.normalizedUsername : '';
+  let username = curUser ? (curUser.normalizedUsername || curUser.username) : '';
   if (!username) {
     username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
   }
-  if (!username) {
+  const normUser = normalizeUserName(username);
+  if (!normUser) {
     btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
     btn.title = 'Cài đặt lớp học';
     return;
   }
   try {
     const allClasses = await window.CloudDB.getClasses();
-    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => normalizeUsername(m.username) === normalizeUsername(username)));
+    if (!Array.isArray(allClasses)) return;
+    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => {
+      const mUser = m?.username || m?.normalizedUsername || m?.studentId || m?.id || '';
+      return normalizeUserName(mUser) === normUser;
+    }));
     if (enrolled.length === 0) {
       btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
       btn.title = 'Cài đặt lớp học';
       return;
     }
     const approved = enrolled.find(c => {
-      const m = c.members.find(x => normalizeUsername(x.username) === normalizeUsername(username));
+      const m = c.members.find(x => {
+        const mUser = x?.username || x?.normalizedUsername || x?.studentId || x?.id || '';
+        return normalizeUserName(mUser) === normUser;
+      });
       return m && m.status === 'approved';
     });
     if (approved) {
       localStorage.setItem('FIN_APP_ACTIVE_STUDENT_CLASS', JSON.stringify({ id: approved.id, code: approved.code, name: approved.name }));
-      btn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> <span>${approved.name} (${approved.code})</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> <span>${escapeHtml(approved.name)} (${escapeHtml(approved.code)})</span>`;
       btn.title = `Đã vào lớp: ${approved.name} (${approved.code})`;
       return;
     }
     const pending = enrolled.find(c => {
-      const m = c.members.find(x => normalizeUsername(x.username) === normalizeUsername(username));
+      const m = c.members.find(x => {
+        const mUser = x?.username || x?.normalizedUsername || x?.studentId || x?.id || '';
+        return normalizeUserName(mUser) === normUser;
+      });
       return m && m.status === 'pending';
     });
     if (pending) {
-      btn.innerHTML = `<i class="fa-solid fa-clock text-amber"></i> <span>Chờ duyệt: ${pending.code}</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-clock text-amber"></i> <span>Chờ duyệt: ${escapeHtml(pending.code)}</span>`;
       btn.title = `Đang chờ người phụ trách duyệt vào nhóm: ${pending.name} (${pending.code})`;
       return;
     }
-  } catch (e) {}
+    btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
+    btn.title = 'Cài đặt lớp học';
+  } catch (e) {
+    console.error("Lỗi cập nhật UI trạng thái lớp:", e);
+  }
 };
 
 async function renderStudentEnrolledClasses() {
   const tbody = document.getElementById('student-enrolled-classes-tbody');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
   const curUser = UserSession.currentUser;
-  let username = curUser ? curUser.normalizedUsername : '';
+  let username = curUser ? (curUser.normalizedUsername || curUser.username) : '';
   if (!username) {
     username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
   }
-  if (!username) {
+  const normUser = normalizeUserName(username);
+  if (!normUser) {
     tbody.innerHTML = '<tr><td colspan="3" class="empty-cell" style="padding: 16px 12px; color: #b45309;"><i class="fa-solid fa-circle-info"></i> Bạn chưa đăng nhập. Vui lòng <a href="javascript:void(0)" onclick="goToAuthPage(\'login\')" style="text-decoration: underline; font-weight: 600; color: inherit;">đăng nhập</a> để xem các nhóm của bạn.</td></tr>';
     if (typeof window.updateStudentClassStatusUI === 'function') {
-      window.updateStudentClassStatusUI();
+      try { await window.updateStudentClassStatusUI(); } catch (e) {}
     }
     return;
   }
-  const allClasses = await window.CloudDB.getClasses();
-  const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => normalizeUsername(m.username) === normalizeUsername(username)));
 
-  if (enrolled.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>';
-    if (typeof window.updateStudentClassStatusUI === 'function') {
-      window.updateStudentClassStatusUI();
+  try {
+    const allClasses = await window.CloudDB.getClasses();
+    if (!Array.isArray(allClasses)) {
+      throw new Error("Dữ liệu nhóm không hợp lệ từ máy chủ");
     }
-    return;
-  }
-  tbody.innerHTML = enrolled.map(c => {
-    const member = c.members.find(m => normalizeUsername(m.username) === normalizeUsername(username));
-    const isApproved = member?.status === 'approved';
-    const isRejected = member?.status === 'rejected';
-    let badgeHtml = '';
-    if (isApproved) {
-      badgeHtml = '<span class="badge-prog badge-prog-done" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check text-emerald"></i> Đã vào lớp</span>';
-    } else if (isRejected) {
-      badgeHtml = '<span class="badge-prog" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-xmark"></i> Từ chối</span>';
+    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => {
+      const mUser = m?.username || m?.normalizedUsername || m?.studentId || m?.id || '';
+      return normalizeUserName(mUser) === normUser;
+    }));
+
+    if (enrolled.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>';
     } else {
-      badgeHtml = '<span class="badge-prog badge-prog-doing" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock text-amber"></i> Chờ duyệt</span>';
+      tbody.innerHTML = enrolled.map(c => {
+        const member = c.members.find(m => {
+          const mUser = m?.username || m?.normalizedUsername || m?.studentId || m?.id || '';
+          return normalizeUserName(mUser) === normUser;
+        });
+        const isApproved = member?.status === 'approved';
+        const isRejected = member?.status === 'rejected';
+        let badgeHtml = '';
+        if (isApproved) {
+          badgeHtml = '<span class="badge-prog badge-prog-done" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check text-emerald"></i> Đã vào lớp</span>';
+        } else if (isRejected) {
+          badgeHtml = '<span class="badge-prog" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-xmark"></i> Từ chối</span>';
+        } else {
+          badgeHtml = '<span class="badge-prog badge-prog-doing" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock text-amber"></i> Chờ duyệt</span>';
+        }
+        return `
+          <tr>
+            <td><strong>${escapeHtml(c.name || '')}</strong></td>
+            <td><code>${escapeHtml(c.code || '')}</code></td>
+            <td>${badgeHtml}</td>
+          </tr>
+        `;
+      }).join('');
     }
-    return `
-      <tr>
-        <td><strong>${c.name}</strong></td>
-        <td><code>${c.code}</code></td>
-        <td>${badgeHtml}</td>
-      </tr>
-    `;
-  }).join('');
+  } catch (err) {
+    console.error("Lỗi tải danh sách nhóm đã tham gia:", err);
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-cell" style="padding: 16px 12px; color: #ef4444;"><i class="fa-solid fa-circle-exclamation text-danger"></i> Không thể tải dữ liệu nhóm: ${escapeHtml(err.message || 'Lỗi kết nối máy chủ')}. <a href="javascript:void(0)" onclick="renderStudentEnrolledClasses()" style="text-decoration: underline; font-weight: 600; color: inherit; margin-left: 6px;"><i class="fa-solid fa-arrow-rotate-right"></i> Thử lại</a></td></tr>`;
+  }
+
   if (typeof window.updateStudentClassStatusUI === 'function') {
-    window.updateStudentClassStatusUI();
+    try {
+      await window.updateStudentClassStatusUI();
+    } catch (err) {}
   }
 }
 
@@ -10107,6 +10149,10 @@ function initCloudClassesRealtimeSync() {
 
   if (window.CloudDB && typeof window.CloudDB.subscribeToClasses === 'function') {
     window.CloudDB.subscribeToClasses(() => {});
+  }
+
+  if (typeof window.updateStudentClassStatusUI === 'function') {
+    try { window.updateStudentClassStatusUI(); } catch (err) {}
   }
 }
 

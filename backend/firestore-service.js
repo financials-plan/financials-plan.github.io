@@ -446,14 +446,16 @@ function normalizeMaxMembers(raw, fallback = 40) {
 function mergeMembersList(listA = [], listB = []) {
   const map = new Map();
   (listA || []).forEach(m => {
-    if (m && m.username) {
-      const u = normalizeUsername(m.username);
+    if (m && (m.username || m.normalizedUsername || m.studentId || m.id)) {
+      const rawUser = m.username || m.normalizedUsername || m.studentId || m.id;
+      const u = normalizeUsername(rawUser);
       map.set(u, { ...m, username: u });
     }
   });
   (listB || []).forEach(m => {
-    if (m && m.username) {
-      const u = normalizeUsername(m.username);
+    if (m && (m.username || m.normalizedUsername || m.studentId || m.id)) {
+      const rawUser = m.username || m.normalizedUsername || m.studentId || m.id;
+      const u = normalizeUsername(rawUser);
       const existing = map.get(u);
       if (!existing) {
         map.set(u, { ...m, username: u });
@@ -2452,7 +2454,10 @@ const FirestoreService = {
         return { success: false, error: "Nhóm này hiện đã khóa, không nhận thêm thành viên." };
       }
       const members = Array.isArray(cls.members) ? cls.members.slice() : [];
-      const existing = members.find(m => normalizeUsername(m.username) === cleanUser);
+      const existing = members.find(m => {
+        const u = m && (m.username || m.normalizedUsername || m.studentId || m.id);
+        return normalizeUsername(u) === cleanUser;
+      });
       if (existing) {
         if (existing.status === "pending") {
           return {
@@ -2548,7 +2553,10 @@ const FirestoreService = {
     let memberStatus = null;
     const res = await mutateClassInCloud(classId, (cls) => {
       if (!Array.isArray(cls.members)) cls.members = [];
-      const member = cls.members.find(m => normalizeUsername(m.username) === cleanUser);
+      const member = cls.members.find(m => {
+        const u = m && (m.username || m.normalizedUsername || m.studentId || m.id);
+        return normalizeUsername(u) === cleanUser;
+      });
       if (!member) {
         return { success: false, error: "Không tìm thấy học viên trong lớp." };
       }
@@ -2561,7 +2569,10 @@ const FirestoreService = {
         member.rejectedAt = new Date().toISOString();
         memberStatus = "rejected";
       } else if (action === "remove") {
-        cls.members = cls.members.filter(m => normalizeUsername(m.username) !== cleanUser);
+        cls.members = cls.members.filter(m => {
+          const u = m && (m.username || m.normalizedUsername || m.studentId || m.id);
+          return normalizeUsername(u) !== cleanUser;
+        });
         memberStatus = "removed";
       }
       return {
