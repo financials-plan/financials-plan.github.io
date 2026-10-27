@@ -1719,8 +1719,10 @@ function calculateRetirementGoal(goal) {
   const retireRate = Number(goal.retireReturnRate) > 0 ? Number(goal.retireReturnRate) : RETIREMENT_PHASE_DEFAULT_RETURN_PCT;
   const infl = INFLATION_ENABLED ? (Number(goal.inflation) || 0) : 0;
 
+  // Chỉ tự tính vốn hưu trí khi người dùng đã nhập các thông số hưu trí ở thẻ (retireModel = 2);
+  // dữ liệu cũ giữ nguyên "Mục tiêu tiết kiệm cần đạt" đã nhập, không bị ghi đè.
   let targetFV = 0;
-  if (years > 0 && (monthlyCost > 0 || leftover > 0)) {
+  if (goal.retireModel === 2 && years > 0 && (monthlyCost > 0 || leftover > 0)) {
     const firstYearCost = inflateToGoalDate(monthlyCost * 12, goal);
     const capital = FinancialMath.calculateRetirementCapitalNeeded(firstYearCost, retireRate, infl, years);
     const leftoverPV = leftover / Math.pow(1 + retireRate / 100, years);
@@ -1748,6 +1750,7 @@ function calculateRetirementGoal(goal) {
 // Người dùng sửa trực tiếp "Mục tiêu tiết kiệm cần đạt" của mục tiêu cố định
 function applyFixedGoalValEdit(g, val) {
   const v = Number(val) || 0;
+  if (isRetirementFixedGoal(g) && v > 0) g.retireModel = 0;
   const periods = Number(g.yearsRetire || g.collegePeriods) || 0;
   g._manualValOverride = (v > 0 && periods === 0);
 }
@@ -6545,14 +6548,17 @@ window.updateGoalCardField = function(goalId, field, rawText) {
       g.val = safeVal;
       applyFixedGoalValEdit(g, safeVal);
     } else if (field === 'collegePeriods' || field === 'yearsRetire') {
+      if (isRetirementFixedGoal(g) && safeVal > 0) g.retireModel = 2;
       g.collegePeriods = safeVal;
       g.yearsRetire = safeVal;
       if (safeVal > 0) g._manualValOverride = false;
     } else if (field === 'monthlyTuition' || field === 'monthlyRetire') {
+      if (isRetirementFixedGoal(g) && safeVal > 0) g.retireModel = 2;
       g.monthlyTuition = safeVal;
       g.monthlyRetire = safeVal;
       if (safeVal > 0) g._manualValOverride = false;
     } else if (field === 'supportFund' || field === 'deathFund') {
+      if (isRetirementFixedGoal(g) && safeVal > 0) g.retireModel = 2;
       g.supportFund = safeVal;
       g.deathFund = safeVal;
       if (safeVal > 0) g._manualValOverride = false;

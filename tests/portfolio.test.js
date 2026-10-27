@@ -343,7 +343,7 @@ test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script
 
 test("K. Hưu trí: số kỳ theo NĂM, chưa tính lạm phát, lợi suất giai đoạn nghỉ hưu thận trọng", () => {
   const ret = goal("Hưu trí", {
-    id: "fixed_retirement", fixedType: "retirement", isFixed: true, layoutV: 2,
+    id: "fixed_retirement", fixedType: "retirement", isFixed: true, layoutV: 2, retireModel: 2,
     start: 2030, end: 2040, yearsRetire: 30, monthlyRetire: 10, inflation: 4, retireReturnRate: 6.5, deathFund: 0,
     allocProducts: [
       { prodName: "Tiền gửi C", weight: 100, _explicitSelected: true },
@@ -396,4 +396,12 @@ test("M. Di chuyển dữ liệu cũ: khối Hưu trí chứa quỹ dự phòng 
   assert.strictEqual(legacyRet.layoutV, 2);
   env.migrateLegacyRetirementReserve(goals);
   assert.strictEqual(goals.length, 2, "chạy lại không nhân đôi");
+});
+
+test("N. Hưu trí dữ liệu cũ: không tự ghi đè mục tiêu đã nhập", () => {
+  const ret = goal("Hưu trí", { id: "fixed_retirement", fixedType: "retirement", isFixed: true, layoutV: 2, val: 500, start: 2031, end: 2040, yearsRetire: 30, monthlyRetire: 10 });
+  const env = makeEnv(baseState({ tcGoals: [ret] }));
+  env.calculateMonthlyNeed(ret);
+  assert.strictEqual(ret.val, 500);
+  assert.strictEqual(ret.calculatedTargetFV, 500);
 });
