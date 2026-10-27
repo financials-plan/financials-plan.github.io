@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FirestoreDataSchema",
+  "description": "Lược đồ định dạng dữ liệu cho Cloud Firestore trong ứng dụng Bảng Quản Lý & Hoạch Định Tài Chính",
+  "type": "object",
+  "definitions": {
+    "keywordsData": {
+      "type": "object",
+      "properties": {
+        "expenses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Danh mục từ khóa chi phí thiết lập"
+        },
+        "incomeList": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Danh mục từ khóa nguồn thu nhập"
+        },
+        "planList": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Danh mục kế hoạch phát triển bản thân"
+        },
+        "investProducts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Danh mục sản phẩm tích lũy và đầu tư"
+        }
+      },
+      "required": ["expenses", "incomeList", "planList", "investProducts"]
+    },
+    "classEntity": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "instructor": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "closed", "archived"] },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "username": { "type": "string" },
+              "name": { "type": "string" },
+              "role": { "type": "string" },
+              "status": { "type": "string", "enum": ["active", "pending", "rejected"] },
+              "joinedAt": { "type": "string" }
+            },
+            "required": ["id", "name", "role", "status"]
+          }
+        }
+      },
+      "required": ["name", "status"]
+    },
+    "financialAccount": {
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "state": {
+          "type": "object",
+          "description": "Toàn bộ trạng thái tài chính cá nhân gồm các danh mục, bảng kế hoạch và thông số cấu hình"
+        }
+      },
+      "required": ["updatedAt"]
+    }
+  }
+}

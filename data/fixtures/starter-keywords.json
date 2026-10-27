@@ -1,0 +1,33 @@
+{
+  "$schema": "../schemas/firestore-schema.json#/definitions/keywordsData",
+  "version": "1.0.0",
+  "description": "Danh mục từ khóa mặc định khởi tạo cho học viên và hệ thống",
+  "expenses": [
+    "Tiền ăn uống, sinh hoạt",
+    "Tiền thuê nhà, điện nước",
+    "Mua sắm cá nhân",
+    "Chi phí đi lại, xăng xe",
+    "Quỹ khẩn cấp, y tế"
+  ],
+  "incomeList": [
+    "Lương chính",
+    "Thu nhập làm thêm, Freelance",
+    "Thưởng hiệu quả, Lễ Tết",
+    "Thu nhập từ đầu tư / Tiết kiệm",
+    "Thu nhập thụ động khác"
+  ],
+  "planList": [
+    "Học ngoại ngữ (IELTS / Tiếng Trung)",
+    "Khóa học chuyên môn nâng cao",
+    "Chứng chỉ nghề nghiệp chuyên sâu",
+    "Mua sách & tài liệu phát triển kỹ năng",
+    "Tham gia hội thảo, mạng lưới nghề nghiệp"
+  ],
+  "investProducts": [
+    "Tiết kiệm kỳ hạn ngân hàng",
+    "Quỹ mở cổ phiếu / Trái phiếu",
+    "Cổ phiếu giá trị dài hạn",
+    "Vàng & tài sản phòng hộ",
+    "Bất động sản / Tích lũy tài sản thực"
+  ]
+}
