@@ -660,7 +660,7 @@ function createFixedCollegeGoal() {
     id: "fixed_college",
     fixedType: "college",
     isFixed: true,
-    name: "Cho con đi học đại học",
+    name: "Quỹ dự phòng Tài chính",
     type: "invest",
     start: 0,
     end: 0,
@@ -841,7 +841,7 @@ function ensureFixedInvestmentGoals() {
     collegeGoal.fixedType = "college";
     collegeGoal.isFixed = true;
     if (!collegeGoal.name || typeof collegeGoal.name !== "string" || collegeGoal.name.trim() === "") {
-      collegeGoal.name = "Cho con đi học đại học";
+      collegeGoal.name = "Quỹ dự phòng Tài chính";
     }
     collegeGoal.type = "invest";
     normalizeGoalNumericFields(collegeGoal, tpl);
@@ -1661,8 +1661,8 @@ function singleRateOfGoal(goal, portfolio) {
     : (portfolio.expectedAvgReturn > 0 ? portfolio.expectedAvgReturn : (Number(goal.estimatedRate) || 0));
 }
 
-// Mục tiêu "Cho con đi học đại học": giá trị hiện tại của học phí các kỳ (kỳ = THÁNG, lãi suất tháng hiệu dụng)
-// cộng quỹ hỗ trợ; chi phí nhập theo giá hôm nay và được quy đổi lạm phát đến năm hoàn tất tích lũy.
+// Mục tiêu "Quỹ dự phòng Tài chính" (tên cũ của khối này: "Cho con đi học đại học"): giá trị hiện tại của khoản chi
+// định kỳ hằng tháng trong số tháng đã nhập (lãi suất tháng hiệu dụng) cộng số tiền để lại sau cùng; chi phí nhập theo giá hôm nay và được quy đổi lạm phát đến năm hoàn tất tích lũy.
 function calculateCollegeGoal(goal) {
   normalizeGoalNumericFields(goal, createFixedCollegeGoal());
   const portfolio = computeGoalPortfolioMetrics(goal);
@@ -5902,7 +5902,7 @@ window.onGoalFieldInput = function(idx, field, val) {
   if (field === 'name') {
     const colTitle = document.getElementById('fixed-goal-title-college');
     const retTitle = document.getElementById('fixed-goal-title-retirement');
-    if (isCollegeFixedGoal(g) && colTitle) colTitle.textContent = val || 'Cho con đi học đại học';
+    if (isCollegeFixedGoal(g) && colTitle) colTitle.textContent = val || 'Quỹ dự phòng Tài chính';
     if (isRetirementFixedGoal(g) && retTitle) retTitle.textContent = val || 'Hưu trí';
   }
   if (field === 'val') {
@@ -6170,7 +6170,7 @@ function createCardHtmlCollege(g, num) {
   return `
     <div class="tc-goal-card-h4" id="card-${g.id}" data-fixed-goal="college">
       <div class="tc-card-h4-title">
-        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Cho con đi học đại học')}</strong></span>
+        <span>Mục tiêu đầu tư ${num}: <strong id="fixed-goal-title-college" contenteditable="true" spellcheck="false" title="Nhấn để sửa tên mục tiêu" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Quỹ dự phòng Tài chính')}</strong></span>
         <span class="badge-fixed-goal"><i class="fa-solid fa-lock"></i> Cố định</span>
       </div>
       <div class="tc-card-table-scroll">
@@ -6209,7 +6209,7 @@ function createCardHtmlCollege(g, num) {
               <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Số tháng chi trả học phí (kỳ = tháng)</td>
+              <td>Số tháng chi trả</td>
               <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
               <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
@@ -6219,7 +6219,7 @@ function createCardHtmlCollege(g, num) {
               <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Chi phí học tập mỗi tháng (giá hôm nay)</td>
+              <td>Chi phí mỗi tháng (giá hôm nay)</td>
               <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
               <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
@@ -6227,7 +6227,7 @@ function createCardHtmlCollege(g, num) {
               <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
             </tr>
             <tr class="bg-neutral-gray font-semibold">
-              <td>Quỹ hỗ trợ / để lại sau tốt nghiệp:</td>
+              <td>Số tiền để lại sau cùng:</td>
               <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
               <td style="text-align: right;">LS ước tính:</td>
               <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
@@ -6535,7 +6535,7 @@ window.updateGoalCardField = function(goalId, field, rawText) {
     if (trimmed) {
       g.name = trimmed;
     } else {
-      g.name = isCollegeFixedGoal(g) ? 'Cho con đi học đại học' : (isRetirementFixedGoal(g) ? 'Hưu trí' : 'Mục tiêu');
+      g.name = isCollegeFixedGoal(g) ? 'Quỹ dự phòng Tài chính' : (isRetirementFixedGoal(g) ? 'Hưu trí' : 'Mục tiêu');
     }
     renderTcGoalsFormTable();
     renderTcMatrixTable();
@@ -7933,7 +7933,7 @@ const CSV_TABLE_SCHEMAS = {
     ]
   },
   month_learning: {
-    label: "Chi phí học tập theo tháng",
+    label: "Chi phí định kỳ theo tháng",
     requireMonth: true,
     fields: [
       { key: "name", label: "Nội dung đào tạo", required: true },
@@ -8468,7 +8468,7 @@ window.updateJsonImportPreview = function() {
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
-      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Cho con đi học đại học"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
+      <div>• <strong>Hai mục tiêu cố định ("Hưu trí", "Quỹ dự phòng Tài chính"):</strong> Được bảo vệ cấu trúc và không thể bị xóa.</div>
     `;
   }
   if (prevBox) prevBox.style.display = 'flex';
@@ -8593,7 +8593,7 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         if (!g || typeof g !== 'object') return;
         if (isCollegeFixedGoal(g)) {
           if (mode === 'update' && currentCollege) {
-            Object.assign(currentCollege, g, { id: 'fixed_college', name: g.name || currentCollege.name || 'Cho con đi học đại học', type: 'invest', isFixed: true, fixedType: 'college' });
+            Object.assign(currentCollege, g, { id: 'fixed_college', name: g.name || currentCollege.name || 'Quỹ dự phòng Tài chính', type: 'invest', isFixed: true, fixedType: 'college' });
           }
           return;
         }
