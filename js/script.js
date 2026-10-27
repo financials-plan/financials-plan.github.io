@@ -8506,6 +8506,10 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
     if (typeof cleanImport.currentYear === 'number') AppState.currentYear = cleanImport.currentYear;
     if (typeof cleanImport.currentAge === 'number') AppState.currentAge = cleanImport.currentAge;
     if (typeof cleanImport.birthYear === 'number') AppState.birthYear = cleanImport.birthYear;
+    if (cleanImport.targetSavingsRate !== undefined && cleanImport.targetSavingsRate !== null && cleanImport.targetSavingsRate !== '') {
+      const rate = parseFloat(cleanImport.targetSavingsRate);
+      if (isFinite(rate) && rate >= 0 && rate <= 100) AppState.targetSavingsRate = rate;
+    }
     if (Array.isArray(cleanImport.expenses)) {
       if (mode === 'replace') AppState.expenses = [...cleanImport.expenses];
       else {
