@@ -1709,13 +1709,9 @@ function calculateCollegeGoal(goal) {
   goal.deathFund = supportFund;
 
   let targetFV = 0;
-  if (periods > 0 && (periodicNeed > 0 || supportFund > 0)) {
-    const pvRateAnnual = portfolio.expectedAvgReturn > 0
-      ? portfolio.expectedAvgReturn
-      : (Number(goal.estimatedRate) || Number(goal.rate) || 0);
-    const pvMonthly = FinancialMath.monthlyRateFromAnnualPct(pvRateAnnual);
-    const pvRateMonthlyPct = isFinite(pvMonthly) ? pvMonthly * 100 : 0;
-    targetFV = FinancialMath.calculateEducationCapitalNeeded(periods, inflateToGoalDate(periodicNeed, goal), supportFund, pvRateMonthlyPct);
+  // Quỹ dự phòng: mục tiêu = số tháng dự phòng × chi phí mỗi tháng (ví dụ 6 tháng × 21 = 126), không chiết khấu
+  if (periods > 0 && periodicNeed > 0) {
+    targetFV = periods * inflateToGoalDate(periodicNeed, goal);
     if (!goal._manualValOverride) {
       goal.val = Number(targetFV.toFixed(2));
     } else {
@@ -6257,8 +6253,8 @@ function createCardHtmlCollege(g, num) {
               <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Số tiền để lại sau cùng</td>
-              <td class="cell-green-val font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
+              <td>Tổng ước chi phí</td>
+              <td class="cell-orange-val font-mono" id="college-total-cost" title="Số tháng dự phòng × chi phí mỗi tháng">${(periods * periodicNeed).toFixed(0)}</td>
               <td>Số tiền thanh toán hằng năm</td>
               <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Mức sinh lời kỳ vọng trung bình</td>

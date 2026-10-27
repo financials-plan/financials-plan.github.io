@@ -55,7 +55,7 @@ Thu nhập cần = Tổng góp / Tỷ lệ tiết kiệm mục tiêu
 | Mục tiêu | Cách tính vốn cần có |
 |---|---|
 | Hưu trí | Giá trị hiện tại của chi tiêu hưu trí hằng tháng × 12 trong `số năm nghỉ hưu` (lợi suất giai đoạn nghỉ hưu, mặc định 6,5%/năm) + số tiền để lại cuối đời chiết khấu về lúc nghỉ hưu. Số kỳ tính theo **năm**. Chỉ tự tính khi người dùng nhập thông số hưu trí; nếu gõ trực tiếp "Mục tiêu tiết kiệm cần đạt" thì giữ giá trị đó. |
-| Quỹ dự phòng Tài chính | Giá trị hiện tại của khoản chi định kỳ theo tháng trong số tháng đã nhập (lãi tháng hiệu dụng) + số tiền để lại sau cùng. |
+| Quỹ dự phòng Tài chính | Tổng ước chi phí = số tháng dự phòng × chi phí mỗi tháng (ví dụ 6 × 21 = 126), không chiết khấu; đây cũng là mục tiêu tiết kiệm cần đạt. Khoản góp hằng tháng tính theo mục 1. |
 | Khoản nợ | Niên kim trả dần: `PMT = P·r/(1 − (1+r)^−n)`, `r = lãi năm/12`. |
 
 Lạm phát hiện **chưa được tính** (cờ `INFLATION_ENABLED = false`); giá trị mục tiêu nhập theo số tiền danh nghĩa.

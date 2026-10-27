@@ -485,3 +485,20 @@ test("R. Dữ liệu bảng tính gốc: tỷ trọng và thu nhập cần có t
   assert.ok(near(ms[1].incomeNeed, 28.50, 0.01), "thu nhập 26: " + ms[1].incomeNeed);
   assert.ok(near(ms[1].stocks, 56.8, 0.2) && near(ms[1].bonds, 26.6, 0.2) && near(ms[1].cash, 16.5, 0.2), JSON.stringify(ms[1]));
 });
+
+test("S. Quỹ dự phòng: mục tiêu = số tháng dự phòng × chi phí mỗi tháng (6 × 21 = 126), không chiết khấu", () => {
+  const g = Object.assign(goal("fixed_college", {}), {
+    isFixed: true, fixedType: "college", name: "Quỹ dự phòng Tài chính",
+    start: 2027, end: 2029, collegePeriods: 6, monthlyTuition: 21, supportFund: 0, estimatedRate: 5,
+    allocProducts: [
+      { prodName: "ETF A", weight: 50, _explicitSelected: true },
+      { prodName: "Tiền gửi C", weight: 50, _explicitSelected: true },
+      { prodName: "", weight: 0 }
+    ]
+  });
+  const env = makeEnv(baseState({ currentYear: 2026, tcGoals: [g] }));
+  env.calculateMonthlyNeed(g);
+  assert.strictEqual(g.val, 126);
+  assert.strictEqual(g.calculatedTargetFV, 126);
+  assert.ok(g.monthly > 0 && g.monthly * 36 < 126, "khoản góp hằng tháng nhỏ hơn mục tiêu / số tháng góp nhờ lãi");
+});

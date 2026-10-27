@@ -568,7 +568,7 @@ test("10. Task A — Enrolled Classes & Member Identity Verification", () => {
 
   // 5. Verify cache-busting in main.html
   const mainHtml = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
-  assert.ok(mainHtml.includes("script.js?v=3.5.8"), "main.html uses updated cache-busting version v=3.5.8");
+  assert.ok(mainHtml.includes("script.js?v=3.5.9"), "main.html uses updated cache-busting version v=3.5.9");
 });
 
 test("11. Task B — Dashboard Variance Cumulative Calculation Verification", () => {
