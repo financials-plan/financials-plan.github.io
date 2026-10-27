@@ -2212,6 +2212,7 @@ function calculateCareerDetails() {
   const startTrackingYear = Number(AppState.currentYear) || calendarYear;
 
   let prevRoute = 0;
+  let prevActual = null;
   return ages.map((age) => {
     const yearOffset = age - baseAge;
     const year = startTrackingYear + yearOffset;
@@ -2223,14 +2224,16 @@ function calculateCareerDetails() {
     const overrideActual = AppState.careerActualOverrides ? AppState.careerActualOverrides[age] : undefined;
     const hasManualActual = (overrideActual !== undefined && overrideActual !== null) || Boolean(exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null);
 
+    // Ô không nhập tay lấy theo ô phía trên (ô đầu lấy thu nhập tháng hiện tại); sửa ô nào thì các ô sau tự đổi theo
     let actualVal = null;
     if (hasManualActual) {
       actualVal = overrideActual !== undefined ? overrideActual : exist.actual;
-    } else if (exist && exist.actual !== undefined && exist.actual !== null) {
-      actualVal = exist.actual;
-    } else if (yearOffset === 0 && autoActualIncome > 0) {
-      actualVal = autoActualIncome;
+    } else if (yearOffset === 0) {
+      actualVal = autoActualIncome > 0 ? autoActualIncome : null;
+    } else {
+      actualVal = prevActual;
     }
+    prevActual = actualVal;
 
     const overrideRoute = AppState.careerRouteOverrides ? AppState.careerRouteOverrides[age] : undefined;
     const hasManualRoute = (overrideRoute !== undefined && overrideRoute !== null) || Boolean(exist && exist.manualRoute === true && exist.route !== undefined && exist.route !== null);
