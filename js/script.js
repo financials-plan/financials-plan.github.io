@@ -6264,17 +6264,10 @@ function createCardHtmlCollege(g, num) {
             <tr>
               <td>Lãi suất ước tính (năm)</td>
               <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
-              <td colspan="6" class="bg-neutral-gray"></td>
-            </tr>
-            <tr>
               <td>Số tiền dự phòng đã có</td>
               <td class="cell-green-val font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
-              <td colspan="6" class="bg-neutral-gray"></td>
-            </tr>
-            <tr class="font-semibold">
-              <td class="font-bold">Mục tiêu tiết kiệm cần đạt</td>
-              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
-              <td colspan="6" class="bg-neutral-gray"></td>
+              <td colspan="2" class="font-bold text-center bg-col-head">Mục tiêu tiết kiệm cần đạt</td>
+              <td colspan="2" class="cell-orange-val text-center font-bold font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
             </tr>
             
             ${!portfolio.isWeightValid ? `
