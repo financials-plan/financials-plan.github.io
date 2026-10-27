@@ -3241,7 +3241,7 @@ function renderDashboardAllCharts() {
       data: {
         labels: months,
         datasets: [
-          { type: 'line', label: 'Lũy kế độ lệch (|kế hoạch − thực tế|)', data: cumDiff, borderColor: '#7960F8', borderWidth: 2.5, fill: false, tension: 0.2, pointRadius: 3, pointBackgroundColor: '#7960F8' },
+          { type: 'line', label: 'Chênh lệch lũy kế', data: cumDiff, borderColor: '#7960F8', borderWidth: 2.5, fill: false, tension: 0.2, pointRadius: 3, pointBackgroundColor: '#7960F8' },
           { label: 'Chi thực tế', data: actuals, backgroundColor: '#F06E78', borderRadius: 4 },
           { label: 'Kế hoạch', data: Array(12).fill(planExp), backgroundColor: themeTokens.planBar, borderRadius: 4 }
         ]
