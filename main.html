@@ -1184,7 +1184,6 @@
           <div class="data-panel mb-4">
             <div class="sheet-title-banner flex-between">
               <span><i class="fa-solid fa-coins"></i> PHẦN 1: TIỀN DỰ TÍNH KIẾM ĐƯỢC MỖI THÁNG</span>
-              <button class="btn-table-add" onclick="addPlanIncomeDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm khoản thu</span></button>
             </div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
@@ -1195,7 +1194,6 @@
                     <th style="width: 150px;">Số tiền dự tính</th>
                     <th style="width: 220px;">Ghi chú chi tiết</th>
                     <th>Mức độ ổn định</th>
-                    <th style="width: 45px;">Xóa</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-plan-inc"></tbody>
@@ -1203,7 +1201,7 @@
                   <tr class="bg-total-row">
                     <td colspan="2" class="font-bold">Tổng thu nhập dự tính hàng tháng</td>
                     <td class="text-right text-success font-bold font-mono" id="plan-sum-inc-val">0.00</td>
-                    <td colspan="3"></td>
+                    <td colspan="2"></td>
                   </tr>
                 </tfoot>
               </table>
@@ -1213,7 +1211,6 @@
           <div class="data-panel">
             <div class="sheet-title-banner flex-between">
               <span><i class="fa-solid fa-credit-card"></i> PHẦN 2: MỨC TIỀN DỰ TÍNH TIÊU MỖI THÁNG</span>
-              <button class="btn-table-add" onclick="addPlanExpenseDirect()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm khoản chi</span></button>
             </div>
             <div class="table-scroll-x">
               <table class="excel-table-bordered">
@@ -1224,7 +1221,6 @@
                     <th style="width: 150px;">Mức chi tối đa</th>
                     <th style="width: 220px;">Ghi chú chi tiết</th>
                     <th>Mức độ cần thiết</th>
-                    <th style="width: 45px;">Xóa</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-plan-exp"></tbody>
@@ -1232,7 +1228,7 @@
                   <tr class="bg-total-row">
                     <td colspan="2" class="font-bold">Tổng chi tiêu dự tính hàng tháng</td>
                     <td class="text-right text-danger font-bold font-mono" id="plan-sum-exp-val">0.00</td>
-                    <td colspan="3"></td>
+                    <td colspan="2"></td>
                   </tr>
                 </tfoot>
               </table>
@@ -2930,7 +2926,7 @@
   </button>
 
   <script type="module" src="./backend/firestore-service.js"></script>
-  <script src="./js/script.js?v=3.5.9"></script>
+  <script src="./js/script.js?v=3.6.0"></script>
 
 </body>
 </html>

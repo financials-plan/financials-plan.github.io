@@ -3640,47 +3640,45 @@ function syncKeywordChangesToDependentSheets() {
   recalculateAll();
 }
 
+// Bảng kế hoạch thu/chi là bảng cố định: mỗi dòng ứng với một khoản trong Từ khóa thiết lập (không thêm/xóa tại đây).
+// Giữ số liệu đã nhập theo tên khoản; khoản mới có kế hoạch 0; danh sách từ khóa rỗng (chưa tải dữ liệu) thì không đụng tới.
+function syncPlanRowsWithKeywords() {
+  const build = (names, rows) => {
+    const keep = new Map((rows || []).filter(r => r && r.name).map(r => [r.name, r]));
+    return getUniqueNonEmptyList([names]).map(n => keep.get(n) || { name: n, plan: 0.0, note: '', analysis: '' });
+  };
+  if (Array.isArray(AppState.incomeList) && AppState.incomeList.length > 0) {
+    AppState.planIncome = build(AppState.incomeList, AppState.planIncome);
+  }
+  if (Array.isArray(AppState.expenses) && AppState.expenses.length > 0) {
+    AppState.planExpense = build(AppState.expenses, AppState.planExpense);
+  }
+}
+
 function renderPlanTables() {
+  syncPlanRowsWithKeywords();
   const tbInc = document.getElementById('tbody-plan-inc');
   if (tbInc) {
-    const incOptions = getUniqueNonEmptyList([
-      AppState.incomeList,
-      (AppState.planIncome || []).map(p => p.name)
-    ]);
     tbInc.innerHTML = AppState.planIncome.map((p, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td>
-          <select class="select-inline-cell" onchange="updatePlanIncCat(${idx}, this.value)">
-            ${incOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === p.name ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
-          </select>
-        </td>
+        <td class="font-semibold">${escapeHtml(p.name || '')}</td>
         <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanIncValLive(${idx}, this.innerText)" onblur="updatePlanIncVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deletePlanIncRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 
   const tbExp = document.getElementById('tbody-plan-exp');
   if (tbExp) {
-    const expOptions = getUniqueNonEmptyList([
-      AppState.expenses,
-      (AppState.planExpense || []).map(p => p.name)
-    ]);
     tbExp.innerHTML = AppState.planExpense.map((p, idx) => `
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
-        <td>
-          <select class="select-inline-cell" onchange="updatePlanExpCat(${idx}, this.value)">
-            ${expOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === p.name ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
-          </select>
-        </td>
+        <td class="font-semibold">${escapeHtml(p.name || '')}</td>
         <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanExpValLive(${idx}, this.innerText)" onblur="updatePlanExpVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deletePlanExpRow(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
