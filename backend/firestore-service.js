@@ -424,6 +424,67 @@ function normalizeMaxMembers(raw, fallback = 40) {
   return parseInt(raw, 10) || fallback;
 }
 
+function mergeMembersList(listA = [], listB = []) {
+  const map = new Map();
+  (listA || []).forEach(m => {
+    if (m && m.username) {
+      const u = normalizeUsername(m.username);
+      map.set(u, { ...m, username: u });
+    }
+  });
+  (listB || []).forEach(m => {
+    if (m && m.username) {
+      const u = normalizeUsername(m.username);
+      const existing = map.get(u);
+      if (!existing) {
+        map.set(u, { ...m, username: u });
+      } else {
+        let finalStatus = existing.status || "pending";
+        if (existing.status === "approved" || m.status === "approved") {
+          finalStatus = "approved";
+        } else if (existing.status === "rejected" || m.status === "rejected") {
+          const dateExisting = existing.joinedAt ? new Date(existing.joinedAt).getTime() : 0;
+          const dateM = m.joinedAt ? new Date(m.joinedAt).getTime() : 0;
+          finalStatus = (dateM >= dateExisting ? m.status : existing.status) || "pending";
+        } else {
+          finalStatus = "pending";
+        }
+        map.set(u, {
+          ...existing,
+          ...m,
+          username: u,
+          name: m.name || existing.name || u,
+          status: finalStatus,
+          joinedAt: existing.joinedAt || m.joinedAt || new Date().toISOString()
+        });
+      }
+    }
+  });
+  return Array.from(map.values());
+}
+
+function mergeClassRecord(c1, c2) {
+  if (!c1 && !c2) return null;
+  if (!c1) return c2;
+  if (!c2) return c1;
+  const mergedMembers = mergeMembersList(c1.members, c2.members);
+  const date1 = c1.updatedAt ? new Date(c1.updatedAt).getTime() : 0;
+  const date2 = c2.updatedAt ? new Date(c2.updatedAt).getTime() : 0;
+  const primary = date2 >= date1 ? c2 : c1;
+  const secondary = date2 >= date1 ? c1 : c2;
+  return {
+    ...secondary,
+    ...primary,
+    id: c1.id || c2.id,
+    code: primary.code || secondary.code,
+    name: primary.name || secondary.name,
+    status: primary.status || secondary.status || "active",
+    isPrivate: primary.isPrivate !== undefined ? primary.isPrivate : secondary.isPrivate,
+    members: mergedMembers,
+    updatedAt: new Date(Math.max(date1, date2, Date.now())).toISOString()
+  };
+}
+
 async function findClassesByCode(cleanCode) {
   const code = String(cleanCode || "").trim().toUpperCase();
   if (!code) return [];
@@ -431,9 +492,16 @@ async function findClassesByCode(cleanCode) {
   const seenIds = new Set();
 
   const addIfValid = (data) => {
-    if (isRealClassRecord(data) && !seenIds.has(data.id)) {
-      seenIds.add(data.id);
-      list.push(data);
+    if (isRealClassRecord(data)) {
+      if (seenIds.has(data.id)) {
+        const existingIdx = list.findIndex(x => x.id === data.id);
+        if (existingIdx !== -1) {
+          list[existingIdx] = mergeClassRecord(list[existingIdx], data);
+        }
+      } else {
+        seenIds.add(data.id);
+        list.push(data);
+      }
     }
   };
 
@@ -553,35 +621,120 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
 }
 
 async function mutateClassInCloud(classId, mutator) {
-  if (!isFirebaseReady || !db) {
-    const local = getLocalClasses();
-    const cls = local[classId];
-    if (!cls) return { success: false, error: "Không tìm thấy nhóm." };
-    const out = mutator(cls);
-    if (out && out.success === false) return out;
-    cls.updatedAt = new Date().toISOString();
-    local[classId] = cls;
-    saveLocalClasses(local);
-    return { success: true, class: cls };
-  }
-  const ref = doc(db, CLASSES_COLLECTION, classId);
-  try {
-    const res = await withTimeout(runTransaction(db, async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists()) {
-        return { success: false, error: "Không tìm thấy nhóm trên Cloud (có thể nhóm chưa được đồng bộ hoặc đã bị xóa)." };
+  const local = getLocalClasses();
+  let cls = local[classId] ? JSON.parse(JSON.stringify(local[classId])) : null;
+
+  if (isFirebaseReady && db) {
+    try {
+      const cRef = doc(db, CLASSES_COLLECTION, classId);
+      const cSnap = await withTimeout(getDoc(cRef), 5000).catch(() => null);
+      if (cSnap && cSnap.exists()) {
+        const cData = { ...cSnap.data(), id: cSnap.id };
+        cls = cls ? mergeClassRecord(cls, cData) : cData;
       }
-      const cls = { ...snap.data(), id: snap.id };
-      const out = mutator(cls);
-      if (out && out.success === false) return out;
-      cls.updatedAt = new Date().toISOString();
-      tx.set(ref, cls);
-      return { success: true, class: cls };
-    }), 15000);
-    if (res.success) cacheClassLocally(res.class);
-    return res;
+    } catch (e) {}
+
+    try {
+      const gRef = doc(db, GROUPS_COLLECTION, classId);
+      const gSnap = await withTimeout(getDoc(gRef), 5000).catch(() => null);
+      if (gSnap && gSnap.exists()) {
+        const gData = { ...gSnap.data(), id: gSnap.id };
+        cls = cls ? mergeClassRecord(cls, gData) : gData;
+      }
+    } catch (e) {}
+  }
+
+  if (!cls) {
+    return { success: false, error: "Không tìm thấy nhóm trên Cloud hoặc bộ nhớ cục bộ (có thể nhóm chưa được đồng bộ hoặc đã bị xóa)." };
+  }
+
+  const prevMembers = Array.isArray(cls.members) ? cls.members.slice() : [];
+  const out = mutator(cls);
+  if (out && out.success === false) return out;
+
+  cls.updatedAt = new Date().toISOString();
+  if (!Array.isArray(cls.members)) cls.members = [];
+
+  local[classId] = cls;
+  saveLocalClasses(local);
+
+  if (!isFirebaseReady || !db) {
+    return { success: true, class: cls, ...(out && typeof out === "object" ? out : {}) };
+  }
+
+  try {
+    await syncClassesStoreToFirestore(classId, cls, false);
+
+    const currentMemberUsernames = new Set(cls.members.map(m => normalizeUsername(m.username)));
+    const removedMembers = prevMembers.filter(m => !currentMemberUsernames.has(normalizeUsername(m.username)));
+    const writePromises = [];
+
+    cls.members.forEach(m => {
+      const u = normalizeUsername(m.username);
+      if (!u) return;
+      const memberDoc = {
+        username: u,
+        name: m.name || u,
+        status: m.status || "pending",
+        joinedAt: m.joinedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        classId,
+        className: cls.name,
+        classCode: cls.code
+      };
+      writePromises.push(
+        setDoc(doc(db, CLASSES_COLLECTION, classId, "members", u), memberDoc, { merge: true }),
+        setDoc(doc(db, GROUPS_COLLECTION, classId, "members", u), memberDoc, { merge: true }),
+        setDoc(doc(db, "users", u), {
+          enrolledClasses: {
+            [classId]: {
+              classId,
+              code: cls.code,
+              name: cls.name,
+              status: m.status || "pending",
+              joinedAt: m.joinedAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          }
+        }, { merge: true }).catch(() => {}),
+        setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + u), {
+          enrolledClasses: {
+            [classId]: {
+              classId,
+              code: cls.code,
+              name: cls.name,
+              status: m.status || "pending",
+              joinedAt: m.joinedAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          }
+        }, { merge: true }).catch(() => {})
+      );
+    });
+
+    removedMembers.forEach(m => {
+      const u = normalizeUsername(m.username);
+      if (!u) return;
+      writePromises.push(
+        deleteDoc(doc(db, CLASSES_COLLECTION, classId, "members", u)).catch(() => {}),
+        deleteDoc(doc(db, GROUPS_COLLECTION, classId, "members", u)).catch(() => {}),
+        updateDoc(doc(db, "users", u), { [`enrolledClasses.${classId}`]: deleteField() }).catch(() => {}),
+        updateDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + u), { [`enrolledClasses.${classId}`]: deleteField() }).catch(() => {})
+      );
+    });
+
+    await withTimeout(Promise.allSettled(writePromises), 10000).catch(() => {});
+    cacheClassLocally(cls);
+    return { success: true, class: cls, ...(out && typeof out === "object" ? out : {}) };
   } catch (err) {
-    return { success: false, error: "Chưa lưu được thay đổi lên Cloud: " + describeCloudError(err) };
+    console.warn("Lưu thay đổi lớp học lên Cloud thất bại, đã bảo lưu cục bộ:", err);
+    return {
+      success: true,
+      localOnly: true,
+      class: cls,
+      ...(out && typeof out === "object" ? out : {}),
+      warning: "Đã lưu cục bộ: " + describeCloudError(err)
+    };
   }
 }
 
@@ -2066,7 +2219,9 @@ const FirestoreService = {
       if (snap) {
         snap.forEach(d => {
           const data = { ...d.data(), id: d.id };
-          if (isRealClassRecord(data)) remote[d.id] = data;
+          if (isRealClassRecord(data)) {
+            remote[d.id] = remote[d.id] ? mergeClassRecord(remote[d.id], data) : data;
+          }
         });
       }
     } catch (err) {}
@@ -2076,7 +2231,9 @@ const FirestoreService = {
       if (gSnap) {
         gSnap.forEach(d => {
           const data = { ...d.data(), id: d.id };
-          if (isRealClassRecord(data)) remote[d.id] = { ...(remote[d.id] || {}), ...data };
+          if (isRealClassRecord(data)) {
+            remote[d.id] = remote[d.id] ? mergeClassRecord(remote[d.id], data) : data;
+          }
         });
       }
     } catch (err) {}
@@ -2096,8 +2253,8 @@ const FirestoreService = {
           if (aData && aData.classes && typeof aData.classes === "object") {
             Object.keys(aData.classes).forEach(cid => {
               const c = aData.classes[cid];
-              if (isRealClassRecord(c) && !remote[cid]) {
-                remote[cid] = c;
+              if (isRealClassRecord(c)) {
+                remote[cid] = remote[cid] ? mergeClassRecord(remote[cid], c) : c;
               }
             });
           }
@@ -2106,7 +2263,12 @@ const FirestoreService = {
     }
 
     const me = activeAuthContext ? activeAuthContext.normalizedUsername : "";
-    const cache = { ...local, ...remote };
+    const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
+    const cache = {};
+    allIds.forEach(id => {
+      cache[id] = mergeClassRecord(local[id], remote[id]);
+    });
+
     const failed = [];
     const localOnly = Object.values(local).filter(c =>
       isRealClassRecord(c) && !remote[c.id] && me && c.instructorUsername === me
@@ -2184,6 +2346,9 @@ const FirestoreService = {
     if (!cleanCode) {
       return { success: false, error: "Vui lòng nhập mã nhóm." };
     }
+    if (!cleanUser) {
+      return { success: false, error: "Vui lòng đăng nhập trước khi tham gia nhóm." };
+    }
 
     if (/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanCode) || cleanCode.startsWith("INST-") || cleanCode.startsWith("ADMN-")) {
       const actRes = await this.activateAdminCode(cleanCode, cleanUser);
@@ -2205,7 +2370,37 @@ const FirestoreService = {
         return { success: false, error: "Nhóm này hiện đã khóa, không nhận thêm thành viên." };
       }
       const members = Array.isArray(cls.members) ? cls.members.slice() : [];
-      if (members.some(m => m.username === cleanUser)) {
+      const existing = members.find(m => normalizeUsername(m.username) === cleanUser);
+      if (existing) {
+        if (existing.status === "pending") {
+          return {
+            success: true,
+            status: "pending",
+            alreadyJoined: true,
+            class: cls,
+            message: `Yêu cầu tham gia nhóm "${cls.name}" của bạn đang ở trạng thái CHỜ DUYỆT. Vui lòng đợi người phụ trách phê duyệt để vào lớp.`
+          };
+        }
+        if (existing.status === "approved") {
+          return {
+            success: true,
+            status: "approved",
+            alreadyJoined: true,
+            class: cls,
+            message: `Bạn đã là thành viên chính thức của nhóm "${cls.name}".`
+          };
+        }
+        if (existing.status === "rejected") {
+          existing.status = cls.isPrivate ? "pending" : "approved";
+          existing.joinedAt = new Date().toISOString();
+          cls.members = members;
+          return {
+            success: true,
+            class: cls,
+            status: existing.status,
+            message: cls.isPrivate ? `Đã gửi lại yêu cầu tham gia nhóm "${cls.name}". Vui lòng chờ người phụ trách duyệt.` : `Đã tham gia nhóm "${cls.name}" thành công!`
+          };
+        }
         return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia nhóm này." };
       }
       const seatsTaken = members.filter(m => m.status !== "rejected").length;
@@ -2255,25 +2450,38 @@ const FirestoreService = {
       return result;
     });
     if (!res.success) return res;
-    return result;
+    return result || res;
   },
 
   async approveClassMember(classId, studentUsername, action) {
-    return mutateClassInCloud(classId, (cls) => {
+    const cleanUser = normalizeUsername(studentUsername);
+    let memberStatus = null;
+    const res = await mutateClassInCloud(classId, (cls) => {
       if (!Array.isArray(cls.members)) cls.members = [];
-      const member = cls.members.find(m => m.username === studentUsername);
+      const member = cls.members.find(m => normalizeUsername(m.username) === cleanUser);
       if (!member) {
         return { success: false, error: "Không tìm thấy học viên trong lớp." };
       }
       if (action === "approve") {
         member.status = "approved";
+        member.approvedAt = new Date().toISOString();
+        memberStatus = "approved";
       } else if (action === "reject") {
         member.status = "rejected";
+        member.rejectedAt = new Date().toISOString();
+        memberStatus = "rejected";
       } else if (action === "remove") {
-        cls.members = cls.members.filter(m => m.username !== studentUsername);
+        cls.members = cls.members.filter(m => normalizeUsername(m.username) !== cleanUser);
+        memberStatus = "removed";
       }
-      return null;
+      return {
+        success: true,
+        class: cls,
+        memberStatus,
+        action
+      };
     });
+    return res;
   },
 
   async updateClass(classId, updates = {}) {

@@ -430,6 +430,9 @@ const UserSession = {
     if (typeof window.renderAccountSwitcher === 'function') {
       window.renderAccountSwitcher();
     }
+    if (typeof window.updateStudentClassStatusUI === 'function') {
+      window.updateStudentClassStatusUI();
+    }
   }
 };
 
@@ -9806,11 +9809,14 @@ window.submitStudentJoinClass = async function() {
       }
       if (fb) {
         fb.style.display = 'block';
-        fb.className = 'text-success';
-        fb.textContent = res.message;
+        fb.className = res.status === 'approved' ? 'text-success' : 'text-warning';
+        fb.innerHTML = (res.status === 'approved' ? '<i class="fa-solid fa-circle-check text-emerald"></i> ' : '<i class="fa-solid fa-clock text-amber"></i> ') + res.message;
       }
       if (input) input.value = '';
       await renderStudentEnrolledClasses();
+      if (typeof window.updateStudentClassStatusUI === 'function') {
+        window.updateStudentClassStatusUI();
+      }
     } else {
       showToast(res.error || "Không thể tham gia nhóm.", "error");
       if (fb) {
@@ -9834,6 +9840,45 @@ window.submitStudentJoinClass = async function() {
   }
 };
 
+window.updateStudentClassStatusUI = async function() {
+  const btn = document.getElementById('btn-floating-switch-class');
+  if (!btn || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
+  const curUser = UserSession.currentUser;
+  let username = curUser ? curUser.normalizedUsername : '';
+  if (!username) {
+    username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
+  }
+  if (!username) return;
+  try {
+    const allClasses = await window.CloudDB.getClasses();
+    const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => m.username === username));
+    if (enrolled.length === 0) {
+      btn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> <span>Cài đặt lớp học</span>';
+      btn.title = 'Cài đặt lớp học';
+      return;
+    }
+    const approved = enrolled.find(c => {
+      const m = c.members.find(x => x.username === username);
+      return m && m.status === 'approved';
+    });
+    if (approved) {
+      localStorage.setItem('FIN_APP_ACTIVE_STUDENT_CLASS', JSON.stringify({ id: approved.id, code: approved.code, name: approved.name }));
+      btn.innerHTML = `<i class="fa-solid fa-circle-check text-emerald"></i> <span>${approved.name} (${approved.code})</span>`;
+      btn.title = `Đã vào lớp: ${approved.name} (${approved.code})`;
+      return;
+    }
+    const pending = enrolled.find(c => {
+      const m = c.members.find(x => x.username === username);
+      return m && m.status === 'pending';
+    });
+    if (pending) {
+      btn.innerHTML = `<i class="fa-solid fa-clock text-amber"></i> <span>Chờ duyệt: ${pending.code}</span>`;
+      btn.title = `Đang chờ người phụ trách duyệt vào nhóm: ${pending.name} (${pending.code})`;
+      return;
+    }
+  } catch (e) {}
+};
+
 async function renderStudentEnrolledClasses() {
   const tbody = document.getElementById('student-enrolled-classes-tbody');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
@@ -9847,19 +9892,34 @@ async function renderStudentEnrolledClasses() {
 
   if (enrolled.length === 0) {
     tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">Bạn chưa tham gia nhóm nào</td></tr>';
+    if (typeof window.updateStudentClassStatusUI === 'function') {
+      window.updateStudentClassStatusUI();
+    }
     return;
   }
   tbody.innerHTML = enrolled.map(c => {
     const member = c.members.find(m => m.username === username);
     const isApproved = member?.status === 'approved';
+    const isRejected = member?.status === 'rejected';
+    let badgeHtml = '';
+    if (isApproved) {
+      badgeHtml = '<span class="badge-prog badge-prog-done" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check text-emerald"></i> Đã vào lớp</span>';
+    } else if (isRejected) {
+      badgeHtml = '<span class="badge-prog" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-xmark"></i> Từ chối</span>';
+    } else {
+      badgeHtml = '<span class="badge-prog badge-prog-doing" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-clock text-amber"></i> Chờ duyệt</span>';
+    }
     return `
       <tr>
         <td><strong>${c.name}</strong></td>
         <td><code>${c.code}</code></td>
-        <td><span class="badge-prog ${isApproved ? 'badge-prog-done' : 'badge-prog-doing'}">${isApproved ? 'Đã duyệt' : 'Chờ duyệt'}</span></td>
+        <td>${badgeHtml}</td>
       </tr>
     `;
   }).join('');
+  if (typeof window.updateStudentClassStatusUI === 'function') {
+    window.updateStudentClassStatusUI();
+  }
 }
 
 window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
@@ -10366,8 +10426,8 @@ window.renderAdminRequestsTable = async function() {
 
   if (groupFilter) {
     const curVal = groupFilter.value;
-    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm riêng tư</option>';
-    classes.filter(c => c.isPrivate !== false).forEach(c => {
+    groupFilter.innerHTML = '<option value="all">Tất cả các nhóm</option>';
+    classes.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = `${c.name} (${c.code})`;
@@ -10380,7 +10440,6 @@ window.renderAdminRequestsTable = async function() {
 
   const pendingRequests = [];
   classes.forEach(c => {
-    if (c.isPrivate === false) return;
     if (selectedGroupId !== 'all' && c.id !== selectedGroupId) return;
 
     const mList = Array.isArray(c.members) ? c.members : [];
@@ -10390,6 +10449,7 @@ window.renderAdminRequestsTable = async function() {
           classId: c.id,
           className: c.name,
           classCode: c.code,
+          isPrivate: c.isPrivate !== false,
           username: m.username,
           name: m.name || m.username,
           email: m.email || m.recoveryEmail || '',
@@ -10436,7 +10496,7 @@ window.renderAdminRequestsTable = async function() {
       <td><code>${r.email}</code></td>
       <td>
         <strong>${r.className}</strong>
-        <span class="badge-group-type badge-type-private" style="margin-left: 6px;"><i class="fa-solid fa-lock"></i> Kín</span>
+        <span class="badge-group-type ${r.isPrivate ? 'badge-type-private' : 'badge-type-open'}" style="margin-left: 6px;">${r.isPrivate ? '<i class="fa-solid fa-lock"></i> Kín' : '<i class="fa-solid fa-globe"></i> Mở'}</span>
       </td>
       <td><small class="text-muted">${(r.joinedAt || '').slice(0, 16).replace('T', ' ')}</small></td>
       <td style="text-align: right;">
@@ -10463,6 +10523,12 @@ window.approveJoinRequest = async function(classId, username) {
     showToast(`Đã duyệt cho học viên @${username} vào nhóm thành công!`);
     await renderAdminRequestsTable();
     updateAdminPendingBadge();
+    if (typeof loadClassManagerData === 'function') {
+      await loadClassManagerData();
+    }
+    if (typeof renderAdminStudentsTable === 'function') {
+      await renderAdminStudentsTable();
+    }
   }
 };
 
@@ -10477,10 +10543,31 @@ window.rejectJoinRequest = async function(classId, username) {
     showToast(`Đã từ chối yêu cầu của học viên @${username}.`);
     await renderAdminRequestsTable();
     updateAdminPendingBadge();
+    if (typeof loadClassManagerData === 'function') {
+      await loadClassManagerData();
+    }
   }
 };
 
 window.updateAdminPendingBadge = async function(count) {
+  const badge = document.getElementById('admin-pending-badge');
+  if (!badge) return;
+  let totalPending = typeof count === 'number' ? count : 0;
+  if (typeof count !== 'number' && window.CloudDB && typeof window.CloudDB.getClasses === 'function') {
+    const classes = await window.CloudDB.getClasses();
+    classes.forEach(c => {
+      if (Array.isArray(c.members)) {
+        totalPending += c.members.filter(m => m.status === 'pending').length;
+      }
+    });
+  }
+  if (totalPending > 0) {
+    badge.textContent = totalPending;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+};
   const badge = document.getElementById('admin-pending-badge');
   if (!badge) return;
   let totalPending = typeof count === 'number' ? count : 0;
