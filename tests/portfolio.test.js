@@ -39,6 +39,8 @@ const FN_NAMES = [
 function makeEnv(state) {
   const code = [
     FM_SRC,
+    src.match(/const RETIREMENT_PHASE_DEFAULT_RETURN_PCT = [^;]+;/)[0],
+    src.match(/const INFLATION_ENABLED = [^;]+;/)[0],
     ...FN_NAMES.map(n => extractTopLevel(src, "function " + n + "(")),
     "return { FinancialMath, calculateMonthlyNeed, simulatePersonalPortfolio, getPortfolio30YrData, getMatrixIncomeNeed, " +
     "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge };"
@@ -339,7 +341,7 @@ test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script
   );
 });
 
-test("K. Hưu trí: số kỳ theo NĂM, lạm phát và lợi suất giai đoạn nghỉ hưu thận trọng", () => {
+test("K. Hưu trí: số kỳ theo NĂM, chưa tính lạm phát, lợi suất giai đoạn nghỉ hưu thận trọng", () => {
   const ret = goal("Hưu trí", {
     id: "fixed_retirement", fixedType: "retirement", isFixed: true, layoutV: 2,
     start: 2030, end: 2040, yearsRetire: 30, monthlyRetire: 10, inflation: 4, retireReturnRate: 6.5, deathFund: 0,
@@ -351,13 +353,13 @@ test("K. Hưu trí: số kỳ theo NĂM, lạm phát và lợi suất giai đo�
   const env = makeEnv(baseState({ tcGoals: [ret] }));
   env.calculateMonthlyNeed(ret);
   // kỳ vọng độc lập: chi tiêu năm đầu nghỉ hưu quy đổi lạm phát 11 năm, tăng 4%/năm, chiết khấu 6,5%/năm, 30 NĂM
-  const first = 120 * Math.pow(1.04, 11);
+  const first = 120; // lạm phát đang tắt: trường inflation bị bỏ qua
   let cap = 0;
-  for (let t = 1; t <= 30; t++) cap += first * Math.pow(1.04, t - 1) / Math.pow(1.065, t);
+  for (let t = 1; t <= 30; t++) cap += first / Math.pow(1.065, t);
   assert.ok(Math.abs(ret.val - cap) < 0.01, `vốn hưu trí ${ret.val} vs ${cap}`);
   // nếu nhầm 30 là 30 tháng (2,5 năm) thì thấp hơn rất nhiều
   let wrong = 0;
-  for (let t = 1; t <= 2.5; t++) wrong += first * Math.pow(1.04, t - 1) / Math.pow(1.065, t);
+  for (let t = 1; t <= 2.5; t++) wrong += first / Math.pow(1.065, t);
   assert.ok(ret.val > wrong * 5);
   // khoản góp khớp mục tiêu theo lợi suất sản phẩm 5%
   const r = effMonthly(5), n = 132;
@@ -365,15 +367,15 @@ test("K. Hưu trí: số kỳ theo NĂM, lạm phát và lợi suất giai đo�
   assert.ok(Math.abs(ret.monthly - A) < 1e-6);
 });
 
-test("L. Lạm phát mục tiêu thường; 0% giữ nguyên kết quả cũ", () => {
+test("L. Lạm phát đang tắt: trường inflation (kể cả dữ liệu cũ = 4) không làm đổi mục tiêu", () => {
   const g1 = goal("Mua nhà", { val: 1500, start: 2030, end: 2036, inflation: 4,
     allocProducts: [{ prodName: "Tiền gửi C", weight: 100, _explicitSelected: true }, { prodName: "", weight: 0 }, { prodName: "", weight: 0 }] });
   const g0 = JSON.parse(JSON.stringify(g1)); g0.inflation = 0;
   const env = makeEnv(baseState({ tcGoals: [g1, g0] }));
   env.calculateMonthlyNeed(g1); env.calculateMonthlyNeed(g0);
-  assert.ok(Math.abs(g1.calculatedTargetFV - 1500 * Math.pow(1.04, 7)) < 1e-6);
+  assert.ok(Math.abs(g1.calculatedTargetFV - 1500) < 1e-9);
   assert.ok(Math.abs(g0.calculatedTargetFV - 1500) < 1e-9);
-  assert.ok(g1.monthly > g0.monthly);
+  assert.ok(Math.abs(g1.monthly - g0.monthly) < 1e-12);
 });
 
 test("M. Di chuyển dữ liệu cũ: khối Hưu trí chứa quỹ dự phòng -> mục tiêu 'Quỹ dự phòng', không mất dữ liệu", () => {

@@ -1617,6 +1617,9 @@ function computeGoalPMT(goal, targetFV, nMonths, singleRatePct) {
 // Người dùng có thể nhập giá trị riêng ở trường retireReturnRate của mục tiêu Hưu trí.
 const RETIREMENT_PHASE_DEFAULT_RETURN_PCT = 6.5;
 
+// Chưa tính lạm phát (dữ liệu cũ có thể còn trường inflation; không được dùng trong công thức khi cờ này tắt)
+const INFLATION_ENABLED = false;
+
 // Số năm từ năm tham chiếu đến cuối năm hoàn tất mục tiêu (dùng để quy đổi lạm phát)
 function yearsToGoalDate(goal) {
   const base = getBaseYearAndAge().year;
@@ -1626,6 +1629,7 @@ function yearsToGoalDate(goal) {
 
 // Giá trị theo giá hôm nay -> danh nghĩa tại thời điểm hoàn tất: amount * (1 + lạm phát)^số năm
 function inflateToGoalDate(amount, goal) {
+  if (!INFLATION_ENABLED) return Number(amount) || 0;
   const infl = Number(goal && goal.inflation);
   const a = Number(amount) || 0;
   if (!isFinite(infl) || infl <= -100 || a <= 0) return a;
@@ -1713,7 +1717,7 @@ function calculateRetirementGoal(goal) {
   goal.deathFund = leftover;
 
   const retireRate = Number(goal.retireReturnRate) > 0 ? Number(goal.retireReturnRate) : RETIREMENT_PHASE_DEFAULT_RETURN_PCT;
-  const infl = Number(goal.inflation) || 0;
+  const infl = INFLATION_ENABLED ? (Number(goal.inflation) || 0) : 0;
 
   let targetFV = 0;
   if (years > 0 && (monthlyCost > 0 || leftover > 0)) {
@@ -5863,23 +5867,6 @@ function renderTcGoalsFormTable() {
                  oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
         </td>
-        <td>
-          ${g.type === 'debt'
-            ? `<span class="text-muted" style="padding:0 8px;">—</span>`
-            : `<input type="number" step="any" class="text-right font-mono" value="${Number(g.inflation) || 0}" placeholder="0" title="Lạm phát bình quân (%/năm) dùng để quy đổi giá trị mục tiêu (nhập theo giá hôm nay) sang giá tại năm hoàn tất"
-                 oninput="onGoalFieldInput(${idx}, 'inflation', parseFloat(this.value)||0)"
-                 onchange="onGoalFieldChange(${idx}, 'inflation', parseFloat(this.value)||0)">`
-          }
-        </td>
-        <td>
-          ${g.type === 'debt'
-            ? `<span class="text-muted" style="padding:0 8px;">—</span>`
-            : `<select class="select-inline-cell" aria-label="Khi hoàn tất mục tiêu" title="Chi vốn: tiền được sử dụng khi mục tiêu hoàn tất, không còn nằm trong danh mục. Giữ đầu tư: vốn tiếp tục được đầu tư." onchange="onGoalFieldChange(${idx}, 'fundUsage', this.value)">
-                 <option value="spend" ${getGoalFundUsage(g) === 'spend' ? 'selected' : ''}>Chi vốn</option>
-                 <option value="hold" ${getGoalFundUsage(g) === 'hold' ? 'selected' : ''}>Giữ đầu tư</option>
-               </select>`
-          }
-        </td>
         <td class="text-center">
           ${isFixed
             ? `<span class="badge-fixed-goal" title="Mục tiêu cố định không được xóa"><i class="fa-solid fa-shield-halved"></i></span>`
@@ -6134,11 +6121,9 @@ function createCardHtmlRetirement(g, num) {
               <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
             <tr>
-              <td>Lạm phát (%/năm)</td>
-              <td class="cell-green-val font-mono" id="retire-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
               <td>Lợi suất giai đoạn nghỉ hưu (%/năm)</td>
               <td class="cell-green-val font-mono" id="retire-phase-return" contenteditable="true" spellcheck="false" title="Giai đoạn nghỉ hưu nên chuyển sang sản phẩm an toàn; để 0 = dùng mặc định ${RETIREMENT_PHASE_DEFAULT_RETURN_PCT}%" onblur="updateGoalCardField('${g.id}', 'retireReturnRate', this.innerText)">${(Number(g.retireReturnRate) || RETIREMENT_PHASE_DEFAULT_RETURN_PCT).toFixed(1)}%</td>
-              <td colspan="4" class="text-muted" style="font-size: 11px;">Tiền sẵn có, lãi suất ước tính và số năm/chi tiêu hưu trí nhập theo giá hôm nay; hệ thống quy đổi lạm phát đến năm nghỉ hưu.</td>
+              <td colspan="4" class="text-muted" style="font-size: 11px;">Số năm nghỉ hưu và chi tiêu hưu trí nhập theo giá hôm nay (chưa tính lạm phát).</td>
             </tr>
             ${!portfolio.isWeightValid ? `
             <tr>
@@ -6236,11 +6221,7 @@ function createCardHtmlCollege(g, num) {
               <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
               <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
-            <tr>
-              <td>Lạm phát (%/năm)</td>
-              <td class="cell-green-val font-mono" id="college-inflation" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'inflation', this.innerText)">${(Number(g.inflation) || 0).toFixed(1)}%</td>
-              <td colspan="6" class="text-muted" style="font-size: 11px;">Chi phí học tập nhập theo giá hôm nay; hệ thống quy đổi lạm phát đến năm hoàn tất tích lũy.</td>
-            </tr>
+            
             ${!portfolio.isWeightValid ? `
             <tr>
               <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
