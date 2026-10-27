@@ -1786,7 +1786,8 @@ function applyFixedGoalValEdit(g, val) {
   const v = Number(val) || 0;
   if (isRetirementFixedGoal(g) && v > 0) g.retireModel = 0;
   const periods = Number(g.yearsRetire || g.collegePeriods) || 0;
-  g._manualValOverride = (v > 0 && periods === 0);
+  // Quỹ dự phòng: số người dùng gõ vào "Giá trị mục tiêu" được giữ và dùng để tính khoản góp (đổi số tháng/chi phí thì tính lại tự động)
+  g._manualValOverride = (v > 0 && (periods === 0 || isCollegeFixedGoal(g)));
 }
 
 function calculateMonthlyNeed(goal) {

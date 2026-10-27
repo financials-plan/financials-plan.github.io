@@ -43,7 +43,7 @@ function makeEnv(state) {
     src.match(/const INFLATION_ENABLED = [^;]+;/)[0],
     ...FN_NAMES.map(n => extractTopLevel(src, "function " + n + "(")),
     "return { FinancialMath, calculateMonthlyNeed, simulatePersonalPortfolio, getPortfolio30YrData, getMatrixIncomeNeed, " +
-    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge, getAverageExpectedReturnPct };"
+    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge, getAverageExpectedReturnPct, applyFixedGoalValEdit };"
   ].join("\n");
   const factory = new Function("AppState", "window", code);
   return factory(state, {});
@@ -528,4 +528,27 @@ test("T. Mức sinh lời trung bình ở dashboard = trung bình V(y) = Σ tỷ
   assert.strictEqual(k, 30);
   assert.ok(Math.abs(env.getAverageExpectedReturnPct() - sum / k) < 1e-9);
   assert.strictEqual(makeEnv(baseState()).getAverageExpectedReturnPct(), null, "chưa có mục tiêu -> chưa có số");
+});
+
+test("U. Quỹ dự phòng: sửa tay Giá trị mục tiêu được giữ và dùng tính khoản góp; đổi số tháng thì tính lại", () => {
+  const g = Object.assign(goal("fixed_college", {}), {
+    isFixed: true, fixedType: "college", name: "Quỹ dự phòng Tài chính",
+    start: 2027, end: 2029, collegePeriods: 6, monthlyTuition: 10, estimatedRate: 5,
+    allocProducts: [
+      { prodName: "ETF A", weight: 50, _explicitSelected: true },
+      { prodName: "Tiền gửi C", weight: 50, _explicitSelected: true },
+      { prodName: "", weight: 0 }
+    ]
+  });
+  const env = makeEnv(baseState({ currentYear: 2026, tcGoals: [g] }));
+  env.calculateMonthlyNeed(g);
+  assert.strictEqual(g.val, 60);
+  const mAuto = g.monthly;
+  g.val = 90; env.applyFixedGoalValEdit(g, 90);
+  env.calculateMonthlyNeed(g);
+  assert.strictEqual(g.val, 90, "số gõ tay không bị tính đè lại");
+  assert.ok(Math.abs(g.monthly - mAuto * 1.5) < 1e-9, "khoản góp tính theo 90");
+  g.collegePeriods = 8; g._manualValOverride = false; // như khi sửa số tháng ở thẻ
+  env.calculateMonthlyNeed(g);
+  assert.strictEqual(g.val, 80);
 });
