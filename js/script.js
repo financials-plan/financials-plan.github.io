@@ -2043,7 +2043,9 @@ function simulatePersonalPortfolio(horizonYears) {
     const year = base.year + i;
     const b = perYear[year];
     const hasData = b.total > 1e-9;
-    const pct = k => (hasData ? (b.byType[k] / b.total) * 100 : null);
+    // Sản phẩm chưa xác định Loại đầu tư không có cột riêng: tỷ trọng chia theo phần số dư đã xác định loại
+    const knownTotal = b.total - b.byType.unknown;
+    const pct = k => (hasData && knownTotal > 1e-9 ? (b.byType[k] / knownTotal) * 100 : null);
     rows.push({
       year,
       age: base.age === null ? null : base.age + i,
@@ -2055,7 +2057,6 @@ function simulatePersonalPortfolio(horizonYears) {
       bonds: pct('bonds'),
       insurance: pct('insurance'),
       bank_deposit: pct('bank_deposit'),
-      unknown: pct('unknown'),
       expectedReturn: hasData ? b.retNumerator / b.total : null
     });
   }
@@ -2085,7 +2086,7 @@ function describePortfolioIssues(sim) {
   });
   const unknownProducts = (AppState.investProducts || []).filter(p => p && !FinancialMath.normalizeInvestmentType(p.investmentType));
   if (unknownProducts.length > 0) {
-    msgs.push(`${unknownProducts.length} kênh đầu tư chưa xác định Loại đầu tư (${unknownProducts.map(p => p.name).join(', ')}) — được xếp vào cột "Chưa xác định".`);
+    msgs.push(`${unknownProducts.length} kênh đầu tư chưa xác định Loại đầu tư (${unknownProducts.map(p => p.name).join(', ')}) — không tính vào tỷ trọng các nhóm; tỷ trọng được tính theo các sản phẩm đã xác định loại.`);
   }
   return msgs;
 }
@@ -2099,7 +2100,6 @@ function getPortfolioAllocationAtAge(targetAge) {
     bonds: row.bonds,
     ins: row.insurance,
     cash: row.bank_deposit,
-    unknown: row.unknown,
     returnNeed: row.expectedReturn,
     expectedReturn: row.expectedReturn,
     balance: row.balance
@@ -2121,7 +2121,6 @@ function getPortfolio30YrData() {
     bondTot: r.bonds,
     insTot: r.insurance,
     cashTot: r.bank_deposit,
-    unknownTot: r.unknown,
     partial: sim.status === 'partial'
   }));
 }
@@ -2156,7 +2155,6 @@ function renderPortfolio30YrTable() {
       <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.bondTot)}</td>
       <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.insTot)}</td>
       <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.cashTot)}</td>
-      <td class="text-right font-mono font-bold">${fmtPortfolioPct(item.unknownTot)}</td>
       <td class="text-right font-mono font-bold text-success">${fmtPortfolioPct(item.ret, 2)}</td>
     </tr>`;
   }).join('');
@@ -2253,7 +2251,6 @@ function calculateAgeMilestones() {
     const bonds = hasPortfolio ? matchedP.bondTot : null;
     const ins = hasPortfolio ? matchedP.insTot : null;
     const cash = hasPortfolio ? matchedP.cashTot : null;
-    const unknown = hasPortfolio ? matchedP.unknownTot : null;
     const returnNeed = hasPortfolio ? matchedP.ret : null;
 
     const userStore = AppState.milestonesStore[idx] || {};
@@ -2274,7 +2271,6 @@ function calculateAgeMilestones() {
       bonds,
       ins,
       cash,
-      unknown,
       returnNeed,
       expectedReturn: returnNeed,
       skills: skillVal
@@ -5200,7 +5196,6 @@ function renderCareerTables() {
         <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.bonds)}</td>
         <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.ins)}</td>
         <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.cash)}</td>
-        <td class="text-right font-semibold font-mono">${fmtPortfolioPct(item.unknown)}</td>
         <td class="text-right font-bold text-success font-mono">${fmtPortfolioPct(item.returnNeed, 2)}</td>
         <td>
           <input type="text"

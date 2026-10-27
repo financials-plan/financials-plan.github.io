@@ -34,7 +34,7 @@ B_năm = B_(năm−1) · (1 + R_p) + 12 · A · w_p        (trong các năm góp
 
 - Mục tiêu bắt đầu muộn thì chưa có số dư ở các năm trước.
 - Khi mục tiêu kết thúc: **Chi vốn** → số dư về 0 trong trạng thái cuối năm đó; **Giữ đầu tư** (mặc định cho Hưu trí) → tiếp tục sinh lời, không góp thêm.
-- Tỷ trọng nhóm = số dư nhóm ÷ tổng số dư; nhóm theo trường **Loại đầu tư** của sản phẩm: Cổ phiếu, Trái phiếu, Bảo hiểm, Tiền gửi, và "Chưa xác định".
+- Tỷ trọng nhóm = số dư nhóm ÷ tổng số dư **của các sản phẩm đã xác định loại**; nhóm theo trường **Loại đầu tư**: Cổ phiếu, Trái phiếu, Bảo hiểm, Tiền gửi. Không có cột "Chưa xác định": sản phẩm chưa chọn loại không vào tỷ trọng nhóm (vẫn tính trong mức sinh lời và số dư).
 - **Mức sinh lời cần thiết** (cột ở Cân đối lộ trình) = Σ (số dư sản phẩm ÷ tổng số dư) × lợi suất sản phẩm. Đây là bình quân gia quyền lợi suất kỳ vọng của danh mục đã chọn, không phải mức tối thiểu để đạt mục tiêu.
 
 Chưa đủ dữ liệu (không có mục tiêu hợp lệ) → bảng hiển thị "—", không dùng tỷ trọng mẫu.

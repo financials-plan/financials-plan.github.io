@@ -218,7 +218,7 @@ test("F. Mô phỏng danh mục: tỷ trọng và lợi suất theo số dư, m�
   assert.ok(Math.abs(row2030.stocks - (g1[0] + g2[0]) / total * 100) < 1e-9);
   assert.ok(Math.abs(row2030.bank_deposit - g1[1] / total * 100) < 1e-9);
   assert.strictEqual(row2030.bonds, 0);
-  assert.ok(Math.abs(row2030.stocks + row2030.bonds + row2030.insurance + row2030.bank_deposit + row2030.unknown - 100) < 1e-9);
+  assert.ok(Math.abs(row2030.stocks + row2030.bonds + row2030.insurance + row2030.bank_deposit - 100) < 1e-9);
   const expRet = (g1[0] * 12 + g1[1] * 5 + g2[0] * 15) / total;
   assert.ok(Math.abs(row2030.expectedReturn - expRet) < 1e-9, "lợi suất kỳ vọng theo số dư");
 
@@ -270,8 +270,9 @@ test("G. Đổi Loại đầu tư của sản phẩm làm tỷ trọng nhóm tha
 
   state.investProducts[1].investmentType = "";
   row = env.simulatePersonalPortfolio(5).rows[0];
-  assert.ok(row.unknown > 0, "chưa xác định không bị xếp vào tiền gửi");
-  assert.ok(Math.abs(row.bank_deposit - bankBefore) < 1e-12, "tiền gửi không nhận thêm phần chưa xác định");
+  assert.strictEqual(row.unknown, undefined, "không còn cột Chưa xác định");
+  assert.ok(Math.abs(row.stocks + row.bonds + row.insurance + row.bank_deposit - 100) < 1e-9, "tỷ trọng chia theo phần đã xác định loại");
+  assert.ok(row.bank_deposit > 0 && row.stocks > 0);
   assert.ok(env.describePortfolioIssues().some(m => m.includes("chưa xác định Loại đầu tư")));
 });
 
