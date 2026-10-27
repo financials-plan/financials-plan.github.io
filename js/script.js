@@ -6212,22 +6212,22 @@ function createCardHtmlCollege(g, num) {
         <table class="tc-card-h4-table">
           <thead>
             <tr class="bg-header-sub">
-              <th colspan="2" style="width: 31%;">Thông số thời gian &amp; Định mức</th>
-              <th colspan="2" style="width: 29%;">Mục tiêu tích lũy</th>
-              <th colspan="4" style="width: 40%;">Phân bổ sản phẩm đầu tư</th>
+              <th colspan="2" style="width: 31%;">Thông số kế hoạch</th>
+              <th colspan="2" style="width: 29%;">Tóm tắt kế hoạch</th>
+              <th colspan="4" style="width: 40%;">Sản phẩm đầu tư</th>
             </tr>
             <tr class="bg-col-head">
-              <th>Chỉ tiêu</th><th style="width: 55px;">Giá trị</th>
-              <th>Chỉ tiêu</th><th style="width: 65px;">Số tiền</th>
-              <th>Sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lãi DK</th><th style="width: 45px;">Rủi ro</th>
+              <th>Khoản mục</th><th style="width: 55px;">Giá trị</th>
+              <th>Khoản mục</th><th style="width: 65px;">Giá trị</th>
+              <th>Loại sản phẩm</th><th style="width: 50px;">Tỷ trọng</th><th style="width: 45px;">Lợi nhuận</th><th style="width: 45px;">Rủi ro</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Năm bắt đầu</td>
               <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
-              <td>Mục tiêu tiết kiệm cần đạt</td>
-              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td>Chi phí chi tiêu ước tính (tháng)</td>
+              <td class="cell-orange-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
               <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
@@ -6236,38 +6236,45 @@ function createCardHtmlCollege(g, num) {
             <tr>
               <td>Năm kết thúc</td>
               <td class="cell-green-val font-mono" id="college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
-              <td class="font-bold">Tổng số năm tích lũy</td>
-              <td class="cell-green-val font-bold font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
+              <td>Thời gian tiết kiệm (năm)</td>
+              <td class="cell-green-val font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
               <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Số tháng chi trả</td>
+              <td>Số tháng dự phòng</td>
               <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
-              <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
-              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
+              <td>Số tiền thanh toán hằng tháng</td>
+              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
               <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
               <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
             </tr>
             <tr>
-              <td>Chi phí mỗi tháng (giá hôm nay)</td>
-              <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
-              <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
-              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
-              <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
-              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
+              <td>Số tiền để lại sau cùng</td>
+              <td class="cell-green-val font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
+              <td>Số tiền thanh toán hằng năm</td>
+              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
+              <td colspan="2" class="font-bold text-center bg-col-head">Mức sinh lời kỳ vọng trung bình</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%</td>
             </tr>
-            <tr class="bg-neutral-gray font-semibold">
-              <td>Số tiền để lại sau cùng:</td>
-              <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
-              <td style="text-align: right;">LS ước tính:</td>
+            <tr>
+              <td>LS ước tính (năm)</td>
               <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
-              <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
-              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td colspan="6" class="bg-neutral-gray"></td>
+            </tr>
+            <tr>
+              <td>Số tiền dự phòng đã có</td>
+              <td class="cell-green-val font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td colspan="6" class="bg-neutral-gray"></td>
+            </tr>
+            <tr class="font-semibold">
+              <td class="font-bold">Mục tiêu tiết kiệm cần đạt</td>
+              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td colspan="6" class="bg-neutral-gray"></td>
             </tr>
             
             ${!portfolio.isWeightValid ? `
