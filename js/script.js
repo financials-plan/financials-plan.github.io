@@ -2895,8 +2895,8 @@ function renderDashboardAllCharts() {
     let runningDiff = 0;
     for (let m = 1; m <= 12; m++) {
       const act = (AppState.monthlyDetails[m]?.expenses || []).reduce((s, x) => s + (Number(x.val) || 0), 0);
-      actuals.push(act);
-      runningDiff += (act - planExp);
+      actuals.push(act)
+      runningDiff += (planExp - act); 
       cumDiff.push(runningDiff);
     }
     dashChartInstances.variance = new Chart(cv5.getContext('2d'), {
