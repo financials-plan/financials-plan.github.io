@@ -1960,7 +1960,8 @@ function classifyProductType(rawName) {
 // Chỉ dựa vào trường fundUsage do người dùng chọn; mặc định: Hưu trí giữ vốn, các mục tiêu khác chi vốn.
 function getGoalFundUsage(goal) {
   if (goal && (goal.fundUsage === 'hold' || goal.fundUsage === 'spend')) return goal.fundUsage;
-  return isRetirementFixedGoal(goal) ? 'hold' : 'spend';
+  // Quỹ hưu trí và quỹ dự phòng giữ vốn đầu tư sau khi kết thúc giai đoạn góp
+  return (isRetirementFixedGoal(goal) || isCollegeFixedGoal(goal)) ? 'hold' : 'spend';
 }
 
 function getBaseYearAndAge() {
@@ -2045,6 +2046,15 @@ function simulatePersonalPortfolio(horizonYears) {
     });
   });
 
+  // r̄_g: lợi nhuận kỳ vọng trung bình cộng của các sản phẩm trong từng nhóm Loại đầu tư
+  const groupAvgReturn = {};
+  ['stocks', 'bonds', 'insurance', 'bank_deposit'].forEach(t => {
+    const rs = (AppState.investProducts || [])
+      .filter(p => p && FinancialMath.normalizeInvestmentType(p.investmentType) === t)
+      .map(p => Number(p.returnRate) || 0);
+    groupAvgReturn[t] = rs.length > 0 ? rs.reduce((s, x) => s + x, 0) / rs.length : null;
+  });
+
   const rows = [];
   for (let i = 0; i < horizon; i++) {
     const year = base.year + i;
@@ -2053,6 +2063,12 @@ function simulatePersonalPortfolio(horizonYears) {
     // Sản phẩm chưa xác định Loại đầu tư không có cột riêng: tỷ trọng chia theo phần số dư đã xác định loại
     const knownTotal = b.total - b.byType.unknown;
     const pct = k => (hasData && knownTotal > 1e-9 ? (b.byType[k] / knownTotal) * 100 : null);
+    // V(y) = Σ_g w_g(y) × r̄_g
+    let groupReturn = null;
+    if (hasData && knownTotal > 1e-9) {
+      groupReturn = ['stocks', 'bonds', 'insurance', 'bank_deposit']
+        .reduce((s, t) => s + (groupAvgReturn[t] === null ? 0 : (b.byType[t] / knownTotal) * groupAvgReturn[t]), 0);
+    }
     rows.push({
       year,
       age: base.age === null ? null : base.age + i,
@@ -2064,7 +2080,8 @@ function simulatePersonalPortfolio(horizonYears) {
       bonds: pct('bonds'),
       insurance: pct('insurance'),
       bank_deposit: pct('bank_deposit'),
-      expectedReturn: hasData ? b.retNumerator / b.total : null
+      expectedReturn: hasData ? b.retNumerator / b.total : null,
+      groupReturn
     });
   }
 
@@ -2076,6 +2093,14 @@ function simulatePersonalPortfolio(horizonYears) {
     issues,
     status: !anyData ? 'insufficient' : (issues.length > 0 ? 'partial' : 'ok')
   };
+}
+
+// Mức sinh lời trung bình ước tính (%): trung bình V(y) qua các năm có số dư; null nếu chưa đủ dữ liệu
+function getAverageExpectedReturnPct() {
+  const vs = simulatePersonalPortfolio(30).rows
+    .filter(r => r.hasData && r.groupReturn !== null && r.groupReturn !== undefined)
+    .map(r => r.groupReturn);
+  return vs.length > 0 ? vs.reduce((s, x) => s + x, 0) / vs.length : null;
 }
 
 // Mô tả tiếng Việt về các vấn đề dữ liệu khiến kết quả danh mục chưa đầy đủ
@@ -2941,14 +2966,10 @@ function renderDashboardAllCharts() {
       : totalVal.toLocaleString('vi-VN', { maximumFractionDigits: 1 });
   }
 
-  const p30 = typeof getPortfolio30YrData === 'function' ? getPortfolio30YrData() : [];
-  let avgP30Ret = 0;
-  const p30WithData = (p30 || []).filter(p => p && p.ret !== null && p.ret !== undefined);
-  if (p30WithData.length > 0) {
-    avgP30Ret = p30WithData.reduce((s, p) => s + Number(p.ret), 0) / p30WithData.length;
-  }
+  // Mức sinh lời trung bình ước tính = trung bình V(y) các năm đã có số dư (V = Σ tỷ trọng nhóm × lợi nhuận TB nhóm)
+  const avgP30Ret = getAverageExpectedReturnPct();
   if (avgRetEl) {
-    avgRetEl.textContent = p30WithData.length > 0 ? (avgP30Ret.toFixed(2).replace('.', ',') + '%') : '—';
+    avgRetEl.textContent = avgP30Ret === null ? '—' : (avgP30Ret.toFixed(2).replace('.', ',') + '%');
   }
 
   const cvTcPie = document.getElementById('chart-dashboard-tc-goals-pie');
@@ -3029,6 +3050,7 @@ function renderDashboardAllCharts() {
     const savingNeeds = [];
     const incomeNeeds = [];
     const expectedReturns = [];
+    const p30Rows = simulatePersonalPortfolio(30).rows;
 
     for (let i = 0; i < numYears; i++) {
       const yr = startYr + i;
@@ -3045,8 +3067,9 @@ function renderDashboardAllCharts() {
       const inc = getMatrixIncomeNeed(i);
       incomeNeeds.push(inc === null ? null : Number(inc.toFixed(1)));
 
-      const pRow = (p30 && p30[i]) || (p30 && p30.find(p => p.age === age));
-      const retVal = (pRow && pRow.ret !== null && pRow.ret !== undefined) ? Number(pRow.ret) : null;
+      // Đường mức sinh lời cùng thuật toán với số trung bình: V(y) = Σ tỷ trọng nhóm × lợi nhuận TB nhóm
+      const pRow = p30Rows[i];
+      const retVal = (pRow && pRow.groupReturn !== null && pRow.groupReturn !== undefined) ? Number(pRow.groupReturn) : null;
       expectedReturns.push(retVal === null ? null : Number(retVal.toFixed(2)));
     }
 

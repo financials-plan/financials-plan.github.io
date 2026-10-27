@@ -31,7 +31,7 @@ const FN_NAMES = [
   "computeGoalPortfolioMetrics", "computeGoalPMT", "calculateCollegeGoal", "calculateRetirementGoal",
   "calculateMonthlyNeed", "getTargetSavingsRatePct", "getEffectiveSavingsRateRatio",
   "computeIncomeNeedForGoalSavings", "getMatrixIncomeNeed", "simulatePersonalPortfolio",
-  "describePortfolioIssues", "getPortfolioAllocationAtAge", "getPortfolio30YrData", "calculateAgeMilestones",
+  "describePortfolioIssues", "getPortfolioAllocationAtAge", "getPortfolio30YrData", "calculateAgeMilestones", "getAverageExpectedReturnPct",
   "yearsToGoalDate", "inflateToGoalDate", "accumulationMonthsOf", "singleRateOfGoal", "applyFixedGoalValEdit",
   "migrateLegacyRetirementReserve"
 ].filter(n => new RegExp("^function " + n + "\\(", "m").test(src));
@@ -43,7 +43,7 @@ function makeEnv(state) {
     src.match(/const INFLATION_ENABLED = [^;]+;/)[0],
     ...FN_NAMES.map(n => extractTopLevel(src, "function " + n + "(")),
     "return { FinancialMath, calculateMonthlyNeed, simulatePersonalPortfolio, getPortfolio30YrData, getMatrixIncomeNeed, " +
-    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge };"
+    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge, getAverageExpectedReturnPct };"
   ].join("\n");
   const factory = new Function("AppState", "window", code);
   return factory(state, {});
@@ -501,4 +501,31 @@ test("S. Quỹ dự phòng: mục tiêu = số tháng dự phòng × chi phí m�
   assert.strictEqual(g.val, 126);
   assert.strictEqual(g.calculatedTargetFV, 126);
   assert.ok(g.monthly > 0 && g.monthly * 36 < 126, "khoản góp hằng tháng nhỏ hơn mục tiêu / số tháng góp nhờ lãi");
+});
+
+test("T. Mức sinh lời trung bình ở dashboard = trung bình V(y) = Σ tỷ trọng nhóm × lợi nhuận TB nhóm", () => {
+  // Nhóm: cổ phiếu (12% và 15% -> TB 13,5%), tiền gửi (5%)
+  const g = goal("Quỹ giữ vốn", {
+    val: 300, start: 2030, end: 2032, fundUsage: "hold",
+    allocProducts: [
+      { prodName: "ETF A", weight: 50, _explicitSelected: true },
+      { prodName: "Tiền gửi C", weight: 50, _explicitSelected: true },
+      { prodName: "", weight: 0 }
+    ]
+  });
+  const env = makeEnv(baseState({ tcGoals: [g] }));
+  const r = 0.5 * 12 + 0.5 * 5; // lãi mục tiêu
+  const i = r / 1200, N = 36;
+  const A = 300 * i / (Math.pow(1 + i, N) - 1);
+  const rStock = (12 + 15) / 2, rBank = 5;
+  let bs = 0, bb = 0, sum = 0, k = 0;
+  for (let y = 2030; y <= 2059; y++) {
+    if (y <= 2032) { bs = bs * 1.12 + 12 * A * 0.5; bb = bb * 1.05 + 12 * A * 0.5; }
+    else { bs *= 1.12; bb *= 1.05; }
+    sum += (bs * rStock + bb * rBank) / (bs + bb);
+    k++;
+  }
+  assert.strictEqual(k, 30);
+  assert.ok(Math.abs(env.getAverageExpectedReturnPct() - sum / k) < 1e-9);
+  assert.strictEqual(makeEnv(baseState()).getAverageExpectedReturnPct(), null, "chưa có mục tiêu -> chưa có số");
 });
