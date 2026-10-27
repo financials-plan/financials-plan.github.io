@@ -1136,28 +1136,37 @@ const FinancialMath = {
     return (Math.pow(1 + r, n) - 1) / r;
   },
 
-  // Test C, Test D, Test M: Investment PMT (một mức lợi suất hiệu dụng năm cho toàn mục tiêu)
-  // A = max(0, (S - B0*(1+r)^N) / F(N)), khoản góp cuối tháng.
+  // Quy ước tích lũy (thống nhất cho công thức khoản góp VÀ bảng số dư): khoản góp hằng tháng A được góp dồn
+  // 12A vào CUỐI mỗi năm, lãi nhập vốn theo NĂM với lợi suất hiệu dụng năm R.
+  // Hệ số tích lũy năm F(Y) = ((1+R)^Y - 1) / R (R = 0 -> Y), Y = số tháng / 12.
+  annualFactor: function(R, years) {
+    if (!isFinite(R) || years <= 0) return 0;
+    if (Math.abs(R) < 1e-12) return years;
+    return (Math.pow(1 + R, years) - 1) / R;
+  },
+
+  // Test C, Test D, Test M: khoản góp hằng tháng cho một mức lợi suất hiệu dụng năm
+  // A = max(0, (S - B0 (1+R)^Y) / (12 F(Y)))
   calculateInvestmentPMT: function(targetFV, initialBalance, annualReturnPct, totalPeriods) {
     const F = Math.max(0, this.safeNumber(targetFV, 0));
     const B0 = Math.max(0, this.safeNumber(initialBalance, 0));
     const n = Math.max(0, Math.round(this.safeNumber(totalPeriods, 0)));
-    const r = this.monthlyRateFromAnnualPct(annualReturnPct);
+    const R = this.safeNumber(annualReturnPct, 0) / 100;
 
-    if (F <= 0 || n <= 0 || !isFinite(r)) return 0;
+    if (F <= 0 || n <= 0 || R <= -1) return 0;
+    const years = n / 12;
 
     // Test D: Nếu số dư hiện tại sau tăng trưởng đủ đạt hoặc vượt mục tiêu, PMT = 0 (không âm)
-    const paidFV = B0 * Math.pow(1 + r, n);
-    const deficitFV = Math.max(0, F - paidFV);
+    const deficitFV = Math.max(0, F - B0 * Math.pow(1 + R, years));
     if (deficitFV <= 0) return 0;
 
-    const pmt = deficitFV / this.annuityFactor(r, n);
+    const pmt = deficitFV / (12 * this.annualFactor(R, years));
     return (!isNaN(pmt) && isFinite(pmt) && pmt > 0) ? pmt : 0;
   },
 
   // Khoản góp cho danh mục nhiều sản phẩm, mỗi sản phẩm một lợi suất riêng.
   // products: [{ weight (%), returnRatePct, initialBalance }]; tỷ trọng phải cộng đúng 100%.
-  // A = max(0, (S - Σ B_p0 (1+r_p)^N) / Σ w_p F_p(N)).
+  // A = max(0, (S - Σ B_p0 (1+R_p)^Y) / (12 Σ w_p F_p(Y))).
   // Trả { status, pmt, ... }; pmt = null khi dữ liệu không hợp lệ (không giả vờ đã tính đúng).
   calculateMultiProductPMT: function(targetFV, products, totalPeriods) {
     const F = Math.max(0, this.safeNumber(targetFV, 0));
@@ -1173,27 +1182,28 @@ const FinancialMath = {
     if (n <= 0) {
       return { status: 'invalid_period', pmt: null, totalWeight };
     }
+    const years = n / 12;
     let initialFV = 0;
     let weightedFactor = 0;
     for (const p of products) {
-      const r = this.monthlyRateFromAnnualPct(p && p.returnRatePct);
-      if (!isFinite(r)) {
+      const R = this.safeNumber(p && p.returnRatePct, 0) / 100;
+      if (R <= -1) {
         return { status: 'invalid_rate', pmt: null, totalWeight };
       }
       const w = Math.max(0, this.safeNumber(p.weight, 0)) / 100;
       const b0 = Math.max(0, this.safeNumber(p.initialBalance, 0));
-      initialFV += b0 * Math.pow(1 + r, n);
-      weightedFactor += w * this.annuityFactor(r, n);
+      initialFV += b0 * Math.pow(1 + R, years);
+      weightedFactor += w * this.annualFactor(R, years);
     }
     if (F <= 0) {
       return { status: 'ok', pmt: 0, totalWeight, initialFV };
     }
-    const pmt = Math.max(0, (F - initialFV) / weightedFactor);
+    const pmt = Math.max(0, (F - initialFV) / (12 * weightedFactor));
     return { status: 'ok', pmt: isFinite(pmt) ? pmt : null, totalWeight, initialFV };
   },
 
   // Mô phỏng số dư cuối năm của từng sản phẩm trong MỘT mục tiêu:
-  // B_m = B_(m-1) (1 + r_p) + A * w_p (góp cuối tháng) trong các năm [startYear, endYear].
+  // B_năm = B_(năm-1) (1 + R_p) + 12 A w_p trong các năm [startYear, endYear] (khớp công thức khoản góp).
   // Hết endYear: nếu spendAtEnd thì toàn bộ vốn được chi (số dư = 0 trong trạng thái cuối kỳ),
   // ngược lại vốn tiếp tục sinh lời, không góp thêm. Trả snapshot cuối mỗi năm đến lastYear.
   simulateGoalYearEndBalances: function(cfg) {
@@ -1206,8 +1216,8 @@ const FinancialMath = {
     const prods = Array.isArray(cfg.products) ? cfg.products : [];
     if (!(start > 0) || end < start || last < start || prods.length === 0) return empty;
 
-    const rm = prods.map(p => this.monthlyRateFromAnnualPct(p && p.returnRatePct));
-    if (rm.some(x => !isFinite(x))) return empty;
+    const R = prods.map(p => this.safeNumber(p && p.returnRatePct, 0) / 100);
+    if (R.some(x => x <= -1)) return empty;
     const w = prods.map(p => Math.max(0, this.safeNumber(p && p.weight, 0)) / 100);
     const bal = prods.map(p => Math.max(0, this.safeNumber(p && p.initialBalance, 0)));
     const years = {};
@@ -1215,13 +1225,11 @@ const FinancialMath = {
 
     for (let y = start; y <= last; y++) {
       const active = (y <= end);
-      for (let m = 0; m < 12; m++) {
-        for (let i = 0; i < bal.length; i++) {
-          bal[i] = bal[i] * (1 + rm[i]) + (active ? A * w[i] : 0);
-        }
+      for (let i = 0; i < bal.length; i++) {
+        bal[i] = bal[i] * (1 + R[i]) + (active ? 12 * A * w[i] : 0);
       }
       if (y === end && cfg.spendAtEnd === true) {
-        withdrawn[y] = bal.reduce((s, v) => s + v, 0);
+        withdrawn[y] = bal.reduce((t, v) => t + v, 0);
         for (let i = 0; i < bal.length; i++) bal[i] = 0;
       }
       years[y] = bal.slice();
@@ -1377,10 +1385,11 @@ const FinancialMath = {
     if (!name) return '';
 
     const matched = [];
-    if (/\b(co phieu|etf|stock|equity)\b/.test(name)) matched.push('stocks');
-    if (/\b(trai phieu|bond)\b/.test(name)) matched.push('bonds');
+    // Mã quỹ/sản phẩm được xếp nhóm theo báo cáo Phần 1: DCBC, DCDS = quỹ cổ phiếu; DCBF = quỹ trái phiếu; Finhay = tiền gửi
+    if (/\b(co phieu|etf|stock|equity|dcbc|dcds)\b/.test(name)) matched.push('stocks');
+    if (/\b(trai phieu|bond|dcbf)\b/.test(name)) matched.push('bonds');
     if (/\b(bao hiem|bhnt|insurance)\b/.test(name)) matched.push('insurance');
-    if (/\b(tien gui|tiet kiem|ngan hang|deposit)\b/.test(name)) matched.push('bank_deposit');
+    if (/\b(tien gui|tiet kiem|ngan hang|deposit|finhay)\b/.test(name)) matched.push('bank_deposit');
     return matched.length === 1 ? matched[0] : '';
   },
 

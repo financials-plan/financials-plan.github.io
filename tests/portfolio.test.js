@@ -52,14 +52,14 @@ function makeEnv(state) {
 // --- Phép tính độc lập, không dùng FinancialMath ---
 const effMonthly = (R) => Math.pow(1 + R / 100, 1 / 12) - 1;
 function refSim(products, A, months, B0 = 0) {
-  // products: [{w (0..1), R(%)}], khoản góp cuối tháng
+  // products: [{w (0..1), R(%)}]; mỗi năm góp dồn 12A vào cuối năm, lãi nhập vốn theo năm
   return products.map(p => {
-    const r = effMonthly(p.R);
     let b = B0 * p.w;
-    for (let m = 0; m < months; m++) b = b * (1 + r) + A * p.w;
+    for (let y = 0; y < months / 12; y++) b = b * (1 + p.R / 100) + 12 * A * p.w;
     return b;
   });
 }
+const annF = (R, Y) => (R === 0 ? Y : (Math.pow(1 + R / 100, Y) - 1) / (R / 100));
 
 test("A. Không lợi suất, không số dư: 120 triệu / 12 tháng = 10 triệu/tháng", () => {
   const { FinancialMath } = makeEnv({});
@@ -78,13 +78,11 @@ test("B. Số dư đầu kỳ 60 triệu, lợi suất 0%: 5 triệu/tháng", ()
 test("B2. Số dư ban đầu có sinh lãi: khoản góp nhỏ hơn cách trừ thẳng số dư", () => {
   const { FinancialMath } = makeEnv({});
   const pmt = FinancialMath.calculateInvestmentPMT(1000, 400, 10, 24);
-  const r = effMonthly(10);
-  const expected = (1000 - 400 * Math.pow(1 + r, 24)) / ((Math.pow(1 + r, 24) - 1) / r);
+  const expected = (1000 - 400 * Math.pow(1.1, 2)) / (12 * annF(10, 2));
   assert.ok(Math.abs(pmt - expected) < 1e-9, `${pmt} vs ${expected}`);
-  const naive = (1000 - 400) / ((Math.pow(1 + r, 24) - 1) / r);
+  const naive = (1000 - 400) / (12 * annF(10, 2));
   assert.ok(pmt < naive);
   assert.strictEqual(FinancialMath.calculateInvestmentPMT(100, 120, 5, 12), 0);
-  assert.ok(Math.abs(Math.pow(1 + effMonthly(14), 12) - 1.14) < 1e-12, "r tháng là hiệu dụng năm quy đổi");
 });
 
 test("C. Ba sản phẩm 20/30/50, 14% / 9,8% / 5% hiệu dụng, 48 tháng: tổng giá trị tương lai = mục tiêu", () => {
@@ -94,8 +92,8 @@ test("C. Ba sản phẩm 20/30/50, 14% / 9,8% / 5% hiệu dụng, 48 tháng: t�
   const res = FinancialMath.calculateMultiProductPMT(S, prods.map(p => ({ weight: p.w * 100, returnRatePct: p.R, initialBalance: 0 })), 48);
   assert.strictEqual(res.status, "ok");
   // kỳ vọng độc lập: A = S / Σ w F_p
-  const denom = prods.reduce((s, p) => { const r = effMonthly(p.R); return s + p.w * (Math.pow(1 + r, 48) - 1) / r; }, 0);
-  assert.ok(Math.abs(res.pmt - S / denom) < 1e-9);
+  const denom = prods.reduce((s, p) => s + p.w * annF(p.R, 4), 0);
+  assert.ok(Math.abs(res.pmt - S / (12 * denom)) < 1e-9);
   const total = refSim(prods, res.pmt, 48).reduce((a, b) => a + b, 0);
   assert.ok(Math.abs(total - S) < 1e-6, `tổng FV ${total}`);
   // khác khoản góp tính bằng lợi suất bình quân (cách cũ)
@@ -143,8 +141,10 @@ test("E. Loại đầu tư: chuẩn hóa, tự nhận diện chỉ khi rõ ràng
   assert.strictEqual(FinancialMath.normalizeInvestmentType("bank_deposit"), "bank_deposit");
   assert.strictEqual(FinancialMath.normalizeInvestmentType("ins"), "insurance");
   assert.strictEqual(FinancialMath.normalizeInvestmentType("abc"), "");
-  assert.strictEqual(FinancialMath.inferInvestmentType("Finhay tích lũy"), "", "Finhay không tự là tiền gửi");
-  assert.strictEqual(FinancialMath.inferInvestmentType("Chứng chỉ quỹ mở (DCDS / DCBC)"), "");
+  assert.strictEqual(FinancialMath.inferInvestmentType("Finhay"), "bank_deposit", "Finhay thuộc Tiền gửi theo báo cáo");
+  assert.strictEqual(FinancialMath.inferInvestmentType("DCDS"), "stocks");
+  assert.strictEqual(FinancialMath.inferInvestmentType("DCBF"), "bonds");
+  assert.strictEqual(FinancialMath.inferInvestmentType("Sản phẩm 1"), "");
   assert.strictEqual(FinancialMath.inferInvestmentType("Trái phiếu Techcombank"), "bonds");
   assert.strictEqual(FinancialMath.inferInvestmentType("Gửi tiết kiệm ngân hàng kỳ hạn"), "bank_deposit");
   assert.strictEqual(FinancialMath.inferInvestmentType("ETF VN30"), "stocks");
@@ -201,10 +201,9 @@ test("F. Mô phỏng danh mục: tỷ trọng và lợi suất theo số dư, m�
   const A1 = env.calculateMonthlyNeed(spend);
   const A2 = env.calculateMonthlyNeed(hold);
   const p1 = [{ w: 0.5, R: 12 }, { w: 0.5, R: 5 }];
-  const den1 = p1.reduce((s, p) => { const r = effMonthly(p.R); return s + p.w * (Math.pow(1 + r, 36) - 1) / r; }, 0);
-  assert.ok(Math.abs(A1 - 600 / den1) < 1e-9, "khoản góp mục tiêu 1");
-  const r2 = effMonthly(15);
-  const exA2 = (1000 - 100 * Math.pow(1 + r2, 60)) / ((Math.pow(1 + r2, 60) - 1) / r2);
+  const den1 = p1.reduce((s, p) => s + p.w * annF(p.R, 3), 0);
+  assert.ok(Math.abs(A1 - 600 / (12 * den1)) < 1e-9, "khoản góp mục tiêu 1");
+  const exA2 = (1000 - 100 * Math.pow(1.15, 5)) / (12 * annF(15, 5));
   assert.ok(Math.abs(A2 - exA2) < 1e-9, "khoản góp mục tiêu 2");
 
   const bal = (prods, A, months, B0) => refSim(prods, A, months, B0);
@@ -229,7 +228,7 @@ test("F. Mô phỏng danh mục: tỷ trọng và lợi suất theo số dư, m�
   // Sau 2034: giữ vốn, không góp thêm, tiếp tục sinh lời
   const row2036 = sim.rows[6];
   const at2034 = bal([{ w: 1, R: 15 }], A2, 60, 100)[0];
-  assert.ok(Math.abs(row2036.balance - at2034 * Math.pow(1 + r2, 24)) < 1e-6);
+  assert.ok(Math.abs(row2036.balance - at2034 * Math.pow(1.15, 2)) < 1e-6);
   assert.ok(Math.abs(at2034 - 1000) < 1e-6, "đạt đúng mục tiêu tại hạn");
 
   // Mốc tuổi lấy tuổi hiện tại (không hardcode 21/2026)
@@ -312,15 +311,15 @@ test("I. Dữ liệu cũ chưa có investmentType: giữ nguyên, tự nhận di
   env.normalizeInvestProducts(legacy);
   assert.strictEqual(legacy[0].investmentType, "stocks");
   assert.strictEqual(legacy[0].investmentTypeAuto, true);
-  assert.strictEqual(legacy[1].investmentType, "", "Finhay không bị gán Tiền gửi");
+  assert.strictEqual(legacy[1].investmentType, "bank_deposit");
   assert.strictEqual(legacy[2].investmentType, "insurance");
   assert.strictEqual(legacy[2].investmentTypeAuto, undefined);
   assert.strictEqual(legacy.length, 3);
   assert.strictEqual(legacy[1].returnRate, 6);
   const reloaded = JSON.parse(JSON.stringify(legacy));
-  assert.deepStrictEqual(reloaded.map(p => p.investmentType), ["stocks", "", "insurance"]);
+  assert.deepStrictEqual(reloaded.map(p => p.investmentType), ["stocks", "bank_deposit", "insurance"]);
   env.normalizeInvestProducts(reloaded);
-  assert.deepStrictEqual(reloaded.map(p => p.investmentType), ["stocks", "", "insurance"]);
+  assert.deepStrictEqual(reloaded.map(p => p.investmentType), ["stocks", "bank_deposit", "insurance"]);
 });
 
 test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script.js", () => {
@@ -362,8 +361,7 @@ test("K. Hưu trí: số kỳ theo NĂM, chưa tính lạm phát, lợi suất g
   for (let t = 1; t <= 2.5; t++) wrong += first / Math.pow(1.065, t);
   assert.ok(ret.val > wrong * 5);
   // khoản góp khớp mục tiêu theo lợi suất sản phẩm 5%
-  const r = effMonthly(5), n = 132;
-  const A = ret.calculatedTargetFV / ((Math.pow(1 + r, n) - 1) / r);
+  const A = ret.calculatedTargetFV / (12 * annF(5, 11));
   assert.ok(Math.abs(ret.monthly - A) < 1e-6);
 });
 
@@ -404,4 +402,30 @@ test("N. Hưu trí dữ liệu cũ: không tự ghi đè mục tiêu đã nhập
   env.calculateMonthlyNeed(ret);
   assert.strictEqual(ret.val, 500);
   assert.strictEqual(ret.calculatedTargetFV, 500);
+});
+
+test("O. Khớp ví dụ báo cáo (tuổi 26, mục tiêu Đám cưới năm thứ 5): góp 12A cuối năm, lãi nhập vốn theo năm", () => {
+  const { FinancialMath } = makeEnv({});
+  const sim = FinancialMath.simulateGoalYearEndBalances({
+    startYear: 2024, endYear: 2030, lastYear: 2028, monthlyContribution: 1.6066, spendAtEnd: true,
+    products: [
+      { weight: 30, returnRatePct: 15, initialBalance: 0 },
+      { weight: 50, returnRatePct: 10.5, initialBalance: 0 },
+      { weight: 20, returnRatePct: 5, initialBalance: 0 }
+    ]
+  });
+  const b = sim.years[2028];
+  assert.ok(Math.abs(b[0] - 38.99) < 0.02, "ETFFINLEAD " + b[0]);
+  assert.ok(Math.abs(b[1] - 59.44) < 0.02, "TP Techcombank " + b[1]);
+  assert.ok(Math.abs(b[2] - 21.31) < 0.02, "Tiền gửi " + b[2]);
+  // công thức khoản góp và bảng số dư dùng chung một quy ước: đạt đúng mục tiêu
+  const S = 200;
+  const pm = FinancialMath.calculateMultiProductPMT(S, [
+    { weight: 30, returnRatePct: 15, initialBalance: 0 }, { weight: 50, returnRatePct: 10.5, initialBalance: 0 }, { weight: 20, returnRatePct: 5, initialBalance: 0 }
+  ], 84).pmt;
+  const sim2 = FinancialMath.simulateGoalYearEndBalances({
+    startYear: 2024, endYear: 2030, lastYear: 2030, monthlyContribution: pm, spendAtEnd: false,
+    products: [{ weight: 30, returnRatePct: 15 }, { weight: 50, returnRatePct: 10.5 }, { weight: 20, returnRatePct: 5 }]
+  });
+  assert.ok(Math.abs(sim2.years[2030].reduce((a, v) => a + v, 0) - S) < 1e-9);
 });
