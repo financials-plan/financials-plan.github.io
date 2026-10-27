@@ -382,18 +382,36 @@
       let allocIns = 12;
       let allocCash = 18;
 
-      let studentPlan = null;
-      try {
-        const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
-        if (raw) studentPlan = JSON.parse(raw);
-      } catch (e) {}
+      let studentPlan = m.plan || null;
+      if (!studentPlan) {
+        try {
+          const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
+          if (raw) studentPlan = JSON.parse(raw);
+        } catch (e) {}
+      }
 
       if (studentPlan) {
+        const actualPlan = (studentPlan && studentPlan.plan) ? studentPlan.plan : ((studentPlan && studentPlan.data) ? studentPlan.data : ((studentPlan && studentPlan.state) ? studentPlan.state : studentPlan));
         let mCount = 0;
-        if (studentPlan.ho_ten || studentPlan.currentAge > 0 || studentPlan.monthlyIncome > 0) mCount++;
-        if (studentPlan.monthlyDetails && Object.keys(studentPlan.monthlyDetails).length > 0) mCount++;
-        if (Array.isArray(studentPlan.personalGoals) && studentPlan.personalGoals.length > 0) mCount++;
-        if (Array.isArray(studentPlan.careerMilestones) && studentPlan.careerMilestones.length > 0) mCount++;
+
+        const hasExpenses = Array.isArray(actualPlan.expenses) && actualPlan.expenses.length > 0;
+        const hasIncomeList = Array.isArray(actualPlan.incomeList) && actualPlan.incomeList.length > 0;
+        const hasProfile = Boolean(actualPlan.ho_ten || (actualPlan.currentAge && actualPlan.currentAge !== 21) || actualPlan.monthlyIncome > 0 || actualPlan.incomeMonthly > 0 || (Array.isArray(actualPlan.planList) && actualPlan.planList.length > 0));
+        if (hasExpenses || hasIncomeList || hasProfile) mCount++;
+
+        const hasMonthlyDetails = actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === "object" && Object.values(actualPlan.monthlyDetails).some(m => m && ((Array.isArray(m.incomes) && m.incomes.length > 0) || (Array.isArray(m.expenses) && m.expenses.length > 0) || typeof m === "number" || m.plan > 0 || m.actual > 0));
+        const hasPlanTables = (Array.isArray(actualPlan.planIncome) && actualPlan.planIncome.length > 0) || (Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0);
+        if (hasMonthlyDetails || hasPlanTables) mCount++;
+
+        const goalsList = Array.isArray(actualPlan.tcGoals) ? actualPlan.tcGoals : (Array.isArray(actualPlan.personalGoals) ? actualPlan.personalGoals : (Array.isArray(actualPlan.goals) ? actualPlan.goals : []));
+        if (goalsList.length > 0) mCount++;
+
+        const hasCareerDetails = Array.isArray(actualPlan.careerDetailList) && actualPlan.careerDetailList.length > 0;
+        const hasMilestonesStore = actualPlan.milestonesStore && typeof actualPlan.milestonesStore === "object" && Object.keys(actualPlan.milestonesStore).length > 0;
+        const hasCareerMilestones = Array.isArray(actualPlan.careerMilestones) && actualPlan.careerMilestones.length > 0;
+        const hasRouteOverrides = actualPlan.careerRouteOverrides && typeof actualPlan.careerRouteOverrides === "object" && Object.keys(actualPlan.careerRouteOverrides).length > 0;
+        const hasInvestProducts = Array.isArray(actualPlan.investProducts) && actualPlan.investProducts.length > 0;
+        if (hasCareerDetails || hasMilestonesStore || hasCareerMilestones || hasRouteOverrides || hasInvestProducts) mCount++;
 
         if (mCount >= 4) {
           percent = 100;
@@ -404,36 +422,47 @@
         } else if (mCount === 2) {
           percent = 50;
           statusLabel = "Đang lập lộ trình";
-        } else {
-          percent = 30;
+        } else if (mCount === 1) {
+          percent = 25;
           statusLabel = "Mới bắt đầu";
+        } else {
+          percent = 0;
+          statusLabel = "Chưa nộp bài làm";
         }
 
-        const inc = Number(studentPlan.monthlyIncome || studentPlan.incomeMonthly || 0);
+        const inc = Number(actualPlan.monthlyIncome || actualPlan.incomeMonthly || (Array.isArray(actualPlan.planIncome) ? actualPlan.planIncome.reduce((s, x) => s + (Number(x.plan) || 0), 0) : 0));
         let exp = 0;
-        if (studentPlan.monthlyDetails && typeof studentPlan.monthlyDetails === "object") {
-          Object.values(studentPlan.monthlyDetails).forEach(v => {
+        if (actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === "object") {
+          Object.values(actualPlan.monthlyDetails).forEach(v => {
             if (typeof v === "number") exp += v;
             else if (v && typeof v.plan === "number") exp += v.plan;
+            else if (v && Array.isArray(v.expenses)) exp += v.expenses.reduce((s, x) => s + (Number(x.amount || x.plan || x.val) || 0), 0);
           });
+        }
+        if (exp === 0 && Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0) {
+          exp = actualPlan.planExpense.reduce((s, x) => s + (Number(x.plan) || 0), 0);
         }
         if (exp === 0 && inc > 0) exp = inc * 0.65;
         if (inc > 0) {
           netCashflow = Math.round((inc - exp) * 10) / 10;
           savingsRate = Math.round(((inc - exp) / inc) * 100);
+          if (savingsRate < 0) savingsRate = 0;
         }
-        if (studentPlan.targetSavingsRate) {
-          savingsRate = Number(studentPlan.targetSavingsRate);
+        if (actualPlan.targetSavingsRate) {
+          savingsRate = Number(actualPlan.targetSavingsRate);
         }
-        if (studentPlan.portfolioAllocation) {
-          allocStocks = Number(studentPlan.portfolioAllocation.stocks || allocStocks);
-          allocBonds = Number(studentPlan.portfolioAllocation.bonds || allocBonds);
-          allocIns = Number(studentPlan.portfolioAllocation.insurance || allocIns);
-          allocCash = Number(studentPlan.portfolioAllocation.cash || allocCash);
+        if (actualPlan.portfolioAllocation) {
+          allocStocks = Number(actualPlan.portfolioAllocation.stocks || allocStocks);
+          allocBonds = Number(actualPlan.portfolioAllocation.bonds || allocBonds);
+          allocIns = Number(actualPlan.portfolioAllocation.insurance || allocIns);
+          allocCash = Number(actualPlan.portfolioAllocation.cash || allocCash);
         }
       } else if (m.status === "approved") {
-        percent = 50;
-        statusLabel = "Đang lập lộ trình";
+        percent = 0;
+        statusLabel = "Chưa nộp bài làm";
+      } else {
+        percent = 0;
+        statusLabel = "Chờ duyệt";
       }
 
       let colorGrad = "linear-gradient(90deg, #ef4444 0%, #f87171 100%)";

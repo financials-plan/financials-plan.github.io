@@ -924,7 +924,71 @@ function createEmptyAppState() {
 const AppState = createEmptyAppState();
 window.AppState = AppState;
 
+function assertWritePermission(actionDescription = "Thao tác") {
+  if (window.isReadOnlyStudentView) {
+    console.warn(`[ReadOnlyGuard] Chặn ${actionDescription}: Đang ở chế độ xem bài học viên chỉ đọc.`);
+    if (typeof showToast === 'function') {
+      showToast(`Không thể ${actionDescription.toLowerCase()}: Đang ở Chế độ Xem bài học viên (Chỉ đọc).`, "error");
+    }
+    return false;
+  }
+  return true;
+}
+window.assertWritePermission = assertWritePermission;
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', function(e) {
+    if (!window.isReadOnlyStudentView) return;
+    const target = e.target;
+    const btn = target.closest('button, a, [onclick], .btn-table-del, .btn-del-row, .btn-delete');
+    if (btn) {
+      const oc = btn.getAttribute('onclick') || '';
+      if (/delete|remove|clear|reset|add|update/i.test(oc) && !/exitStudentPlanReadOnly|close|switchTab|download|export|view|inspect/i.test(oc)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        assertWritePermission("Thực hiện thay đổi");
+        return false;
+      }
+      if (btn.classList.contains('btn-table-del') || btn.classList.contains('btn-del-row') || btn.classList.contains('btn-delete') || btn.id === 'btn-reset-data' || btn.id === 'btn-auto-fill') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        assertWritePermission("Xóa hoặc thay đổi dữ liệu");
+        return false;
+      }
+    }
+  }, true);
+
+  document.addEventListener('keydown', function(e) {
+    if (!window.isReadOnlyStudentView) return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      assertWritePermission("Lưu dữ liệu");
+      return false;
+    }
+    if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Tab') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        assertWritePermission("Chỉnh sửa ô dữ liệu");
+        return false;
+      }
+    }
+  }, true);
+
+  document.addEventListener('beforeinput', function(e) {
+    if (!window.isReadOnlyStudentView) return;
+    if (e.target && e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      assertWritePermission("Chỉnh sửa nội dung");
+      return false;
+    }
+  }, true);
+}
+
 window.resetAppStateToEmpty = function() {
+  if (!assertWritePermission("Đặt lại toàn bộ dữ liệu")) return;
   const fresh = createEmptyAppState();
   Object.keys(fresh).forEach(k => {
     AppState[k] = fresh[k];
@@ -3039,18 +3103,21 @@ window.renderAll = function() {
 };
 
 window.addExpenseRow = function() {
+  if (!assertWritePermission("Thêm dòng chi tiêu")) return;
   AppState.expenses.push(`Chi tiêu mới ${AppState.expenses.length + 1}`);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.deleteExpenseItem = function(idx) {
+  if (!assertWritePermission("Xóa mục chi tiêu")) return;
   AppState.expenses.splice(idx, 1);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.updateExpenseItem = function(idx, val) {
+  if (!assertWritePermission("Cập nhật chi tiêu")) return;
   const oldName = AppState.expenses[idx];
   const newName = (val || '').trim();
   if (!newName) {
@@ -3078,18 +3145,21 @@ window.updateExpenseItem = function(idx, val) {
 };
 
 window.addIncomeRow = function() {
+  if (!assertWritePermission("Thêm dòng thu nhập")) return;
   AppState.incomeList.push(`Nguồn thu mới ${AppState.incomeList.length + 1}`);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.deleteIncomeItem = function(idx) {
+  if (!assertWritePermission("Xóa mục thu nhập")) return;
   AppState.incomeList.splice(idx, 1);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.updateIncomeItem = function(idx, val) {
+  if (!assertWritePermission("Cập nhật thu nhập")) return;
   const oldName = AppState.incomeList[idx];
   const newName = (val || '').trim();
   if (!newName) {
@@ -3117,18 +3187,21 @@ window.updateIncomeItem = function(idx, val) {
 };
 
 window.addPlanRow = function() {
+  if (!assertWritePermission("Thêm dòng kế hoạch")) return;
   AppState.planList.push(`Kế hoạch đào tạo ${AppState.planList.length + 1}`);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.deletePlanListItem = function(idx) {
+  if (!assertWritePermission("Xóa mục kế hoạch")) return;
   AppState.planList.splice(idx, 1);
   renderSetupTables();
   syncKeywordChangesToDependentSheets();
 };
 
 window.updatePlanListItem = function(idx, val) {
+  if (!assertWritePermission("Cập nhật kế hoạch")) return;
   const oldName = AppState.planList[idx];
   const newName = (val || '').trim();
   if (!newName) {
@@ -3190,6 +3263,7 @@ function syncInvestProductsToGoals(oldProdName = null, newProdName = null) {
 }
 
 window.addInvestRow = function() {
+  if (!assertWritePermission("Thêm sản phẩm đầu tư")) return;
   AppState.investProducts.push({ name: `Sản phẩm mới ${AppState.investProducts.length + 1}`, returnRate: 10.0, risk: 8.0 });
   syncInvestProductsToGoals();
   renderSetupTables();
@@ -3200,6 +3274,7 @@ window.addInvestRow = function() {
 };
 
 window.deleteInvestItem = function(idx) {
+  if (!assertWritePermission("Xóa sản phẩm đầu tư")) return;
   AppState.investProducts.splice(idx, 1);
   syncInvestProductsToGoals();
   renderSetupTables();
@@ -3210,6 +3285,7 @@ window.deleteInvestItem = function(idx) {
 };
 
 window.updateInvestField = function(idx, field, val) {
+  if (!assertWritePermission("Cập nhật sản phẩm đầu tư")) return;
   if (!AppState.investProducts[idx]) return;
   const oldName = field === 'name' ? AppState.investProducts[idx].name : null;
   const cleanVal = field === 'name' ? (val || '').trim() : val;
@@ -3288,6 +3364,7 @@ function renderPlanTables() {
 }
 
 window.addPlanIncomeDirect = function() {
+  if (!assertWritePermission("Thêm kế hoạch thu nhập")) return;
   const firstCat = (AppState.incomeList && AppState.incomeList.length > 0) ? AppState.incomeList[0] : "Nguồn thu 1";
   AppState.planIncome.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
@@ -3296,6 +3373,7 @@ window.addPlanIncomeDirect = function() {
 };
 
 window.deletePlanIncRow = function(idx) {
+  if (!assertWritePermission("Xóa kế hoạch thu nhập")) return;
   AppState.planIncome.splice(idx, 1);
   renderPlanTables();
   renderReconciliationTable(AppState.currentMonth);
@@ -3303,6 +3381,7 @@ window.deletePlanIncRow = function(idx) {
 };
 
 window.addPlanExpenseDirect = function() {
+  if (!assertWritePermission("Thêm kế hoạch chi tiêu")) return;
   const firstCat = (AppState.expenses && AppState.expenses.length > 0) ? AppState.expenses[0] : "Chi tiêu 1";
   AppState.planExpense.push({ name: firstCat, plan: 0.0, note: "", analysis: "" });
   renderPlanTables();
@@ -3311,6 +3390,7 @@ window.addPlanExpenseDirect = function() {
 };
 
 window.deletePlanExpRow = function(idx) {
+  if (!assertWritePermission("Xóa kế hoạch chi tiêu")) return;
   AppState.planExpense.splice(idx, 1);
   renderPlanTables();
   renderReconciliationTable(AppState.currentMonth);
@@ -4049,6 +4129,7 @@ function renderReconciliationTable(m) {
 }
 
 window.addMonthDetailIncomeRow = function() {
+  if (!assertWritePermission("Thêm dòng thu nhập chi tiết")) return;
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
@@ -4070,6 +4151,7 @@ window.addMonthDetailIncomeRow = function() {
 };
 
 window.deleteMonthIncomeRow = function(m, i) {
+  if (!assertWritePermission("Xóa dòng thu nhập chi tiết")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes) {
     AppState.monthlyDetails[m].incomes.splice(i, 1);
     renderMonthView(m);
@@ -4078,6 +4160,7 @@ window.deleteMonthIncomeRow = function(m, i) {
 };
 
 window.addMonthDetailExpenseRow = function() {
+  if (!assertWritePermission("Thêm dòng chi tiêu chi tiết")) return;
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
@@ -4099,6 +4182,7 @@ window.addMonthDetailExpenseRow = function() {
 };
 
 window.deleteMonthExpenseRow = function(m, i) {
+  if (!assertWritePermission("Xóa dòng chi tiêu chi tiết")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].expenses) {
     AppState.monthlyDetails[m].expenses.splice(i, 1);
     renderMonthView(m);
@@ -4397,6 +4481,7 @@ window.updateMonthLearningField = function(m, i, field, value) {
 };
 
 window.addMonthLearningRow = function() {
+  if (!assertWritePermission("Thêm dòng đào tạo")) return;
   const m = AppState.currentMonth || 1;
   const y = AppState.currentYear || 2026;
   const mStr = String(m).padStart(2, '0');
@@ -4418,6 +4503,7 @@ window.addMonthLearningRow = function() {
 };
 
 window.deleteMonthLearningRow = function(m, i) {
+  if (!assertWritePermission("Xóa dòng đào tạo")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].learningDetails) {
     AppState.monthlyDetails[m].learningDetails.splice(i, 1);
     renderMonthView(m);
@@ -4624,6 +4710,7 @@ function renderYearEndBalanceSheet() {
 }
 
 window.addBalanceSheetAssetRow = function(sourceType = 'keyword') {
+  if (!assertWritePermission("Thêm tài sản bảng cân đối")) return;
   ensureYearEndBalanceSheet();
   const prods = AppState.investProducts || [];
   let defaultName = "Tài sản mới";
@@ -4640,6 +4727,7 @@ window.addBalanceSheetAssetRow = function(sourceType = 'keyword') {
 };
 
 window.updateBalanceSheetAssetSource = function(idx, newSource) {
+  if (!assertWritePermission("Cập nhật nguồn tài sản")) return;
   ensureYearEndBalanceSheet();
   const item = AppState.yearEndBalanceSheet.assets[idx];
   if (!item) return;
@@ -4657,6 +4745,7 @@ window.updateBalanceSheetAssetSource = function(idx, newSource) {
 };
 
 window.updateBalanceSheetAssetFieldLive = function(idx, field, rawVal) {
+  if (!assertWritePermission("Cập nhật giá trị tài sản")) return;
   ensureYearEndBalanceSheet();
   const item = AppState.yearEndBalanceSheet.assets[idx];
   if (!item) return;
@@ -4667,6 +4756,7 @@ window.updateBalanceSheetAssetFieldLive = function(idx, field, rawVal) {
 };
 
 window.updateBalanceSheetAssetField = function(idx, field, rawVal) {
+  if (!assertWritePermission("Cập nhật thông tin tài sản")) return;
   ensureYearEndBalanceSheet();
   const item = AppState.yearEndBalanceSheet.assets[idx];
   if (!item) return;
@@ -4680,6 +4770,7 @@ window.updateBalanceSheetAssetField = function(idx, field, rawVal) {
 };
 
 window.deleteBalanceSheetAssetRow = function(idx) {
+  if (!assertWritePermission("Xóa tài sản bảng cân đối")) return;
   ensureYearEndBalanceSheet();
   AppState.yearEndBalanceSheet.assets.splice(idx, 1);
   renderYearEndBalanceSheet();
@@ -4687,6 +4778,7 @@ window.deleteBalanceSheetAssetRow = function(idx) {
 };
 
 window.addBalanceSheetLiabilityRow = function() {
+  if (!assertWritePermission("Thêm khoản nợ bảng cân đối")) return;
   ensureYearEndBalanceSheet();
   AppState.yearEndBalanceSheet.liabilities.push({
     name: "Khoản nợ mới",
@@ -4697,6 +4789,7 @@ window.addBalanceSheetLiabilityRow = function() {
 };
 
 window.updateBalanceSheetLiabilityFieldLive = function(idx, field, rawVal) {
+  if (!assertWritePermission("Cập nhật giá trị khoản nợ")) return;
   ensureYearEndBalanceSheet();
   const item = AppState.yearEndBalanceSheet.liabilities[idx];
   if (!item) return;
@@ -4707,6 +4800,7 @@ window.updateBalanceSheetLiabilityFieldLive = function(idx, field, rawVal) {
 };
 
 window.updateBalanceSheetLiabilityField = function(idx, field, rawVal) {
+  if (!assertWritePermission("Cập nhật thông tin khoản nợ")) return;
   ensureYearEndBalanceSheet();
   const item = AppState.yearEndBalanceSheet.liabilities[idx];
   if (!item) return;
@@ -4720,6 +4814,7 @@ window.updateBalanceSheetLiabilityField = function(idx, field, rawVal) {
 };
 
 window.deleteBalanceSheetLiabilityRow = function(idx) {
+  if (!assertWritePermission("Xóa khoản nợ bảng cân đối")) return;
   ensureYearEndBalanceSheet();
   AppState.yearEndBalanceSheet.liabilities.splice(idx, 1);
   renderYearEndBalanceSheet();
@@ -4903,6 +4998,7 @@ window.updateCareerMilestoneField = function(idx, field, val) {
 };
 
 window.resetCareerMilestones = function() {
+  if (!assertWritePermission("Đặt lại cột mốc lộ trình")) return;
   AppState.milestonesStore = {};
   const docId = (window.UserSession && UserSession.currentUser) ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
   try {
@@ -5600,6 +5696,7 @@ window.onGoalFieldChange = function(idx, field, val) {
 };
 
 window.addNewTcGoalRow = function() {
+  if (!assertWritePermission("Thêm mục tiêu tài chính")) return;
   ensureFixedInvestmentGoals();
   const newGoal = {
     id: `g_${Date.now()}`,
@@ -5635,6 +5732,7 @@ window.addNewTcGoalRow = function() {
 };
 
 window.deleteTcGoalRow = function(idx) {
+  if (!assertWritePermission("Xóa mục tiêu tài chính")) return;
   const target = AppState.tcGoals[idx];
   if (!target) return;
   if (isFixedInvestmentGoal(target)) {
@@ -6447,8 +6545,8 @@ function renderSkillsFamilyJob() {
   if (tbS) {
     tbS.innerHTML = AppState.skillsList.map((s, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.skillsList[${i}]=this.innerText.trim();">${s}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="AppState.skillsList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa kỹ năng')){ AppState.skillsList[${i}]=this.innerText.trim(); }">${s}</td>
+        <td class="text-center"><button class="btn-table-del" onclick="deleteSkillRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -6457,8 +6555,8 @@ function renderSkillsFamilyJob() {
   if (tbF) {
     tbF.innerHTML = AppState.familyList.map((f, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.familyList[${i}]=this.innerText.trim();">${f}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="AppState.familyList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa nguồn hỗ trợ')){ AppState.familyList[${i}]=this.innerText.trim(); }">${f}</td>
+        <td class="text-center"><button class="btn-table-del" onclick="deleteFamilyRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -6467,16 +6565,44 @@ function renderSkillsFamilyJob() {
   if (tbJ) {
     tbJ.innerHTML = AppState.jobList.map((j, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="AppState.jobList[${i}]=this.innerText.trim();">${j}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="AppState.jobList.splice(${i},1); renderSkillsFamilyJob();"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa môi trường làm việc')){ AppState.jobList[${i}]=this.innerText.trim(); }">${j}</td>
+        <td class="text-center"><button class="btn-table-del" onclick="deleteJobRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
 }
 
-window.addSkillRow = function() { AppState.skillsList.push("Kỹ năng mới"); renderSkillsFamilyJob(); };
-window.addFamilyRow = function() { AppState.familyList.push("Nguồn hỗ trợ mới"); renderSkillsFamilyJob(); };
-window.addJobRow = function() { AppState.jobList.push("Môi trường làm việc mới"); renderSkillsFamilyJob(); };
+window.deleteSkillRow = function(i) {
+  if (!assertWritePermission("Xóa kỹ năng")) return;
+  AppState.skillsList.splice(i, 1);
+  renderSkillsFamilyJob();
+};
+window.deleteFamilyRow = function(i) {
+  if (!assertWritePermission("Xóa nguồn hỗ trợ")) return;
+  AppState.familyList.splice(i, 1);
+  renderSkillsFamilyJob();
+};
+window.deleteJobRow = function(i) {
+  if (!assertWritePermission("Xóa môi trường làm việc")) return;
+  AppState.jobList.splice(i, 1);
+  renderSkillsFamilyJob();
+};
+
+window.addSkillRow = function() {
+  if (!assertWritePermission("Thêm kỹ năng")) return;
+  AppState.skillsList.push("Kỹ năng mới");
+  renderSkillsFamilyJob();
+};
+window.addFamilyRow = function() {
+  if (!assertWritePermission("Thêm nguồn hỗ trợ")) return;
+  AppState.familyList.push("Nguồn hỗ trợ mới");
+  renderSkillsFamilyJob();
+};
+window.addJobRow = function() {
+  if (!assertWritePermission("Thêm môi trường làm việc")) return;
+  AppState.jobList.push("Môi trường làm việc mới");
+  renderSkillsFamilyJob();
+};
 
 function recalculateAll() {
   let totalIncYear = 0, totalExpYear = 0;
@@ -7192,10 +7318,12 @@ window.executeRestoreSelectedBackup = async function() {
 };
 
 window.deleteSelectedBackup = async function() {
+  if (!assertWritePermission("Xóa bản sao lưu")) return;
   if (selectedBackupId) window.openDeleteConfirmModal(selectedBackupId);
 };
 
 window.deleteBackupItem = function(backupId) {
+  if (!assertWritePermission("Xóa bản sao lưu")) return;
   window.openDeleteConfirmModal(backupId);
 };
 
@@ -10941,9 +11069,24 @@ window.renderAdminStudentsTable = async function() {
   let balancingCount = 0;
   let pendingCount = 0;
 
-  const processedMembers = members.map(m => {
-    let percent = 20;
-    let statusLabel = "Chưa hoàn thiện";
+  const memberProgressList = await Promise.all(
+    members.map(async m => {
+      let prog = null;
+      if (m.plan) {
+        prog = { plan: m.plan };
+      }
+      if (!prog && window.CloudDB && typeof window.CloudDB.getStudentClassProgress === 'function') {
+        try {
+          prog = await window.CloudDB.getStudentClassProgress(m.username);
+        } catch (e) {}
+      }
+      return { member: m, progress: prog };
+    })
+  );
+
+  const processedMembers = memberProgressList.map(({ member: m, progress: prog }) => {
+    let percent = (prog && typeof prog.percent === 'number') ? prog.percent : 0;
+    let statusLabel = (prog && prog.statusLabel) ? prog.statusLabel : (m.status === 'approved' ? "Chưa nộp bài làm" : "Chờ duyệt");
     let netCashflow = 0;
     let savingsRate = 0;
     let dsrVal = 0;
@@ -10952,7 +11095,7 @@ window.renderAdminStudentsTable = async function() {
     let allocIns = 0;
     let allocCash = 0;
 
-    let studentPlan = m.plan || null;
+    let studentPlan = (prog && prog.plan) ? prog.plan : (m.plan || null);
     if (!studentPlan) {
       try {
         const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + m.username);
@@ -10961,36 +11104,58 @@ window.renderAdminStudentsTable = async function() {
     }
 
     if (studentPlan) {
-      let mCount = 0;
-      if (studentPlan.ho_ten || studentPlan.currentAge > 0 || (studentPlan.monthlyIncome > 0 || studentPlan.incomeMonthly > 0)) mCount++;
-      if (studentPlan.monthlyDetails && Object.keys(studentPlan.monthlyDetails).length > 0) mCount++;
-      if (Array.isArray(studentPlan.personalGoals) && studentPlan.personalGoals.length > 0) mCount++;
-      if (Array.isArray(studentPlan.careerMilestones) && studentPlan.careerMilestones.length > 0) mCount++;
+      const actualPlan = (studentPlan && studentPlan.plan) ? studentPlan.plan : ((studentPlan && studentPlan.data) ? studentPlan.data : ((studentPlan && studentPlan.state) ? studentPlan.state : studentPlan));
+      
+      if (!prog || typeof prog.percent !== 'number') {
+        let mCount = 0;
+        const hasExpenses = Array.isArray(actualPlan.expenses) && actualPlan.expenses.length > 0;
+        const hasIncomeList = Array.isArray(actualPlan.incomeList) && actualPlan.incomeList.length > 0;
+        const hasProfile = Boolean(actualPlan.ho_ten || (actualPlan.currentAge && actualPlan.currentAge !== 21) || actualPlan.monthlyIncome > 0 || actualPlan.incomeMonthly > 0 || (Array.isArray(actualPlan.planList) && actualPlan.planList.length > 0));
+        if (hasExpenses || hasIncomeList || hasProfile) mCount++;
 
-      if (mCount >= 4) {
-        percent = 100;
-        statusLabel = "Đã hoàn thành 100%";
-      } else if (mCount === 3) {
-        percent = 75;
-        statusLabel = "Gần hoàn thành";
-      } else if (mCount === 2) {
-        percent = 50;
-        statusLabel = "Đang lập lộ trình";
-      } else if (mCount === 1) {
-        percent = 25;
-        statusLabel = "Mới bắt đầu";
-      } else {
-        percent = 85;
-        statusLabel = "Đã cân đối lộ trình";
+        const hasMonthlyDetails = actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === 'object' && Object.values(actualPlan.monthlyDetails).some(m => m && ((Array.isArray(m.incomes) && m.incomes.length > 0) || (Array.isArray(m.expenses) && m.expenses.length > 0) || typeof m === 'number' || m.plan > 0 || m.actual > 0));
+        const hasPlanTables = (Array.isArray(actualPlan.planIncome) && actualPlan.planIncome.length > 0) || (Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0);
+        if (hasMonthlyDetails || hasPlanTables) mCount++;
+
+        const goalsList = Array.isArray(actualPlan.tcGoals) ? actualPlan.tcGoals : (Array.isArray(actualPlan.personalGoals) ? actualPlan.personalGoals : (Array.isArray(actualPlan.goals) ? actualPlan.goals : []));
+        if (goalsList.length > 0) mCount++;
+
+        const hasCareerDetails = Array.isArray(actualPlan.careerDetailList) && actualPlan.careerDetailList.length > 0;
+        const hasMilestonesStore = actualPlan.milestonesStore && typeof actualPlan.milestonesStore === 'object' && Object.keys(actualPlan.milestonesStore).length > 0;
+        const hasCareerMilestones = Array.isArray(actualPlan.careerMilestones) && actualPlan.careerMilestones.length > 0;
+        const hasRouteOverrides = actualPlan.careerRouteOverrides && typeof actualPlan.careerRouteOverrides === 'object' && Object.keys(actualPlan.careerRouteOverrides).length > 0;
+        const hasInvestProducts = Array.isArray(actualPlan.investProducts) && actualPlan.investProducts.length > 0;
+        if (hasCareerDetails || hasMilestonesStore || hasCareerMilestones || hasRouteOverrides || hasInvestProducts) mCount++;
+
+        if (mCount >= 4) {
+          percent = 100;
+          statusLabel = "Đã hoàn thành 100%";
+        } else if (mCount === 3) {
+          percent = 75;
+          statusLabel = "Gần hoàn thành";
+        } else if (mCount === 2) {
+          percent = 50;
+          statusLabel = "Đang lập lộ trình";
+        } else if (mCount === 1) {
+          percent = 25;
+          statusLabel = "Mới bắt đầu";
+        } else {
+          percent = 0;
+          statusLabel = "Chưa nộp bài làm";
+        }
       }
 
-      const inc = Number(studentPlan.monthlyIncome || studentPlan.incomeMonthly || 0);
+      const inc = Number(actualPlan.monthlyIncome || actualPlan.incomeMonthly || (Array.isArray(actualPlan.planIncome) ? actualPlan.planIncome.reduce((s, x) => s + (Number(x.plan) || 0), 0) : 0));
       let exp = 0;
-      if (studentPlan.monthlyDetails && typeof studentPlan.monthlyDetails === 'object') {
-        Object.values(studentPlan.monthlyDetails).forEach(v => {
+      if (actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === 'object') {
+        Object.values(actualPlan.monthlyDetails).forEach(v => {
           if (typeof v === 'number') exp += v;
           else if (v && typeof v.plan === 'number') exp += v.plan;
+          else if (v && Array.isArray(v.expenses)) exp += v.expenses.reduce((s, x) => s + (Number(x.amount || x.plan || x.val) || 0), 0);
         });
+      }
+      if (exp === 0 && Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0) {
+        exp = actualPlan.planExpense.reduce((s, x) => s + (Number(x.plan) || 0), 0);
       }
       if (exp === 0 && inc > 0) exp = inc * 0.65;
       if (inc > 0) {
@@ -10998,14 +11163,14 @@ window.renderAdminStudentsTable = async function() {
         savingsRate = Math.round(((inc - exp) / inc) * 100);
         if (savingsRate < 0) savingsRate = 0;
       }
-      if (studentPlan.targetSavingsRate) {
-        savingsRate = Number(studentPlan.targetSavingsRate);
+      if (actualPlan.targetSavingsRate) {
+        savingsRate = Number(actualPlan.targetSavingsRate);
       }
-      if (studentPlan.portfolioAllocation) {
-        allocStocks = Number(studentPlan.portfolioAllocation.stocks || allocStocks);
-        allocBonds = Number(studentPlan.portfolioAllocation.bonds || allocBonds);
-        allocIns = Number(studentPlan.portfolioAllocation.insurance || allocIns);
-        allocCash = Number(studentPlan.portfolioAllocation.cash || allocCash);
+      if (actualPlan.portfolioAllocation) {
+        allocStocks = Number(actualPlan.portfolioAllocation.stocks || allocStocks);
+        allocBonds = Number(actualPlan.portfolioAllocation.bonds || allocBonds);
+        allocIns = Number(actualPlan.portfolioAllocation.insurance || allocIns);
+        allocCash = Number(actualPlan.portfolioAllocation.cash || allocCash);
       }
     } else if (m.status === 'approved') {
       percent = 0;

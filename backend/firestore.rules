@@ -4,27 +4,39 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function isValidDocId(id) {
-      return id is string;
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    function canDeleteDoc(id) {
+      return isValidDocId(id) && request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isValidDocId(userId) && request.auth != null && (request.auth.uid == userId || request.auth.token.email == userId);
     }
 
     match /financial_Authentication/{docId} {
-      allow read, write: if true || docId == 'groups';
+      allow read, create, update: if true || docId == 'groups';
+      allow delete: if canDeleteDoc(docId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /classes/{classId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
       allow delete: if isValidDocId(classId);
 
       match /submissions/{studentUsername} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if isOwner(studentUsername);
       }
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if isValidDocId(classId);
       }
     }
 
@@ -37,103 +49,128 @@ service cloud.firestore {
     }
 
     match /group_codes/{code} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if canDeleteDoc(code);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /student_plans/{planId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(planId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /user_states/{stateId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(stateId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /financial_data/{docId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if false;
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /financial_accounts/{username} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(username);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /users/{username} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(username);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /accounts/{username} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(username);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /admin_codes/{code} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if canDeleteDoc(code);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /keywords/{keywordId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if canDeleteDoc(keywordId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /setup_keywords/{docId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if canDeleteDoc(docId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /student_keywords/{username} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if isOwner(username);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /keywords_config/{configId} {
-      allow read, write: if true;
+      allow read, create, update: if true;
+      allow delete: if canDeleteDoc(configId);
 
       match /{subcollection=**} {
-        allow read, write: if true;
+        allow read, create, update: if true;
+        allow delete: if false;
       }
     }
 
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

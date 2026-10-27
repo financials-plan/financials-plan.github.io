@@ -5929,6 +5929,35 @@ body.rail-collapsed:not(.rail-hover-expanded) .brand-unit-badge {
 .btn-exit-student-preview:hover {
   background: #D97706;
 }
+
+/* ReadOnly Student View Guard Styles */
+body.is-student-preview-mode .btn-table-del,
+body.is-student-preview-mode .btn-del-row,
+body.is-student-preview-mode .btn-delete,
+body.is-student-preview-mode .fa-trash,
+body.is-student-preview-mode .fa-trash-can,
+body.is-student-preview-mode button[onclick*="delete"],
+body.is-student-preview-mode button[onclick*="Delete"],
+body.is-student-preview-mode button[onclick*="remove"],
+body.is-student-preview-mode button[onclick*="Remove"],
+body.is-student-preview-mode button[onclick*="add"],
+body.is-student-preview-mode button[onclick*="Add"],
+body.is-student-preview-mode button[onclick*="reset"],
+body.is-student-preview-mode button[onclick*="Reset"],
+body.is-student-preview-mode #btn-cloud-save,
+body.is-student-preview-mode #btn-auto-fill,
+body.is-student-preview-mode #btn-reset-data,
+body.is-student-preview-mode .btn-add-row {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body.is-student-preview-mode [contenteditable="true"] {
+  pointer-events: none !important;
+  user-select: text !important;
+  cursor: default !important;
+  background-color: transparent !important;
+}
 .class-manager-modal-card {
   max-width: 960px;
   width: 95vw;

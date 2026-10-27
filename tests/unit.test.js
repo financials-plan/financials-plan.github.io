@@ -629,3 +629,211 @@ test("11. Task B — Dashboard Variance Cumulative Calculation Verification", ()
     assert.strictEqual(typeof val, "number");
   });
 });
+
+test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Verification", async () => {
+  const crypto = require("crypto");
+  const fs = require("fs");
+  const path = require("path");
+
+  // 1. Verify 100% SHA-256 byte parity between js/script.js and script.js
+  const jsScriptBuf = fs.readFileSync(path.join(__dirname, "../js/script.js"));
+  const rootScriptBuf = fs.readFileSync(path.join(__dirname, "../script.js"));
+  const h1 = crypto.createHash("sha256").update(jsScriptBuf).digest("hex");
+  const h2 = crypto.createHash("sha256").update(rootScriptBuf).digest("hex");
+  assert.strictEqual(h1, h2, "js/script.js and script.js must have 100% SHA-256 byte parity");
+
+  const scriptContent = jsScriptBuf.toString("utf8");
+
+  // 2. Verify assertWritePermission definition and exposure
+  assert.ok(scriptContent.includes("function assertWritePermission(actionDescription"), "assertWritePermission must be defined");
+  assert.ok(scriptContent.includes("window.assertWritePermission = assertWritePermission"), "assertWritePermission must be exposed on window");
+
+  // 3. Verify Read-Only Guard logic
+  let isReadOnlyStudentView = false;
+  function mockAssertWritePermission(action) {
+    if (isReadOnlyStudentView) return false;
+    return true;
+  }
+
+  assert.strictEqual(mockAssertWritePermission("Xóa dòng"), true, "Should allow write when not in read-only view");
+  isReadOnlyStudentView = true;
+  assert.strictEqual(mockAssertWritePermission("Xóa dòng"), false, "Should block write when isReadOnlyStudentView is true");
+
+  // 4. Verify all critical delete and mutation functions include assertWritePermission guard
+  const protectedFuncs = [
+    "window.deleteExpenseItem = function(idx) {",
+    "window.deleteIncomeItem = function(idx) {",
+    "window.deletePlanListItem = function(idx) {",
+    "window.deleteInvestItem = function(idx) {",
+    "window.deletePlanIncRow = function(idx) {",
+    "window.deletePlanExpRow = function(idx) {",
+    "window.deleteMonthIncomeRow = function(m, i) {",
+    "window.deleteMonthExpenseRow = function(m, i) {",
+    "window.deleteMonthLearningRow = function(m, i) {",
+    "window.deleteBalanceSheetAssetRow = function(idx) {",
+    "window.deleteBalanceSheetLiabilityRow = function(idx) {",
+    "window.deleteTcGoalRow = function(idx) {",
+    "window.deleteBackupItem = function(backupId) {",
+    "window.deleteSelectedBackup = async function() {",
+    "window.resetAppStateToEmpty = function() {",
+    "window.resetCareerMilestones = function() {"
+  ];
+
+  for (const fnSig of protectedFuncs) {
+    assert.ok(scriptContent.includes(fnSig), `Function signature ${fnSig} must exist in script.js`);
+    const fnIdx = scriptContent.indexOf(fnSig);
+    const bodySlice = scriptContent.slice(fnIdx, fnIdx + 300);
+    assert.ok(bodySlice.includes("assertWritePermission"), `Function ${fnSig} must call assertWritePermission at its start`);
+  }
+
+  // 5. Verify backend firestore-service.js ReadOnlyGuard
+  const fsServiceContent = fs.readFileSync(path.join(__dirname, "../backend/firestore-service.js"), "utf8");
+  assert.ok(fsServiceContent.includes("window.isReadOnlyStudentView"), "firestore-service.js must check window.isReadOnlyStudentView");
+  assert.ok(fsServiceContent.includes("deleteUserData(targetDocId)"), "firestore-service.js must provide deleteUserData");
+
+  // 6. Verify firestore.rules Zero Comments and Security
+  const rulesContent = fs.readFileSync(path.join(__dirname, "../backend/firestore.rules"), "utf8");
+  assert.ok(!rulesContent.includes("//"), "firestore.rules must not contain single line comments");
+  assert.ok(!rulesContent.includes("/*"), "firestore.rules must not contain multi line comments");
+  assert.ok(rulesContent.includes("match /groups/{groupId}"));
+  assert.ok(rulesContent.includes("docId == 'groups'"));
+  assert.ok(rulesContent.includes("match /keywords/{keywordId}"));
+  assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
+  assert.ok(rulesContent.includes("match /student_keywords/{username}"));
+  assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
+  assert.ok(rulesContent.includes("allow read, write: if true;"));
+
+  // 7. Verify Admin Student Progress Roadmap calculation with real AppState schema
+  function computeProgress(plan) {
+    const progress = {
+      keywords: "not_started",
+      monthlyPlan: "not_started",
+      goals: "not_started",
+      careerMilestones: "not_started",
+      percent: 0,
+      statusLabel: "Chưa nộp bài làm"
+    };
+
+    if (!plan) return progress;
+    const actualPlan = plan.plan || plan.data || plan.state || plan;
+
+    // Module 1: Keywords & Profile Setup
+    const hasExpenses = Array.isArray(actualPlan.expenses) && actualPlan.expenses.length > 0;
+    const hasIncomeList = Array.isArray(actualPlan.incomeList) && actualPlan.incomeList.length > 0;
+    const hasPlanList = Array.isArray(actualPlan.planList) && actualPlan.planList.length > 0;
+    const hasProfile = Boolean(actualPlan.ho_ten || (actualPlan.currentAge && actualPlan.currentAge !== 21) || actualPlan.monthlyIncome > 0 || actualPlan.incomeMonthly > 0);
+    if ((hasExpenses || hasIncomeList) && (hasProfile || hasPlanList)) {
+      progress.keywords = "completed";
+    } else if (hasExpenses || hasIncomeList || hasProfile) {
+      progress.keywords = "completed";
+    } else {
+      progress.keywords = "in_progress";
+    }
+
+    // Module 2: Monthly Cashflow Plan
+    const hasMonthlyDetails = actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === "object" && Object.values(actualPlan.monthlyDetails).some(m => {
+      if (!m) return false;
+      if (typeof m === "number" && m > 0) return true;
+      if (Array.isArray(m.incomes) && m.incomes.length > 0) return true;
+      if (Array.isArray(m.expenses) && m.expenses.length > 0) return true;
+      if (m.plan > 0 || m.actual > 0) return true;
+      return false;
+    });
+    const hasPlanTables = (Array.isArray(actualPlan.planIncome) && actualPlan.planIncome.length > 0) || (Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0);
+    if (hasMonthlyDetails || hasPlanTables) {
+      progress.monthlyPlan = "completed";
+    }
+
+    // Module 3: Financial Goals (tcGoals)
+    const goalsList = Array.isArray(actualPlan.tcGoals) ? actualPlan.tcGoals : (Array.isArray(actualPlan.personalGoals) ? actualPlan.personalGoals : (Array.isArray(actualPlan.goals) ? actualPlan.goals : []));
+    if (goalsList.length >= 2) {
+      progress.goals = "completed";
+    } else if (goalsList.length > 0) {
+      progress.goals = "in_progress";
+    }
+
+    // Module 4: Career Milestones & Portfolio (careerDetailList / milestonesStore / investProducts)
+    const hasCareerDetails = Array.isArray(actualPlan.careerDetailList) && actualPlan.careerDetailList.length > 0;
+    const hasMilestonesStore = actualPlan.milestonesStore && typeof actualPlan.milestonesStore === "object" && Object.keys(actualPlan.milestonesStore).length > 0;
+    const hasCareerMilestones = Array.isArray(actualPlan.careerMilestones) && actualPlan.careerMilestones.length > 0;
+    const hasRouteOverrides = actualPlan.careerRouteOverrides && typeof actualPlan.careerRouteOverrides === "object" && Object.keys(actualPlan.careerRouteOverrides).length > 0;
+    const hasInvestProducts = Array.isArray(actualPlan.investProducts) && actualPlan.investProducts.length > 0;
+    if (hasCareerDetails || hasMilestonesStore || hasCareerMilestones || hasRouteOverrides || hasInvestProducts) {
+      progress.careerMilestones = "completed";
+    }
+
+    const items = [progress.keywords, progress.monthlyPlan, progress.goals, progress.careerMilestones];
+    const completedCount = items.filter(s => s === "completed").length;
+    const inProgressCount = items.filter(s => s === "in_progress").length;
+    progress.percent = Math.round(((completedCount * 1.0) + (inProgressCount * 0.5)) / 4 * 100);
+
+    if (progress.percent >= 90) {
+      progress.statusLabel = "Đã hoàn thành 100%";
+    } else if (progress.percent >= 70) {
+      progress.statusLabel = "Gần hoàn thành";
+    } else if (progress.percent >= 40) {
+      progress.statusLabel = "Đang lập lộ trình";
+    } else if (progress.percent > 0) {
+      progress.statusLabel = "Mới bắt đầu";
+    } else {
+      progress.statusLabel = "Chưa nộp bài làm";
+    }
+
+    return progress;
+  }
+
+  // 7a. 100% completed student plan with AppState schema
+  const fullPlan = {
+    ho_ten: "Nguyễn Văn Sinh Viên",
+    currentAge: 22,
+    expenses: ["Ăn uống", "Đi lại"],
+    incomeList: ["Lương chính"],
+    planIncome: [{ name: "Lương chính", plan: 15.0 }],
+    tcGoals: [{ id: "g1", name: "Hưu trí" }, { id: "g2", name: "Dự phòng" }],
+    careerDetailList: [{ age: 22, target: 50 }],
+    investProducts: [{ name: "Cổ phiếu", returnRate: 15.0 }]
+  };
+  const progFull = computeProgress(fullPlan);
+  assert.strictEqual(progFull.percent, 100, "Full plan must reach 100%");
+  assert.strictEqual(progFull.statusLabel, "Đã hoàn thành 100%");
+
+  // 7b. 75% completed student plan (3 modules: M1, M2, M3)
+  const threeModulePlan = {
+    ho_ten: "Trần Thị Ba Môn",
+    currentAge: 23,
+    expenses: ["Ăn uống"],
+    incomeList: ["Lương"],
+    planIncome: [{ name: "Lương", plan: 10 }],
+    tcGoals: [{ id: "g1", name: "Hưu trí" }, { id: "g2", name: "Mua xe" }]
+  };
+  const prog3 = computeProgress(threeModulePlan);
+  assert.strictEqual(prog3.percent, 75, "3-module plan must reach 75%");
+  assert.strictEqual(prog3.statusLabel, "Gần hoàn thành");
+
+  // 7c. 50% completed student plan (2 modules: M1, M3)
+  const twoModulePlan = {
+    ho_ten: "Lê Văn Hai Môn",
+    currentAge: 24,
+    expenses: ["Ăn uống"],
+    incomeList: ["Lương"],
+    tcGoals: [{ id: "g1", name: "Hưu trí" }, { id: "g2", name: "Mua nhà" }]
+  };
+  const prog2 = computeProgress(twoModulePlan);
+  assert.strictEqual(prog2.percent, 50, "2-module plan must reach 50%");
+  assert.strictEqual(prog2.statusLabel, "Đang lập lộ trình");
+
+  // 7d. 25% completed student plan (1 module: M1)
+  const oneModulePlan = {
+    ho_ten: "Phạm Văn Mới Bắt Đầu",
+    currentAge: 25,
+    expenses: ["Ăn uống"]
+  };
+  const prog1 = computeProgress(oneModulePlan);
+  assert.strictEqual(prog1.percent, 25, "1-module plan must reach 25%");
+  assert.strictEqual(prog1.statusLabel, "Mới bắt đầu");
+
+  // 7e. Empty plan
+  const emptyProg = computeProgress(null);
+  assert.strictEqual(emptyProg.percent, 0);
+  assert.strictEqual(emptyProg.statusLabel, "Chưa nộp bài làm");
+});

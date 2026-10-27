@@ -1741,6 +1741,15 @@ const FirestoreService = {
   },
 
   async saveData(appStateData, customDocId = null, userMeta = null) {
+    if (typeof window !== "undefined" && window.isReadOnlyStudentView) {
+      return {
+        success: false,
+        code: "PERMISSION_DENIED",
+        error: "Từ chối ghi dữ liệu: Đang ở chế độ xem bài học viên chỉ đọc.",
+        message: "Không thể lưu dữ liệu khi đang ở chế độ chỉ đọc."
+      };
+    }
+
     const access = verifyDataAccessPermission(customDocId);
     if (!access.allowed) {
       return {
@@ -1976,6 +1985,15 @@ const FirestoreService = {
   },
 
   async deleteBackup(customDocId = null, backupId) {
+    if (typeof window !== "undefined" && window.isReadOnlyStudentView) {
+      return {
+        success: false,
+        code: "PERMISSION_DENIED",
+        error: "Từ chối xóa dữ liệu: Đang ở chế độ xem bài học viên chỉ đọc.",
+        message: "Không thể xóa bản sao lưu khi đang ở chế độ chỉ đọc."
+      };
+    }
+
     const access = verifyDataAccessPermission(customDocId);
     if (!access.allowed) {
       return { success: false, code: access.code, error: access.error };
@@ -2792,10 +2810,53 @@ const FirestoreService = {
     return this.saveData(data, targetDocId);
   },
 
+  async deleteUserData(targetDocId) {
+    if (typeof window !== "undefined" && window.isReadOnlyStudentView) {
+      return {
+        success: false,
+        code: "PERMISSION_DENIED",
+        error: "Từ chối xóa dữ liệu: Đang ở chế độ xem bài học viên chỉ đọc.",
+        message: "Không thể xóa dữ liệu học viên khi đang ở chế độ chỉ đọc."
+      };
+    }
+    const access = verifyDataAccessPermission(targetDocId);
+    if (!access.allowed) {
+      return { success: false, code: access.code, error: access.error, message: access.error };
+    }
+    const cleanUser = (targetDocId || "").replace(/^user_/, "").trim();
+    const normUser = normalizeUsername(cleanUser);
+    const normDocId = "user_" + normUser;
+    try {
+      localStorage.removeItem("FIN_APP_LAST_STATE_" + normDocId);
+      localStorage.removeItem("FIN_APP_BACKUPS_" + normDocId);
+      localStorage.removeItem("FIN_APP_LAST_STATE_user_" + normUser);
+      if (isFirebaseReady && db) {
+        await Promise.allSettled([
+          deleteDoc(doc(db, firestoreSettings.collectionName, normDocId)),
+          deleteDoc(doc(db, FINANCIAL_AUTH_COLLECTION, normDocId)),
+          deleteDoc(doc(db, "student_plans", normUser)),
+          deleteDoc(doc(db, "setup_keywords", normUser)),
+          deleteDoc(doc(db, "student_keywords", normUser))
+        ]).catch(() => {});
+      }
+      return { success: true, message: "Đã xóa dữ liệu học viên thành công." };
+    } catch (e) {
+      return { success: false, error: e.message || "Lỗi xóa dữ liệu học viên." };
+    }
+  },
+
   async getStudentClassProgress(studentUsername) {
     const norm = normalizeUsername(studentUsername);
     let plan = null;
-    if (isFirebaseReady && db) {
+
+    try {
+      const loadRes = await this.loadUserData("user_" + norm);
+      if (loadRes && loadRes.success && loadRes.data) {
+        plan = loadRes.data;
+      }
+    } catch (e) {}
+
+    if (!plan && isFirebaseReady && db) {
       try {
         const docRef = doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + norm);
         const snap = await Promise.race([
@@ -2806,6 +2867,20 @@ const FirestoreService = {
           plan = snap.data();
         }
       } catch (e) {}
+      if (!plan) {
+        try {
+          const spRef = doc(db, "student_plans", norm);
+          const spSnap = await getDoc(spRef).catch(() => null);
+          if (spSnap && spSnap.exists()) {
+            const spData = spSnap.data();
+            if (spData && (spData.plan || spData.state)) {
+              plan = spData.plan || spData.state;
+            } else if (spData) {
+              plan = spData;
+            }
+          }
+        } catch (e) {}
+      }
       if (!plan) {
         try {
           const classes = getLocalClasses();
@@ -2823,6 +2898,7 @@ const FirestoreService = {
         } catch (e) {}
       }
     }
+
     if (!plan) {
       try {
         const raw = localStorage.getItem("FIN_APP_LAST_STATE_user_" + norm);
@@ -2835,35 +2911,78 @@ const FirestoreService = {
       monthlyPlan: "not_started",
       goals: "not_started",
       careerMilestones: "not_started",
-      percent: 0
+      percent: 0,
+      statusLabel: "Chưa nộp bài làm",
+      plan: null
     };
 
     if (plan) {
-      const hasKeywords = (Array.isArray(plan.expenses) && plan.expenses.length > 0) || (Array.isArray(plan.incomeList) && plan.incomeList.length > 0);
-      if (hasKeywords) {
+      const actualPlan = (plan && plan.plan) ? plan.plan : ((plan && plan.data) ? plan.data : ((plan && plan.state) ? plan.state : plan));
+      progress.plan = actualPlan;
+
+      // Module 1: Keywords & Profile Setup
+      const hasExpenses = Array.isArray(actualPlan.expenses) && actualPlan.expenses.length > 0;
+      const hasIncomeList = Array.isArray(actualPlan.incomeList) && actualPlan.incomeList.length > 0;
+      const hasPlanList = Array.isArray(actualPlan.planList) && actualPlan.planList.length > 0;
+      const hasProfile = Boolean(actualPlan.ho_ten || (actualPlan.currentAge && actualPlan.currentAge !== 21) || actualPlan.monthlyIncome > 0 || actualPlan.incomeMonthly > 0);
+      if ((hasExpenses || hasIncomeList) && (hasProfile || hasPlanList)) {
         progress.keywords = "completed";
-      } else if (plan.ho_ten && plan.currentAge > 0 && (plan.monthlyIncome > 0 || plan.incomeMonthly > 0)) {
+      } else if (hasExpenses || hasIncomeList || hasProfile) {
         progress.keywords = "completed";
-      } else if (plan.ho_ten || plan.currentAge > 0) {
+      } else {
         progress.keywords = "in_progress";
       }
-      if (plan.monthlyDetails && Object.keys(plan.monthlyDetails).length > 0) {
+
+      // Module 2: Monthly Cashflow Plan (P2 / Kế hoạch ngân sách dòng tiền)
+      const hasMonthlyDetails = actualPlan.monthlyDetails && typeof actualPlan.monthlyDetails === "object" && Object.values(actualPlan.monthlyDetails).some(m => {
+        if (!m) return false;
+        if (typeof m === "number" && m > 0) return true;
+        if (Array.isArray(m.incomes) && m.incomes.length > 0) return true;
+        if (Array.isArray(m.expenses) && m.expenses.length > 0) return true;
+        if (m.plan > 0 || m.actual > 0) return true;
+        return false;
+      });
+      const hasPlanTables = (Array.isArray(actualPlan.planIncome) && actualPlan.planIncome.length > 0) || (Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0);
+      if (hasMonthlyDetails || hasPlanTables) {
         progress.monthlyPlan = "completed";
       }
-      if (Array.isArray(plan.personalGoals) && plan.personalGoals.length >= 2) {
+
+      // Module 3: Financial Goals (Mục tiêu tài chính)
+      const goalsList = Array.isArray(actualPlan.tcGoals) ? actualPlan.tcGoals : (Array.isArray(actualPlan.personalGoals) ? actualPlan.personalGoals : (Array.isArray(actualPlan.goals) ? actualPlan.goals : []));
+      if (goalsList.length >= 2) {
         progress.goals = "completed";
-      } else if (Array.isArray(plan.personalGoals) && plan.personalGoals.length > 0) {
+      } else if (goalsList.length > 0) {
         progress.goals = "in_progress";
       }
-      if (Array.isArray(plan.careerMilestones) && plan.careerMilestones.length > 0) {
+
+      // Module 4: Career Milestones & Portfolio (Lộ trình & Danh mục đầu tư)
+      const hasCareerDetails = Array.isArray(actualPlan.careerDetailList) && actualPlan.careerDetailList.length > 0;
+      const hasMilestonesStore = actualPlan.milestonesStore && typeof actualPlan.milestonesStore === "object" && Object.keys(actualPlan.milestonesStore).length > 0;
+      const hasCareerMilestones = Array.isArray(actualPlan.careerMilestones) && actualPlan.careerMilestones.length > 0;
+      const hasRouteOverrides = actualPlan.careerRouteOverrides && typeof actualPlan.careerRouteOverrides === "object" && Object.keys(actualPlan.careerRouteOverrides).length > 0;
+      const hasInvestProducts = Array.isArray(actualPlan.investProducts) && actualPlan.investProducts.length > 0;
+      if (hasCareerDetails || hasMilestonesStore || hasCareerMilestones || hasRouteOverrides || hasInvestProducts) {
         progress.careerMilestones = "completed";
+      }
+
+      const items = [progress.keywords, progress.monthlyPlan, progress.goals, progress.careerMilestones];
+      const completedCount = items.filter(s => s === "completed").length;
+      const inProgressCount = items.filter(s => s === "in_progress").length;
+      progress.percent = Math.round(((completedCount * 1.0) + (inProgressCount * 0.5)) / 4 * 100);
+
+      if (progress.percent >= 90) {
+        progress.statusLabel = "Đã hoàn thành 100%";
+      } else if (progress.percent >= 70) {
+        progress.statusLabel = "Gần hoàn thành";
+      } else if (progress.percent >= 40) {
+        progress.statusLabel = "Đang lập lộ trình";
+      } else if (progress.percent > 0) {
+        progress.statusLabel = "Mới bắt đầu";
+      } else {
+        progress.statusLabel = "Đang lập lộ trình";
       }
     }
 
-    const items = [progress.keywords, progress.monthlyPlan, progress.goals, progress.careerMilestones];
-    const completed = items.filter(s => s === "completed").length;
-    const inProgress = items.filter(s => s === "in_progress").length;
-    progress.percent = Math.round(((completed * 1.0) + (inProgress * 0.5)) / 4 * 100);
     return progress;
   },
 
