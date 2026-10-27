@@ -2332,10 +2332,13 @@ function calculateCareerDetails() {
     const overrideActual = AppState.careerActualOverrides ? AppState.careerActualOverrides[age] : undefined;
     const hasManualActual = (overrideActual !== undefined && overrideActual !== null) || Boolean(exist && exist.manualActual === true && exist.actual !== undefined && exist.actual !== null);
 
-    // Ô không nhập tay lấy theo ô phía trên (ô đầu lấy thu nhập tháng hiện tại); sửa ô nào thì các ô sau tự đổi theo
+    // Ô không nhập tay lấy theo ô phía trên (ô đầu lấy thu nhập tháng hiện tại); sửa ô nào thì các ô sau tự đổi theo.
+    // Chỉ điền tự động đến năm hiện tại của lịch; các năm sau để trống ("-") trừ khi người dùng tự nhập.
     let actualVal = null;
     if (hasManualActual) {
       actualVal = overrideActual !== undefined ? overrideActual : exist.actual;
+    } else if (year > calendarYear) {
+      actualVal = null;
     } else if (yearOffset === 0) {
       actualVal = autoActualIncome > 0 ? autoActualIncome : null;
     } else {
