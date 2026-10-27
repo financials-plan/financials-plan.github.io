@@ -331,7 +331,7 @@ test("J. Giao diện: cột Loại đầu tư, bốn lựa chọn, mirror script
   const { FinancialMath } = makeEnv({});
   assert.deepStrictEqual(
     FinancialMath.INVESTMENT_TYPES.map(t => FinancialMath.INVESTMENT_TYPE_LABELS[t]),
-    ["Cổ phiếu", "Trái phiếu", "Bảo hiểm", "Tiền gửi Ngân hàng"]
+    ["Cổ phiếu", "Trái phiếu", "Bảo hiểm", "Tiền gửi"]
   );
   assert.ok(!src.includes("DEFAULT_PORTFOLIO_30YR_BENCHMARK"));
   assert.strictEqual(

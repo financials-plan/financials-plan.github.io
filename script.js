@@ -1352,7 +1352,7 @@ const FinancialMath = {
     stocks: 'Cổ phiếu',
     bonds: 'Trái phiếu',
     insurance: 'Bảo hiểm',
-    bank_deposit: 'Tiền gửi Ngân hàng'
+    bank_deposit: 'Tiền gửi'
   },
 
   // Chuẩn hóa giá trị loại đầu tư về một trong bốn giá trị nội bộ; không nhận ra -> '' (chưa xác định)
@@ -1886,6 +1886,7 @@ function parseInvestmentTypeInput(raw) {
   if (direct) return direct;
   const text = String(raw === null || raw === undefined ? '' : raw).trim().toLowerCase();
   const labels = FinancialMath.INVESTMENT_TYPE_LABELS;
+  if (text === 'tiền gửi ngân hàng') return 'bank_deposit';
   return FinancialMath.INVESTMENT_TYPES.find(t => labels[t].toLowerCase() === text) || '';
 }
 
@@ -7877,7 +7878,7 @@ const CSV_TABLE_SCHEMAS = {
       ["Cổ phiếu tăng trưởng (VN30)", "15.0", "20.0", "Cổ phiếu"],
       ["Chứng chỉ quỹ mở (DCDS / DCBC)", "12.0", "15.0", "Cổ phiếu"],
       ["Trái phiếu doanh nghiệp uy tín (DCBF)", "9.5", "5.0", "Trái phiếu"],
-      ["Gửi tiết kiệm ngân hàng kỳ hạn", "6.5", "1.0", "Tiền gửi Ngân hàng"]
+      ["Gửi tiết kiệm ngân hàng kỳ hạn", "6.5", "1.0", "Tiền gửi"]
     ]
   },
   career_route: {
