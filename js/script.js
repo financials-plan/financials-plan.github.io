@@ -1928,7 +1928,7 @@ window.switchTab = function(tabId) {
   document.getElementById('btn-month-collapsed')?.classList.remove('active');
   document.getElementById(`btn-${tabId}`)?.classList.add('active');
 
-  const titlesMap = {
+ const titlesMap = {
     'tab-tukhoa': 'TỪ KHÓA THIẾT LẬP',
     'tab-dashboard': 'DASHBOARD THEO DÕI TÀI CHÍNH',
     'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
@@ -1937,9 +1937,9 @@ window.switchTab = function(tabId) {
     'tab-kehoach': 'KẾ HOẠCH THU NHẬP VÀ CHI TIÊU',
     'tab-khaosat': 'BẢNG KHẢO SÁT ĐÁNH GIÁ BẢN THÂN',
     'tab-admin-groups': 'TỔNG QUAN CÁC NHÓM',
-    'tab-admin-requests': 'YÊU CẦU VÀO NHÓM (PRIVATE)',
-    'tab-admin-students': 'QUẢN LÍ SINH VIÊN & THÀNH VIÊN',
-    'tab-admin-analytics': 'PHÂN TÍCH CHUYÊN SÂU NHÓM'
+    'tab-admin-requests': 'YÊU CẦU VÀO NHÓM',
+    'tab-admin-students': 'QUẢN LÍ',
+    'tab-admin-analytics': 'PHÂN TÍCH CHUYÊN SÂU'
   };
 
   const currentTitleEl = document.getElementById('current-title');
