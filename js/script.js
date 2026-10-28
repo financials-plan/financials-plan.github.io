@@ -11448,7 +11448,7 @@ window.sortAdminStudents = function(key) {
   paintAdminStudents();
 };
 window.resetAdminStudentFilters = function() {
-  ['admin-student-search', 'admin-student-date-from', 'admin-student-date-to'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['admin-student-search'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   window.adminStudentsSort = { key: '', dir: 1 };
   window.filterAdminStudentsKpi('all');
 };
@@ -11691,17 +11691,12 @@ function paintAdminStudents() {
   const { curGroup, processedMembers } = cache;
 
   const searchTokens = normalizeSearchText(String(document.getElementById('admin-student-search')?.value || '').replace(/@/g, ' ')).split(' ').filter(Boolean);
-  const dateFrom = document.getElementById('admin-student-date-from')?.value || '';
-  const dateTo = document.getElementById('admin-student-date-to')?.value || '';
 
   const filteredMembers = processedMembers.filter(m => {
     if (searchTokens.length) {
       const hay = normalizeSearchText([m.name, m.username].join(' '));
       if (!searchTokens.every(tok => hay.includes(tok))) return false;
     }
-    const joinedDay = String(m.joinedAt || '').slice(0, 10);
-    if (dateFrom && (!joinedDay || joinedDay < dateFrom)) return false;
-    if (dateTo && (!joinedDay || joinedDay > dateTo)) return false;
     if (window.currentKpiFilter === 'completed') return m.percent >= 70;
     if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
     if (window.currentKpiFilter === 'pending') return m.percent < 40 || m.status !== 'approved';
@@ -11722,7 +11717,7 @@ function paintAdminStudents() {
   if (sorters[sortState.key]) filteredMembers.sort((a, b) => sorters[sortState.key](a, b) * sortState.dir);
   const sortTh = (key, label, style = '') => {
     const active = sortState.key === key;
-    const icon = !active ? 'fa-sort' : (sortState.dir === 1 ? 'fa-sort-up' : 'fa-sort-down');
+    const icon = !active ? 'fa-arrow-down' : (sortState.dir === 1 ? 'fa-arrow-up' : 'fa-arrow-down');
     return `<th class="th-sortable${active ? ' is-sorted' : ''}" style="${style}" onclick="sortAdminStudents('${key}')" title="Bấm để sắp xếp">${label} <i class="fa-solid ${icon}"></i></th>`;
   };
 

@@ -497,12 +497,6 @@
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
               <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm theo họ tên hoặc username..." oninput="onAdminStudentSearchInput()" autocomplete="off">
             </div>
-            <div class="admin-date-range" title="Lọc theo ngày tham gia">
-              <i class="fa-regular fa-calendar"></i>
-              <input type="date" id="admin-student-date-from" class="admin-search-input admin-toolbar-select" onchange="onAdminStudentViewChange()" aria-label="Từ ngày">
-              <span>→</span>
-              <input type="date" id="admin-student-date-to" class="admin-search-input admin-toolbar-select" onchange="onAdminStudentViewChange()" aria-label="Đến ngày">
-            </div>
             <button type="button" class="view-switch-btn" onclick="resetAdminStudentFilters()" title="Xóa bộ lọc và sắp xếp"><i class="fa-solid fa-rotate-left"></i> <span>Đặt lại</span></button>
             <div class="admin-view-switcher">
               <button type="button" class="view-switch-btn active" id="btn-view-mode-progress" onclick="setAdminStudentsViewMode('progress')" title="Chế độ xem tiến độ lộ trình">
