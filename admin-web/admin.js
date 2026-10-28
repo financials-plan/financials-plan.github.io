@@ -6,6 +6,52 @@
   let currentViewMode = "progress";
   let currentKpiFilter = "all";
   let activeAdminSession = null;
+  let lastProcessedMembers = [];
+
+  function esc(value) {
+    return String(value === undefined || value === null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function jsArg(value) {
+    return esc(JSON.stringify(String(value === undefined || value === null ? "" : value)));
+  }
+
+  function normalizeSearchText(raw) {
+    return String(raw || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function authHeaders() {
+    const headers = {};
+    if (activeAdminSession?.apiKey) headers["x-admin-key"] = activeAdminSession.apiKey;
+    if (activeAdminSession?.token) headers["Authorization"] = "Bearer " + activeAdminSession.token;
+    return headers;
+  }
+
+  async function callApi(apiPath, body) {
+    try {
+      const res = await fetch(`${API_BASE}${apiPath}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(body)
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      return { ok: res.ok && !!(data && data.success), offline: false, data };
+    } catch (e) {
+      return { ok: false, offline: true, data: null };
+    }
+  }
 
   function init() {
     setupEventListeners();
@@ -293,9 +339,7 @@
   async function loadClasses() {
     try {
       const res = await fetch(`${API_BASE}/api/classes`, {
-        headers: {
-          ...(activeAdminSession?.apiKey ? { "x-admin-key": activeAdminSession.apiKey } : {})
-        }
+        headers: authHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -319,7 +363,7 @@
     const select = document.getElementById("admin-class-select");
     if (select) {
       select.innerHTML = cachedClasses.map(c => `
-        <option value="${c.id}" ${c.id === currentClassId ? "selected" : ""}>${c.name} (${c.code})</option>
+        <option value="${esc(c.id)}" ${c.id === currentClassId ? "selected" : ""}>${esc(c.name)} (${esc(c.code)})</option>
       `).join("");
       if (!currentClassId && cachedClasses[0]) {
         currentClassId = cachedClasses[0].id;
@@ -343,13 +387,13 @@
       <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
         <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i> ${isPriv ? 'Kín (Private)' : 'Mở (Global)'}
       </span>
-      <span class="badge-group-type ${isAccepting ? 'badge-type-global' : 'badge-type-private'}" style="cursor: pointer;" onclick="window.adminWebPortal.toggleAcceptance('${curGroup.id}')" title="Bật/Tắt tiếp nhận sinh viên">
+      <span class="badge-group-type ${isAccepting ? 'badge-type-global' : 'badge-type-private'}" style="cursor: pointer;" onclick="window.adminWebPortal.toggleAcceptance(${jsArg(curGroup.id)})" title="Bật/Tắt tiếp nhận sinh viên">
         <i class="fa-solid ${isAccepting ? 'fa-door-open' : 'fa-door-closed'}"></i> ${isAccepting ? 'Đang mở nhận' : 'Đã khóa nhận'}
       </span>
-      <span class="group-code-pill" onclick="window.adminWebPortal.copyGroupCode('${curGroup.code}')" title="Sao chép mã tham gia">
-        <code>${curGroup.code}</code> <i class="fa-regular fa-copy" style="margin-left: 4px;"></i>
+      <span class="group-code-pill" onclick="window.adminWebPortal.copyGroupCode(${jsArg(curGroup.code)})" title="Sao chép mã tham gia">
+        <code>${esc(curGroup.code)}</code> <i class="fa-regular fa-copy" style="margin-left: 4px;"></i>
       </span>
-      <button type="button" class="btn-group-action" onclick="window.adminWebPortal.regenGroupCode('${curGroup.id}')" title="Tái tạo mã tham gia ngẫu nhiên">
+      <button type="button" class="btn-group-action" onclick="window.adminWebPortal.regenGroupCode(${jsArg(curGroup.id)})" title="Tái tạo mã tham gia ngẫu nhiên">
         <i class="fa-solid fa-arrows-rotate"></i> Đổi mã
       </button>
       <span style="font-size: 13px; color: var(--admin-muted);">Quy mô: <strong>${limit === 0 ? 'Không giới hạn' : limit + ' người'}</strong></span>
@@ -365,7 +409,7 @@
     if (!tbody || !curGroup) return;
 
     const members = Array.isArray(curGroup.members) ? curGroup.members : [];
-    const searchVal = (document.getElementById("admin-student-search")?.value || "").trim().toLowerCase();
+    const searchVal = normalizeSearchText(document.getElementById("admin-student-search")?.value);
 
     let completedCount = 0;
     let balancingCount = 0;
@@ -509,8 +553,10 @@
     document.getElementById("strip-kpi-balancing") && (document.getElementById("strip-kpi-balancing").textContent = balancingCount);
     document.getElementById("strip-kpi-pending") && (document.getElementById("strip-kpi-pending").textContent = pendingCount);
 
+    lastProcessedMembers = processed;
+
     const filtered = processed.filter(m => {
-      const matchSearch = !searchVal || (m.name || "").toLowerCase().includes(searchVal) || (m.username || "").toLowerCase().includes(searchVal);
+      const matchSearch = !searchVal || normalizeSearchText(m.name).includes(searchVal) || normalizeSearchText(m.username).includes(searchVal);
       if (!matchSearch) return false;
       if (currentKpiFilter === "completed") return m.percent >= 70;
       if (currentKpiFilter === "balancing") return m.percent >= 40 && m.percent < 70;
@@ -564,14 +610,14 @@
           <td><strong>#${idx + 1}</strong></td>
           <td>
             <div class="student-user-cell">
-              <div class="student-avatar-circle">${(m.name || "S").charAt(0).toUpperCase()}</div>
+              <div class="student-avatar-circle">${esc((m.name || "S").charAt(0).toUpperCase())}</div>
               <div class="student-name-meta">
-                <strong>${m.name}</strong>
-                <span>@${m.username}</span>
+                <strong>${esc(m.name)}</strong>
+                <span>@${esc(m.username)}</span>
               </div>
             </div>
           </td>
-          <td><code>${m.email}</code></td>
+          <td><code>${esc(m.email)}</code></td>
           <td style="text-align: right;"><strong class="${m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow >= 0 ? '+' : ''}${m.netCashflow} tr</strong></td>
           <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate}%</strong></td>
           <td style="text-align: right;"><span style="color: var(--admin-muted);">${m.dsrVal}%</span></td>
@@ -586,10 +632,10 @@
           <td>${m.healthBadge}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; align-items: center; gap: 4px;">
-              <button type="button" class="btn-inspect-student-pill" onclick="window.adminWebPortal.inspectStudent('${m.username}', '${m.name}')">
+              <button type="button" class="btn-inspect-student-pill" onclick="window.adminWebPortal.inspectStudent(${jsArg(m.username)}, ${jsArg(m.name)})">
                 <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
               </button>
-              <button type="button" class="btn-remove-student-pill" onclick="window.adminWebPortal.removeStudent('${curGroup.id}', '${m.username}')">
+              <button type="button" class="btn-remove-student-pill" onclick="window.adminWebPortal.removeStudent(${jsArg(curGroup.id)}, ${jsArg(m.username)})">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -602,14 +648,14 @@
           <td><strong>#${idx + 1}</strong></td>
           <td>
             <div class="student-user-cell">
-              <div class="student-avatar-circle">${(m.name || "S").charAt(0).toUpperCase()}</div>
+              <div class="student-avatar-circle">${esc((m.name || "S").charAt(0).toUpperCase())}</div>
               <div class="student-name-meta">
-                <strong>${m.name}</strong>
-                <span>@${m.username}</span>
+                <strong>${esc(m.name)}</strong>
+                <span>@${esc(m.username)}</span>
               </div>
             </div>
           </td>
-          <td><code>${m.email}</code></td>
+          <td><code>${esc(m.email)}</code></td>
           <td><small style="color: var(--admin-muted);">${(m.joinedAt || '').slice(0, 10)}</small></td>
           <td>
             <span class="badge-group-type ${m.status === 'approved' ? 'badge-type-global' : 'badge-type-private'}">
@@ -629,10 +675,10 @@
           </td>
           <td style="text-align: right;">
             <div style="display: inline-flex; align-items: center; gap: 4px;">
-              <button type="button" class="btn-inspect-student-pill" onclick="window.adminWebPortal.inspectStudent('${m.username}', '${m.name}')">
+              <button type="button" class="btn-inspect-student-pill" onclick="window.adminWebPortal.inspectStudent(${jsArg(m.username)}, ${jsArg(m.name)})">
                 <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
               </button>
-              <button type="button" class="btn-remove-student-pill" onclick="window.adminWebPortal.removeStudent('${curGroup.id}', '${m.username}')">
+              <button type="button" class="btn-remove-student-pill" onclick="window.adminWebPortal.removeStudent(${jsArg(curGroup.id)}, ${jsArg(m.username)})">
                 <i class="fa-solid fa-trash-can"></i>
               </button>
             </div>
@@ -674,19 +720,33 @@
     if (!confirm("Tạo mã tham gia mới cho nhóm này? Mã cũ sẽ không còn hiệu lực.")) return;
     const newCode = "GRP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     const curGroup = cachedClasses.find(c => c.id === classId);
-    if (curGroup) {
-      curGroup.code = newCode;
-      updateClassMeta();
-      showToast(`Đã cấp mã tham gia mới: ${newCode}`, "success");
+    if (!curGroup) return;
+    const res = await callApi("/api/classes/update", { classId, code: newCode });
+    if (!res.ok && !res.offline) {
+      showToast((res.data && res.data.error) || "Không đổi được mã trên máy chủ.", "danger");
+      return;
     }
+    curGroup.code = newCode;
+    updateClassMeta();
+    showToast(res.offline ? `Mã mới ${newCode} chỉ áp dụng trên màn hình này (chưa kết nối được máy chủ).` : `Đã cấp mã tham gia mới: ${newCode}`, res.offline ? "warning" : "success");
   }
 
   async function toggleAcceptance(classId) {
     const curGroup = cachedClasses.find(c => c.id === classId);
     if (!curGroup) return;
-    curGroup.isAccepting = curGroup.isAccepting === false ? true : false;
+    const next = curGroup.isAccepting === false;
+    const res = await callApi("/api/classes/update", { classId, isAccepting: next });
+    if (!res.ok && !res.offline) {
+      showToast((res.data && res.data.error) || "Không cập nhật được trên máy chủ.", "danger");
+      return;
+    }
+    curGroup.isAccepting = next;
     updateClassMeta();
-    showToast(curGroup.isAccepting ? "Đã mở nhận thêm học viên." : "Đã khóa nhận học viên.", "info");
+    if (res.offline) {
+      showToast("Thay đổi chỉ áp dụng trên màn hình này (chưa kết nối được máy chủ).", "warning");
+    } else {
+      showToast(next ? "Đã mở nhận thêm học viên." : "Đã khóa nhận học viên.", "info");
+    }
   }
 
   function exportCsv() {
@@ -698,8 +758,16 @@
     csv += `BAO CAO LOP HOC: ${curGroup.name} [MA: ${curGroup.code}]\n`;
     csv += `STT,Username,Ho Ten,Email,Ngay tham gia,Trang thai,Doi ngu,Tien do (%)\n`;
 
+    const csvCell = (v) => {
+      let s = String(v === undefined || v === null ? "" : v).replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+      return `"${s}"`;
+    };
+    const byUser = new Map(lastProcessedMembers.map(p => [p.username, p]));
     members.forEach((m, idx) => {
-      csv += `"${idx + 1}","${m.username}","${m.name}","${m.email || (m.username + '@gmail.com')}","${m.joinedAt || ''}","${m.status}","Admin","75%"\n`;
+      const p = byUser.get(m.username) || m;
+      const progress = typeof p.percent === "number" ? p.percent + "%" : "";
+      csv += [idx + 1, m.username, m.name, p.email || m.email || "", m.joinedAt || "", m.status, curGroup.instructorName || curGroup.instructorUsername || "", progress].map(csvCell).join(",") + "\n";
     });
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -748,12 +816,12 @@
       if (plan) {
         body.innerHTML = `
           <div style="font-size: 13px; line-height: 1.6;">
-            <p><strong>Họ và tên:</strong> ${plan.ho_ten || name}</p>
-            <p><strong>Thu nhập hàng tháng:</strong> ${plan.monthlyIncome || 0} triệu</p>
-            <p><strong>Tỷ lệ tiết kiệm mục tiêu:</strong> ${plan.targetSavingsRate || 35}%</p>
-            <p><strong>Số mục tiêu tài chính:</strong> ${Array.isArray(plan.personalGoals) ? plan.personalGoals.length : 0} mục tiêu</p>
+            <p><strong>Họ và tên:</strong> ${esc(plan.ho_ten || name)}</p>
+            <p><strong>Thu nhập hàng tháng:</strong> ${esc(Number(plan.monthlyIncome) || 0)} triệu</p>
+            <p><strong>Tỷ lệ tiết kiệm mục tiêu:</strong> ${plan.targetSavingsRate ? esc(plan.targetSavingsRate) + "%" : "chưa nhập"}</p>
+            <p><strong>Số mục tiêu tài chính:</strong> ${Array.isArray(plan.personalGoals) ? plan.personalGoals.length : (Array.isArray(plan.tcGoals) ? plan.tcGoals.length : 0)} mục tiêu</p>
             <div style="margin-top: 12px; max-height: 200px; overflow-y: auto; background: var(--admin-bg); padding: 10px; border-radius: 6px;">
-              <pre style="font-size: 11.5px; font-family: monospace;">${JSON.stringify(plan, null, 2)}</pre>
+              <pre style="font-size: 11.5px; font-family: monospace;">${esc(JSON.stringify(plan, null, 2))}</pre>
             </div>
           </div>
         `;
@@ -761,7 +829,7 @@
         body.innerHTML = `
           <div style="text-align: center; padding: 24px 0; color: var(--admin-muted);">
             <i class="fa-solid fa-folder-open" style="font-size: 32px; margin-bottom: 8px;"></i>
-            <p>Học viên @${username} chưa lưu kế hoạch tài chính lên máy chủ đám mây.</p>
+            <p>Học viên @${esc(username)} chưa lưu kế hoạch tài chính lên máy chủ đám mây.</p>
           </div>
         `;
       }
@@ -775,14 +843,18 @@
     if (modal) modal.style.display = "none";
   }
 
-  function removeStudent(classId, username) {
+  async function removeStudent(classId, username) {
     if (!confirm(`Bạn có chắc muốn xóa sinh viên @${username} khỏi nhóm?`)) return;
     const curGroup = cachedClasses.find(c => c.id === classId);
-    if (curGroup && Array.isArray(curGroup.members)) {
-      curGroup.members = curGroup.members.filter(m => m.username !== username);
-      renderStudentsTable();
-      showToast(`Đã xóa học viên @${username} khỏi nhóm.`, "info");
+    if (!curGroup || !Array.isArray(curGroup.members)) return;
+    const res = await callApi("/api/classes/approve", { classId, studentUsername: username, action: "remove" });
+    if (!res.ok && !res.offline) {
+      showToast((res.data && res.data.error) || "Không xóa được học viên trên máy chủ.", "danger");
+      return;
     }
+    curGroup.members = curGroup.members.filter(m => m.username !== username);
+    renderStudentsTable();
+    showToast(res.offline ? `Đã ẩn @${username} trên màn hình này (chưa kết nối được máy chủ).` : `Đã xóa học viên @${username} khỏi nhóm.`, res.offline ? "warning" : "info");
   }
 
   function showToast(msg, type = "info") {

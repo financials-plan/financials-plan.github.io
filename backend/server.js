@@ -142,6 +142,28 @@ function isAdminAuthorized(req, url) {
   return false;
 }
 
+function isStaffAuthorized(req, url) {
+  if (isAdminAuthorized(req, url)) return true;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const session = sessionsStore.get(authHeader.slice(7).trim());
+    if (session && session.role === "instructor" && session.expiresAt > Date.now()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function normalizeClassCode(code) {
+  return String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function findActiveClassByCode(code, exceptId = null) {
+  const norm = normalizeClassCode(code);
+  if (!norm) return null;
+  return Array.from(classesStore.values()).find(c => c.id !== exceptId && c.status === "active" && normalizeClassCode(c.code) === norm) || null;
+}
+
 const server = http.createServer(async (req, res) => {
   handleCors(req, res);
 
@@ -604,8 +626,19 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (pathname === "/api/admin/codes" && !isAdminAuthorized(req, url)) {
+      sendJson(res, 403, { success: false, error: "Yêu cầu quyền Quản trị viên (QTV) hoặc khóa x-admin-key hợp lệ." });
+      return;
+    }
+
+    const staffOnlyClassRoutes = ["/api/classes", "/api/classes/update", "/api/classes/approve", "/api/classes/archive", "/api/classes/delete"];
+    if (staffOnlyClassRoutes.includes(pathname) && (req.method === "POST" || (req.method === "GET" && pathname === "/api/classes")) && !isStaffAuthorized(req, url)) {
+      sendJson(res, 403, { success: false, error: "Yêu cầu quyền Quản trị viên hoặc Giảng viên." });
+      return;
+    }
+
     if (req.method === "GET" && pathname === "/api/admin/codes") {
-      const list = Array.from(adminCodesStore.values()).map(c => ({
+      const list =Array.from(adminCodesStore.values()).map(c => ({
         code: c.code,
         role: c.role,
         maxUses: c.maxUses,
@@ -743,7 +776,12 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 400, { success: false, error: "Vui lòng nhập tên lớp và mã lớp." });
         return;
       }
-      const classId = "cls_" + Date.now().toString(36);
+      const clash = findActiveClassByCode(code);
+      if (clash) {
+        sendJson(res, 409, { success: false, error: `Mã "${code}" đang được nhóm "${clash.name}" sử dụng. Vui lòng chọn mã khác.` });
+        return;
+      }
+      const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       const newClass = {
         id: classId,
         name,
@@ -770,8 +808,17 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm cần chỉnh sửa." });
         return;
       }
+      if (body.code) {
+        const newCode = sanitizeInput(body.code, 32).toUpperCase();
+        const clash = findActiveClassByCode(newCode, classId);
+        if (clash) {
+          sendJson(res, 409, { success: false, error: `Mã "${newCode}" đang được nhóm "${clash.name}" sử dụng. Vui lòng chọn mã khác.` });
+          return;
+        }
+        targetClass.code = newCode;
+      }
       if (body.name) targetClass.name = sanitizeInput(body.name, 64);
-      if (body.code) targetClass.code = sanitizeInput(body.code, 32).toUpperCase();
+      if (body.isAccepting !== undefined) targetClass.isAccepting = Boolean(body.isAccepting);
       if (body.description !== undefined) targetClass.description = sanitizeInput(body.description, 255);
       if (body.isPrivate !== undefined) targetClass.isPrivate = Boolean(body.isPrivate);
       if (body.maxMembers !== undefined) {
@@ -800,6 +847,10 @@ const server = http.createServer(async (req, res) => {
       });
       if (!targetClass) {
         sendJson(res, 404, { success: false, error: "Không tìm thấy nhóm với mã này hoặc nhóm đã kết thúc." });
+        return;
+      }
+      if (targetClass.isAccepting === false) {
+        sendJson(res, 400, { success: false, error: "Nhóm này hiện đã khóa, không nhận thêm thành viên." });
         return;
       }
       if (targetClass.maxMembers > 0 && targetClass.members.length >= targetClass.maxMembers) {
