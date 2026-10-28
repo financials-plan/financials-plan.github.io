@@ -570,3 +570,36 @@ test("Quỹ dự phòng: sửa Tổng ước chi phí thì chi phí mỗi tháng
   env.syncCollegeMonthlyFromTotal(h, 724);
   assert.strictEqual(h.monthlyTuition, 20);
 });
+
+test("Mức sinh lời trung bình: bảng 30 năm, mốc tuổi và Dashboard cùng dùng V(y) = Σ tỷ trọng nhóm × lợi nhuận TB nhóm", () => {
+  const spend = goal("Mua xe", {
+    val: 600, start: 2030, end: 2032, fundUsage: "spend",
+    allocProducts: [
+      { prodName: "ETF A", weight: 50, _explicitSelected: true },
+      { prodName: "Tiền gửi C", weight: 50, _explicitSelected: true },
+      { prodName: "", weight: 0 }
+    ]
+  });
+  const hold = goal("Quỹ dài hạn", {
+    val: 1000, paid: 100, start: 2030, end: 2034, fundUsage: "hold",
+    allocProducts: [
+      { prodName: "Quỹ cổ phiếu B", weight: 100, _explicitSelected: true },
+      { prodName: "", weight: 0 }, { prodName: "", weight: 0 }
+    ]
+  });
+  const env = makeEnv(baseState({ tcGoals: [spend, hold] }));
+  const rows = env.simulatePersonalPortfolio(30).rows.filter(r => r.hasData);
+  const avgStocks = (12 + 15) / 2, avgDeposit = 5; // trung bình cộng lợi nhuận sản phẩm trong nhóm
+  rows.forEach(r => {
+    const expected = (r.stocks / 100) * avgStocks + (r.bank_deposit / 100) * avgDeposit;
+    assert.ok(Math.abs(r.groupReturn - expected) < 1e-9, `V(${r.year})`);
+  });
+  const k = rows.length;
+  const mean = rows.reduce((s, r) => s + r.groupReturn, 0) / k;
+  assert.ok(Math.abs(env.getAverageExpectedReturnPct() - mean) < 1e-9, "trung bình các năm có số dư");
+  // Bảng 30 năm dùng cùng V(y)
+  const list = env.getPortfolio30YrData().filter(x => x.hasData);
+  assert.strictEqual(list.length, k);
+  const tableMean = list.reduce((s, x) => s + x.ret, 0) / list.length;
+  assert.ok(Math.abs(tableMean - env.getAverageExpectedReturnPct()) < 1e-9, "trung bình ở bảng 30 năm = Dashboard");
+});

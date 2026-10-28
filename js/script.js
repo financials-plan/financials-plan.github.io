@@ -2287,7 +2287,8 @@ function getPortfolio30YrData() {
     hasData: r.hasData,
     total: r.hasData ? 100 : null,
     balance: r.balance,
-    ret: r.expectedReturn,
+    // Mức sinh lời của năm = V(y) = Σ tỷ trọng nhóm × lợi nhuận TB nhóm (cùng thuật toán với số trung bình ở Dashboard)
+    ret: (r.groupReturn !== null && r.groupReturn !== undefined) ? r.groupReturn : null,
     groupRet: r.groupReturn,
     stockTot: r.stocks,
     bondTot: r.bonds,
