@@ -378,7 +378,7 @@
           <div class="admin-toolbar-row">
             <div class="search-box-wrap">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="admin-group-search" class="admin-search-input" placeholder="Tìm kiếm nhóm theo tên hoặc mã..." oninput="renderAdminGroupsList()">
+              <input type="text" id="admin-group-search" class="admin-search-input" placeholder="Tìm kiếm nhóm theo tên hoặc mã..." oninput="onAdminGroupSearchInput()">
             </div>
             <div class="filter-actions-wrap">
               <select id="admin-group-filter-type" class="admin-select-styled" onchange="renderAdminGroupsList()">
@@ -495,7 +495,7 @@
           <div class="admin-toolbar-row">
             <div class="search-box-wrap" style="flex: 1;">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm sinh viên theo họ tên hoặc username..." oninput="renderAdminStudentsTable()">
+              <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm sinh viên theo họ tên hoặc username..." oninput="onAdminStudentSearchInput()">
             </div>
             <div class="admin-view-switcher">
               <button type="button" class="view-switch-btn active" id="btn-view-mode-progress" onclick="setAdminStudentsViewMode('progress')" title="Chế độ xem tiến độ lộ trình">
@@ -2926,7 +2926,7 @@
   </button>
 
   <script type="module" src="./backend/firestore-service.js"></script>
-  <script src="./js/script.js?v=3.6.6"></script>
+  <script src="./js/script.js?v=3.6.7"></script>
 
 </body>
 </html>

@@ -115,6 +115,24 @@ if (typeof window !== 'undefined') {
   window.normalizeUsername = normalizeUserName;
 }
 
+function normalizeSearchText(raw) {
+  return String(raw || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function debounceCall(fn, ms = 250) {
+  let timer = null;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -10585,10 +10603,17 @@ if (document.readyState === 'loading') {
   initCloudClassesRealtimeSync();
 }
 
+function replaceAppState(source) {
+  Object.keys(AppState).forEach(k => { delete AppState[k]; });
+  Object.assign(AppState, createEmptyAppState(), source || {});
+}
+
 window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   closeClassManagerModal();
 
-  backupInstructorAppState = JSON.parse(JSON.stringify(AppState));
+  if (!window.isReadOnlyStudentView || !backupInstructorAppState) {
+    backupInstructorAppState = JSON.parse(JSON.stringify(AppState));
+  }
   window.isReadOnlyStudentView = true;
 
   let studentPlan = null;
@@ -10616,11 +10641,11 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   }
 
   if (studentPlan) {
+    const studentData = {};
     Object.keys(studentPlan).forEach(k => {
-      if (!k.startsWith('_')) {
-        AppState[k] = studentPlan[k];
-      }
+      if (!k.startsWith('_')) studentData[k] = studentPlan[k];
     });
+    replaceAppState(studentData);
     ensureDefaultKeywords(AppState);
     ensureFixedInvestmentGoals();
     syncInvestProductsToGoals();
@@ -10636,6 +10661,7 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
     if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
     if (typeof renderAll === 'function') renderAll();
   } else {
+    replaceAppState(null);
     ensureDefaultKeywords(AppState);
     ensureFixedInvestmentGoals();
     syncInvestProductsToGoals();
@@ -10667,7 +10693,7 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
 
 window.exitStudentPlanReadOnly = function() {
   if (backupInstructorAppState) {
-    Object.assign(AppState, backupInstructorAppState);
+    replaceAppState(backupInstructorAppState);
     backupInstructorAppState = null;
   }
   window.isReadOnlyStudentView = false;
@@ -10841,14 +10867,19 @@ window.submitCreateNewGroup = async function() {
   }
 };
 
+let adminGroupsRenderSeq = 0;
+window.onAdminGroupSearchInput = debounceCall(() => window.renderAdminGroupsList(), 250);
+
 window.renderAdminGroupsList = async function() {
   const grid = document.getElementById('admin-groups-grid');
   if (!grid || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
 
+  const seq = ++adminGroupsRenderSeq;
   const classes = await window.CloudDB.getClasses();
+  if (seq !== adminGroupsRenderSeq) return;
   cachedClassesList = classes;
 
-  const searchVal = (document.getElementById('admin-group-search')?.value || '').trim().toLowerCase();
+  const searchVal = normalizeSearchText(document.getElementById('admin-group-search')?.value);
   const filterType = document.getElementById('admin-group-filter-type')?.value || 'all';
 
   let totalStudents = 0;
@@ -10877,8 +10908,8 @@ window.renderAdminGroupsList = async function() {
     if (filterType === 'private' && c.isPrivate === false) return false;
     if (filterType === 'global' && c.isPrivate !== false) return false;
     if (searchVal) {
-      const matchName = (c.name || '').toLowerCase().includes(searchVal);
-      const matchCode = (c.code || '').toLowerCase().includes(searchVal);
+      const matchName = normalizeSearchText(c.name).includes(searchVal);
+      const matchCode = normalizeSearchText(c.code).includes(searchVal);
       if (!matchName && !matchCode) return false;
     }
     return true;
@@ -11309,6 +11340,9 @@ window.onAdminStudentGroupChange = function(classId) {
   renderAdminStudentsTable();
 };
 
+let adminStudentsRenderSeq = 0;
+window.onAdminStudentSearchInput = debounceCall(() => window.renderAdminStudentsTable(), 250);
+
 window.renderAdminStudentsTable = async function() {
   const tbody = document.getElementById('tbody-admin-students');
   const thead = document.getElementById('thead-admin-students');
@@ -11317,7 +11351,9 @@ window.renderAdminStudentsTable = async function() {
   const metaBox = document.getElementById('group-current-meta');
   if (!tbody || !window.CloudDB || typeof window.CloudDB.getClasses !== 'function') return;
 
+  const seq = ++adminStudentsRenderSeq;
   const classes = await window.CloudDB.getClasses();
+  if (seq !== adminStudentsRenderSeq) return;
   cachedClassesList = classes;
 
   if (classes.length === 0) {
@@ -11358,7 +11394,7 @@ window.renderAdminStudentsTable = async function() {
   }
 
   const members = Array.isArray(curGroup.members) ? curGroup.members : [];
-  const searchVal = (document.getElementById('admin-student-search')?.value || '').trim().toLowerCase();
+  const searchVal = normalizeSearchText(document.getElementById('admin-student-search')?.value);
 
   let completedCount = 0;
   let balancingCount = 0;
@@ -11378,6 +11414,8 @@ window.renderAdminStudentsTable = async function() {
       return { member: m, progress: prog };
     })
   );
+
+  if (seq !== adminStudentsRenderSeq) return;
 
   const processedMembers = memberProgressList.map(({ member: m, progress: prog }) => {
     let percent = (prog && typeof prog.percent === 'number') ? prog.percent : 0;
@@ -11532,7 +11570,7 @@ window.renderAdminStudentsTable = async function() {
   document.getElementById('strip-kpi-pending') && (document.getElementById('strip-kpi-pending').textContent = pendingCount);
 
   const filteredMembers = processedMembers.filter(m => {
-    const matchSearch = !searchVal || (m.name || '').toLowerCase().includes(searchVal) || (m.username || '').toLowerCase().includes(searchVal);
+    const matchSearch = !searchVal || normalizeSearchText(m.name).includes(searchVal) || normalizeSearchText(m.username).includes(searchVal);
     if (!matchSearch) return false;
     if (window.currentKpiFilter === 'completed') return m.percent >= 70;
     if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
