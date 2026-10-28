@@ -1909,6 +1909,17 @@ function calculateRetirementGoal(goal) {
 }
 
 // Người dùng sửa trực tiếp "Mục tiêu tiết kiệm cần đạt" của mục tiêu cố định
+// Quỹ dự phòng: tổng chi phí = số tháng × chi phí mỗi tháng (đã quy đổi lạm phát), nên sửa tổng thì chi phí mỗi tháng tự tính lại cho khớp
+function syncCollegeMonthlyFromTotal(g, total) {
+  const reserveMonths = Number(g && (g.collegePeriods || g.yearsRetire)) || 0;
+  const v = Number(total) || 0;
+  if (!isCollegeFixedGoal(g) || !(v > 0) || !(reserveMonths > 0)) return;
+  const factor = inflateToGoalDate(1, g) || 1;
+  const perMonth = Number((v / (reserveMonths * factor)).toFixed(2));
+  g.monthlyTuition = perMonth;
+  g.monthlyRetire = perMonth;
+}
+
 function applyFixedGoalValEdit(g, val) {
   const v = Number(val) || 0;
   if (isRetirementFixedGoal(g) && v > 0) g.retireModel = 0;
@@ -6741,6 +6752,7 @@ window.updateGoalCardField = function(goalId, field, rawText) {
     } else if (field === 'val') {
       g.val = safeVal;
       applyFixedGoalValEdit(g, safeVal);
+      syncCollegeMonthlyFromTotal(g, safeVal);
     } else if (field === 'collegePeriods' || field === 'yearsRetire') {
       if (isRetirementFixedGoal(g) && safeVal > 0) g.retireModel = 2;
       g.collegePeriods = safeVal;

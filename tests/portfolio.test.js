@@ -32,7 +32,7 @@ const FN_NAMES = [
   "calculateMonthlyNeed", "getTargetSavingsRatePct", "getEffectiveSavingsRateRatio",
   "computeIncomeNeedForGoalSavings", "getMatrixIncomeNeed", "simulatePersonalPortfolio",
   "describePortfolioIssues", "getPortfolioAllocationAtAge", "getPortfolio30YrData", "calculateAgeMilestones", "getAverageExpectedReturnPct",
-  "yearsToGoalDate", "inflateToGoalDate", "accumulationMonthsOf", "singleRateOfGoal", "applyFixedGoalValEdit",
+  "yearsToGoalDate", "inflateToGoalDate", "syncCollegeMonthlyFromTotal", "accumulationMonthsOf", "singleRateOfGoal", "applyFixedGoalValEdit",
   "migrateLegacyRetirementReserve"
 ].filter(n => new RegExp("^function " + n + "\\(", "m").test(src));
 
@@ -43,7 +43,7 @@ function makeEnv(state) {
     src.match(/const INFLATION_ENABLED = [^;]+;/)[0],
     ...FN_NAMES.map(n => extractTopLevel(src, "function " + n + "(")),
     "return { FinancialMath, calculateMonthlyNeed, simulatePersonalPortfolio, getPortfolio30YrData, getMatrixIncomeNeed, " +
-    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge, getAverageExpectedReturnPct, applyFixedGoalValEdit };"
+    "calculateAgeMilestones, migrateLegacyRetirementReserve, normalizeInvestProducts, getProductInvestmentType, describePortfolioIssues, getPortfolioAllocationAtAge, getAverageExpectedReturnPct, applyFixedGoalValEdit, syncCollegeMonthlyFromTotal, createFixedCollegeGoal };"
   ].join("\n");
   const factory = new Function("AppState", "window", code);
   return factory(state, {});
@@ -551,4 +551,22 @@ test("U. Quỹ dự phòng: sửa tay Giá trị mục tiêu được giữ và 
   g.collegePeriods = 8; g._manualValOverride = false; // như khi sửa số tháng ở thẻ
   env.calculateMonthlyNeed(g);
   assert.strictEqual(g.val, 80);
+});
+
+test("Quỹ dự phòng: sửa Tổng ước chi phí thì chi phí mỗi tháng tự tính lại, giữ đúng tổng", () => {
+  const env = makeEnv({ currentYear: 2026, currentAge: 21 });
+  const g = env.createFixedCollegeGoal();
+  g.start = 2030; g.end = 2048; g.collegePeriods = 4; g.yearsRetire = 4; g.inflation = 0;
+  g.monthlyTuition = 20; g.monthlyRetire = 20;
+  g.val = 724;
+  env.applyFixedGoalValEdit(g, 724);
+  env.syncCollegeMonthlyFromTotal(g, 724);
+  assert.strictEqual(g.monthlyTuition, 181);
+  assert.strictEqual(g.monthlyRetire, 181);
+  env.calculateMonthlyNeed(g);
+  assert.strictEqual(Math.round(g.val), 724);
+  // Không có số tháng dự phòng: giữ nguyên chi phí mỗi tháng
+  const h = env.createFixedCollegeGoal(); h.collegePeriods = 0; h.yearsRetire = 0; h.monthlyTuition = 20;
+  env.syncCollegeMonthlyFromTotal(h, 724);
+  assert.strictEqual(h.monthlyTuition, 20);
 });
