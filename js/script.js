@@ -12357,9 +12357,13 @@ window.submitGenerateAdminCode = async function() {
   const maxUses = parseInt(document.getElementById('inp-gen-uses')?.value, 10) || 1;
   const days = parseInt(document.getElementById('inp-gen-days')?.value, 10) || 30;
 
-  if (window.CloudDB && typeof window.CloudDB.generateAdminCode === 'function') {
-    const res = await window.CloudDB.generateAdminCode(role, maxUses, days);
-    showToast(`Đã tạo mã cấp quyền: ${res.code}`);
+  if (window.CloudDB && typeof window.CloudDB.createAdminCode === 'function') {
+    const res = await window.CloudDB.createAdminCode(role, maxUses, days);
+    if (!res || !res.success) {
+      showToast('Không thể tạo mã cấp quyền.', 'error');
+      return;
+    }
+    showToast(`Đã tạo mã cấp quyền: ${res.code.code}`);
     renderAdminPersonalCodesList();
   }
 };

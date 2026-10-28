@@ -518,13 +518,14 @@ function setupClassesRealtimeListener() {
   try {
     const q = collection(db, CLASSES_COLLECTION);
     classesRealtimeUnsubscribe = onSnapshot(q, (snapshot) => {
-      const remote = {};
+      const remoteAll = {};
       snapshot.forEach(d => {
         const data = { ...d.data(), id: d.id };
         if (isRealClassRecord(data)) {
-          remote[d.id] = data;
+          remoteAll[d.id] = data;
         }
       });
+      const remote = omitDeletedClasses(remoteAll);
 
       const local = getLocalClasses();
       const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
@@ -667,7 +668,7 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
   }
   delete local[classId];
   saveLocalClasses(local);
-  await withTimeout(deleteDoc(ref)).catch(() => {});
+  await withTimeout(deleteDoc(ref));
   const legacyAggregates = [
     doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
     doc(db, CLASSES_COLLECTION, "groups"),
@@ -839,6 +840,34 @@ function saveLocalAdminCodes(codes) {
   } catch (e) {}
 }
 
+const DELETED_CLASSES_KEY = "FIN_APP_DELETED_CLASSES_V1";
+
+function getDeletedClassIds() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(DELETED_CLASSES_KEY) || "[]");
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function markClassDeleted(classId, deleted = true) {
+  const ids = getDeletedClassIds();
+  if (deleted) ids.add(classId); else ids.delete(classId);
+  try {
+    localStorage.setItem(DELETED_CLASSES_KEY, JSON.stringify([...ids].slice(-200)));
+  } catch (e) {}
+}
+
+function omitDeletedClasses(classMap) {
+  const dead = getDeletedClassIds();
+  const out = {};
+  Object.keys(classMap || {}).forEach(id => {
+    if (!dead.has(id)) out[id] = classMap[id];
+  });
+  return out;
+}
+
 function getLocalClasses() {
   let classes = {};
   try {
@@ -847,6 +876,7 @@ function getLocalClasses() {
   } catch (e) {
     classes = {};
   }
+  classes = omitDeletedClasses(classes);
   let modified = false;
   if (classes["cls_k48"]) {
     delete classes["cls_k48"];
@@ -866,7 +896,7 @@ function getLocalClasses() {
 
 function saveLocalClasses(classes) {
   try {
-    localStorage.setItem(LOCAL_CLASSES_KEY, JSON.stringify(classes || {}));
+    localStorage.setItem(LOCAL_CLASSES_KEY, JSON.stringify(omitDeletedClasses(classes)));
   } catch (e) {}
 }
 
@@ -2398,6 +2428,9 @@ const FirestoreService = {
       } catch (e) {}
     }
 
+    const dead = getDeletedClassIds();
+    dead.forEach(id => { delete remote[id]; });
+
     const me = activeAuthContext ? activeAuthContext.normalizedUsername : "";
     const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
     const cache = {};
@@ -2762,9 +2795,11 @@ const FirestoreService = {
 
   async deleteClass(classId) {
     if (isFirebaseReady && db) {
+      markClassDeleted(classId);
       try {
         await syncClassesStoreToFirestore(classId, null, true);
       } catch (err) {
+        markClassDeleted(classId, false);
         return { success: false, error: "Chưa xóa được nhóm trên Cloud: " + describeCloudError(err) };
       }
     } else if (!getLocalClasses()[classId]) {
