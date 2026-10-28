@@ -329,6 +329,28 @@ function readDateCellValue(el) {
 }
 window.readDateCellValue = readDateCellValue;
 
+// Số tiền tính bằng số thực nên cộng/trừ dễ sinh đuôi như 1.0999999999999999; làm tròn tối đa 6 chữ số thập phân
+function roundMoney(v) {
+  const n = Number(v);
+  return isFinite(n) ? Math.round(n * 1e6) / 1e6 : 0;
+}
+
+// Chuẩn hóa số tiền đã lưu (kể cả dữ liệu cũ bị đuôi thập phân) trong thu/chi/đào tạo 12 tháng
+function normalizeMonthlyAmounts() {
+  const md = AppState.monthlyDetails;
+  if (!md || typeof md !== 'object') return;
+  for (let m = 1; m <= 12; m++) {
+    const d = md[m];
+    if (!d) continue;
+    ['incomes', 'expenses', 'learningDetails'].forEach(type => {
+      if (!Array.isArray(d[type])) return;
+      d[type].forEach(item => {
+        if (item && item.val !== undefined && item.val !== null && item.val !== '') item.val = roundMoney(item.val);
+      });
+    });
+  }
+}
+
 function getMonthFromIso(iso) {
   if (!iso || typeof iso !== 'string') return null;
   const parts = iso.trim().split('-');
@@ -354,6 +376,7 @@ function sortMonthTransactions(m, type) {
 // Chỉ gọi khi bấm Lưu; lúc đang nhập liệu các dòng giữ nguyên vị trí để số liệu không nhảy.
 function organizeMonthlyTransactions() {
   let moved = 0;
+  normalizeMonthlyAmounts();
   const ensureMonth = (mm) => {
     if (!AppState.monthlyDetails[mm]) {
       AppState.monthlyDetails[mm] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
@@ -408,7 +431,7 @@ function flushMonthInputsToState(m) {
       const numEl = tr.querySelector(sel.val);
       if (numEl && String(numEl.value).trim() !== '') {
         const num = parseFloat(String(numEl.value).replace(/,/g, '.'));
-        if (isFinite(num)) item.val = num;
+        if (isFinite(num)) item.val = roundMoney(num);
       }
       if (sel.desc) {
         const descEl = tr.querySelector(sel.desc);
@@ -4469,13 +4492,13 @@ function syncMonthLearningExpense(m) {
   const mStr = String(m).padStart(2, '0');
   if (totalLearningCost > 0) {
     if (lrnExpense) {
-      lrnExpense.val = totalLearningCost;
+      lrnExpense.val = roundMoney(totalLearningCost);
     } else {
       expList.push({
         date: `${y}-${mStr}-20`,
         cat: lrnCatName,
         desc: "Đầu tư phát triển bản thân",
-        val: totalLearningCost,
+        val: roundMoney(totalLearningCost),
         autoSyncedLearning: true
       });
     }
@@ -4515,7 +4538,7 @@ function renderMonthView(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(inc.desc || '')}" placeholder="Chi tiết nguồn thu..." oninput="updateMonthIncDesc(${m}, ${i}, this.value)" onchange="updateMonthIncDesc(${m}, ${i}, this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${Number(inc.val) ? inc.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${roundMoney(inc.val) || ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
         </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})" aria-label="Xoá dòng thu nhập"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -4548,7 +4571,7 @@ function renderMonthView(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(exp.desc || '')}" placeholder="Chi tiết giao dịch..." oninput="updateMonthExpDesc(${m}, ${i}, this.value)" onchange="updateMonthExpDesc(${m}, ${i}, this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${Number(exp.val) ? exp.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${roundMoney(exp.val) || ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
         </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})" aria-label="Xoá dòng chi tiêu"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -4835,7 +4858,7 @@ window.updateMonthExpCat = function(m, i, val) {
 
 window.updateMonthIncValLive = function(m, i, val) {
   if (!AppState.monthlyDetails[m]?.incomes?.[i]) return;
-  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  const num = roundMoney(typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0));
   AppState.monthlyDetails[m].incomes[i].val = num;
   renderReconciliationTable(m);
   recalculateAll();
@@ -4843,7 +4866,7 @@ window.updateMonthIncValLive = function(m, i, val) {
 
 window.updateMonthExpValLive = function(m, i, val) {
   if (!AppState.monthlyDetails[m]?.expenses?.[i]) return;
-  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  const num = roundMoney(typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0));
   AppState.monthlyDetails[m].expenses[i].val = num;
   AppState.monthlyDetails[m].expenses[i].userEdited = true;
   renderReconciliationTable(m);
@@ -4896,7 +4919,7 @@ function renderMonthLearningSection(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(it.desc || '')}" placeholder="Nội dung khóa học / sách..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-info" value="${Number(it.val) ? it.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthLearningValLive(${m}, ${i}, this.value)" onchange="updateMonthLearningVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-info" value="${roundMoney(it.val) || ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthLearningValLive(${m}, ${i}, this.value)" onchange="updateMonthLearningVal(${m}, ${i}, this.value)">
         </td>
         <td>
           <input type="text" class="input-inline-cell" value="${escapeHtml(it.expRes || '')}" placeholder="Kết quả kỳ vọng..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)">
@@ -4967,7 +4990,7 @@ window.updateMonthLearningFieldLive = function(m, i, field, val) {
 
 window.updateMonthLearningValLive = function(m, i, val) {
   if (!AppState.monthlyDetails[m]?.learningDetails?.[i]) return;
-  const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
+  const num = roundMoney(typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0));
   AppState.monthlyDetails[m].learningDetails[i].val = num;
   updateMonthLearningStats(m);
   syncLearningToDashboard();
@@ -5206,7 +5229,7 @@ function renderYearEndBalanceSheet() {
             </td>
             <td>${nameCellHtml}</td>
             <td>
-              <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
+              <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null && item.val !== '' ? roundMoney(item.val) : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
             </td>
             <td class="text-center">
               <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
@@ -5229,7 +5252,7 @@ function renderYearEndBalanceSheet() {
             <input type="text" class="input-inline-cell" value="${escapeHtml(item.name || '')}" placeholder="Tên khoản nợ / nghĩa vụ..." oninput="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'name', this.value)">
           </td>
           <td>
-            <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
+            <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null && item.val !== '' ? roundMoney(item.val) : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
           </td>
           <td class="text-center">
             <button type="button" class="btn-table-del" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
@@ -6102,13 +6125,13 @@ function renderTcGoalsFormTable() {
           }
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number(g.val) || 0}"
+          <input type="number" step="any" class="text-right font-mono" value="${roundMoney(g.val)}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'val', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number(g.paid) || 0}"
+          <input type="number" step="any" class="text-right font-mono" value="${roundMoney(g.paid)}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'paid', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
@@ -7248,6 +7271,7 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
         AppState[key] = cloudData[key];
       }
     });
+    normalizeMonthlyAmounts();
     ensureFixedInvestmentGoals();
     syncInvestProductsToGoals();
 
