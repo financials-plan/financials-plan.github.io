@@ -10247,7 +10247,7 @@ async function renderClassProgressMatrix() {
 
   const rows = [];
   for (const m of members) {
-    const prog = await window.CloudDB.getStudentClassProgress(m.username);
+    const prog = await window.CloudDB.getStudentClassProgress(m.username, { fresh: true });
     const badgeMap = {
       completed: '<span class="badge-prog badge-prog-done"><i class="fa-solid fa-check"></i> Hoàn thành</span>',
       in_progress: '<span class="badge-prog badge-prog-doing"><i class="fa-solid fa-spinner"></i> Đang làm</span>',
@@ -10290,7 +10290,7 @@ async function renderClassAnalyticsDashboard() {
   let totalStocks = 0, totalBonds = 0, totalInsurance = 0, totalCash = 0;
 
   for (const m of members) {
-    const prog = await window.CloudDB.getStudentClassProgress(m.username);
+    const prog = await window.CloudDB.getStudentClassProgress(m.username, { fresh: true });
     totalPercent += (prog.percent || 0);
 
     let plan = null;
@@ -10735,7 +10735,7 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
   let studentPlan = null;
   if (window.CloudDB && typeof window.CloudDB.loadUserData === 'function') {
     try {
-      const cloudRes = await window.CloudDB.loadUserData('user_' + studentUsername);
+      const cloudRes = await window.CloudDB.loadUserData('user_' + studentUsername, { fresh: true });
       if (cloudRes && cloudRes.success && cloudRes.data) {
         studentPlan = cloudRes.data;
       }

@@ -446,6 +446,13 @@ let classesRealtimeUnsubscribe = null;
 
 const LOGIN_STAMP_MIN_INTERVAL_MS = 10 * 60 * 1000;
 const CLASSES_CACHE_TTL_MS = 45000;
+// Bài làm của học viên khác (admin/giảng viên xem tiến độ, phân tích nhóm) được giữ trong bộ nhớ để mở lại tab không tốn thêm lượt đọc Firestore
+const USER_DATA_CACHE_TTL_MS = 10 * 60 * 1000;
+const USER_DATA_CACHE_MAX = 300;
+const userDataCache = new Map();
+function cloneForCache(value) {
+  return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+}
 let classesCache = { at: 0, user: "", value: null };
 let classesInflight = null;
 let classesGen = 0;
@@ -2733,8 +2740,25 @@ const FirestoreService = {
     return { success: true, message: "Đã xóa nhóm thành công." };
   },
 
-  async loadUserData(targetDocId) {
+  async loadUserData(targetDocId, options = {}) {
     if (!targetDocId) return { success: false, error: "Thiếu ID tài liệu." };
+    const normTarget = normalizeUsername(targetDocId.replace(/^user_/, "").trim());
+    const caller = getCallerContext().username;
+    const cacheable = Boolean(normTarget) && normTarget !== caller;
+    const cacheKey = caller + ":" + normTarget;
+    if (cacheable && !options.fresh) {
+      const hit = userDataCache.get(cacheKey);
+      if (hit && Date.now() - hit.at < USER_DATA_CACHE_TTL_MS) return cloneForCache(hit.res);
+    }
+    const res = await this.loadUserDataRemote(targetDocId);
+    if (cacheable && res && res.success && res.data) {
+      if (userDataCache.size >= USER_DATA_CACHE_MAX) userDataCache.delete(userDataCache.keys().next().value);
+      userDataCache.set(cacheKey, { at: Date.now(), res: cloneForCache(res) });
+    }
+    return res;
+  },
+
+  async loadUserDataRemote(targetDocId) {
     const cleanUser = targetDocId.replace(/^user_/, "").trim();
     const normUser = normalizeUsername(cleanUser);
     const normDocId = "user_" + normUser;
@@ -2811,6 +2835,7 @@ const FirestoreService = {
     const cleanUser = (targetDocId || "").replace(/^user_/, "").trim();
     const normUser = normalizeUsername(cleanUser);
     const normDocId = "user_" + normUser;
+    for (const k of [...userDataCache.keys()]) { if (k.endsWith(":" + normUser)) userDataCache.delete(k); }
     try {
       localStorage.removeItem("FIN_APP_LAST_STATE_" + normDocId);
       localStorage.removeItem("FIN_APP_BACKUPS_" + normDocId);
@@ -2828,12 +2853,12 @@ const FirestoreService = {
     }
   },
 
-  async getStudentClassProgress(studentUsername) {
+  async getStudentClassProgress(studentUsername, options = {}) {
     const norm = normalizeUsername(studentUsername);
     let plan = null;
 
     try {
-      const loadRes = await this.loadUserData("user_" + norm);
+      const loadRes = await this.loadUserData("user_" + norm, options);
       if (loadRes && loadRes.success && loadRes.data) {
         plan = loadRes.data;
       }
