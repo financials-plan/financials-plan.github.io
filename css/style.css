@@ -1024,6 +1024,8 @@ body.rail-collapsed:not(.rail-hover-expanded) .rail-month-collapsed-btn[data-too
   border-bottom: 1px solid var(--border);
   min-height: 56px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 .topbar-left {
