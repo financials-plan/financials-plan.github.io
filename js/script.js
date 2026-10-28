@@ -11939,7 +11939,11 @@ window.removeStudentFromGroup = async function(classId, username) {
       showToast((cloudRes && cloudRes.error) || 'Không lưu được thay đổi lên Cloud.', 'error');
       return;
     }
-    showToast(`Đã xóa học viên @${username} khỏi nhóm.`);
+    if (cloudRes.cloudSynced === false) {
+      showToast(cloudRes.warning || 'Chưa xóa được trên Cloud, học viên có thể xuất hiện lại.', 'warning');
+    } else {
+      showToast(`Đã xóa học viên @${username} khỏi nhóm trên Cloud.`);
+    }
     await renderAdminStudentsTable();
     await renderAdminGroupsList();
   }

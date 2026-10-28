@@ -421,11 +421,12 @@ function mergeMembersList(listA = [], listB = []) {
   return Array.from(map.values());
 }
 
-function mergeClassRecord(c1, c2) {
+function mergeClassRecord(c1, c2, remoteIsSource = false) {
   if (!c1 && !c2) return null;
   if (!c1) return c2;
   if (!c2) return c1;
-  const mergedMembers = mergeMembersList(c1.members, c2.members);
+  // Khi c2 là bản vừa đọc từ Cloud thì danh sách thành viên theo Cloud, để người đã bị xoá không bị gộp lại từ bản lưu cục bộ cũ
+  const mergedMembers = remoteIsSource ? mergeMembersList([], c2.members) : mergeMembersList(c1.members, c2.members);
   const date1 = c1.updatedAt ? new Date(c1.updatedAt).getTime() : 0;
   const date2 = c2.updatedAt ? new Date(c2.updatedAt).getTime() : 0;
   const primary = date2 >= date1 ? c2 : c1;
@@ -487,7 +488,7 @@ function setupClassesRealtimeListener() {
       const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
       const cache = {};
       allIds.forEach(id => {
-        cache[id] = mergeClassRecord(local[id], remote[id]);
+        cache[id] = mergeClassRecord(local[id], remote[id], true);
       });
       saveLocalClasses(cache);
 
@@ -570,7 +571,7 @@ async function mutateClassInCloud(classId, mutator, options = {}) {
       const cSnap = await withTimeout(getDoc(cRef), 5000).catch(() => null);
       if (cSnap && cSnap.exists()) {
         const cData = { ...cSnap.data(), id: cSnap.id };
-        cls = cls ? mergeClassRecord(cls, cData) : cData;
+        cls = cls ? mergeClassRecord(cls, cData, true) : cData;
       }
     } catch (e) {}
   }
@@ -2301,7 +2302,7 @@ const FirestoreService = {
     const allIds = new Set([...Object.keys(local), ...Object.keys(remote)]);
     const cache = {};
     allIds.forEach(id => {
-      cache[id] = mergeClassRecord(local[id], remote[id]);
+      cache[id] = mergeClassRecord(local[id], remote[id], true);
     });
 
     const failed = [];
