@@ -2793,6 +2793,51 @@ const FirestoreService = {
     return res;
   },
 
+  async restoreClassRecord(classData) {
+    if (!isRealClassRecord(classData)) {
+      return { success: false, error: "Bản ghi lớp trong tệp sao lưu không hợp lệ." };
+    }
+    const cls = { ...classData };
+    delete cls._localOnly;
+    markClassDeleted(cls.id, false);
+    cacheClassLocally(cls);
+    if (isFirebaseReady && db) {
+      try {
+        await syncClassesStoreToFirestore(cls.id, cls, false);
+      } catch (err) {
+        return { success: false, error: "Chưa khôi phục được nhóm lên Cloud: " + describeCloudError(err) };
+      }
+    }
+    return { success: true, class: cls };
+  },
+
+  async restoreAdminCodeRecord(codeData) {
+    const code = String(codeData && codeData.code || "").trim().toUpperCase();
+    if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+      return { success: false, error: "Mã cấp quyền trong tệp sao lưu không hợp lệ." };
+    }
+    const record = {
+      code,
+      role: codeData.role === "admin" ? "admin" : "instructor",
+      maxUses: parseInt(codeData.maxUses, 10) || 1,
+      usedCount: parseInt(codeData.usedCount, 10) || 0,
+      isRevoked: codeData.isRevoked === true,
+      expiresAt: codeData.expiresAt || new Date().toISOString(),
+      createdAt: codeData.createdAt || new Date().toISOString()
+    };
+    const local = getLocalAdminCodes();
+    local[code] = record;
+    saveLocalAdminCodes(local);
+    if (isFirebaseReady && db) {
+      try {
+        await withTimeout(setDoc(doc(db, ADMIN_CODES_COLLECTION, code), record, { merge: true }));
+      } catch (err) {
+        return { success: false, error: "Chưa khôi phục được mã lên Cloud: " + describeCloudError(err) };
+      }
+    }
+    return { success: true, code: record };
+  },
+
   async deleteClass(classId) {
     if (isFirebaseReady && db) {
       markClassDeleted(classId);

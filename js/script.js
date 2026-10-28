@@ -12434,7 +12434,7 @@ window.revokeAdminCode = async function(code) {
   }
 };
 
-window.submitChangeAdminPassword = function() {
+window.submitChangeAdminPassword = async function() {
   const oldP = document.getElementById('inp-pass-old')?.value || '';
   const newP = document.getElementById('inp-pass-new')?.value || '';
   const confP = document.getElementById('inp-pass-confirm')?.value || '';
@@ -12448,6 +12448,15 @@ window.submitChangeAdminPassword = function() {
   }
   if (newP !== confP) {
     showToast('Mật khẩu xác nhận không khớp.', 'warning');
+    return;
+  }
+  if (!window.CloudDB || typeof window.CloudDB.changePassword !== 'function') {
+    showToast('Dịch vụ xác thực đang khởi tạo, vui lòng thử lại.', 'warning');
+    return;
+  }
+  const res = await window.CloudDB.changePassword(oldP, newP);
+  if (!res || !res.success) {
+    showToast((res && res.error) || 'Không thể đổi mật khẩu.', 'error');
     return;
   }
   showToast('Đã đổi mật khẩu Quản trị viên thành công!');
@@ -12590,15 +12599,48 @@ window.handleAdminSystemRestoreFile = function(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async (e) => {
+    let data = null;
     try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data.classes) && window.CloudDB) {
-        showToast('Khôi phục dữ liệu sao lưu thành công!');
-        if (typeof renderAdminGroupsList === 'function') renderAdminGroupsList();
-      }
-    } catch (err) {
+      data = JSON.parse(e.target.result);
+    } catch (err) {}
+    if (!data || data.system !== 'financials-plan-admin' || !Array.isArray(data.classes) || !window.CloudDB) {
       showToast('Tệp sao lưu không hợp lệ.', 'error');
+      input.value = '';
+      return;
     }
+
+    const existing = await window.CloudDB.getClasses();
+    const existingIds = new Set(existing.map(c => c.id));
+    const activeCodes = new Set(existing.filter(c => c.status === 'active').map(c => c.code));
+    let restored = 0, skipped = 0, failed = 0;
+    for (const cls of data.classes) {
+      if (!cls || existingIds.has(cls.id) || (cls.status === 'active' && activeCodes.has(cls.code))) {
+        skipped++;
+        continue;
+      }
+      const res = await window.CloudDB.restoreClassRecord(cls);
+      if (res && res.success) {
+        restored++;
+        if (cls.status === 'active') activeCodes.add(cls.code);
+      } else {
+        failed++;
+      }
+    }
+
+    const existingCodes = new Set((await window.CloudDB.getAdminCodes()).map(c => c.code));
+    let codesRestored = 0;
+    for (const codeRec of (Array.isArray(data.adminCodes) ? data.adminCodes : [])) {
+      if (!codeRec || existingCodes.has(codeRec.code)) continue;
+      const res = await window.CloudDB.restoreAdminCodeRecord(codeRec);
+      if (res && res.success) codesRestored++;
+    }
+
+    input.value = '';
+    showToast(
+      `Khôi phục xong: ${restored} nhóm, ${codesRestored} mã cấp quyền (bỏ qua ${skipped} nhóm đã có hoặc trùng mã${failed ? `, ${failed} nhóm lỗi` : ''}).`,
+      failed ? 'warning' : 'success'
+    );
+    if (typeof renderAdminGroupsList === 'function') renderAdminGroupsList();
   };
   reader.readAsText(file);
 };
