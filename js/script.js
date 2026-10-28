@@ -10407,6 +10407,70 @@ window.openStudentJoinClassModal = async function() {
   await renderStudentEnrolledClasses();
 };
 
+window.closeClassOverviewModal = function() {
+  const overlay = document.getElementById('class-overview-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.classList.remove('active');
+};
+
+window.openClassOverviewModal = async function() {
+  const overlay = document.getElementById('class-overview-modal-overlay');
+  const body = document.getElementById('class-overview-body');
+  if (!overlay || !body) return;
+  overlay.style.display = 'flex';
+  overlay.classList.add('active');
+  body.innerHTML = '<div class="empty-cell" style="padding: 18px; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</div>';
+
+  const curUser = UserSession.currentUser;
+  let username = curUser ? (curUser.normalizedUsername || curUser.username) : '';
+  if (!username) username = localStorage.getItem('FIN_APP_GUEST_STUDENT_ID') || '';
+  const normUser = normalizeUserName(username);
+  if (!normUser) {
+    body.innerHTML = '<div class="empty-cell" style="padding: 18px; color: #b45309;"><i class="fa-solid fa-circle-info"></i> Bạn chưa đăng nhập. Vui lòng <a href="javascript:void(0)" onclick="closeClassOverviewModal(); goToAuthPage(\'login\')" style="text-decoration: underline; font-weight: 600; color: inherit;">đăng nhập</a> để xem lớp học của bạn.</div>';
+    return;
+  }
+  try {
+    const all = (window.CloudDB && typeof window.CloudDB.getClasses === 'function') ? await window.CloudDB.getClasses() : [];
+    const memberUser = m => normalizeUserName(m?.username || m?.normalizedUsername || m?.studentId || m?.id || '');
+    const mine = (Array.isArray(all) ? all : []).filter(c => Array.isArray(c.members) && c.members.some(m => memberUser(m) === normUser));
+    if (mine.length === 0) {
+      body.innerHTML = '<div class="empty-cell" style="padding: 18px; text-align: center;">Bạn chưa tham gia nhóm nào.</div>';
+      return;
+    }
+    let myProgress = null;
+    if (window.CloudDB && typeof window.CloudDB.getStudentClassProgress === 'function') {
+      try { myProgress = await window.CloudDB.getStudentClassProgress(normUser); } catch (e) {}
+    }
+    body.innerHTML = mine.map(c => {
+      const me = c.members.find(m => memberUser(m) === normUser);
+      const approvedCount = c.members.filter(m => m.status === 'approved').length;
+      const limit = parseInt(c.maxMembers, 10) || 0;
+      const statusLabel = me.status === 'approved' ? 'Đã vào lớp' : (me.status === 'rejected' ? 'Bị từ chối' : 'Chờ duyệt');
+      const rows = [
+        ['Mã nhóm', `<code>${escapeHtml(c.code || '')}</code>`],
+        ['Người phụ trách', escapeHtml(c.instructorName || c.instructorUsername || '—')],
+        ['Quy mô', `${approvedCount} thành viên${limit ? ' / tối đa ' + limit : ''}`],
+        ['Loại nhóm', c.isPrivate === false ? 'Mở (Global)' : 'Kín (Private)'],
+        ['Trạng thái của bạn', statusLabel],
+        ['Ngày tham gia', escapeHtml(String(me.joinedAt || '').slice(0, 10) || '—')]
+      ];
+      if (me.status === 'approved' && myProgress && typeof myProgress.percent === 'number') {
+        rows.push(['Tiến độ bài làm của bạn', `${myProgress.percent}% — ${escapeHtml(myProgress.statusLabel || '')}`]);
+      }
+      return `
+        <div class="class-overview-card">
+          <div class="class-overview-title"><i class="fa-solid fa-graduation-cap text-primary"></i> ${escapeHtml(c.name || '')}</div>
+          ${c.description ? `<p class="text-muted" style="margin: 4px 0 8px; font-size: 13px;">${escapeHtml(c.description)}</p>` : ''}
+          <dl class="class-overview-list">
+            ${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}
+          </dl>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    body.innerHTML = `<div class="empty-cell" style="padding: 18px; color: #ef4444;"><i class="fa-solid fa-circle-exclamation"></i> Không thể tải dữ liệu lớp: ${escapeHtml(err.message || 'Lỗi kết nối máy chủ')}</div>`;
+  }
+};
 window.closeStudentJoinClassModal = function() {
   const overlay = document.getElementById('student-join-class-modal-overlay');
   if (!overlay) return;

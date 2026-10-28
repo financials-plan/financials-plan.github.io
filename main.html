@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=3.7.6">
+  <link rel="stylesheet" href="./css/style.css?v=3.7.7">
 </head>
 <body>
 
@@ -2588,6 +2588,26 @@
     </div>
   </div>
 
+  <div id="class-overview-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="class-overview-modal-title" style="display: none;">
+    <div class="modal-card" style="max-width: 640px;">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="class-overview-modal-title"><i class="fa-solid fa-table-cells-large text-primary"></i> Toàn cảnh lớp học</h3>
+          <p>Thông tin chung của các nhóm bạn đã tham gia</p>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeClassOverviewModal()" aria-label="Đóng">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="class-overview-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" onclick="closeClassOverviewModal()">Đóng</button>
+        <button type="button" class="btn-modal-submit" onclick="closeClassOverviewModal(); openStudentJoinClassModal()">
+          <span>Tham gia nhóm khác</span> <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  </div>
   <div id="student-join-class-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="student-join-class-modal-title" style="display: none;">
     <div class="modal-card" style="max-width: 480px;">
       <div class="modal-header">
@@ -2920,13 +2940,17 @@
     </div>
   </div>
 
+  <button type="button" class="btn-primary btn-floating-class-action btn-floating-class-overview" id="btn-floating-class-overview" onclick="openClassOverviewModal()" title="Xem toàn cảnh lớp học" aria-label="Xem toàn cảnh lớp học">
+    <i class="fa-solid fa-table-cells-large"></i>
+    <span>Toàn cảnh lớp học</span>
+  </button>
   <button type="button" class="btn-primary btn-floating-class-action" id="btn-floating-switch-class" onclick="openStudentJoinClassModal()" title="Cài đặt lớp học" aria-label="Cài đặt lớp học">
     <i class="fa-solid fa-graduation-cap"></i>
     <span>Cài đặt lớp học</span>
   </button>
 
   <script type="module" src="./backend/firestore-service.js?v=3.7.1"></script>
-  <script src="./js/script.js?v=3.7.5"></script>
+  <script src="./js/script.js?v=3.7.7"></script>
 
 </body>
 </html>
