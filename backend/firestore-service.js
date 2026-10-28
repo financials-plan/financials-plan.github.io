@@ -1806,7 +1806,14 @@ const FirestoreService = {
               updatedAt: new Date().toISOString(),
               plan: cleanData
             };
-            await setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }).catch(() => {});
+            // Từ khóa thiết lập có trường riêng trong student_plans (không cần đào vào plan)
+            const keywords = {
+              expenses: cleanData.expenses || [],
+              incomeList: cleanData.incomeList || [],
+              planList: cleanData.planList || [],
+              investProducts: cleanData.investProducts || []
+            };
+            await setDoc(doc(db, "student_plans", studentUser), { ...subData, keywords }, { merge: true }).catch(() => {});
             for (const cid of Object.keys(classes)) {
               const c = classes[cid];
               const isMember = (c.members || []).some(m => m.username === studentUser);
@@ -2735,13 +2742,14 @@ const FirestoreService = {
     if (res && res.success && res.data) {
       if (isFirebaseReady && db) {
         try {
-          // Từ khóa thiết lập nằm sẵn trong bài làm lưu ở student_plans: chỉ đọc khi bản chính còn thiếu danh sách nào đó
+          // Từ khóa thiết lập nằm ở trường keywords của student_plans: chỉ đọc khi bản chính còn thiếu danh sách nào đó
           const kwKeys = ["expenses", "incomeList", "planList", "investProducts"];
           const missing = kwKeys.filter(k => !Array.isArray(res.data[k]) || res.data[k].length === 0);
           if (missing.length > 0) {
             const spSnap = await getDoc(doc(db, "student_plans", normUser)).catch(() => null);
-            const spPlan = spSnap && spSnap.exists() ? (spSnap.data().plan || {}) : {};
-            missing.forEach(k => { res.data[k] = Array.isArray(spPlan[k]) ? spPlan[k] : []; });
+            const spData = spSnap && spSnap.exists() ? spSnap.data() : {};
+            const spKeywords = spData.keywords || spData.plan || {};
+            missing.forEach(k => { res.data[k] = Array.isArray(spKeywords[k]) ? spKeywords[k] : []; });
           }
         } catch (e) {}
       }
