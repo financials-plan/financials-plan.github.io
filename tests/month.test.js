@@ -18,8 +18,8 @@ function extract(decl) {
 }
 
 function makeEnv(state) {
-  const code = ["function roundMoney(", "function normalizeMonthlyAmounts(", "function getMonthFromIso(", "function sortMonthTransactions(", "function organizeMonthlyTransactions("].map(extract).join("\n") +
-    "\nreturn { organizeMonthlyTransactions, roundMoney, normalizeMonthlyAmounts };";
+  const code = ["function getMonthFromIso(", "function sortMonthTransactions(", "function organizeMonthlyTransactions("].map(extract).join("\n") +
+    "\nreturn { organizeMonthlyTransactions };";
   return new Function("AppState", code)(state);
 }
 
@@ -43,16 +43,14 @@ test("Dòng chưa có ngày nằm cuối và chạy lại không đổi gì thê
   assert.strictEqual(env.organizeMonthlyTransactions(), 0);
 });
 
-test("Số tiền bị đuôi thập phân (1.0999999999999999) được làm tròn khi lưu và khi nạp", () => {
-  const env = makeEnv({ monthlyDetails: {} });
-  assert.strictEqual(env.roundMoney(1.0999999999999999), 1.1);
-  assert.strictEqual(env.roundMoney(0.1 + 0.2), 0.3);
-  assert.strictEqual(env.roundMoney("abc"), 0);
-  const state = { monthlyDetails: { 6: { incomes: [{ date: "2026-06-10", val: 0.30000000000000004 }], expenses: [{ date: "2026-06-10", val: 1.0999999999999999 }, { date: "2026-06-11", val: "" }], learningDetails: [{ val: 2.2 }] } } };
-  makeEnv(state).normalizeMonthlyAmounts();
-  assert.strictEqual(state.monthlyDetails[6].incomes[0].val, 0.3);
-  assert.strictEqual(state.monthlyDetails[6].expenses[0].val, 1.1);
-  assert.strictEqual(state.monthlyDetails[6].expenses[1].val, "");
+test("Số tiền người dùng đã nhập được giữ nguyên tuyệt đối: Lưu không làm tròn hay sửa số", () => {
+  const vals = [1.0999999999999999, 0.30000000000000004, 5.5, 0.1, 2];
+  const state = { monthlyDetails: { 6: { incomes: [{ date: "2026-06-10", val: vals[0] }, { date: "2026-06-11", val: vals[1] }], expenses: [{ date: "2026-06-10", val: vals[2] }, { date: "2026-06-12", val: vals[3] }], learningDetails: [{ date: "2026-06-13", val: vals[4] }] } } };
+  makeEnv(state).organizeMonthlyTransactions();
+  const d = state.monthlyDetails[6];
+  assert.deepStrictEqual([d.incomes[0].val, d.incomes[1].val, d.expenses[0].val, d.expenses[1].val, d.learningDetails[0].val], vals);
+  const fns = src.slice(src.indexOf("window.updateMonthIncValLive = function"), src.indexOf("window.updateReconNote = function"));
+  assert.ok(!/roundMoney|toFixed|Math\.round/.test(fns), "hàm nhận số tiền người dùng gõ không được làm tròn");
 });
 
 test("Sửa ngày khi đang nhập không xếp lại hay chuyển dòng (chỉ Lưu mới xếp)", () => {
