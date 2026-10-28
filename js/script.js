@@ -4515,7 +4515,7 @@ function renderMonthView(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(inc.desc || '')}" placeholder="Chi tiết nguồn thu..." oninput="updateMonthIncDesc(${m}, ${i}, this.value)" onchange="updateMonthIncDesc(${m}, ${i}, this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${inc.val !== undefined && inc.val !== null ? inc.val : ''}" placeholder="0.0" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${Number(inc.val) ? inc.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
         </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})" aria-label="Xoá dòng thu nhập"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -4548,7 +4548,7 @@ function renderMonthView(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(exp.desc || '')}" placeholder="Chi tiết giao dịch..." oninput="updateMonthExpDesc(${m}, ${i}, this.value)" onchange="updateMonthExpDesc(${m}, ${i}, this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${exp.val !== undefined && exp.val !== null ? exp.val : ''}" placeholder="0.0" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${Number(exp.val) ? exp.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
         </td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})" aria-label="Xoá dòng chi tiêu"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
@@ -4896,7 +4896,7 @@ function renderMonthLearningSection(m) {
           <input type="text" class="input-inline-cell" value="${escapeHtml(it.desc || '')}" placeholder="Nội dung khóa học / sách..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'desc', this.value)">
         </td>
         <td>
-          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-info" value="${it.val !== undefined && it.val !== null ? it.val : ''}" placeholder="0.0" oninput="updateMonthLearningValLive(${m}, ${i}, this.value)" onchange="updateMonthLearningVal(${m}, ${i}, this.value)">
+          <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-info" value="${Number(it.val) ? it.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthLearningValLive(${m}, ${i}, this.value)" onchange="updateMonthLearningVal(${m}, ${i}, this.value)">
         </td>
         <td>
           <input type="text" class="input-inline-cell" value="${escapeHtml(it.expRes || '')}" placeholder="Kết quả kỳ vọng..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'expRes', this.value)">
