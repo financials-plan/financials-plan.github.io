@@ -1,5 +1,14 @@
 rules_version = '2';
 
+// Mục tiêu tối ưu chi phí/dung lượng (KHÔNG nới quyền so với bản trước):
+// - Chỉ khai báo các collection app thật sự dùng; mọi đường dẫn khác bị từ chối mặc định
+//   (bản cũ cho đọc công khai toàn bộ `/{document=**}` -> ai cũng quét được cả database).
+// - Bỏ các collection/subcollection không còn dùng (financial_data, user_states, keywords,
+//   keywords_config) để không ai có thể ghi rác làm phình dung lượng.
+// - Mỗi lần ghi phải là một map hợp lệ và không quá số trường tối đa của từng loại tài liệu,
+//   chặn việc ghi tài liệu phình to bất thường.
+// Lưu ý: app tự quản tài khoản (chưa dùng Firebase Authentication) nên quyền ghi vẫn mở; xem SECURITY.md mục 8b.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -15,162 +24,80 @@ service cloud.firestore {
       return isValidDocId(userId) && request.auth != null && (request.auth.uid == userId || request.auth.token.email == userId);
     }
 
-    match /financial_Authentication/{docId} {
-      allow read, create, update: if true || docId == 'groups';
-      allow delete: if canDeleteDoc(docId);
+    function fitsKeys(maxKeys) {
+      return request.resource.data is map && request.resource.data.keys().size() <= maxKeys;
+    }
 
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
+    match /financial_Authentication/{docId} {
+      allow read: if isValidDocId(docId);
+      allow create, update: if isValidDocId(docId) && fitsKeys(60);
+      allow delete: if canDeleteDoc(docId);
     }
 
     match /classes/{classId} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(classId);
+      allow create, update: if isValidDocId(classId) && fitsKeys(80);
       allow delete: if isValidDocId(classId);
 
       match /submissions/{studentUsername} {
-        allow read, create, update: if true;
+        allow read: if isValidDocId(studentUsername);
+        allow create, update: if isValidDocId(studentUsername) && fitsKeys(80);
         allow delete: if isOwner(studentUsername);
-      }
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if isValidDocId(classId);
       }
     }
 
     match /groups/{groupId} {
-      allow read, write: if true;
-
-      match /{subcollection=**} {
-        allow read, write: if true;
-      }
+      allow read: if isValidDocId(groupId);
+      allow create, update: if isValidDocId(groupId) && fitsKeys(80);
+      allow delete: if isValidDocId(groupId);
     }
 
     match /group_codes/{code} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(code);
+      allow create, update: if isValidDocId(code) && fitsKeys(40);
       allow delete: if canDeleteDoc(code);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /student_plans/{planId} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(planId);
+      allow create, update: if isValidDocId(planId) && fitsKeys(200);
       allow delete: if isOwner(planId);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
-    }
-
-    match /user_states/{stateId} {
-      allow read, create, update: if true;
-      allow delete: if isOwner(stateId);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
-    }
-
-    match /financial_data/{docId} {
-      allow read, create, update: if true;
-      allow delete: if false;
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /financial_accounts/{username} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(username);
+      allow create, update: if isValidDocId(username) && fitsKeys(60);
       allow delete: if isOwner(username);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /users/{username} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(username);
+      allow create, update: if isValidDocId(username) && fitsKeys(60);
       allow delete: if isOwner(username);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /accounts/{username} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(username);
+      allow create, update: if isValidDocId(username) && fitsKeys(60);
       allow delete: if isOwner(username);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /admin_codes/{code} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(code);
+      allow create, update: if isValidDocId(code) && fitsKeys(40);
       allow delete: if canDeleteDoc(code);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
-    }
-
-    match /keywords/{keywordId} {
-      allow read, create, update: if true;
-      allow delete: if canDeleteDoc(keywordId);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /setup_keywords/{docId} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(docId);
+      allow create, update: if isValidDocId(docId) && fitsKeys(200);
       allow delete: if canDeleteDoc(docId);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
     }
 
     match /student_keywords/{username} {
-      allow read, create, update: if true;
+      allow read: if isValidDocId(username);
+      allow create, update: if isValidDocId(username) && fitsKeys(200);
       allow delete: if isOwner(username);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
-    }
-
-    match /keywords_config/{configId} {
-      allow read, create, update: if true;
-      allow delete: if canDeleteDoc(configId);
-
-      match /{subcollection=**} {
-        allow read, create, update: if true;
-        allow delete: if false;
-      }
-    }
-
-    match /{document=**} {
-      allow read: if true;
-      allow write: if false;
     }
   }
 }
