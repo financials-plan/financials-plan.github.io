@@ -360,7 +360,7 @@ Các kiểm tra phân quyền ở client chỉ chặn thao tác thông thường
 1. Đăng nhập bằng tài khoản `admin` cũ một lần rồi **đổi mật khẩu** (Cài đặt cá nhân → Bảo mật) — mật khẩu mặc định cũ vẫn còn hiệu lực trong Firestore cho đến khi bạn đổi.
 2. Đặt lại mật khẩu (hoặc vô hiệu hóa) các tài khoản mẫu cũ: `dinh_anh_quan`, `hst`, `demo`.
 3. Thu hồi các mã mặc định cũ còn trong collection `admin_codes` (`ADMN-2026-X8Y9`, `INST-2026-K48A`).
-4. Nếu cần tạo/đặt lại Quản trị viên trực tiếp trong Firestore: dùng [`scripts/make-account-hash.js`](./scripts/make-account-hash.js).
+4. Nếu cần tạo/đặt lại Quản trị viên trực tiếp trong Firestore: dùng [`backend/make-account-hash.js`](./backend/make-account-hash.js).
 5. Xem lại mọi mật khẩu từng dùng với hệ thống này là đã lộ (do từng lưu chữ thường và đọc được công khai) — yêu cầu người dùng đổi mật khẩu nếu họ dùng lại ở nơi khác.
 
 ---
