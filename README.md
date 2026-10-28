@@ -30,7 +30,9 @@ Công thức đang dùng được mô tả tại [docs/reference/CONG_THUC_HIEN_
 ├── index.html, main.html, 404.html   # Điểm vào và giao diện chính (GitHub Pages phục vụ từ thư mục gốc)
 ├── js/script.js                      # Toàn bộ logic ứng dụng và thư viện FinancialMath
 ├── css/style.css                     # Giao diện
-├── config/firebase-config.js         # Cấu hình Firebase của web app
+├── config/firebase-config.js         # Cấu hình Firebase của web app (đúng dạng đoạn mã Firebase cấp)
+├── config/firestore-settings.js      # Tên collection và mã tài liệu mặc định
+├── config/MIGRATION.md               # Hướng dẫn chuyển giao quyền quản trị dự án Firebase
 ├── auth/                             # Màn hình đăng nhập / đăng ký
 ├── admin-web/                        # Cổng quản trị
 ├── backend/                          # Firestore service, rules, indexes, Cloud Functions, server bảo mật

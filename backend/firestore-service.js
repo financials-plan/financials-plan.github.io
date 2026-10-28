@@ -1,4 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
   doc,
@@ -21,7 +20,8 @@ import {
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { firebaseConfig, firestoreSettings } from "../config/firebase-config.js";
+import { firebaseConfig, app } from "../config/firebase-config.js";
+import { firestoreSettings } from "../config/firestore-settings.js";
 
 let db = null;
 let auth = null;
@@ -38,7 +38,6 @@ const ACCOUNTS_COLLECTION = firestoreSettings.accountsCollectionName || "financi
 try {
   const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyA1B2C3D4E5F6G7H8I9J0_THAY_BANG_KEY_CUA_BAN";
   if (isConfigured) {
-    const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     try {
       auth = getAuth(app);
