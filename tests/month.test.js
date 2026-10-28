@@ -81,3 +81,12 @@ test("Ô ngày: số vừa gõ được ghi nhận, gõ sai thì trả lại ng�
   assert.strictEqual(read(c), "", "xóa trống");
   assert.ok(!("data-iso-date" in c.attrs));
 });
+
+test("Ô nhập thu/chi/đào tạo ghi theo mã dòng, không theo vị trí mảng", () => {
+  ["updateMonthIncValLive", "updateMonthExpValLive", "updateMonthIncDesc", "updateMonthExpDesc", "updateMonthIncCat", "updateMonthExpCat", "updateMonthIncomeDate", "updateMonthExpenseDate", "updateMonthLearningValLive", "updateMonthLearningFieldLive", "updateMonthLearningCat", "updateMonthLearningField", "deleteMonthIncomeRow", "deleteMonthExpenseRow", "deleteMonthLearningRow"].forEach(name => {
+    const start = src.indexOf("window." + name + " = function");
+    assert.ok(start >= 0, name);
+    assert.ok(src.slice(start, start + 260).includes("resolveRowIndex("), name + " phải xác định dòng theo mã dòng");
+  });
+  assert.strictEqual((src.match(/<tr data-rid="\$\{rowRid\(/g) || []).length, 3);
+});

@@ -335,6 +335,31 @@ function roundMoney(v) {
   return isFinite(n) ? Math.round(n * 1e6) / 1e6 : 0;
 }
 
+// Mỗi dòng thu/chi/đào tạo có một mã dòng chỉ dùng trong phiên (không lưu): ô nhập luôn ghi đúng dòng của nó
+// kể cả khi thứ tự mảng đã đổi (tự thêm/xóa dòng chi phí học tập, xếp ngày khi Lưu) mà bảng chưa vẽ lại.
+const rowRidMap = new WeakMap();
+let rowRidSeq = 0;
+function rowRid(item) {
+  if (!item || typeof item !== 'object') return 0;
+  if (!rowRidMap.has(item)) rowRidMap.set(item, ++rowRidSeq);
+  return rowRidMap.get(item);
+}
+function monthRowList(m, type) {
+  const d = AppState.monthlyDetails && AppState.monthlyDetails[m];
+  return (d && Array.isArray(d[type])) ? d[type] : [];
+}
+function resolveRowIndex(list, i) {
+  const ev = window.event;
+  const el = ev && ev.target;
+  const tr = el && el.closest ? el.closest('tr[data-rid]') : null;
+  if (tr) {
+    const rid = Number(tr.getAttribute('data-rid'));
+    const idx = list.findIndex(x => rowRid(x) === rid);
+    if (idx >= 0) return idx;
+  }
+  return i;
+}
+
 function getMonthFromIso(iso) {
   if (!iso || typeof iso !== 'string') return null;
   const parts = iso.trim().split('-');
@@ -406,10 +431,9 @@ function flushMonthInputsToState(m) {
   sections.forEach(([tbodyId, list, sel]) => {
     const tb = document.getElementById(tbodyId);
     if (!tb || !Array.isArray(list)) return;
-    const rows = tb.querySelectorAll('tr');
-    if (rows.length !== list.length) return;
-    rows.forEach((tr, i) => {
-      const item = list[i];
+    tb.querySelectorAll('tr[data-rid]').forEach(tr => {
+      const rid = Number(tr.getAttribute('data-rid'));
+      const item = list.find(x => rowRid(x) === rid);
       if (!item) return;
       const numEl = tr.querySelector(sel.val);
       if (numEl && String(numEl.value).trim() !== '') {
@@ -4504,7 +4528,7 @@ function renderMonthView(m) {
   const tbInc = document.getElementById('tbody-m-detail-income');
   if (tbInc) {
     tbInc.innerHTML = mData.incomes.map((inc, i) => `
-      <tr>
+      <tr data-rid="${rowRid(inc)}">
         <td>
           <div class="date-input-wrap">
             <input type="text" class="input-date-cell" data-month="${m}" data-type="income" data-index="${i}" data-iso-date="${inc.date || ''}" value="${formatDisplayDate(inc.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthIncomeDate(${m}, ${i}, readDateCellValue(this))" onblur="updateMonthIncomeDate(${m}, ${i}, readDateCellValue(this))">
@@ -4537,7 +4561,7 @@ function renderMonthView(m) {
   const tbExp = document.getElementById('tbody-m-detail-expense');
   if (tbExp) {
     tbExp.innerHTML = mData.expenses.map((exp, i) => `
-      <tr>
+      <tr data-rid="${rowRid(exp)}">
         <td>
           <div class="date-input-wrap">
             <input type="text" class="input-date-cell" data-month="${m}" data-type="expense" data-index="${i}" data-iso-date="${exp.date || ''}" value="${formatDisplayDate(exp.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthExpenseDate(${m}, ${i}, readDateCellValue(this))" onblur="updateMonthExpenseDate(${m}, ${i}, readDateCellValue(this))">
@@ -4734,6 +4758,7 @@ window.addMonthDetailIncomeRow = function() {
 };
 
 window.deleteMonthIncomeRow = function(m, i) {
+  i = resolveRowIndex(monthRowList(m, 'incomes'), i);
   if (!assertWritePermission("Xóa dòng thu nhập chi tiết")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes) {
     AppState.monthlyDetails[m].incomes.splice(i, 1);
@@ -4764,6 +4789,7 @@ window.addMonthDetailExpenseRow = function() {
 };
 
 window.deleteMonthExpenseRow = function(m, i) {
+  i = resolveRowIndex(monthRowList(m, 'expenses'), i);
   if (!assertWritePermission("Xóa dòng chi tiêu chi tiết")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].expenses) {
     AppState.monthlyDetails[m].expenses.splice(i, 1);
@@ -4775,6 +4801,7 @@ window.deleteMonthExpenseRow = function(m, i) {
 // Sửa ngày chỉ lưu lại giá trị ngày; dòng giữ nguyên vị trí và không dựng lại bảng.
 // Việc đưa giao dịch về đúng tháng và xếp theo ngày được làm khi bấm Lưu (organizeMonthlyTransactions).
 window.updateMonthIncomeDate = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'incomes'), i);
   const item = AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes[i];
   if (!item) return;
   const iso = parseToIsoDate(val);
@@ -4784,6 +4811,7 @@ window.updateMonthIncomeDate = function(m, i, val) {
 };
 
 window.updateMonthExpenseDate = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'expenses'), i);
   const item = AppState.monthlyDetails[m] && AppState.monthlyDetails[m].expenses[i];
   if (!item) return;
   const iso = parseToIsoDate(val);
@@ -4792,16 +4820,19 @@ window.updateMonthExpenseDate = function(m, i, val) {
   window.hasUnsavedChanges = true;
 };
 window.updateMonthIncDesc = function(m, i, txt) {
+  i = resolveRowIndex(monthRowList(m, 'incomes'), i);
   if (AppState.monthlyDetails[m]?.incomes?.[i]) {
     AppState.monthlyDetails[m].incomes[i].desc = (txt || '').trim();
   }
 };
 window.updateMonthExpDesc = function(m, i, txt) {
+  i = resolveRowIndex(monthRowList(m, 'expenses'), i);
   if (AppState.monthlyDetails[m]?.expenses?.[i]) {
     AppState.monthlyDetails[m].expenses[i].desc = (txt || '').trim();
   }
 };
 window.updateMonthIncCat = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'incomes'), i);
   if (!AppState.monthlyDetails[m]?.incomes?.[i]) return;
   if (val === '__ADD_NEW_CAT__') {
     const newCat = (prompt("Nhập tên nguồn thu mới:") || "").trim();
@@ -4821,6 +4852,7 @@ window.updateMonthIncCat = function(m, i, val) {
 };
 
 window.updateMonthExpCat = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'expenses'), i);
   if (!AppState.monthlyDetails[m]?.expenses?.[i]) return;
   if (val === '__ADD_NEW_CAT__') {
     const newCat = (prompt("Nhập tên danh mục chi tiêu mới:") || "").trim();
@@ -4840,6 +4872,7 @@ window.updateMonthExpCat = function(m, i, val) {
 };
 
 window.updateMonthIncValLive = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'incomes'), i);
   if (!AppState.monthlyDetails[m]?.incomes?.[i]) return;
   const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
   AppState.monthlyDetails[m].incomes[i].val = num;
@@ -4848,6 +4881,7 @@ window.updateMonthIncValLive = function(m, i, val) {
 };
 
 window.updateMonthExpValLive = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'expenses'), i);
   if (!AppState.monthlyDetails[m]?.expenses?.[i]) return;
   const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
   AppState.monthlyDetails[m].expenses[i].val = num;
@@ -4885,7 +4919,7 @@ function renderMonthLearningSection(m) {
 
   if (tb) {
     tb.innerHTML = items.map((it, i) => `
-      <tr>
+      <tr data-rid="${rowRid(it)}">
         <td>
           <div class="date-input-wrap">
             <input type="text" class="input-date-cell" data-month="${m}" data-type="learning" data-index="${i}" data-iso-date="${it.date || ''}" value="${formatDisplayDate(it.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthLearningField(${m}, ${i}, 'date', readDateCellValue(this))" onblur="updateMonthLearningField(${m}, ${i}, 'date', readDateCellValue(this))">
@@ -4966,12 +5000,14 @@ function updateMonthLearningStats(m) {
 }
 
 window.updateMonthLearningFieldLive = function(m, i, field, val) {
+  i = resolveRowIndex(monthRowList(m, 'learningDetails'), i);
   if (AppState.monthlyDetails[m]?.learningDetails?.[i]) {
     AppState.monthlyDetails[m].learningDetails[i][field] = (val || '').trim();
   }
 };
 
 window.updateMonthLearningValLive = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'learningDetails'), i);
   if (!AppState.monthlyDetails[m]?.learningDetails?.[i]) return;
   const num = typeof val === 'number' ? val : (parseFloat(String(val).replace(/,/g, '.')) || 0);
   AppState.monthlyDetails[m].learningDetails[i].val = num;
@@ -4984,6 +5020,7 @@ window.updateMonthLearningVal = function(m, i, val) {
 };
 
 window.updateMonthLearningCat = function(m, i, val) {
+  i = resolveRowIndex(monthRowList(m, 'learningDetails'), i);
   if (!AppState.monthlyDetails[m]?.learningDetails?.[i]) return;
   if (val === '__ADD_NEW_CAT__') {
     const newCat = (prompt("Nhập tên mục kế hoạch đào tạo mới:") || "").trim();
@@ -5004,6 +5041,7 @@ window.updateMonthLearningCat = function(m, i, val) {
 };
 
 window.updateMonthLearningField = function(m, i, field, value) {
+  i = resolveRowIndex(monthRowList(m, 'learningDetails'), i);
   if (!AppState.monthlyDetails[m] || !AppState.monthlyDetails[m].learningDetails[i]) return;
   if (field === 'date') {
     // Giống thu/chi: chỉ ghi ngày, việc chuyển tháng và xếp theo ngày làm khi bấm Lưu (organizeMonthlyTransactions)
@@ -5043,6 +5081,7 @@ window.addMonthLearningRow = function() {
 };
 
 window.deleteMonthLearningRow = function(m, i) {
+  i = resolveRowIndex(monthRowList(m, 'learningDetails'), i);
   if (!assertWritePermission("Xóa dòng đào tạo")) return;
   if (AppState.monthlyDetails[m] && AppState.monthlyDetails[m].learningDetails) {
     AppState.monthlyDetails[m].learningDetails.splice(i, 1);
