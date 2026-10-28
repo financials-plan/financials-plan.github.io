@@ -7568,7 +7568,12 @@ window.executeConfirmedAction = async function() {
         window.filterAndSortBackups();
         isConfirmProcessing = false;
         window.closeConfirmModal();
-        showToast(`Đã xóa vĩnh viễn bản sao lưu [${action.backup.name || 'được chọn'}] trên Cloud!`, "success");
+        const delName = action.backup.name || 'được chọn';
+        if (res.localOnly) {
+          showToast(`Chỉ xóa được bản sao lưu [${delName}] trên thiết bị. Chưa kết nối Cloud nên bản trên Cloud vẫn còn, hãy xóa lại khi có mạng.`, "warning");
+        } else {
+          showToast(`Đã xóa vĩnh viễn bản sao lưu [${delName}] trên Cloud và thiết bị!`, "success");
+        }
       } else {
 
         isConfirmProcessing = false;

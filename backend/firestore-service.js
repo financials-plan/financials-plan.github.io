@@ -2006,21 +2006,64 @@ const FirestoreService = {
       };
     }
 
+    let localBackups = [];
     try {
-      let localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
+      localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
       localBackups = localBackups.filter(b => b.id !== backupId);
       localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(localBackups));
+    } catch (e) {}
+
+    if (!this.isReady()) {
       return {
         success: true,
         localOnly: true,
         backups: localBackups,
-        message: "Đã xóa bản sao lưu."
+        message: "Đã xóa bản sao lưu trên thiết bị. Chưa kết nối được Cloud nên bản trên Cloud (nếu có) chưa bị xóa."
+      };
+    }
+
+    try {
+      const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
+      const snap = await Promise.race([
+        getDoc(docRef),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
+      ]);
+      let cloudBackups = [];
+      if (snap && snap.exists()) {
+        const data = snap.data();
+        if (data.owner_uid && access.uid && data.owner_uid !== access.uid && !access.isElevated && activeAuthContext?.role !== "admin") {
+          return {
+            success: false,
+            code: "PERMISSION_DENIED",
+            error: "Từ chối xóa: Bản sao lưu thuộc quyền sở hữu của tài khoản khác."
+          };
+        }
+        cloudBackups = Array.isArray(data._backups) ? data._backups : [];
+        if (cloudBackups.some(b => b && b.id === backupId)) {
+          cloudBackups = cloudBackups.filter(b => b && b.id !== backupId);
+          await Promise.race([
+            updateDoc(docRef, { _backups: cloudBackups, _lastUpdated: new Date().toISOString() }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
+          ]);
+        }
+      }
+
+      const mergedMap = new Map();
+      [...cloudBackups, ...localBackups].forEach(b => {
+        if (b && b.id && !mergedMap.has(b.id)) mergedMap.set(b.id, b);
+      });
+      const backups = Array.from(mergedMap.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+      return {
+        success: true,
+        backups,
+        message: "Đã xóa bản sao lưu trên Cloud và thiết bị."
       };
     } catch (e) {
       return {
         success: false,
-        error: e.message || "Lỗi xóa bản sao lưu",
-        message: "Không thể xóa bản sao lưu."
+        error: "Không xóa được bản sao lưu trên Cloud (" + (e && e.message ? e.message : "lỗi không xác định") + "). Hãy thử lại.",
+        message: "Không thể xóa bản sao lưu trên Cloud."
       };
     }
   },
