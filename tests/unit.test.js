@@ -11,6 +11,7 @@ const {
   hashPassword,
   verifyPassword
 } = require("../backend/security");
+process.env.FINPLAN_DEMO_SEED = "1";
 const server = require("../backend/server");
 
 const TEST_PORT = 8998;
@@ -568,7 +569,50 @@ test("10. Task A — Enrolled Classes & Member Identity Verification", () => {
 
   // 5. Verify cache-busting in main.html
   const mainHtml = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
-  assert.ok(mainHtml.includes("script.js?v=3.6.9"), "main.html uses updated cache-busting version v=3.6.9");
+  assert.ok(mainHtml.includes("script.js?v=3.7.0"), "main.html uses updated cache-busting version v=3.7.0");
+});
+
+test("10b. Security regression — no backdoors, default credentials or role-by-username in client code", () => {
+  const read = (rel) => fs.readFileSync(path.join(__dirname, "..", rel), "utf8");
+  const clientFiles = ["js/script.js", "auth/auth.js", "admin-web/admin.js", "admin-web/index.html", "backend/firestore-service.js"];
+  const forbidden = [
+    /lumen2026/,
+    /startsWith\(["']admin_["']\)/,
+    /startsWith\(["']qtv_["']\)/,
+    /haketo_spec/,
+    /cleanPass === ["']administrator["']/,
+    /startsWith\(["']qtv-["']\)/
+  ];
+  for (const rel of clientFiles) {
+    const content = read(rel);
+    for (const re of forbidden) {
+      assert.ok(!re.test(content), `${rel} must not contain ${re}`);
+    }
+  }
+  const service = read("backend/firestore-service.js");
+  assert.ok(!/password:\s*cleanPass/.test(service), "plaintext passwords must not be written to Firestore");
+  assert.ok(!/mat_khau:\s*(cleanPass|nxtPass)/.test(service), "plaintext passwords must not be written to Firestore");
+  assert.ok(service.includes("pbkdf2-sha256"), "passwords use PBKDF2");
+  assert.ok(service.includes("PUBLISHED_ADMIN_CODES_BLOCKLIST"), "published default admin codes are blocked");
+  assert.ok(service.includes("requireAdminRole(\"Tạo mã cấp quyền\")"), "creating admin codes is admin-only on the client service");
+  for (const rel of ["js/script.js", "auth/auth.js", "admin-web/admin.js"]) {
+    assert.ok(!/ADMN-2026-X8Y9|INST-2026-K48A/.test(read(rel)), `${rel} must not embed published admin codes`);
+  }
+  const script = read("js/script.js");
+  assert.ok(!/\bconfirm\(/.test(script), "admin flows use the in-app confirm dialog, not window.confirm");
+});
+
+test("10c. Server — admin key is not a public default and unauthenticated admin routes are denied", async () => {
+  const noKey = { "x-admin-key": "" };
+  assert.strictEqual((await makeRequest("GET", "/api/admin/codes", null, noKey)).status, 403);
+  assert.strictEqual((await makeRequest("POST", "/api/admin/codes", { role: "admin" }, noKey)).status, 403);
+  assert.strictEqual((await makeRequest("GET", "/api/classes", null, noKey)).status, 403);
+  assert.strictEqual((await makeRequest("POST", "/api/classes", { name: "x", code: "Y-1" }, noKey)).status, 403);
+  assert.strictEqual((await makeRequest("POST", "/api/classes/approve", { classId: "x", studentUsername: "u", action: "approve" }, noKey)).status, 403);
+  const backup = await makeRequest("GET", "/api/admin/backup");
+  assert.strictEqual(backup.status, 200);
+  const dump = JSON.stringify(backup.data);
+  assert.ok(!/passwordHash|passwordSalt/.test(dump), "backup must not contain password hashes");
 });
 
 test("11. Task B — Dashboard Variance Cumulative Calculation Verification", () => {

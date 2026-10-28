@@ -115,6 +115,125 @@ if (typeof window !== 'undefined') {
   window.normalizeUsername = normalizeUserName;
 }
 
+function isStaffUser(user) {
+  const role = String(user && user.role || '').toLowerCase();
+  return role === 'admin' || role === 'instructor' || role === 'teacher';
+}
+
+function isAdminUser(user) {
+  return String(user && user.role || '').toLowerCase() === 'admin';
+}
+
+function escapeHtmlText(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function jsStringArg(value) {
+  return escapeHtmlText(JSON.stringify(String(value === undefined || value === null ? '' : value)));
+}
+
+function appDialog({ title = '', message = '', confirmText = 'Đồng ý', cancelText = 'Hủy', danger = false, showCancel = true, copyText = '' }) {
+  return new Promise(resolve => {
+    const previouslyFocused = document.activeElement;
+    const overlay = document.createElement('div');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('data-app-dialog', '1');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,18,30,.55);';
+    const card = document.createElement('div');
+    card.style.cssText = 'width:min(440px,100%);background:var(--bg-card,#fff);color:var(--text,#292747);border:1px solid var(--border,#E8E5F7);border-radius:14px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3);font-family:inherit;';
+    const h = document.createElement('h3');
+    h.textContent = title || (showCancel ? 'Xác nhận' : 'Thông báo');
+    h.style.cssText = 'margin:0 0 8px;font-size:17px;';
+    const p = document.createElement('p');
+    p.textContent = message;
+    p.style.cssText = 'margin:0 0 14px;line-height:1.55;font-size:14px;color:var(--text-muted,#6E6B8F);white-space:pre-line;word-break:break-word;';
+    card.append(h, p);
+    if (copyText) {
+      const code = document.createElement('input');
+      code.type = 'text';
+      code.readOnly = true;
+      code.value = copyText;
+      code.style.cssText = 'width:100%;box-sizing:border-box;margin:0 0 14px;padding:10px 12px;border-radius:8px;border:1px solid var(--border-strong,#D6D1EE);background:var(--bg-surface,#FBFAFF);color:var(--text,#292747);font:600 15px/1.2 monospace;';
+      code.addEventListener('focus', () => code.select());
+      card.appendChild(code);
+    }
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;';
+    const mkBtn = (label, primary, value) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      b.style.cssText = 'min-height:40px;padding:0 16px;border-radius:9px;font:600 14px inherit;cursor:pointer;border:1px solid ' + (primary ? 'transparent' : 'var(--border-strong,#D6D1EE)') + ';background:' + (primary ? (danger ? 'var(--danger-strong,#D13F4D)' : 'var(--primary,#6258F5)') : 'transparent') + ';color:' + (primary ? '#fff' : 'var(--text,#292747)') + ';';
+      b.addEventListener('click', () => close(value));
+      return b;
+    };
+    const cancelBtn = showCancel ? mkBtn(cancelText, false, false) : null;
+    const okBtn = mkBtn(confirmText, true, true);
+    if (cancelBtn) row.appendChild(cancelBtn);
+    row.appendChild(okBtn);
+    card.appendChild(row);
+    overlay.appendChild(card);
+    function onKey(e) {
+      if (e.key === 'Escape') close(false);
+    }
+    function close(result) {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      if (previouslyFocused && previouslyFocused.focus) {
+        try { previouslyFocused.focus(); } catch (err) {}
+      }
+      resolve(result);
+    }
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(overlay);
+    (cancelBtn || okBtn).focus();
+  });
+}
+
+window.appConfirm = (message, options = {}) => appDialog({ message, ...options });
+window.appNotice = (title, message, options = {}) => appDialog({ title, message, showCancel: false, confirmText: 'Đã hiểu', ...options });
+
+function safeFilePart(value) {
+  return String(value === undefined || value === null ? '' : value).replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 40) || 'export';
+}
+
+function buildStudentExportMetrics(member, studentPlan) {
+  const row = { m1: '—', m2: '—', m3: '—', m4: '—', pct: '—', sRate: '—', dsr: '—', netCash: '—', stocks: '—', bonds: '—', ins: '—', cash: '—' };
+  if (!studentPlan) {
+    if (member && member.status !== 'approved') {
+      row.m1 = row.m2 = row.m3 = row.m4 = 'Chưa bắt đầu';
+      row.pct = '0%';
+    } else {
+      row.m1 = row.m2 = row.m3 = row.m4 = 'Chưa có dữ liệu bài làm';
+    }
+    return row;
+  }
+  const hasKeywords = (Array.isArray(studentPlan.expenses) && studentPlan.expenses.length > 0) || (Array.isArray(studentPlan.incomeList) && studentPlan.incomeList.length > 0);
+  const hasPlan = (Array.isArray(studentPlan.planIncome) && studentPlan.planIncome.length > 0) || (Array.isArray(studentPlan.planExpense) && studentPlan.planExpense.length > 0);
+  const hasGoals = Array.isArray(studentPlan.tcGoals) && studentPlan.tcGoals.length > 0;
+  const hasCareer = (Array.isArray(studentPlan.careerDetailList) && studentPlan.careerDetailList.length > 0) || (Array.isArray(studentPlan.investProducts) && studentPlan.investProducts.length > 0);
+  const flags = [hasKeywords, hasPlan, hasGoals, hasCareer];
+  const labels = flags.map(ok => ok ? 'Hoàn thành' : 'Chưa làm');
+  [row.m1, row.m2, row.m3, row.m4] = labels;
+  row.pct = Math.round(flags.filter(Boolean).length / flags.length * 100) + '%';
+  const rate = studentPlan.targetSavingsRate;
+  if (rate !== undefined && rate !== null && rate !== '' && !isNaN(Number(rate))) row.sRate = Number(rate).toFixed(1) + '%';
+  return row;
+}
+
+function csvSafeCell(value) {
+  let s = String(value === undefined || value === null ? '' : value).replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return `"${s}"`;
+}
+
 function normalizeSearchText(raw) {
   return String(raw || '')
     .toLowerCase()
@@ -239,15 +358,7 @@ const UserSession = {
           }
         } catch (e) {}
       }
-      if (!parsed.role) {
-        if (normalizedUsername === 'admin' || (normalizedUsername && normalizedUsername.startsWith('admin_')) || normalizedUsername === 'administrator') {
-          parsed.role = 'admin';
-        } else if (normalizedUsername === 'dinh_anh_quan' || normalizedUsername === 'haketo_spec' || (normalizedUsername && (normalizedUsername.includes('instructor') || normalizedUsername.includes('teacher')))) {
-          parsed.role = 'instructor';
-        } else {
-          parsed.role = 'student';
-        }
-      }
+      if (!parsed.role) parsed.role = 'student';
       return parsed;
     } catch (e) {
       console.error("Lỗi đọc session từ localStorage:", e);
@@ -401,18 +512,10 @@ const UserSession = {
       if (topbarUserChip) topbarUserChip.style.display = 'inline-flex';
 
       const btnMenuClass = document.getElementById('btn-menu-class-manager');
-      const isInstructorOrAdmin = this.currentUser && (
-        this.currentUser.role === 'admin' ||
-        this.currentUser.role === 'instructor' ||
-        this.currentUser.role === 'teacher' ||
-        this.currentUser.normalizedUsername === 'admin' ||
-        this.currentUser.normalizedUsername === 'haketo_spec' ||
-        (this.currentUser.username && this.currentUser.username.toLowerCase() === 'admin') ||
-        (this.currentUser.normalizedUsername && (this.currentUser.normalizedUsername.startsWith('admin_') || this.currentUser.normalizedUsername.includes('instructor') || this.currentUser.normalizedUsername.includes('teacher')))
-      );
+      const isInstructorOrAdmin = isStaffUser(this.currentUser);
       if (btnMenuClass) btnMenuClass.style.display = isInstructorOrAdmin ? '' : 'none';
       const btnTabCodes = document.getElementById('btn-class-tab-codes');
-      if (btnTabCodes) btnTabCodes.style.display = (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.normalizedUsername === 'admin')) ? '' : 'none';
+      if (btnTabCodes) btnTabCodes.style.display = isAdminUser(this.currentUser) ? '' : 'none';
 
       const btnAdminToggle = document.getElementById('btn-admin-mode-toggle');
       if (btnAdminToggle) {
@@ -473,9 +576,9 @@ const UserSession = {
   }
 };
 
-window.removeProfileFromDevice = function(docId, e) {
+window.removeProfileFromDevice = async function(docId, e) {
   if (e) e.stopPropagation();
-  if (!confirm("Bạn có chắc chắn muốn loại bỏ tài khoản này khỏi thiết bị?")) {
+  if (!(await appConfirm("Bạn có chắc chắn muốn loại bỏ tài khoản này khỏi thiết bị?", { danger: true, confirmText: 'Loại bỏ' }))) {
     return;
   }
   try {
@@ -6964,7 +7067,8 @@ function showToast(message, type = 'success') {
   }
 
   toast.className = `cloud-toast toast-${type} show`;
-  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span>${message}</span>`;
+  toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'}"></i> <span></span>`;
+  toast.querySelector('span').textContent = String(message === undefined || message === null ? '' : message);
 
   setTimeout(() => {
     toast.classList.remove('show');
@@ -9768,17 +9872,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }).catch(() => {});
   }
-  const isInstructorOrAdmin = storedUser && (
-    storedUser.role === 'admin' ||
-    storedUser.role === 'instructor' ||
-    storedUser.role === 'teacher' ||
-    storedUser.normalizedUsername === 'admin' ||
-    storedUser.normalizedUsername === 'haketo_spec' ||
-    (storedUser.username && storedUser.username.toLowerCase() === 'admin') ||
-    (storedUser.normalizedUsername && (storedUser.normalizedUsername.startsWith('admin_') || storedUser.normalizedUsername.includes('instructor') || storedUser.normalizedUsername.includes('teacher')))
-  );
+  const isInstructorOrAdmin = isStaffUser(storedUser);
 
-  if ((isInstructorOrAdmin && !forceStudent) || forceAdmin) {
+  if (isInstructorOrAdmin && !forceStudent) {
     if (typeof window.toggleAdminManagerMode === 'function') {
       window.toggleAdminManagerMode(true);
     }
@@ -10000,12 +10096,12 @@ window.onClassSelected = function(classId) {
     } else {
       pendingTbody.innerHTML = pendingMembers.map(m => `
         <tr>
-          <td><strong>${m.name || m.username}</strong></td>
-          <td><code>@${m.username}</code></td>
+          <td><strong>${escapeHtmlText(m.name || m.username)}</strong></td>
+          <td><code>@${escapeHtmlText(m.username)}</code></td>
           <td>${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('vi-VN') : '---'}</td>
           <td style="text-align: right;">
-            <button type="button" class="btn-sub-action btn-primary-solid" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="handleApproveMember('${m.username}', 'approve')"><i class="fa-solid fa-check"></i> Duyệt</button>
-            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember('${m.username}', 'reject')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
+            <button type="button" class="btn-sub-action btn-primary-solid" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="handleApproveMember(${jsStringArg(m.username)}, 'approve')"><i class="fa-solid fa-check"></i> Duyệt</button>
+            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember(${jsStringArg(m.username)}, 'reject')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
           </td>
         </tr>
       `).join('');
@@ -10021,12 +10117,12 @@ window.onClassSelected = function(classId) {
     } else {
       approvedTbody.innerHTML = approvedMembers.map(m => `
         <tr>
-          <td><strong>${m.name || m.username}</strong></td>
-          <td><code>@${m.username}</code></td>
+          <td><strong>${escapeHtmlText(m.name || m.username)}</strong></td>
+          <td><code>@${escapeHtmlText(m.username)}</code></td>
           <td>${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('vi-VN') : '---'}</td>
           <td style="text-align: right;">
-            <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly('${m.username}', '${m.name || m.username}')"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
-            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember('${m.username}', 'remove')"><i class="fa-solid fa-user-minus"></i> Gỡ</button>
+            <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly(${jsStringArg(m.username)}, ${jsStringArg(m.name || m.username)})"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
+            <button type="button" class="btn-sub-action btn-danger-soft" style="height: 30px; padding: 0 10px; font-size: 12px; margin-left: 6px;" onclick="handleApproveMember(${jsStringArg(m.username)}, 'remove')"><i class="fa-solid fa-user-minus"></i> Gỡ</button>
           </td>
         </tr>
       `).join('');
@@ -10080,7 +10176,7 @@ window.handleApproveMember = async function(studentUsername, action) {
 
 window.archiveCurrentClass = async function() {
   if (!currentSelectedClassId) return;
-  if (!confirm("Bạn có chắc chắn muốn lưu trữ và đóng học kỳ cho lớp học này? Dữ liệu bài làm của học viên vẫn được bảo lưu an toàn.")) {
+  if (!(await appConfirm("Bạn có chắc chắn muốn lưu trữ và đóng học kỳ cho lớp học này? Dữ liệu bài làm của học viên vẫn được bảo lưu an toàn.", { confirmText: 'Lưu trữ' }))) {
     return;
   }
   const res = await window.CloudDB.archiveClass(currentSelectedClassId);
@@ -10108,7 +10204,7 @@ window.exportCurrentClassBackup = function() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `sao-luu-lop-${targetClass.code.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `sao-luu-lop-${safeFilePart(targetClass.code).toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -10139,7 +10235,7 @@ async function renderClassProgressMatrix() {
     };
     rows.push(`
       <tr>
-        <td><strong>${m.name || m.username}</strong><br><small class="text-muted">@${m.username}</small></td>
+        <td><strong>${escapeHtmlText(m.name || m.username)}</strong><br><small class="text-muted">@${escapeHtmlText(m.username)}</small></td>
         <td style="text-align: center;">${badgeMap[prog.keywords] || badgeMap.not_started}</td>
         <td style="text-align: center;">${badgeMap[prog.monthlyPlan] || badgeMap.not_started}</td>
         <td style="text-align: center;">${badgeMap[prog.goals] || badgeMap.not_started}</td>
@@ -10151,7 +10247,7 @@ async function renderClassProgressMatrix() {
           </div>
         </td>
         <td style="text-align: right;">
-          <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly('${m.username}', '${m.name || m.username}')"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
+          <button type="button" class="btn-sub-action" style="height: 30px; padding: 0 10px; font-size: 12px;" onclick="viewStudentPlanReadOnly(${jsStringArg(m.username)}, ${jsStringArg(m.name || m.username)})"><i class="fa-solid fa-eye text-primary"></i> Xem bài</button>
         </td>
       </tr>
     `);
@@ -10260,7 +10356,7 @@ async function renderAdminCodesList() {
   }
   tbody.innerHTML = codes.map(c => `
     <tr>
-      <td><code><strong>${c.code}</strong></code></td>
+      <td><code><strong>${escapeHtmlText(c.code)}</strong></code></td>
       <td><span class="badge-prog ${c.role === 'admin' ? 'badge-prog-doing' : 'badge-prog-done'}">${c.role === 'admin' ? 'System Admin' : 'Instructor'}</span></td>
       <td>${c.usedCount || 0} / ${c.maxUses || 1}</td>
       <td>${c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('vi-VN') : '---'}</td>
@@ -10745,6 +10841,13 @@ window.addEventListener('firebase-ready', () => {
 
 window.isManagerMode = false;
 window.toggleAdminManagerMode = function(forceState) {
+  if (!isStaffUser(UserSession.currentUser) && forceState !== false) {
+    window.isManagerMode = false;
+    if (typeof showToast === 'function' && UserSession.currentUser) {
+      showToast('Chỉ Quản trị viên hoặc Giảng viên mới dùng được khu vực này.', 'warning');
+    }
+    return;
+  }
   if (typeof forceState === 'boolean') {
     window.isManagerMode = forceState;
   } else {
@@ -10780,15 +10883,7 @@ window.toggleAdminManagerMode = function(forceState) {
         toggleLabel.innerHTML = '<i class="fa-solid fa-chalkboard-user"></i> <span>Xem toàn cảnh lớp học</span>';
       }
     }
-    const isInstructorOrAdmin = UserSession.currentUser && (
-      UserSession.currentUser.role === 'admin' ||
-      UserSession.currentUser.role === 'instructor' ||
-      UserSession.currentUser.role === 'teacher' ||
-      UserSession.currentUser.normalizedUsername === 'admin' ||
-      UserSession.currentUser.normalizedUsername === 'haketo_spec' ||
-      (UserSession.currentUser.username && UserSession.currentUser.username.toLowerCase() === 'admin') ||
-      (UserSession.currentUser.normalizedUsername && (UserSession.currentUser.normalizedUsername.startsWith('admin_') || UserSession.currentUser.normalizedUsername.includes('instructor') || UserSession.currentUser.normalizedUsername.includes('teacher')))
-    );
+    const isInstructorOrAdmin = isStaffUser(UserSession.currentUser);
     if (studentAdminShortcut) {
       studentAdminShortcut.style.display = isInstructorOrAdmin ? 'block' : 'none';
       const shortcutBtn = studentAdminShortcut.querySelector('.btn-sidebar-admin-pill');
@@ -10939,14 +11034,14 @@ window.renderAdminGroupsList = async function() {
       <div class="admin-group-card" id="card-group-${c.id}">
         <div class="group-card-header">
           <div class="group-title-wrap">
-            <h3>${c.name}</h3>
+            <h3>${escapeHtmlText(c.name)}</h3>
             <div class="group-meta-badges">
               <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
                 <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i>
                 <span>${isPriv ? 'Nhóm riêng tư' : 'Nhóm mở'}</span>
               </span>
-              <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${c.code}')" title="Bấm để sao chép mã">
-                <code>${c.code}</code> <i class="fa-regular fa-copy"></i>
+              <span class="group-code-pill" onclick="copyGroupCodeToClipboard(${jsStringArg(c.code)})" title="Bấm để sao chép mã">
+                <code>${escapeHtmlText(c.code)}</code> <i class="fa-regular fa-copy"></i>
               </span>
             </div>
           </div>
@@ -10968,13 +11063,13 @@ window.renderAdminGroupsList = async function() {
           </div>
         ` : ''}
 
-        <div class="group-desc-box">${c.description || 'Chưa có ghi chú quy định.'}</div>
+        <div class="group-desc-box">${escapeHtmlText(c.description || 'Chưa có ghi chú quy định.')}</div>
 
         <div class="group-card-actions">
-          <button type="button" class="btn-group-students-main" onclick="goToGroupStudents('${c.id}')">
+          <button type="button" class="btn-group-students-main" onclick="goToGroupStudents(${jsStringArg(c.id)})">
             <i class="fa-solid fa-users-viewfinder"></i> <span>Vào quản lí sinh viên</span>
           </button>
-          <button type="button" class="btn-group-custom-sub" onclick="openCustomGroupModal('${c.id}')" title="Tùy chỉnh nhóm">
+          <button type="button" class="btn-group-custom-sub" onclick="openCustomGroupModal(${jsStringArg(c.id)})" title="Tùy chỉnh nhóm">
             <i class="fa-solid fa-sliders"></i> <span>Tùy chỉnh</span>
           </button>
         </div>
@@ -11077,7 +11172,7 @@ window.saveCustomGroupSettings = async function() {
 window.archiveCurrentCustomGroup = async function() {
   const classId = document.getElementById('custom-group-id')?.value;
   if (!classId) return;
-  if (!confirm('Bạn có chắc chắn muốn lưu trữ và đóng nhóm này? Học viên sẽ không thể gửi thêm bài làm mới.')) return;
+  if (!(await appConfirm('Bạn có chắc chắn muốn lưu trữ và đóng nhóm này? Học viên sẽ không thể gửi thêm bài làm mới.', { confirmText: 'Lưu trữ' }))) return;
 
   if (window.CloudDB && typeof window.CloudDB.archiveClass === 'function') {
     const cloudRes = await window.CloudDB.archiveClass(classId);
@@ -11094,7 +11189,7 @@ window.archiveCurrentCustomGroup = async function() {
 window.deleteCurrentCustomGroup = async function() {
   const classId = document.getElementById('custom-group-id')?.value;
   if (!classId) return;
-  if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhóm này không? Toàn bộ danh sách thành viên trong nhóm sẽ bị xóa.')) return;
+  if (!(await appConfirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN nhóm này không? Toàn bộ danh sách thành viên trong nhóm sẽ bị xóa.', { danger: true, confirmText: 'Xóa vĩnh viễn' }))) return;
 
   if (window.CloudDB && typeof window.CloudDB.deleteClass === 'function') {
     const cloudRes = await window.CloudDB.deleteClass(classId);
@@ -11188,25 +11283,25 @@ window.renderAdminRequestsTable = async function() {
       <td><strong>#${idx + 1}</strong></td>
       <td>
         <div class="student-user-cell">
-          <div class="student-avatar-circle">${(r.name || 'U').charAt(0).toUpperCase()}</div>
+          <div class="student-avatar-circle">${escapeHtmlText((r.name || 'U').charAt(0).toUpperCase())}</div>
           <div class="student-name-meta">
-            <strong>${r.name}</strong>
-            <span>@${r.username}</span>
+            <strong>${escapeHtmlText(r.name)}</strong>
+            <span>@${escapeHtmlText(r.username)}</span>
           </div>
         </div>
       </td>
-      <td><code>${r.email}</code></td>
+      <td><code>${escapeHtmlText(r.email)}</code></td>
       <td>
-        <strong>${r.className}</strong>
+        <strong>${escapeHtmlText(r.className)}</strong>
         <span class="badge-group-type ${r.isPrivate ? 'badge-type-private' : 'badge-type-open'}" style="margin-left: 6px;">${r.isPrivate ? '<i class="fa-solid fa-lock"></i> Kín' : '<i class="fa-solid fa-globe"></i> Mở'}</span>
       </td>
       <td><small class="text-muted">${(r.joinedAt || '').slice(0, 16).replace('T', ' ')}</small></td>
       <td style="text-align: right;">
         <div style="display: inline-flex; gap: 8px;">
-          <button type="button" class="btn-action-approve-pill" onclick="approveJoinRequest('${r.classId}', '${r.username}')">
+          <button type="button" class="btn-action-approve-pill" onclick="approveJoinRequest(${jsStringArg(r.classId)}, ${jsStringArg(r.username)})">
             <i class="fa-solid fa-check"></i> <span>Cho phép vào</span>
           </button>
-          <button type="button" class="btn-action-reject-pill" onclick="rejectJoinRequest('${r.classId}', '${r.username}')">
+          <button type="button" class="btn-action-reject-pill" onclick="rejectJoinRequest(${jsStringArg(r.classId)}, ${jsStringArg(r.username)})">
             <i class="fa-solid fa-xmark"></i> <span>Từ chối</span>
           </button>
         </div>
@@ -11235,7 +11330,7 @@ window.approveJoinRequest = async function(classId, username) {
 };
 
 window.rejectJoinRequest = async function(classId, username) {
-  if (!confirm(`Bạn có chắc muốn từ chối yêu cầu của học viên @${username}?`)) return;
+  if (!(await appConfirm(`Bạn có chắc muốn từ chối yêu cầu của học viên @${username}?`, { danger: true, confirmText: 'Từ chối' }))) return;
   if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
     const cloudRes = await window.CloudDB.approveClassMember(classId, username, 'reject');
     if (!cloudRes || !cloudRes.success) {
@@ -11305,7 +11400,7 @@ window.filterAdminStudentsKpi = function(kpi) {
 };
 
 window.regenGroupJoinCode = async function(classId) {
-  if (!confirm('Bạn có chắc muốn tạo mã tham gia mới cho nhóm này? Mã cũ sẽ không còn hiệu lực.')) return;
+  if (!(await appConfirm('Bạn có chắc muốn tạo mã tham gia mới cho nhóm này? Mã cũ sẽ không còn hiệu lực.', { confirmText: 'Tạo mã mới' }))) return;
   const newCode = 'GRP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
   if (window.CloudDB && typeof window.CloudDB.updateClass === 'function') {
     const cloudRes = await window.CloudDB.updateClass(classId, { code: newCode });
@@ -11365,7 +11460,7 @@ window.renderAdminStudentsTable = async function() {
   }
 
   if (groupSelect) {
-    groupSelect.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === currentSelectedClassId ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
+    groupSelect.innerHTML = classes.map(c => `<option value="${escapeHtmlText(c.id)}" ${c.id === currentSelectedClassId ? 'selected' : ''}>${escapeHtmlText(c.name)} (${escapeHtmlText(c.code)})</option>`).join('');
     if (!currentSelectedClassId && classes[0]) currentSelectedClassId = classes[0].id;
   }
 
@@ -11380,13 +11475,13 @@ window.renderAdminStudentsTable = async function() {
       <span class="badge-group-type ${isPriv ? 'badge-type-private' : 'badge-type-global'}">
         <i class="fa-solid ${isPriv ? 'fa-lock' : 'fa-globe'}"></i> ${isPriv ? 'Kín (Private)' : 'Mở (Global)'}
       </span>
-      <span class="badge-group-type ${isAccepting ? 'badge-prog-done' : 'badge-prog-doing'}" style="cursor: pointer;" onclick="toggleGroupAcceptance('${curGroup.id}')" title="Bấm để bật/tắt tiếp nhận học viên">
+      <span class="badge-group-type ${isAccepting ? 'badge-prog-done' : 'badge-prog-doing'}" style="cursor: pointer;" onclick="toggleGroupAcceptance(${jsStringArg(curGroup.id)})" title="Bấm để bật/tắt tiếp nhận học viên">
         <i class="fa-solid ${isAccepting ? 'fa-door-open' : 'fa-door-closed'}"></i> ${isAccepting ? 'Đang mở nhận' : 'Đã khóa nhận'}
       </span>
-      <span class="group-code-pill" onclick="copyGroupCodeToClipboard('${curGroup.code}')" title="Bấm để sao chép mã">
-        <code>${curGroup.code}</code> <i class="fa-regular fa-copy" style="margin-left: 4px; font-size: 11px;"></i>
+      <span class="group-code-pill" onclick="copyGroupCodeToClipboard(${jsStringArg(curGroup.code)})" title="Bấm để sao chép mã">
+        <code>${escapeHtmlText(curGroup.code)}</code> <i class="fa-regular fa-copy" style="margin-left: 4px; font-size: 11px;"></i>
       </span>
-      <button type="button" class="btn-group-action" style="padding: 2px 7px; font-size: 11px; border-radius: 4px;" onclick="regenGroupJoinCode('${curGroup.id}')" title="Đổi mã tham gia mới">
+      <button type="button" class="btn-group-action" style="padding: 2px 7px; font-size: 11px; border-radius: 4px;" onclick="regenGroupJoinCode(${jsStringArg(curGroup.id)})" title="Đổi mã tham gia mới">
         <i class="fa-solid fa-arrows-rotate"></i> Đổi mã
       </button>
       <span class="text-muted" style="font-size: 13px;">Quy mô: <strong>${limit === 0 ? 'Không giới hạn' : limit + ' người'}</strong></span>
@@ -11627,14 +11722,14 @@ window.renderAdminStudentsTable = async function() {
         <td><strong>#${idx + 1}</strong></td>
         <td>
           <div class="student-user-cell">
-            <div class="student-avatar-circle">${(m.name || 'S').charAt(0).toUpperCase()}</div>
+            <div class="student-avatar-circle">${escapeHtmlText((m.name || 'S').charAt(0).toUpperCase())}</div>
             <div class="student-name-meta">
-              <strong>${m.name}</strong>
-              <span>@${m.username}</span>
+              <strong>${escapeHtmlText(m.name)}</strong>
+              <span>@${escapeHtmlText(m.username)}</span>
             </div>
           </div>
         </td>
-        <td><code>${m.email}</code></td>
+        <td><code>${escapeHtmlText(m.email)}</code></td>
         <td style="text-align: right;"><strong class="${m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow >= 0 ? '+' : ''}${m.netCashflow} tr</strong></td>
         <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate}%</strong></td>
         <td style="text-align: right;"><span class="text-muted">${m.dsrVal}%</span></td>
@@ -11649,10 +11744,13 @@ window.renderAdminStudentsTable = async function() {
         <td>${m.healthBadge}</td>
         <td style="text-align: right;">
           <div style="display: inline-flex; align-items: center; gap: 4px;">
-            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan('${m.username}', '${m.name}')" title="Xem chi tiết kế hoạch tài chính">
+            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan(${jsStringArg(m.username)}, ${jsStringArg(m.name)})" title="Xem chi tiết kế hoạch tài chính">
               <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
             </button>
-            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup('${curGroup.id}', '${m.username}')" title="Xóa khỏi nhóm">
+            <button type="button" class="btn-inspect-student-pill" onclick="adminResetStudentPassword(${jsStringArg(m.username)})" title="Cấp lại mật khẩu cho học viên này">
+              <i class="fa-solid fa-key"></i>
+            </button>
+            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup(${jsStringArg(curGroup.id)}, ${jsStringArg(m.username)})" title="Xóa khỏi nhóm">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
@@ -11665,14 +11763,14 @@ window.renderAdminStudentsTable = async function() {
         <td><strong>#${idx + 1}</strong></td>
         <td>
           <div class="student-user-cell">
-            <div class="student-avatar-circle">${(m.name || 'S').charAt(0).toUpperCase()}</div>
+            <div class="student-avatar-circle">${escapeHtmlText((m.name || 'S').charAt(0).toUpperCase())}</div>
             <div class="student-name-meta">
-              <strong>${m.name}</strong>
-              <span>@${m.username}</span>
+              <strong>${escapeHtmlText(m.name)}</strong>
+              <span>@${escapeHtmlText(m.username)}</span>
             </div>
           </div>
         </td>
-        <td><code>${m.email}</code></td>
+        <td><code>${escapeHtmlText(m.email)}</code></td>
         <td><small class="text-muted">${(m.joinedAt || '').slice(0, 10)}</small></td>
         <td>
           <span class="badge-prog ${m.status === 'approved' ? 'badge-prog-done' : 'badge-prog-doing'}">
@@ -11692,10 +11790,13 @@ window.renderAdminStudentsTable = async function() {
         </td>
         <td style="text-align: right;">
           <div style="display: inline-flex; align-items: center; gap: 4px;">
-            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan('${m.username}', '${m.name}')" title="Soi bài làm của sinh viên">
+            <button type="button" class="btn-inspect-student-pill" onclick="inspectStudentPlan(${jsStringArg(m.username)}, ${jsStringArg(m.name)})" title="Soi bài làm của sinh viên">
               <i class="fa-solid fa-eye"></i> <span>Xem bài</span>
             </button>
-            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup('${curGroup.id}', '${m.username}')" title="Xóa khỏi nhóm">
+            <button type="button" class="btn-inspect-student-pill" onclick="adminResetStudentPassword(${jsStringArg(m.username)})" title="Cấp lại mật khẩu cho học viên này">
+              <i class="fa-solid fa-key"></i>
+            </button>
+            <button type="button" class="btn-remove-student-pill" onclick="removeStudentFromGroup(${jsStringArg(curGroup.id)}, ${jsStringArg(m.username)})" title="Xóa khỏi nhóm">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </div>
@@ -11711,8 +11812,27 @@ window.inspectStudentPlan = function(username, name) {
   }
 };
 
+function generateTempPassword(length = 12) {
+  const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => charset[b % charset.length]).join('');
+}
+
+window.adminResetStudentPassword = async function(username) {
+  if (!window.CloudDB || typeof window.CloudDB.adminResetPassword !== 'function') return;
+  if (!(await appConfirm(`Cấp lại mật khẩu cho tài khoản @${username}? Mật khẩu hiện tại của họ sẽ không dùng được nữa.`, { confirmText: 'Cấp lại mật khẩu' }))) return;
+  const temp = generateTempPassword();
+  const res = await window.CloudDB.adminResetPassword(username, temp);
+  if (!res || !res.success) {
+    showToast((res && res.error) || 'Không cấp lại được mật khẩu.', 'error');
+    return;
+  }
+  await appNotice('Mật khẩu tạm thời', `Hãy gửi mật khẩu này cho @${username} qua kênh riêng và dặn đổi ngay sau khi đăng nhập. Mật khẩu chỉ hiển thị một lần.`, { copyText: temp });
+};
+
 window.removeStudentFromGroup = async function(classId, username) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa học viên @${username} khỏi nhóm?`)) return;
+  if (!(await appConfirm(`Bạn có chắc chắn muốn xóa học viên @${username} khỏi nhóm?`, { danger: true, confirmText: 'Xóa khỏi nhóm' }))) return;
   if (window.CloudDB && typeof window.CloudDB.approveClassMember === 'function') {
     const cloudRes = await window.CloudDB.approveClassMember(classId, username, 'remove');
     if (!cloudRes || !cloudRes.success) {
@@ -11739,8 +11859,8 @@ window.exportGroupMembersCsv = function() {
 
   let csv = '\uFEFF';
   csv += '========================================================================================================================\n';
-  csv += `BÁO CÁO CHI TIẾT NHÓM: ${(curGroup.name || '').replace(/"/g, '""')} [MÃ: ${curGroup.code || curGroup.id}]\n`;
-  csv += `Ngày xuất: ${nowStr} | Chế độ: ${isPriv} | Quy mô tối đa: ${maxStr} | Phụ trách: ${curGroup.instructor || 'Admin'}\n`;
+  csv += csvSafeCell(`BÁO CÁO CHI TIẾT NHÓM: ${curGroup.name || ''} [MÃ: ${curGroup.code || curGroup.id}]`) + '\n';
+  csv += csvSafeCell(`Ngày xuất: ${nowStr} | Chế độ: ${isPriv} | Quy mô tối đa: ${maxStr} | Phụ trách: ${curGroup.instructorName || curGroup.instructorUsername || ''}`) + '\n';
   csv += '========================================================================================================================\n\n';
 
   csv += 'STT,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
@@ -11752,37 +11872,15 @@ window.exportGroupMembersCsv = function() {
       if (raw) studentPlan = JSON.parse(raw);
     } catch (e) {}
 
-    let m1 = 'Hoàn thành', m2 = 'Hoàn thành', m3 = 'Đang làm', m4 = 'Đang cân đối', pct = '75%';
-    let sRate = '35.0%', dsr = '12.5%', netCash = '+8.5 tr', stocks = '45.0%', bonds = '25.0%', ins = '12.0%', cash = '18.0%';
-
-    if (studentPlan) {
-      pct = '100%';
-      m3 = 'Hoàn thành';
-      m4 = 'Hoàn thành';
-      sRate = (studentPlan.targetSavingsRate !== undefined && studentPlan.targetSavingsRate !== null && studentPlan.targetSavingsRate !== '') ? Number(studentPlan.targetSavingsRate).toFixed(1) + '%' : '—';
-    } else if (m.status !== 'approved') {
-      m1 = 'Chưa bắt đầu';
-      m2 = 'Chưa bắt đầu';
-      m3 = 'Chưa bắt đầu';
-      m4 = 'Chưa bắt đầu';
-      pct = '0%';
-      sRate = '-';
-      dsr = '-';
-      netCash = '-';
-      stocks = '-';
-      bonds = '-';
-      ins = '-';
-      cash = '-';
-    }
-
-    csv += `"${idx + 1}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || m.recoveryEmail || ''}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+    const row = buildStudentExportMetrics(m, studentPlan);
+    csv += [idx + 1, m.username || '', m.name || '', m.email || m.recoveryEmail || '', (m.joinedAt || '').slice(0, 10), m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt', row.m1, row.m2, row.m3, row.m4, row.pct, row.sRate, row.dsr, row.netCash, row.stocks, row.bonds, row.ins, row.cash].map(csvSafeCell).join(',') + '\n';
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Bao_Cao_Chi_Tiet_Nhom_${curGroup.code || 'export'}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `Bao_Cao_Chi_Tiet_Nhom_${safeFilePart(curGroup.code || 'export')}_${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('Đã tải xuống file phân tích chi tiết nhóm (CSV)!');
@@ -11826,7 +11924,7 @@ window.exportGroupJsonSnapshot = function() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Snapshot_Nhom_${curGroup.code || curGroup.id}_${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `Snapshot_Nhom_${safeFilePart(curGroup.code || curGroup.id)}_${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('Đã tải xuống file Snapshot JSON toàn bộ nhóm!');
@@ -11850,7 +11948,7 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   if (groupSel) {
     const curId = classId || currentSelectedClassId || classes[0].id;
-    groupSel.innerHTML = classes.map(c => `<option value="${c.id}" ${c.id === curId ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('');
+    groupSel.innerHTML = classes.map(c => `<option value="${escapeHtmlText(c.id)}" ${c.id === curId ? 'selected' : ''}>${escapeHtmlText(c.name)} (${escapeHtmlText(c.code)})</option>`).join('');
   }
 
   const selectedClassId = classId || (groupSel ? groupSel.value : null) || currentSelectedClassId || classes[0].id;
@@ -11870,7 +11968,7 @@ window.renderAdminAnalyticsView = async function(classId) {
           </div>
           <h4 style="margin: 0 0 6px 0; color: var(--text-heading, #1e293b); font-size: 15px; font-weight: 700;">Chưa có học viên trong nhóm</h4>
           <p class="text-muted" style="margin: 0 auto; font-size: 13px; color: #64748b; line-height: 1.5; max-width: 380px;">
-            Nhóm <strong>${target.name}</strong> (<code>${target.code}</code>) hiện chưa có học viên nào được phê duyệt vào lớp. Cơ cấu phân bổ tài sản sẽ tự động tổng hợp khi có học viên tham gia.
+            Nhóm <strong>${escapeHtmlText(target.name)}</strong> (<code>${escapeHtmlText(target.code)}</code>) hiện chưa có học viên nào được phê duyệt vào lớp. Cơ cấu phân bổ tài sản sẽ tự động tổng hợp khi có học viên tham gia.
           </p>
         </div>
       `;
@@ -12317,6 +12415,7 @@ window.openAdminPersonalSettingsModal = function() {
   if (!overlay) return;
   overlay.style.display = 'flex';
   overlay.classList.add('active');
+  loadAdminProfileIntoSettings();
   switchAdminSettingsTab('profile');
 };
 
@@ -12343,16 +12442,44 @@ window.switchAdminSettingsTab = function(tabName) {
   }
 };
 
+function adminProfileStorageKey() {
+  const u = UserSession.currentUser;
+  return 'FIN_ADMIN_PROFILE_' + ((u && (u.normalizedUsername || u.docId)) || 'guest');
+}
+
+function loadAdminProfileIntoSettings() {
+  const u = UserSession.currentUser || {};
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(adminProfileStorageKey()) || '{}'); } catch (e) {}
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  setVal('inp-sett-display-name', saved.displayName || u.displayUsername || u.username || '');
+  setVal('inp-sett-username', u.normalizedUsername || '');
+  setVal('inp-sett-email', saved.email || '');
+  setVal('inp-sett-phone', saved.phone || '');
+  const titleEl = document.getElementById('sett-display-title');
+  if (titleEl) titleEl.textContent = saved.displayName || u.displayUsername || u.username || '';
+}
+
 window.saveAdminProfileSettings = function() {
-  const dName = document.getElementById('inp-sett-display-name')?.value || '';
-  const email = document.getElementById('inp-sett-email')?.value || '';
-  const phone = document.getElementById('inp-sett-phone')?.value || '';
+  const dName = String(document.getElementById('inp-sett-display-name')?.value || '').trim().slice(0, 64);
+  const email = String(document.getElementById('inp-sett-email')?.value || '').trim().slice(0, 120);
+  const phone = String(document.getElementById('inp-sett-phone')?.value || '').trim().slice(0, 24);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('Email liên hệ không đúng định dạng.', 'warning');
+    return;
+  }
+  try {
+    localStorage.setItem(adminProfileStorageKey(), JSON.stringify({ displayName: dName, email, phone }));
+  } catch (e) {
+    showToast('Không lưu được thông tin trên thiết bị này.', 'error');
+    return;
+  }
   const titleEl = document.getElementById('sett-display-title');
   if (titleEl && dName) titleEl.textContent = dName;
-  showToast('Đã lưu thông tin hồ sơ Quản trị viên!');
+  showToast('Đã lưu thông tin hiển thị trên thiết bị này (không đồng bộ lên Cloud).');
 };
 
-window.submitGenerateAdminCode = async function() {
+window.submitGenerateAdminCodeFromSettings = async function() {
   const role = document.getElementById('inp-gen-role')?.value || 'instructor';
   const maxUses = parseInt(document.getElementById('inp-gen-uses')?.value, 10) || 1;
   const days = parseInt(document.getElementById('inp-gen-days')?.value, 10) || 30;
@@ -12383,7 +12510,7 @@ window.renderAdminPersonalCodesList = async function() {
     const isAct = !c.isRevoked && (c.usedCount < c.maxUses) && new Date(c.expiresAt).getTime() > Date.now();
     return `
       <tr>
-        <td><code>${c.code}</code></td>
+        <td><code>${escapeHtmlText(c.code)}</code></td>
         <td>
           <span class="badge-group-type ${c.role === 'admin' ? 'badge-type-private' : 'badge-type-global'}">
             ${c.role === 'admin' ? 'Quản trị viên' : 'Giảng viên'}
@@ -12398,11 +12525,11 @@ window.renderAdminPersonalCodesList = async function() {
         </td>
         <td style="text-align: right;">
           <div style="display: inline-flex; gap: 6px;">
-            <button type="button" class="btn-inspect-student-pill" onclick="copyAdminCodeToClipboard('${c.code}')">
+            <button type="button" class="btn-inspect-student-pill" onclick="copyAdminCodeToClipboard(${jsStringArg(c.code)})">
               <i class="fa-regular fa-copy"></i> <span>Sao chép</span>
             </button>
             ${isAct ? `
-              <button type="button" class="btn-action-reject-pill" onclick="revokeAdminCode('${c.code}')">
+              <button type="button" class="btn-action-reject-pill" onclick="revokeAdminCode(${jsStringArg(c.code)})">
                 <i class="fa-solid fa-ban"></i> <span>Thu hồi</span>
               </button>
             ` : ''}
@@ -12426,7 +12553,7 @@ window.copyAdminCodeToClipboard = function(code) {
 };
 
 window.revokeAdminCode = async function(code) {
-  if (!confirm(`Bạn có chắc muốn thu hồi mã ${code}? Người nhận sẽ không thể đăng ký bằng mã này nữa.`)) return;
+  if (!(await appConfirm(`Bạn có chắc muốn thu hồi mã ${code}? Người nhận sẽ không thể đăng ký bằng mã này nữa.`, { danger: true, confirmText: 'Thu hồi' }))) return;
   if (window.CloudDB && typeof window.CloudDB.revokeAdminCode === 'function') {
     await window.CloudDB.revokeAdminCode(code);
     showToast(`Đã thu hồi mã ${code} thành công.`);
@@ -12483,7 +12610,7 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += '========================================================================================================================\n';
   csv += 'BÁO CÁO TOÀN CẢNH HỆ THỐNG QUẢN TRỊ TÀI CHÍNH CÁ NHÂN (FINANCIAL PLANNING SYSTEM PANORAMA REPORT)\n';
   csv += `Ngày xuất báo cáo: ${nowStr}\n`;
-  csv += 'Quản trị viên xuất file: Admin (Master Administrator)\n';
+  csv += csvSafeCell('Quản trị viên xuất file: ' + ((UserSession.currentUser && (UserSession.currentUser.displayUsername || UserSession.currentUser.username)) || '')) + '\n';
   csv += 'Phiên bản hệ thống: OmniRoute Financial Planner v3.2.0\n';
   csv += '========================================================================================================================\n\n';
 
@@ -12492,11 +12619,8 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += `Tổng số Nhóm / Lớp học,${classes.length},Nhóm đang hoạt động trên hệ thống\n`;
   csv += `Tổng số Học viên chính thức,${totalMembers},Học viên đã tham gia vào các nhóm\n`;
   csv += `Tổng số Yêu cầu chờ duyệt,${totalPending},Học viên gửi yêu cầu vào nhóm riêng tư\n`;
-  csv += `Tỷ lệ hoàn thành ma trận học tập,${totalMembers > 0 ? '78.5%' : '0%'},Đánh giá trên 4 phân hệ cốt lõi M1-M4\n`;
-  csv += 'Tỷ lệ tiết kiệm bình quân hệ thống,38.2%,Tỷ lệ tiết kiệm trên tổng thu nhập hàng tháng\n';
-  csv += 'Tỷ lệ trả nợ bình quân (DSR),14.6%,Khuyến nghị chuẩn an toàn DSR < 35%\n';
-  csv += 'Dòng tiền ròng bình quân/học viên,+9.4 tr/tháng,Thu nhập thặng dư tích lũy hàng tháng\n';
-  csv += `Số mã cấp quyền đang phát hành,${codes.length},Mã phân quyền QTV và Giảng viên\n\n`;
+  csv += `Số mã cấp quyền đang phát hành,${codes.length},Mã phân quyền QTV và Giảng viên\n`;
+  csv += 'Các chỉ số tiết kiệm/nợ/dòng tiền bình quân,—,Chỉ tính được khi có bài làm của từng học viên (xem Phần 3)\n\n';
 
   csv += '--- PHẦN 2: THỐNG KÊ CHI TIẾT TỪNG NHÓM / LỚP HỌC (CLASSES & GROUPS BREAKDOWN) ---\n';
   csv += 'STT,Mã Nhóm,Tên Nhóm / Lớp học,Giảng viên phụ trách,Chế độ nhóm,Sĩ số hiện tại,Quy mô tối đa,Yêu cầu chờ duyệt,Tỷ lệ hoàn tất TB (%),Tỷ lệ tiết kiệm TB (%),Dòng tiền ròng TB (tr/tháng),Tỷ lệ nợ DSR TB (%),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
@@ -12506,7 +12630,7 @@ window.exportAdminComprehensiveCsv = async function() {
     const maxStr = maxM === 0 ? 'Không giới hạn' : String(maxM);
     const mCount = (c.members || []).length;
     const pCount = (c.pendingRequests || []).length;
-    csv += `"${idx + 1}","${c.code || c.id}","${(c.name || '').replace(/"/g, '""')}","${c.instructor || 'Admin'}","${isPriv}","${mCount}","${maxStr}","${pCount}","82.5%","38.5%","+9.2 tr","14.2%","45.0%","25.0%","12.0%","18.0%"\n`;
+    csv += [idx + 1, c.code || c.id, c.name || '', c.instructorName || c.instructorUsername || '', isPriv, mCount, maxStr, pCount, '—', '—', '—', '—', '—', '—', '—', '—'].map(csvSafeCell).join(',') + '\n';
   });
   csv += '\n';
 
@@ -12523,30 +12647,8 @@ window.exportAdminComprehensiveCsv = async function() {
         if (raw) studentPlan = JSON.parse(raw);
       } catch (e) {}
 
-      let m1 = 'Hoàn thành', m2 = 'Hoàn thành', m3 = 'Đang làm', m4 = 'Đang cân đối', pct = '75%';
-      let sRate = '35.0%', dsr = '12.5%', netCash = '+8.5 tr', stocks = '45.0%', bonds = '25.0%', ins = '12.0%', cash = '18.0%';
-
-      if (studentPlan) {
-        pct = '100%';
-        m3 = 'Hoàn thành';
-        m4 = 'Hoàn thành';
-        sRate = (studentPlan.targetSavingsRate !== undefined && studentPlan.targetSavingsRate !== null && studentPlan.targetSavingsRate !== '') ? Number(studentPlan.targetSavingsRate).toFixed(1) + '%' : '—';
-      } else if (m.status !== 'approved') {
-        m1 = 'Chưa bắt đầu';
-        m2 = 'Chưa bắt đầu';
-        m3 = 'Chưa bắt đầu';
-        m4 = 'Chưa bắt đầu';
-        pct = '0%';
-        sRate = '-';
-        dsr = '-';
-        netCash = '-';
-        stocks = '-';
-        bonds = '-';
-        ins = '-';
-        cash = '-';
-      }
-
-      csv += `"${stt++}","${(c.name || '').replace(/"/g, '""')}","${c.code || ''}","${m.username || ''}","${(m.name || '').replace(/"/g, '""')}","${m.email || m.recoveryEmail || ''}","${(m.joinedAt || '').slice(0, 10)}","${m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}","${m1}","${m2}","${m3}","${m4}","${pct}","${sRate}","${dsr}","${netCash}","${stocks}","${bonds}","${ins}","${cash}"\n`;
+      const row = buildStudentExportMetrics(m, studentPlan);
+      csv += [stt++, c.name || '', c.code || '', m.username || '', m.name || '', m.email || m.recoveryEmail || '', (m.joinedAt || '').slice(0, 10), m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt', row.m1, row.m2, row.m3, row.m4, row.pct, row.sRate, row.dsr, row.netCash, row.stocks, row.bonds, row.ins, row.cash].map(csvSafeCell).join(',') + '\n';
     });
   });
   csv += '\n';
@@ -12557,7 +12659,7 @@ window.exportAdminComprehensiveCsv = async function() {
     const isAct = !cd.isRevoked && (cd.usedCount < cd.maxUses) && new Date(cd.expiresAt).getTime() > Date.now();
     const statusText = cd.isRevoked ? 'Đã thu hồi' : (isAct ? 'Còn hiệu lực' : 'Đã hết hạn');
     const roleText = cd.role === 'admin' ? 'Quản trị viên (ADMN)' : 'Giảng viên (INST)';
-    csv += `"${idx + 1}","${cd.code}","${roleText}","${cd.usedCount}","${cd.maxUses}","${(cd.expiresAt || '').slice(0, 10)}","${statusText}"\n`;
+    csv += [idx + 1, cd.code, roleText, cd.usedCount, cd.maxUses, (cd.expiresAt || '').slice(0, 10), statusText].map(csvSafeCell).join(',') + '\n';
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

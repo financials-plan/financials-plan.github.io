@@ -339,6 +339,32 @@ Sử dụng bảng kiểm tra này trước mỗi lần cập nhật phiên bả
 
 ---
 
+## 8b. Xác thực, phân quyền và các việc còn tồn đọng (kiểm toán 10/2026)
+
+**Đã xử lý trong mã nguồn:**
+- Không còn tài khoản, mật khẩu, mã cấp quyền hay khóa Quản trị mặc định trong mã nguồn; mã công khai cũ (`ADMN-2026-X8Y9`, `INST-2026-K48A`…) bị chặn vĩnh viễn ở client.
+- Vai trò chỉ lấy từ hồ sơ tài khoản (không suy ra từ tên đăng nhập như `admin_…`, `…instructor…`).
+- Mật khẩu băm PBKDF2-SHA256 (150.000 vòng); tài khoản cũ tự nâng cấp ở lần đăng nhập thành công kế tiếp và bị xóa trường `password`/`mat_khau` chữ thường.
+- Đặt lại mật khẩu trực tiếp chỉ bằng tên đăng nhập đã bị tắt; Quản trị viên/Giảng viên cấp lại mật khẩu tạm thời cho học viên.
+- Tạo/thu hồi mã cấp quyền chỉ Quản trị viên; Giảng viên chỉ thấy và quản lý nhóm do mình phụ trách; học viên chỉ ghi danh bằng chính tài khoản của mình.
+- Dữ liệu người dùng được escape HTML ở các trang Admin; CSV chặn công thức độc hại; không còn số liệu mẫu bịa sẵn trong báo cáo.
+- Máy chủ Node: mọi API quản trị/nhóm yêu cầu quyền; khóa `ADMIN_API_KEY` bắt buộc hoặc được sinh ngẫu nhiên; sao lưu không chứa hash mật khẩu; dữ liệu mẫu chỉ bật khi đặt `FINPLAN_DEMO_SEED=1`.
+
+**Còn tồn đọng (cần Firebase Authentication — không thể giải quyết chỉ bằng mã client):**
+Các kiểm tra phân quyền ở client chỉ chặn thao tác thông thường; người có hiểu biết vẫn gọi trực tiếp Firestore được vì `firestore.rules` cho phép đọc/ghi công khai các collection `accounts`, `financial_accounts`, `classes`, `groups`, `admin_codes`, `financial_Authentication`. Kết quả kiểm thử trên emulator với đúng file rules này: người chưa đăng nhập đọc được hash mật khẩu, tạo được mã cấp quyền, sửa/xóa nhóm và ghi đè hồ sơ tài chính. Hướng xử lý tận gốc:
+1. Bật Email/Password trong Firebase Authentication (không cần gói trả phí) và chuyển đăng nhập sang tài khoản Firebase (email giả `<username>@…`).
+2. Viết lại rules theo `request.auth.uid` và vai trò lưu ở tài liệu chỉ Quản trị viên được ghi; tách thành viên nhóm thành `classes/{id}/members/{uid}`.
+3. Chạy thử toàn bộ bằng Firebase Emulator trước khi triển khai rules.
+
+**Việc phải làm thủ công trên dữ liệu thật (sau khi triển khai bản mã này):**
+1. Đăng nhập bằng tài khoản `admin` cũ một lần rồi **đổi mật khẩu** (Cài đặt cá nhân → Bảo mật) — mật khẩu mặc định cũ vẫn còn hiệu lực trong Firestore cho đến khi bạn đổi.
+2. Đặt lại mật khẩu (hoặc vô hiệu hóa) các tài khoản mẫu cũ: `dinh_anh_quan`, `hst`, `demo`.
+3. Thu hồi các mã mặc định cũ còn trong collection `admin_codes` (`ADMN-2026-X8Y9`, `INST-2026-K48A`).
+4. Nếu cần tạo/đặt lại Quản trị viên trực tiếp trong Firestore: dùng [`scripts/make-account-hash.js`](./scripts/make-account-hash.js).
+5. Xem lại mọi mật khẩu từng dùng với hệ thống này là đã lộ (do từng lưu chữ thường và đọc được công khai) — yêu cầu người dùng đổi mật khẩu nếu họ dùng lại ở nơi khác.
+
+---
+
 ## 9. Kế hoạch ứng phó sự cố an ninh (Incident Response Plan)
 
 Trong trường hợp phát hiện dấu hiệu bất thường (như lưu lượng gọi Firestore tăng đột biến, nghi ngờ API Key bị lạm dụng từ bên ngoài):

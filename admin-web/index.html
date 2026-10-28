@@ -65,7 +65,7 @@
             <label for="login-admin-key">Khóa API Quản trị đặc biệt (Tùy chọn)</label>
             <div class="auth-input-wrap">
               <i class="fa-solid fa-bolt"></i>
-              <input type="text" id="login-admin-key" class="auth-input" placeholder="qtv-secret-2026 hoặc API Key">
+              <input type="text" id="login-admin-key" class="auth-input" placeholder="Khóa API Quản trị (ADMIN_API_KEY của máy chủ)">
             </div>
           </div>
           <button type="submit" class="auth-btn-submit">
@@ -99,14 +99,14 @@
             <label for="reg-admin-code">Mã kích hoạt QTV (Định dạng XXXX-XXXX-XXXX)</label>
             <div class="auth-input-wrap">
               <i class="fa-solid fa-ticket"></i>
-              <input type="text" id="reg-admin-code" class="auth-input" placeholder="ADMN-2026-X8Y9">
+              <input type="text" id="reg-admin-code" class="auth-input" placeholder="XXXX-XXXX-XXXX">
             </div>
           </div>
           <div class="auth-form-group">
             <label for="reg-admin-key">Khóa API Trigger (Tùy chọn)</label>
             <div class="auth-input-wrap">
               <i class="fa-solid fa-bolt"></i>
-              <input type="text" id="reg-admin-key" class="auth-input" placeholder="qtv-secret-2026">
+              <input type="text" id="reg-admin-key" class="auth-input" placeholder="Khóa API Quản trị">
             </div>
           </div>
           <button type="submit" class="auth-btn-submit">
@@ -116,7 +116,7 @@
 
         <div class="auth-trigger-box">
           <strong><i class="fa-solid fa-circle-info"></i> Thuật toán kích hoạt tự động:</strong>
-          <p>Nếu bạn truy cập đường dẫn có gắn tham số API như <code>?apiKey=qtv-secret-2026</code> hoặc <code>?adminCode=...</code>, hệ thống sẽ tự động xác thực và đưa bạn thẳng vào Trang Quản trị sinh viên mà không cần đăng nhập thủ công.</p>
+          <p>Nếu bạn truy cập đường dẫn có gắn tham số API như <code>?apiKey=...</code> hoặc <code>?adminCode=...</code>, máy chủ sẽ xác thực khóa/mã đó. Khi máy chủ từ chối hoặc không kết nối được, trang sẽ không cấp quyền.</p>
         </div>
       </div>
     </div>

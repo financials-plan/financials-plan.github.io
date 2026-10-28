@@ -8344,3 +8344,46 @@ input::-ms-clear {
 /* Ô nhập có chữ gợi ý khi để trống */
 [contenteditable][data-placeholder]:empty::before { content: attr(data-placeholder); color: #94a3b8; font-weight: 400; font-size: 12px; }
 
+/* === Admin: chống tràn ngang trên màn hình hẹp === */
+.admin-pane-container {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-pane-container > *,
+.admin-pane-container .admin-table-card,
+.admin-pane-container .table-responsive {
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-pane-container .table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.analytics-grid-row {
+  grid-template-columns: repeat(auto-fit, minmax(min(460px, 100%), 1fr));
+}
+.admin-groups-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+}
+@media (max-width: 600px) {
+  .admin-pane-container {
+    padding: 16px 14px;
+  }
+  .admin-hero-banner,
+  .analytics-header-card,
+  .students-mgmt-header-card {
+    flex-wrap: wrap;
+    padding: 16px;
+  }
+  .admin-toolbar-row > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .admin-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .analytics-card {
+    padding: 16px;
+  }
+}

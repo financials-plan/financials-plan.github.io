@@ -190,7 +190,7 @@ function saveAuthenticatedSession(authUser) {
   const normalizedUsername = authUser.normalizedUsername || authUser.normalizedName || normalizeUserName(displayUsername);
   const docId = authUser.docId || `user_${normalizedUsername}`;
 
-  const userRole = authUser.role || (normalizedUsername === "admin" ? "admin" : (normalizedUsername === "haketo_spec" || normalizedUsername === "dinh_anh_quan" ? "instructor" : "student"));
+  const userRole = authUser.role || "student";
 
   const userObj = {
     uid: authUser.uid || "",
@@ -749,7 +749,7 @@ function transitionToWelcomeScreen(user, isNew = false) {
 
 window.navigateToApp = function() {
   const stored = getStoredSession();
-  if (stored && (stored.role === "admin" || stored.role === "instructor" || stored.normalizedUsername === "admin" || (stored.normalizedUsername && stored.normalizedUsername.startsWith("admin_")))) {
+  if (stored && (stored.role === "admin" || stored.role === "instructor")) {
     window.location.href = "../main.html?mode=admin";
   } else {
     window.location.href = "../main.html";
@@ -1048,7 +1048,7 @@ document.addEventListener("DOMContentLoaded", () => {
       bannerEl.style.display = "flex";
       const continueLink = bannerEl.querySelector(".btn-continue-session");
       if (continueLink) {
-        const isAdmin = Boolean(stored.role === "admin" || stored.role === "instructor" || stored.normalizedUsername === "admin" || (stored.normalizedUsername && stored.normalizedUsername.startsWith("admin_")));
+        const isAdmin = Boolean(stored.role === "admin" || stored.role === "instructor");
         continueLink.href = isAdmin ? "../main.html?mode=admin" : "../main.html";
         const span = continueLink.querySelector("span");
         if (span) span.textContent = isAdmin ? "Tiếp tục vào Trang Quản Trị" : "Tiếp tục vào Sổ Tài Chính";

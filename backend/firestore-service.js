@@ -47,31 +47,11 @@ try {
     }
     isFirebaseReady = true;
     setTimeout(() => {
-      syncSeedAccountsToFirestore();
       setupClassesRealtimeListener();
     }, 100);
   }
 } catch (error) {
   console.error("Firebase init error:", error);
-}
-
-async function syncSeedAccountsToFirestore() {
-  if (!isFirebaseReady || !db) return;
-  try {
-    const keys = Object.keys(DEFAULT_SEEDED_ACCOUNTS);
-    for (const k of keys) {
-      const acc = DEFAULT_SEEDED_ACCOUNTS[k];
-      const accRef = doc(db, ACCOUNTS_COLLECTION, acc.normalizedUsername);
-      await setDoc(accRef, { ...acc }, { merge: true }).catch(() => {});
-    }
-    const adminKeys = Object.keys(DEFAULT_ADMIN_CODES);
-    for (const ak of adminKeys) {
-      const codeRec = DEFAULT_ADMIN_CODES[ak];
-      const codeRef = doc(db, ADMIN_CODES_COLLECTION, codeRec.code);
-      await setDoc(codeRef, { ...codeRec }, { merge: true }).catch(() => {});
-    }
-    await setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: DEFAULT_ADMIN_CODES }, { merge: true }).catch(() => {});
-  } catch (e) {}
 }
 
 export function normalizeUsername(raw) {
@@ -189,18 +169,7 @@ function setActiveSessionFromUser(user, sessionToken = "") {
 function isUserElevated(ctxOrSession) {
   if (!ctxOrSession) return false;
   const role = String(ctxOrSession.role || "").toLowerCase();
-  const norm = String(ctxOrSession.normalizedUsername || ctxOrSession.username || ctxOrSession.normalizedName || "").toLowerCase();
-  return (
-    role === "admin" ||
-    role === "instructor" ||
-    role === "teacher" ||
-    role === "quantri" ||
-    norm === "admin" ||
-    norm === "haketo_spec" ||
-    norm.startsWith("admin_") ||
-    norm.includes("instructor") ||
-    norm.includes("teacher")
-  );
+  return role === "admin" || role === "instructor" || role === "teacher" || role === "quantri";
 }
 
 function verifyDataAccessPermission(requestedDocId) {
@@ -292,100 +261,8 @@ function verifyDataAccessPermission(requestedDocId) {
   };
 }
 
-const DEFAULT_SEEDED_ACCOUNTS = {
-  admin: {
-    uid: "uid_admin_seed",
-    username: "Admin",
-    displayUsername: "Admin",
-    rawName: "Admin",
-    ho_ten: "Admin",
-    normalizedUsername: "admin",
-    normalizedName: "admin",
-    role: "admin",
-    docId: "user_admin",
-    password: "administrator",
-    mat_khau: "administrator",
-    salt: "seed_admin_salt_2026",
-    passHash: "cdf84a159d7bc008d3acb8942ae4d298183e5e4d3c41d6c29e47d6497dfdbfac",
-    altPassHash: "94a3395695d9192d44df66e99b9a8f638a25db70d3aa04b43b98b6c805fb7c56",
-    recoveryEmail: "admin@financials-plan.io",
-    maskedEmail: "a***n@f***n.io",
-    hasRecoveryEmail: true,
-    isSeed: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    lastLoginAt: "2026-01-01T00:00:00.000Z"
-  },
-  dinh_anh_quan: {
-    uid: "uid_dinh_anh_quan_seed",
-    username: "Đinh Anh Quân",
-    displayUsername: "Đinh Anh Quân",
-    rawName: "Đinh Anh Quân",
-    ho_ten: "Đinh Anh Quân",
-    normalizedUsername: "dinh_anh_quan",
-    normalizedName: "dinh_anh_quan",
-    role: "instructor",
-    docId: "user_dinh_anh_quan",
-    password: "dinh_anh_quan",
-    mat_khau: "dinh_anh_quan",
-    salt: "seed_daq_salt_2026",
-    passHash: "4422ded22770a1e3223c02093ce9897bb89b7b9c425470135664c828845beb8d",
-    altPassHash: "08e97570e51f30dad06081a4d6acb68acf5de69b11ee4d4795db3d69d08332ba",
-    recoveryEmail: "dinh_anh_quan@gmail.com",
-    maskedEmail: "d***n@g***l.com",
-    hasRecoveryEmail: true,
-    isSeed: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    lastLoginAt: "2026-01-01T00:00:00.000Z"
-  },
-  hst: {
-    uid: "uid_hst_seed",
-    username: "HST",
-    displayUsername: "HST",
-    rawName: "HST",
-    ho_ten: "HST",
-    normalizedUsername: "hst",
-    normalizedName: "hst",
-    role: "student",
-    docId: "user_hst",
-    password: "hst2026",
-    mat_khau: "hst2026",
-    salt: "seed_hst_salt_2026",
-    passHash: "4cb16d1dcc95bc8e016cc29b3788b08a615b6d503e3169a5bb9dc6a7321841a9",
-    altPassHash: "1ac72f8bacb84b00981f4597c6677c820b85c7b5269d3fc50381c6d19cef924b",
-    recoveryEmail: "hst@gmail.com",
-    maskedEmail: "h***t@g***l.com",
-    hasRecoveryEmail: true,
-    isSeed: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    lastLoginAt: "2026-01-01T00:00:00.000Z"
-  },
-  demo: {
-    uid: "uid_demo_seed",
-    username: "Demo User",
-    displayUsername: "Demo User",
-    rawName: "Demo User",
-    ho_ten: "Demo User",
-    normalizedUsername: "demo",
-    normalizedName: "demo",
-    role: "student",
-    docId: "user_demo",
-    password: "lumen2026",
-    mat_khau: "lumen2026",
-    salt: "seed_demo_salt_2026",
-    passHash: "59d73dc5fdb386046c4d456698970e204f3fc86bfe9b5054e0573895e1193388",
-    altPassHash: "8d04d4560e9636ae3d886e6fa00c0826fe28661a0abacaa6bd7032e9ebb54ff7",
-    recoveryEmail: "demo@financials-plan.io",
-    maskedEmail: "d***o@f***n.io",
-    hasRecoveryEmail: true,
-    isSeed: true,
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-    lastLoginAt: "2026-01-01T00:00:00.000Z"
-  }
-};
+// Tài khoản và mã mặc định (mật khẩu/mã công khai trong mã nguồn) đã bị gỡ bỏ vì lý do bảo mật.
+const DEFAULT_SEEDED_ACCOUNTS = {};
 
 const LOCAL_ADMIN_CODES_KEY = "FIN_APP_ADMIN_CODES_SECURE_V1";
 const LOCAL_CLASSES_KEY = "FIN_APP_CLASSES_SECURE_V1";
@@ -405,6 +282,66 @@ function withTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
       timer = setTimeout(() => reject(Object.assign(new Error("Firestore timeout"), { code: "timeout" })), ms);
     })
   ]).finally(() => clearTimeout(timer));
+}
+
+const RESERVED_USERNAMES = new Set(["admin", "administrator", "root", "system", "qtv", "superadmin"]);
+
+function getCallerContext() {
+  if (activeAuthContext) {
+    return { role: activeAuthContext.role || "student", username: activeAuthContext.normalizedUsername || "" };
+  }
+  try {
+    const s = JSON.parse(localStorage.getItem("FIN_APP_USER_SESSION") || "null");
+    if (s) {
+      return { role: s.role || "student", username: normalizeUsername(s.normalizedUsername || s.username || s.rawName || "") };
+    }
+  } catch (e) {}
+  return { role: null, username: "" };
+}
+
+function permissionDenied(action, allowedLabel) {
+  return {
+    success: false,
+    code: "PERMISSION_DENIED",
+    error: `Từ chối: "${action}" chỉ dành cho ${allowedLabel}.`
+  };
+}
+
+function requireAdminRole(action) {
+  return getCallerContext().role === "admin" ? null : permissionDenied(action, "Quản trị viên");
+}
+
+function requireStaffRole(action) {
+  const role = getCallerContext().role;
+  return (role === "admin" || role === "instructor") ? null : permissionDenied(action, "Quản trị viên hoặc Giảng viên");
+}
+
+function canManageClassRecord(cls) {
+  const caller = getCallerContext();
+  if (caller.role === "admin") return true;
+  if (caller.role === "instructor" && cls) {
+    return normalizeUsername(cls.instructorUsername || "") === caller.username;
+  }
+  return false;
+}
+
+function visibleClassesForCaller(list) {
+  const caller = getCallerContext();
+  const arr = Array.isArray(list) ? list : Object.values(list || {});
+  if (caller.role === "admin") return arr;
+  if (caller.role === "instructor") {
+    return arr.filter(c => normalizeUsername(c.instructorUsername || "") === caller.username);
+  }
+  return arr.filter(c => (c.members || []).some(m => normalizeUsername(m && (m.username || m.normalizedUsername || m.studentId || m.id)) === caller.username));
+}
+
+function sanitizeDisplayName(raw, fallback = "") {
+  const clean = String(raw || "")
+    .replace(/[\u0000-\u001f\u007f<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 64);
+  return clean || fallback;
 }
 
 function describeCloudError(err) {
@@ -535,7 +472,7 @@ function setupClassesRealtimeListener() {
       });
       saveLocalClasses(cache);
 
-      const classesList = Object.values(cache);
+      const classesList = visibleClassesForCaller(Object.values(cache));
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("cloud-classes-updated", { detail: classesList }));
       }
@@ -682,7 +619,7 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
   ])).catch(() => {});
 }
 
-async function mutateClassInCloud(classId, mutator) {
+async function mutateClassInCloud(classId, mutator, options = {}) {
   const local = getLocalClasses();
   let cls = local[classId] ? JSON.parse(JSON.stringify(local[classId])) : null;
 
@@ -708,6 +645,10 @@ async function mutateClassInCloud(classId, mutator) {
 
   if (!cls) {
     return { success: false, error: "Không tìm thấy nhóm trên Cloud hoặc bộ nhớ cục bộ (có thể nhóm chưa được đồng bộ hoặc đã bị xóa)." };
+  }
+
+  if (options.requireManage && !canManageClassRecord(cls)) {
+    return permissionDenied("Quản lý nhóm này", "Quản trị viên hoặc Giảng viên phụ trách nhóm");
   }
 
   const prevMembers = Array.isArray(cls.members) ? cls.members.slice() : [];
@@ -800,10 +741,8 @@ async function mutateClassInCloud(classId, mutator) {
   }
 }
 
-const DEFAULT_ADMIN_CODES = {
-  "ADMN-2026-X8Y9": { code: "ADMN-2026-X8Y9", role: "admin", maxUses: 5, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" },
-  "INST-2026-K48A": { code: "INST-2026-K48A", role: "instructor", maxUses: 2, usedCount: 0, isRevoked: false, expiresAt: "2026-11-30T23:59:59.000Z", createdAt: "2026-10-25T00:00:00.000Z" }
-};
+const DEFAULT_ADMIN_CODES = {};
+const PUBLISHED_ADMIN_CODES_BLOCKLIST = new Set(["ADMN-2026-X8Y9", "INST-2026-K48A", "INST-2026-K48B", "EXPD-2025-0001", "RVKD-2026-9999"]);
 
 const DEFAULT_CLASSES = {};
 
@@ -816,7 +755,7 @@ function getLocalAdminCodes() {
     codes = {};
   }
   let modified = false;
-  ["INST-2026-K48B", "EXPD-2025-0001", "RVKD-2026-9999"].forEach(oldKey => {
+  [...PUBLISHED_ADMIN_CODES_BLOCKLIST].forEach(oldKey => {
     if (codes[oldKey]) {
       delete codes[oldKey];
       modified = true;
@@ -909,9 +848,11 @@ function getLocalAuthAccounts() {
     accounts = {};
   }
   let modified = false;
-  Object.keys(DEFAULT_SEEDED_ACCOUNTS).forEach(k => {
-    if (!accounts[k] || (k === "admin" && (accounts[k].password !== "administrator" || accounts[k].role !== "admin"))) {
-      accounts[k] = { ...DEFAULT_SEEDED_ACCOUNTS[k] };
+  Object.keys(accounts).forEach(k => {
+    const acc = accounts[k];
+    if (acc && typeof acc === "object" && acc.passHash && (acc.password !== undefined || acc.mat_khau !== undefined)) {
+      delete acc.password;
+      delete acc.mat_khau;
       modified = true;
     }
   });
@@ -949,6 +890,49 @@ async function computePasswordHash(password, salt) {
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+
+const PBKDF2_ITERATIONS = 150000;
+const PBKDF2_ALGO_TAG = "pbkdf2-sha256";
+
+async function computePasswordHashPbkdf2(password, salt) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(String(password)), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: enc.encode(String(salt)), iterations: PBKDF2_ITERATIONS },
+    key,
+    256
+  );
+  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function canUsePbkdf2() {
+  return typeof crypto !== "undefined" && crypto.subtle && typeof crypto.subtle.deriveBits === "function" && typeof TextEncoder !== "undefined";
+}
+
+// Trả về { passHash, hashAlgo } để lưu: dùng PBKDF2 khi trình duyệt hỗ trợ, ngược lại dùng băm cũ.
+async function hashPasswordForStorage(password, salt) {
+  if (canUsePbkdf2()) {
+    try {
+      return { passHash: await computePasswordHashPbkdf2(password, salt), hashAlgo: PBKDF2_ALGO_TAG };
+    } catch (e) {}
+  }
+  return { passHash: await computePasswordHash(password, salt), hashAlgo: "" };
+}
+
+// Kiểm tra mật khẩu với bản ghi tài khoản (hỗ trợ cả băm cũ SHA-256 và PBKDF2).
+async function verifyStoredPassword(password, record) {
+  if (!record || !record.salt || !record.passHash) return false;
+  if (record.hashAlgo === PBKDF2_ALGO_TAG) {
+    if (!canUsePbkdf2()) return false;
+    try {
+      return (await computePasswordHashPbkdf2(password, record.salt)) === record.passHash;
+    } catch (e) {
+      return false;
+    }
+  }
+  const legacy = await computePasswordHash(password, record.salt);
+  return legacy === record.passHash || (Boolean(record.altPassHash) && legacy === record.altPassHash);
 }
 
 function generateSecureRandomToken(byteLen = 16) {
@@ -1000,15 +984,7 @@ const FirestoreService = {
         role = localAccs[norm].role;
       }
     }
-    if (!role) {
-      if (norm === "admin" || (norm && norm.startsWith("admin_")) || norm === "administrator") {
-        role = "admin";
-      } else if (norm === "dinh_anh_quan" || norm === "haketo_spec" || (norm && (norm.includes("instructor") || norm.includes("teacher")))) {
-        role = "instructor";
-      } else {
-        role = "student";
-      }
-    }
+    if (!role) role = "student";
     storedUser.role = role;
     if (storedUser.uid || storedUser.docId) {
       const token = storedUser.sessionToken || ("sess_" + (storedUser.uid || storedUser.docId || Date.now()));
@@ -1083,10 +1059,15 @@ const FirestoreService = {
       };
     }
 
-    let assignedRole = "student";
-    if (normalizedUsername === "admin" || normalizedUsername.startsWith("admin_") || normalizedUsername === "administrator" || normalizedUsername.startsWith("qtv_")) {
-      assignedRole = "admin";
+    if (RESERVED_USERNAMES.has(normalizedUsername)) {
+      return {
+        success: false,
+        code: "RESERVED_USERNAME",
+        error: "Username này được hệ thống giữ chỗ. Vui lòng chọn Username khác."
+      };
     }
+
+    let assignedRole = "student";
     if (cleanAdminCode) {
       if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanAdminCode)) {
         return {
@@ -1114,7 +1095,7 @@ const FirestoreService = {
         codeRec = localCodes[cleanAdminCode];
       }
 
-      if (!codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
+      if (PUBLISHED_ADMIN_CODES_BLOCKLIST.has(cleanAdminCode) || !codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
         return {
           success: false,
           code: "INVALID_ADMIN_CODE",
@@ -1128,7 +1109,15 @@ const FirestoreService = {
       codeRec.lastUsedBy = normalizedUsername;
 
       if (isFirebaseReady && db) {
-        setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }).catch(() => {});
+        try {
+          await withTimeout(setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }));
+        } catch (codeErr) {
+          return {
+            success: false,
+            code: "ADMIN_CODE_NOT_RECORDED",
+            error: "Chưa ghi nhận được việc dùng mã lên Cloud nên chưa thể đăng ký bằng mã này: " + describeCloudError(codeErr)
+          };
+        }
       }
       const allLocalCodes = getLocalAdminCodes();
       allLocalCodes[cleanAdminCode] = codeRec;
@@ -1175,7 +1164,7 @@ const FirestoreService = {
     }
 
     const salt = generateSecureRandomToken(16);
-    const passHash = await computePasswordHash(cleanPass, salt);
+    const { passHash, hashAlgo } = await hashPasswordForStorage(cleanPass, salt);
     const uid = "usr_" + generateSecureRandomToken(12);
     const sessionToken = "sess_" + generateSecureRandomToken(24);
     const docId = `user_${normalizedUsername}`;
@@ -1191,13 +1180,12 @@ const FirestoreService = {
       normalizedUsername,
       normalizedName: normalizedUsername,
       role: assignedRole,
-      password: cleanPass,
-      mat_khau: cleanPass,
       recoveryEmail: cleanEmail || null,
       maskedEmail,
       hasRecoveryEmail: Boolean(cleanEmail),
       salt,
       passHash,
+      hashAlgo,
       docId,
       createdAt: nowIso,
       updatedAt: nowIso,
@@ -1356,17 +1344,12 @@ const FirestoreService = {
       };
     }
 
-    if (normalizedUsername === "admin" || normalizedUsername.startsWith("admin_") || normalizedUsername === "administrator") {
-      target.role = "admin";
-    }
-
-    const checkHash = await computePasswordHash(cleanPass, target.salt);
-    const isPassValid = (checkHash === target.passHash) ||
-                        (target.altPassHash && checkHash === target.altPassHash) ||
-                        (target.password && target.password === cleanPass) ||
-                        (target.mat_khau && target.mat_khau === cleanPass) ||
-                        (cleanPass === "administrator" && (normalizedUsername === "admin" || normalizedUsername === "administrator")) ||
-                        (cleanPass === "lumen2026");
+    const hashMatches = await verifyStoredPassword(cleanPass, target);
+    const legacyPlaintextMatches = !target.passHash && (
+      (target.password && target.password === cleanPass) ||
+      (target.mat_khau && target.mat_khau === cleanPass)
+    );
+    const isPassValid = hashMatches || legacyPlaintextMatches;
     if (!isPassValid) {
       recordClientLoginFailure(normalizedUsername);
       return {
@@ -1378,6 +1361,17 @@ const FirestoreService = {
 
     clearClientLoginFailures(normalizedUsername);
 
+    const needsHashUpgrade = legacyPlaintextMatches || (hashMatches && target.hashAlgo !== PBKDF2_ALGO_TAG && canUsePbkdf2());
+    if (needsHashUpgrade) {
+      target.salt = generateSecureRandomToken(16);
+      const upgraded = await hashPasswordForStorage(cleanPass, target.salt);
+      target.passHash = upgraded.passHash;
+      target.hashAlgo = upgraded.hashAlgo;
+      delete target.altPassHash;
+    }
+    delete target.password;
+    delete target.mat_khau;
+
     const sessionToken = "sess_" + generateSecureRandomToken(24);
     target.sessionToken = sessionToken;
     target.lastLoginAt = new Date().toISOString();
@@ -1385,11 +1379,17 @@ const FirestoreService = {
 
     if (isFirebaseReady && db) {
       const stampPayload = {
-        password: cleanPass,
-        mat_khau: cleanPass,
+        password: deleteField(),
+        mat_khau: deleteField(),
         lastLoginAt: target.lastLoginAt,
         updatedAt: target.updatedAt
       };
+      if (needsHashUpgrade) {
+        stampPayload.salt = target.salt;
+        stampPayload.passHash = target.passHash;
+        stampPayload.hashAlgo = target.hashAlgo;
+        stampPayload.altPassHash = deleteField();
+      }
       Promise.allSettled([
         setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), stampPayload, { merge: true }),
         setDoc(doc(db, "accounts", normalizedUsername), stampPayload, { merge: true }),
@@ -1496,47 +1496,69 @@ const FirestoreService = {
     return this.requestPasswordRecovery(identifier);
   },
 
-  async resetPasswordWithNewPass(identifier, newPassword) {
-    const cleanId = String(identifier || "").trim();
-    const cleanPass = String(newPassword || "");
-    if (!cleanId) {
-      return { success: false, code: "MISSING_IDENTIFIER", error: "Vui lòng nhập Username hoặc Email khôi phục." };
+  async resetPasswordWithNewPass() {
+    return {
+      success: false,
+      code: "SELF_SERVICE_RESET_DISABLED",
+      error: "Tính năng đặt lại mật khẩu trực tiếp đã tắt vì hệ thống chưa xác minh được chủ tài khoản. Vui lòng liên hệ Quản trị viên hoặc Giảng viên phụ trách để được cấp lại mật khẩu."
+    };
+  },
+
+  async adminResetPassword(targetUsername, newPassword) {
+    const denied = requireStaffRole("Cấp lại mật khẩu cho học viên");
+    if (denied) return denied;
+    const normUser = normalizeUsername(targetUsername);
+    const nxtPass = String(newPassword || "");
+    if (!normUser || RESERVED_USERNAMES.has(normUser)) {
+      return { success: false, error: "Tên đăng nhập không hợp lệ." };
     }
-    if (!cleanPass || cleanPass.length < 6) {
+    if (nxtPass.length < 6) {
       return { success: false, code: "WEAK_PASSWORD", error: "Mật khẩu mới phải có tối thiểu 6 ký tự." };
     }
-    const accounts = getLocalAuthAccounts();
+    const caller = getCallerContext();
     let target = null;
-    let targetKey = null;
-    if (cleanId.includes("@")) {
-      const emailLower = cleanId.toLowerCase();
-      targetKey = Object.keys(accounts).find(k => accounts[k].recoveryEmail && accounts[k].recoveryEmail.toLowerCase() === emailLower);
-      if (targetKey) target = accounts[targetKey];
-    } else {
-      const norm = normalizeUsername(cleanId);
-      targetKey = norm;
-      target = accounts[norm];
-    }
-    if (!target) {
-      return { success: false, code: "ACCOUNT_NOT_FOUND", error: "Không tìm thấy tài khoản tương ứng để đặt lại mật khẩu." };
-    }
-    const newHash = await computePasswordHash(cleanPass, target.salt);
-    target.passHash = newHash;
-    target.updatedAt = new Date().toISOString();
-    accounts[targetKey] = target;
-    saveLocalAuthAccounts(accounts);
     if (isFirebaseReady && db) {
-      setDoc(doc(db, ACCOUNTS_COLLECTION, target.normalizedUsername), {
-        password: cleanPass,
-        mat_khau: cleanPass,
-        passHash: target.passHash,
-        updatedAt: target.updatedAt
-      }, { merge: true }).catch(() => {});
+      try {
+        const snap = await withTimeout(getDoc(doc(db, ACCOUNTS_COLLECTION, normUser)), 8000);
+        if (snap && snap.exists()) target = snap.data();
+      } catch (e) {}
     }
-    return {
-      success: true,
-      message: "Đặt lại mật khẩu thành công! Bạn có thể sử dụng mật khẩu mới để đăng nhập."
-    };
+    if (!target) target = getLocalAuthAccounts()[normUser] || null;
+    if (!target) {
+      return { success: false, code: "ACCOUNT_NOT_FOUND", error: "Không tìm thấy tài khoản này." };
+    }
+    if (caller.role !== "admin" && (target.role === "admin" || target.role === "instructor")) {
+      return permissionDenied("Cấp lại mật khẩu cho tài khoản quản trị/giảng viên", "Quản trị viên");
+    }
+    const newSalt = generateSecureRandomToken(16);
+    const { passHash: newHash, hashAlgo: newAlgo } = await hashPasswordForStorage(nxtPass, newSalt);
+    const nowIso = new Date().toISOString();
+    if (isFirebaseReady && db) {
+      try {
+        await withTimeout(setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
+          password: deleteField(),
+          mat_khau: deleteField(),
+          salt: newSalt,
+          passHash: newHash,
+          hashAlgo: newAlgo,
+          altPassHash: deleteField(),
+          updatedAt: nowIso
+        }, { merge: true }));
+      } catch (err) {
+        return { success: false, error: "Chưa cấp lại được mật khẩu trên Cloud: " + describeCloudError(err) };
+      }
+    }
+    const accounts = getLocalAuthAccounts();
+    if (accounts[normUser]) {
+      accounts[normUser].salt = newSalt;
+      accounts[normUser].passHash = newHash;
+      accounts[normUser].hashAlgo = newAlgo;
+      delete accounts[normUser].altPassHash;
+      delete accounts[normUser].password;
+      delete accounts[normUser].mat_khau;
+      saveLocalAuthAccounts(accounts);
+    }
+    return { success: true, message: "Đã cấp lại mật khẩu cho tài khoản " + normUser + "." };
   },
 
   async changePassword(currentPassword, newPassword) {
@@ -1596,8 +1618,7 @@ const FirestoreService = {
       };
     }
 
-    const checkHash = await computePasswordHash(curPass, target.salt);
-    if (checkHash !== target.passHash) {
+    if (!(await verifyStoredPassword(curPass, target))) {
       return {
         success: false,
         code: "INVALID_CREDENTIALS",
@@ -1606,28 +1627,38 @@ const FirestoreService = {
     }
 
     const newSalt = generateSecureRandomToken(16);
-    const newHash = await computePasswordHash(nxtPass, newSalt);
+    const { passHash: newHash, hashAlgo: newAlgo } = await hashPasswordForStorage(nxtPass, newSalt);
     const newSessionToken = "sess_" + generateSecureRandomToken(24);
     const nowIso = new Date().toISOString();
 
-    target.salt = newSalt;
-    target.passHash = newHash;
-    target.sessionToken = newSessionToken;
-    target.updatedAt = nowIso;
-
     if (isFirebaseReady && db) {
       try {
-        await setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
-          password: nxtPass,
-          mat_khau: nxtPass,
+        await withTimeout(setDoc(doc(db, ACCOUNTS_COLLECTION, normUser), {
+          password: deleteField(),
+          mat_khau: deleteField(),
           salt: newSalt,
           passHash: newHash,
+          hashAlgo: newAlgo,
+          altPassHash: deleteField(),
           updatedAt: nowIso
-        }, { merge: true });
+        }, { merge: true }));
       } catch (fsErr) {
-        console.warn("Lỗi lưu mật khẩu mới lên Firestore:", fsErr);
+        return {
+          success: false,
+          code: "CLOUD_WRITE_FAILED",
+          error: "Chưa đổi được mật khẩu trên Cloud nên mật khẩu cũ vẫn còn hiệu lực: " + describeCloudError(fsErr)
+        };
       }
     }
+
+    target.salt = newSalt;
+    target.passHash = newHash;
+    target.hashAlgo = newAlgo;
+    delete target.altPassHash;
+    delete target.password;
+    delete target.mat_khau;
+    target.sessionToken = newSessionToken;
+    target.updatedAt = nowIso;
 
     accounts[normUser] = target;
     saveLocalAuthAccounts(accounts);
@@ -1691,8 +1722,7 @@ const FirestoreService = {
       };
     }
 
-    const checkHash = await computePasswordHash(curPass, target.salt);
-    if (checkHash !== target.passHash) {
+    if (!(await verifyStoredPassword(curPass, target))) {
       return {
         success: false,
         code: "INVALID_CREDENTIALS",
@@ -2231,6 +2261,7 @@ const FirestoreService = {
   },
 
   async getAdminCodes() {
+    if (requireAdminRole("Xem danh sách mã cấp quyền")) return [];
     const local = getLocalAdminCodes();
     if (isFirebaseReady && db) {
       try {
@@ -2259,6 +2290,8 @@ const FirestoreService = {
   },
 
   async createAdminCode(role = "instructor", maxUses = 1, validDays = 30) {
+    const denied = requireAdminRole("Tạo mã cấp quyền");
+    if (denied) return denied;
     const code = this.generateAdminCode();
     const newCode = {
       code,
@@ -2273,13 +2306,21 @@ const FirestoreService = {
     local[code] = newCode;
     saveLocalAdminCodes(local);
     if (isFirebaseReady && db) {
-      setDoc(doc(db, ADMIN_CODES_COLLECTION, code), newCode, { merge: true }).catch(() => {});
+      try {
+        await withTimeout(setDoc(doc(db, ADMIN_CODES_COLLECTION, code), newCode, { merge: true }));
+      } catch (err) {
+        delete local[code];
+        saveLocalAdminCodes(local);
+        return { success: false, error: "Chưa lưu được mã lên Cloud nên mã chưa dùng được trên thiết bị khác: " + describeCloudError(err) };
+      }
       setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: local }, { merge: true }).catch(() => {});
     }
     return { success: true, code: newCode };
   },
 
   async revokeAdminCode(adminCode) {
+    const denied = requireAdminRole("Thu hồi mã cấp quyền");
+    if (denied) return denied;
     const clean = String(adminCode || "").trim().toUpperCase();
     if (!clean) return { success: false, error: "Thiếu mã quản trị cần thu hồi." };
     const local = getLocalAdminCodes();
@@ -2290,11 +2331,11 @@ const FirestoreService = {
     }
     if (isFirebaseReady && db) {
       try {
-        await Promise.allSettled([
-          setDoc(doc(db, ADMIN_CODES_COLLECTION, clean), { isRevoked: true, revokedAt: new Date().toISOString() }, { merge: true }),
-          setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { updatedAt: new Date().toISOString(), codes: local }, { merge: true })
-        ]);
-      } catch (e) {}
+        await withTimeout(setDoc(doc(db, ADMIN_CODES_COLLECTION, clean), { isRevoked: true, revokedAt: new Date().toISOString() }, { merge: true }));
+      } catch (err) {
+        return { success: false, error: "Chưa thu hồi được mã trên Cloud: " + describeCloudError(err) };
+      }
+      setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { updatedAt: new Date().toISOString(), codes: local }, { merge: true }).catch(() => {});
     }
     return { success: true, message: `Đã thu hồi mã ${clean} thành công.` };
   },
@@ -2324,8 +2365,12 @@ const FirestoreService = {
       const localCodes = getLocalAdminCodes();
       codeRec = localCodes[cleanAdminCode];
     }
-    if (!codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
+    if (PUBLISHED_ADMIN_CODES_BLOCKLIST.has(cleanAdminCode) || !codeRec || codeRec.isRevoked || Date.now() > new Date(codeRec.expiresAt).getTime() || (codeRec.usedCount || 0) >= (codeRec.maxUses || 1)) {
       return { success: false, error: "Mã Quản trị / Giảng viên không hợp lệ, đã bị thu hồi hoặc đã hết lượt sử dụng." };
+    }
+    const callerUser = getCallerContext().username;
+    if (callerUser && cleanUser !== callerUser && getCallerContext().role !== "admin") {
+      return permissionDenied("Kích hoạt mã cho tài khoản khác", "Quản trị viên");
     }
 
     const assignedRole = codeRec.role || "instructor";
@@ -2334,7 +2379,11 @@ const FirestoreService = {
     codeRec.lastUsedBy = cleanUser;
 
     if (isFirebaseReady && db) {
-      setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }).catch(() => {});
+      try {
+        await withTimeout(setDoc(doc(db, ADMIN_CODES_COLLECTION, cleanAdminCode), codeRec, { merge: true }));
+      } catch (err) {
+        return { success: false, error: "Chưa ghi nhận được việc dùng mã lên Cloud: " + describeCloudError(err) };
+      }
       const allLocalCodes = getLocalAdminCodes();
       allLocalCodes[cleanAdminCode] = codeRec;
       setDoc(doc(db, ADMIN_CODES_COLLECTION, "all_codes"), { id: "all_codes", updatedAt: new Date().toISOString(), codes: allLocalCodes }, { merge: true }).catch(() => {});
@@ -2350,7 +2399,11 @@ const FirestoreService = {
       saveLocalAuthAccounts(accounts);
     }
     if (isFirebaseReady && db) {
-      setDoc(doc(db, ACCOUNTS_COLLECTION, cleanUser), { role: assignedRole, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+      try {
+        await withTimeout(setDoc(doc(db, ACCOUNTS_COLLECTION, cleanUser), { role: assignedRole, updatedAt: new Date().toISOString() }, { merge: true }));
+      } catch (err) {
+        return { success: false, error: "Đã ghi nhận mã nhưng chưa cập nhật được vai trò trên Cloud: " + describeCloudError(err) };
+      }
     }
     if (activeAuthContext && activeAuthContext.normalizedUsername === cleanUser) {
       setActiveSessionFromUser({ ...activeAuthContext, role: assignedRole }, activeAuthContext.sessionToken);
@@ -2365,7 +2418,7 @@ const FirestoreService = {
   async getClasses() {
     const local = getLocalClasses();
     if (!isFirebaseReady || !db) {
-      return Object.values(local);
+      return visibleClassesForCaller(Object.values(local));
     }
 
     const remote = {};
@@ -2461,15 +2514,19 @@ const FirestoreService = {
     }
 
     saveLocalClasses(cache);
-    return Object.values(cache);
+    return visibleClassesForCaller(Object.values(cache));
   },
 
   async createClass(name, code, instructorUsername, maxMembers = 40, isPrivate = true, description = "") {
+    const denied = requireStaffRole("Tạo nhóm");
+    if (denied) return denied;
     const cleanName = String(name || "").trim();
     const cleanCode = String(code || "").trim().toUpperCase();
     if (!cleanName || !cleanCode) {
       return { success: false, error: "Vui lòng nhập tên lớp và mã lớp." };
     }
+    const caller = getCallerContext();
+    if (caller.role !== "admin") instructorUsername = caller.username;
     const now = new Date().toISOString();
     const classId = "cls_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const newClass = {
@@ -2510,13 +2567,17 @@ const FirestoreService = {
   async joinClass(code, username, studentName) {
     const cleanCode = String(code || "").trim().toUpperCase();
     const cleanUser = normalizeUsername(username || (activeAuthContext ? activeAuthContext.normalizedUsername : ""));
-    const dispName = studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser);
+    const dispName = sanitizeDisplayName(studentName || (activeAuthContext ? activeAuthContext.displayUsername : cleanUser), cleanUser);
 
     if (!cleanCode) {
       return { success: false, error: "Vui lòng nhập mã nhóm." };
     }
     if (!cleanUser) {
       return { success: false, error: "Vui lòng đăng nhập trước khi tham gia nhóm." };
+    }
+    const joinCaller = getCallerContext();
+    if (joinCaller.username && joinCaller.username !== cleanUser) {
+      return permissionDenied("Tham gia nhóm bằng tài khoản của người khác", "chính chủ tài khoản");
     }
 
     if (/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanCode) || cleanCode.startsWith("INST-") || cleanCode.startsWith("ADMN-")) {
@@ -2563,14 +2624,9 @@ const FirestoreService = {
           };
         }
         if (existing.status === "rejected") {
-          existing.status = cls.isPrivate ? "pending" : "approved";
-          existing.joinedAt = new Date().toISOString();
-          cls.members = members;
           return {
-            success: true,
-            class: cls,
-            status: existing.status,
-            message: cls.isPrivate ? `Đã gửi lại yêu cầu tham gia nhóm "${cls.name}". Vui lòng chờ người phụ trách duyệt.` : `Đã tham gia nhóm "${cls.name}" thành công!`
+            success: false,
+            error: `Yêu cầu tham gia nhóm "${cls.name}" của bạn đã bị từ chối. Vui lòng liên hệ người phụ trách nhóm nếu cần tham gia lại.`
           };
         }
         return { success: false, error: "Bạn đã ở trong danh sách hoặc đã gửi yêu cầu tham gia nhóm này." };
@@ -2666,7 +2722,7 @@ const FirestoreService = {
         memberStatus,
         action
       };
-    });
+    }, { requireManage: true });
     if (res.localOnly) {
       return {
         ...res,
@@ -2679,7 +2735,7 @@ const FirestoreService = {
 
   subscribeToClasses(callback) {
     if (typeof callback !== "function") return () => {};
-    const initial = Object.values(getLocalClasses());
+    const initial = visibleClassesForCaller(Object.values(getLocalClasses()));
     if (initial.length > 0) {
       try { callback(initial); } catch (e) {}
     }
@@ -2761,6 +2817,8 @@ const FirestoreService = {
   },
 
   async updateClass(classId, updates = {}) {
+    const denied = requireStaffRole("Chỉnh sửa nhóm");
+    if (denied) return denied;
     const newCode = updates.code ? String(updates.code).trim().toUpperCase() : "";
     if (newCode && isFirebaseReady && db) {
       try {
@@ -2780,7 +2838,7 @@ const FirestoreService = {
       if (updates.isAccepting !== undefined) cls.isAccepting = Boolean(updates.isAccepting);
       if (updates.description !== undefined) cls.description = String(updates.description).trim();
       return null;
-    });
+    }, { requireManage: true });
   },
 
   async archiveClass(classId) {
@@ -2788,12 +2846,14 @@ const FirestoreService = {
       cls.status = "archived";
       cls.archivedAt = new Date().toISOString();
       return null;
-    });
+    }, { requireManage: true });
     if (res.success) res.message = "Đã lưu trữ và kết thúc học kỳ an toàn.";
     return res;
   },
 
   async restoreClassRecord(classData) {
+    const denied = requireAdminRole("Khôi phục nhóm từ sao lưu");
+    if (denied) return denied;
     if (!isRealClassRecord(classData)) {
       return { success: false, error: "Bản ghi lớp trong tệp sao lưu không hợp lệ." };
     }
@@ -2812,7 +2872,9 @@ const FirestoreService = {
   },
 
   async restoreAdminCodeRecord(codeData) {
-    const code = String(codeData && codeData.code || "").trim().toUpperCase();
+    const denied = requireAdminRole("Khôi phục mã cấp quyền từ sao lưu");
+    if (denied) return denied;
+    const code =String(codeData && codeData.code || "").trim().toUpperCase();
     if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
       return { success: false, error: "Mã cấp quyền trong tệp sao lưu không hợp lệ." };
     }
@@ -2839,6 +2901,18 @@ const FirestoreService = {
   },
 
   async deleteClass(classId) {
+    const denied = requireStaffRole("Xóa nhóm");
+    if (denied) return denied;
+    let existingClass = getLocalClasses()[classId] || null;
+    if (!existingClass && isFirebaseReady && db) {
+      try {
+        const snap = await withTimeout(getDoc(doc(db, CLASSES_COLLECTION, classId)), 8000);
+        if (snap && snap.exists()) existingClass = { ...snap.data(), id: snap.id };
+      } catch (e) {}
+    }
+    if (existingClass && !canManageClassRecord(existingClass)) {
+      return permissionDenied("Xóa nhóm này", "Quản trị viên hoặc Giảng viên phụ trách nhóm");
+    }
     if (isFirebaseReady && db) {
       markClassDeleted(classId);
       try {
@@ -3150,7 +3224,7 @@ const FirestoreService = {
           const acc = accountsToSync[u];
           const norm = normalizeUsername(u);
           const dispName = acc.displayUsername || acc.username || norm;
-          const role = acc.role || (norm === "admin" ? "admin" : (norm === "dinh_anh_quan" ? "instructor" : "student"));
+          const role = acc.role || "student";
           const salt = acc.salt || ("salt_" + norm + "_" + Date.now().toString(36));
           const passHash = acc.passHash || (acc.password ? await computePasswordHash(acc.password, salt) : "");
           const altPassHash = acc.altPassHash || (acc.password ? await computePasswordHash(acc.password, "legacy_static_salt_2026") : "");
@@ -3176,11 +3250,6 @@ const FirestoreService = {
             lastLoginAt: acc.lastLoginAt || new Date().toISOString(),
             schemaVersion: 3
           };
-          if (acc.password) {
-            fullAccount.password = acc.password;
-            fullAccount.mat_khau = acc.password;
-          }
-
           const userProfile = {
             uid: fullAccount.uid,
             username: norm,

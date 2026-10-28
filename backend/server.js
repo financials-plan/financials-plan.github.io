@@ -1,4 +1,5 @@
 const http = require("http");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const {
@@ -17,6 +18,9 @@ const {
 } = require("./security");
 
 const PORT = process.env.PORT || 8787;
+// Dữ liệu/khóa mẫu công khai chỉ được bật khi chủ động đặt FINPLAN_DEMO_SEED=1 (dùng cho kiểm thử).
+const DEMO_MODE = process.env.FINPLAN_DEMO_SEED === "1";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || (DEMO_MODE ? "qtv-secret-2026" : crypto.randomBytes(24).toString("hex"));
 const MAX_BODY_SIZE = 50 * 1024;
 
 const generalIpLimiter = createRateLimiter(15 * 60 * 1000, 100);
@@ -57,7 +61,7 @@ function seedInitialData() {
   ];
   sampleCodes.forEach(c => adminCodesStore.set(c.code, { ...c }));
 }
-seedInitialData();
+if (DEMO_MODE) seedInitialData();
 
 function sendJson(res, statusCode, data) {
   applySecurityHeaders(res);
@@ -124,7 +128,7 @@ function isAdminAuthorized(req, url) {
   const queryKey = url.searchParams.get("adminKey");
   const headerKey = req.headers["x-admin-key"];
   const adminKey = headerKey || queryKey;
-  const expectedKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+  const expectedKey = ADMIN_API_KEY;
   if (adminKey && adminKey === expectedKey) {
     return true;
   }
@@ -135,9 +139,6 @@ function isAdminAuthorized(req, url) {
     if (session && session.role === "admin" && session.expiresAt > Date.now()) {
       return true;
     }
-  }
-  if (process.env.NODE_ENV === "test") {
-    return true;
   }
   return false;
 }
@@ -245,7 +246,7 @@ const server = http.createServer(async (req, res) => {
 
       const rawAdminCode = sanitizeInput(body.adminCode, 16).toUpperCase();
       const rawAdminKey = sanitizeInput(body.adminKey, 64);
-      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      const expectedAdminKey = ADMIN_API_KEY;
       let role = "student";
       if (rawAdminKey && rawAdminKey === expectedAdminKey) {
         role = "admin";
@@ -332,7 +333,7 @@ const server = http.createServer(async (req, res) => {
 
       const rawAdminKey = sanitizeInput(body.adminKey, 64);
       const rawAdminCode = sanitizeInput(body.adminCode, 16).toUpperCase();
-      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      const expectedAdminKey = ADMIN_API_KEY;
       if (rawAdminKey && rawAdminKey === expectedAdminKey) {
         account.role = "admin";
       } else if (rawAdminCode && adminCodesStore.has(rawAdminCode)) {
@@ -380,7 +381,7 @@ const server = http.createServer(async (req, res) => {
       const body = await parseJsonBody(req);
       const incomingKey = sanitizeInput(body.adminKey || body.apiKey, 64) || req.headers["x-admin-key"] || url.searchParams.get("apiKey") || url.searchParams.get("adminKey");
       const incomingCode = sanitizeInput(body.adminCode || body.code, 16).toUpperCase() || url.searchParams.get("code");
-      const expectedAdminKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      const expectedAdminKey = ADMIN_API_KEY;
 
       let grantedRole = null;
       let triggerSource = "";
@@ -393,6 +394,22 @@ const server = http.createServer(async (req, res) => {
         if (!cRec.isRevoked && Date.now() <= new Date(cRec.expiresAt).getTime() && cRec.usedCount < cRec.maxUses) {
           grantedRole = cRec.role || "instructor";
           triggerSource = "admin_code";
+          cRec.usedCount = (cRec.usedCount || 0) + 1;
+          cRec.lastUsedAt = new Date().toISOString();
+        }
+      } else if (typeof body.sessionToken === "string" && body.sessionToken) {
+        const existing = sessionsStore.get(body.sessionToken);
+        if (existing && (existing.role === "admin" || existing.role === "instructor") && existing.expiresAt > Date.now()) {
+          sendJson(res, 200, {
+            success: true,
+            authorized: true,
+            role: existing.role,
+            triggerSource: "session_token",
+            sessionToken: body.sessionToken,
+            redirectTo: "/admin-web/#students",
+            user: { username: existing.normalizedUsername, role: existing.role }
+          });
+          return;
         }
       }
 
@@ -548,7 +565,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && pathname === "/api/admin/init-first-admin") {
       const body = await parseJsonBody(req);
       const secretKey = sanitizeInput(body.secretKey, 64);
-      const expectedKey = process.env.ADMIN_API_KEY || "qtv-secret-2026";
+      const expectedKey = ADMIN_API_KEY;
       const isKeyAuthorized = Boolean(secretKey && secretKey === expectedKey);
 
       const existingAdmins = Array.from(accountsStore.values()).filter(acc => acc.role === "admin");
@@ -704,8 +721,6 @@ const server = http.createServer(async (req, res) => {
           normalizedUsername: a.normalizedUsername,
           role: a.role,
           recoveryEmail: a.recoveryEmail,
-          passwordHash: a.passwordHash,
-          passwordSalt: a.passwordSalt,
           createdAt: a.createdAt
         })),
         classes: Array.from(classesStore.values()),
@@ -726,8 +741,22 @@ const server = http.createServer(async (req, res) => {
         sendJson(res, 400, { success: false, error: "Cấu trúc dữ liệu bản sao lưu không hợp lệ." });
         return;
       }
+      let accountsRestored = 0;
+      let accountsSkipped = 0;
       backup.accounts.forEach(a => {
-        if (a.normalizedUsername) accountsStore.set(a.normalizedUsername, a);
+        const key = a && typeof a.normalizedUsername === "string" ? normalizeUsername(a.normalizedUsername) : "";
+        if (!key) return;
+        const existing = accountsStore.get(key);
+        if (existing) {
+          // Giữ nguyên mật khẩu hiện có; chỉ khôi phục thông tin hồ sơ và vai trò.
+          if (a.username) existing.username = sanitizeInput(a.username, 64);
+          if (a.recoveryEmail) existing.recoveryEmail = sanitizeInput(a.recoveryEmail, 120);
+          if (a.role === "admin" || a.role === "instructor" || a.role === "student") existing.role = a.role;
+          accountsRestored++;
+        } else {
+          // Tệp sao lưu không còn chứa hash mật khẩu nên không thể tạo lại tài khoản đăng nhập được.
+          accountsSkipped++;
+        }
       });
       backup.classes.forEach(c => {
         if (c.id) classesStore.set(c.id, c);
@@ -739,7 +768,8 @@ const server = http.createServer(async (req, res) => {
         success: true,
         message: "Khôi phục dữ liệu sao lưu thành công.",
         restored: {
-          accounts: backup.accounts.length,
+          accounts: accountsRestored,
+          accountsSkipped,
           classes: backup.classes.length,
           adminCodes: backup.adminCodes.length
         }
@@ -972,6 +1002,10 @@ const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`Backend API Security Server running on port ${PORT}`);
+    if (!process.env.ADMIN_API_KEY && !DEMO_MODE) {
+      console.log("ADMIN_API_KEY chưa được đặt: đã tạo khóa Quản trị tạm thời cho phiên chạy này (mất khi tắt máy chủ):");
+      console.log(ADMIN_API_KEY);
+    }
   });
 }
 

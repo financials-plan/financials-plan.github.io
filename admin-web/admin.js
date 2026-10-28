@@ -146,16 +146,7 @@
       }
     }
 
-    const existingRole = localStorage.getItem("FIN_ADMIN_ROLE");
-    if (existingRole === "admin" || existingRole === "instructor") {
-      activeAdminSession = {
-        role: existingRole,
-        token: storedToken,
-        apiKey: storedApiKey,
-        triggerSource: "stored_session"
-      };
-      autoJumpToStudentManagement();
-    }
+    localStorage.removeItem("FIN_ADMIN_ROLE");
   }
 
   async function verifyApiTrigger(payload) {
@@ -171,26 +162,8 @@
       if (res.ok) {
         return await res.json();
       }
-    } catch (e) {}
-
-    if (payload.apiKey === "qtv-secret-2026" || (payload.apiKey && payload.apiKey.startsWith("qtv-"))) {
-      return {
-        success: true,
-        authorized: true,
-        role: "admin",
-        triggerSource: "local_verified_key",
-        sessionToken: "tok_admin_trigger_" + Date.now()
-      };
-    }
-
-    if (payload.adminCode && /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(payload.adminCode)) {
-      return {
-        success: true,
-        authorized: true,
-        role: "instructor",
-        triggerSource: "local_verified_code",
-        sessionToken: "tok_inst_trigger_" + Date.now()
-      };
+    } catch (e) {
+      showToast("Không kết nối được máy chủ quản trị nên chưa thể xác thực quyền.", "warning");
     }
 
     return { success: false, authorized: false };
@@ -244,7 +217,11 @@
         return;
       }
 
-      const role = data.user?.role || (adminKey ? "admin" : "student");
+      const role = data.user?.role || "student";
+      if (role !== "admin" && role !== "instructor") {
+        showToast("Tài khoản này không có quyền vào Cổng Quản trị.", "danger");
+        return;
+      }
       activeAdminSession = {
         role,
         token: data.sessionToken,
@@ -259,18 +236,6 @@
       showToast("Đăng nhập thành công! Đang chuyển hướng...", "success");
       autoJumpToStudentManagement();
     } catch (err) {
-      if (adminKey === "qtv-secret-2026" || password === "lumen2026") {
-        activeAdminSession = {
-          role: "admin",
-          token: "tok_offline_" + Date.now(),
-          apiKey: adminKey,
-          username
-        };
-        localStorage.setItem("FIN_ADMIN_ROLE", "admin");
-        showToast("Đã kích hoạt quyền Quản trị viên ngoại tuyến!", "success");
-        autoJumpToStudentManagement();
-        return;
-      }
       showToast("Lỗi kết nối máy chủ.", "danger");
     }
   }
@@ -304,13 +269,19 @@
         return;
       }
 
-      const role = data.user?.role || "admin";
+      const role = data.user?.role || "student";
+      if (role !== "admin" && role !== "instructor") {
+        showToast("Đã đăng ký tài khoản, nhưng tài khoản chưa có quyền Quản trị/Giảng viên. Hãy nhập mã cấp quyền hợp lệ.", "warning");
+        return;
+      }
       activeAdminSession = {
         role,
+        token: data.sessionToken,
         apiKey: adminKey,
         username: data.user?.username || username
       };
       localStorage.setItem("FIN_ADMIN_ROLE", role);
+      if (data.sessionToken) localStorage.setItem("FIN_ADMIN_SESSION_TOKEN", data.sessionToken);
 
       showToast("Đăng ký tài khoản Quản trị thành công!", "success");
       autoJumpToStudentManagement();
@@ -416,15 +387,15 @@
     let pendingCount = 0;
 
     const processed = members.map(m => {
-      let percent = 25;
-      let statusLabel = "Chưa hoàn thiện";
-      let netCashflow = 8.5;
-      let savingsRate = 35;
-      let dsrVal = 12.5;
-      let allocStocks = 45;
-      let allocBonds = 25;
-      let allocIns = 12;
-      let allocCash = 18;
+      let percent = 0;
+      let statusLabel = "Chưa nộp bài làm";
+      let netCashflow = null;
+      let savingsRate = null;
+      let dsrVal = null;
+      let allocStocks = null;
+      let allocBonds = null;
+      let allocIns = null;
+      let allocCash = null;
 
       let studentPlan = m.plan || null;
       if (!studentPlan) {
@@ -486,8 +457,7 @@
         if (exp === 0 && Array.isArray(actualPlan.planExpense) && actualPlan.planExpense.length > 0) {
           exp = actualPlan.planExpense.reduce((s, x) => s + (Number(x.plan) || 0), 0);
         }
-        if (exp === 0 && inc > 0) exp = inc * 0.65;
-        if (inc > 0) {
+        if (inc > 0 && exp > 0) {
           netCashflow = Math.round((inc - exp) * 10) / 10;
           savingsRate = Math.round(((inc - exp) / inc) * 100);
           if (savingsRate < 0) savingsRate = 0;
@@ -524,9 +494,11 @@
       }
 
       let healthBadge = `<span class="financial-metric-chip chip-safe"><i class="fa-solid fa-circle-check"></i> Lành mạnh</span>`;
-      if (dsrVal > 40 || netCashflow < 0) {
+      if (netCashflow === null && savingsRate === null && dsrVal === null) {
+        healthBadge = `<span class="financial-metric-chip chip-warning"><i class="fa-solid fa-circle-question"></i> Chưa có dữ liệu</span>`;
+      } else if ((dsrVal !== null && dsrVal > 40) || (netCashflow !== null && netCashflow < 0)) {
         healthBadge = `<span class="financial-metric-chip chip-danger"><i class="fa-solid fa-triangle-exclamation"></i> Báo động nợ</span>`;
-      } else if (savingsRate < 15 || percent < 50) {
+      } else if ((savingsRate !== null && savingsRate < 15) || percent < 50) {
         healthBadge = `<span class="financial-metric-chip chip-warning"><i class="fa-solid fa-circle-exclamation"></i> Cần cân đối</span>`;
       }
 
@@ -618,15 +590,15 @@
             </div>
           </td>
           <td><code>${esc(m.email)}</code></td>
-          <td style="text-align: right;"><strong class="${m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow >= 0 ? '+' : ''}${m.netCashflow} tr</strong></td>
-          <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate}%</strong></td>
-          <td style="text-align: right;"><span style="color: var(--admin-muted);">${m.dsrVal}%</span></td>
+          <td style="text-align: right;"><strong class="${m.netCashflow === null || m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow === null ? '—' : (m.netCashflow >= 0 ? '+' : '') + m.netCashflow + ' tr'}</strong></td>
+          <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate === null ? '—' : m.savingsRate + '%'}</strong></td>
+          <td style="text-align: right;"><span style="color: var(--admin-muted);">${m.dsrVal === null ? '—' : m.dsrVal + '%'}</span></td>
           <td>
             <div class="portfolio-alloc-pills">
-              <span class="alloc-pill-tag alloc-tag-stocks" title="Cổ phiếu">CP ${m.allocStocks}%</span>
-              <span class="alloc-pill-tag alloc-tag-bonds" title="Trái phiếu">TP ${m.allocBonds}%</span>
-              <span class="alloc-pill-tag alloc-tag-ins" title="Bảo hiểm">BH ${m.allocIns}%</span>
-              <span class="alloc-pill-tag alloc-tag-cash" title="Tiền gửi">TG ${m.allocCash}%</span>
+              <span class="alloc-pill-tag alloc-tag-stocks" title="Cổ phiếu">CP ${m.allocStocks === null ? '—' : m.allocStocks + '%'}</span>
+              <span class="alloc-pill-tag alloc-tag-bonds" title="Trái phiếu">TP ${m.allocBonds === null ? '—' : m.allocBonds + '%'}</span>
+              <span class="alloc-pill-tag alloc-tag-ins" title="Bảo hiểm">BH ${m.allocIns === null ? '—' : m.allocIns + '%'}</span>
+              <span class="alloc-pill-tag alloc-tag-cash" title="Tiền gửi">TG ${m.allocCash === null ? '—' : m.allocCash + '%'}</span>
             </div>
           </td>
           <td>${m.healthBadge}</td>
