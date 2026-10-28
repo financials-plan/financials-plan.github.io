@@ -44,9 +44,21 @@ service cloud.firestore {
       allow delete: if isOwner(planId);
     }
 
+    function hasNoPlainSecrets() {
+      return !request.resource.data.keys().hasAny(['password', 'mat_khau', 'isSeed']);
+    }
+
+    function keepsPbkdf2() {
+      let pbkdf2 = 'pbkdf2-sha256';
+      let newAlgo = request.resource.data.get('hashAlgo', '');
+      return (resource.data.get('hashAlgo', '') != pbkdf2 || newAlgo == pbkdf2)
+        && (request.resource.data.get('passHash', '') == resource.data.get('passHash', '') || newAlgo == pbkdf2);
+    }
+
     match /financial_accounts/{username} {
       allow get: if isValidDocId(username);
-      allow create, update: if isValidDocId(username) && fitsKeys(60);
+      allow create: if isValidDocId(username) && fitsKeys(60) && hasNoPlainSecrets();
+      allow update: if isValidDocId(username) && fitsKeys(60) && hasNoPlainSecrets() && keepsPbkdf2();
       allow delete: if isOwner(username);
     }
 
