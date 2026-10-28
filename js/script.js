@@ -7184,6 +7184,8 @@ window.saveAppStateToCloud = async function() {
   }
 };
 
+let cloudInitialLoad = null;
+
 window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   if (!window.CloudDB || !UserSession.currentUser) return;
 
@@ -7200,11 +7202,23 @@ window.loadAppStateFromCloud = async function(isInitialLoad = false) {
   updateCloudStatus('loading', 'Đang nạp dữ liệu...');
 
   const userDocId = UserSession.currentUser.docId;
-  const result = await window.CloudDB.loadData(userDocId);
+  // Trang gọi nạp lúc mở và lại gọi khi Firebase sẵn sàng: dùng chung một lượt nạp, tránh nạp hai lần
+  if (!cloudInitialLoad || cloudInitialLoad.docId !== userDocId || !cloudInitialLoad.pending) {
+    const entry = { docId: userDocId, pending: true, promise: null };
+    entry.promise = window.CloudDB.loadData(userDocId).finally(() => { entry.pending = false; });
+    cloudInitialLoad = entry;
+  }
+  const result = await cloudInitialLoad.promise;
 
   if (btnLoad) {
     btnLoad.disabled = false;
     btnLoad.innerHTML = `<i class="fa-solid fa-cloud-arrow-down"></i> <span>Nhập dữ liệu</span>`;
+  }
+
+  // Người dùng đã nhập thu chi trong lúc dữ liệu Cloud còn đang tải: không ghi đè lên những gì vừa nhập
+  if (window.hasUnsavedChanges) {
+    updateCloudStatus('ready', 'Đang giữ dữ liệu bạn vừa nhập (chưa lưu)');
+    return { success: true, skipped: true };
   }
 
   if (result.success && result.data) {
