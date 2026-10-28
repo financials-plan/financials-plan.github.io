@@ -2271,6 +2271,7 @@ function getPortfolio30YrData() {
     total: r.hasData ? 100 : null,
     balance: r.balance,
     ret: r.expectedReturn,
+    groupRet: r.groupReturn,
     stockTot: r.stocks,
     bondTot: r.bonds,
     insTot: r.insurance,
@@ -2405,7 +2406,7 @@ function calculateAgeMilestones() {
     const bonds = hasPortfolio ? matchedP.bondTot : null;
     const ins = hasPortfolio ? matchedP.insTot : null;
     const cash = hasPortfolio ? matchedP.cashTot : null;
-    const returnNeed = hasPortfolio ? matchedP.ret : null;
+    const returnNeed = hasPortfolio ? (matchedP.groupRet !== null && matchedP.groupRet !== undefined ? matchedP.groupRet : matchedP.ret) : null;
 
     const userStore = AppState.milestonesStore[idx] || {};
 
