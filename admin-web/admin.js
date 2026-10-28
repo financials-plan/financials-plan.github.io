@@ -481,7 +481,7 @@
 
       let colorGrad = "linear-gradient(90deg, #ef4444 0%, #f87171 100%)";
       let textClass = "text-red";
-      if (percent >= 70) {
+      if (percent >= 90) {
         colorGrad = "linear-gradient(90deg, #10b981 0%, #34d399 100%)";
         textClass = "text-emerald";
         completedCount++;
@@ -530,8 +530,8 @@
     const filtered = processed.filter(m => {
       const matchSearch = !searchVal || normalizeSearchText(m.name).includes(searchVal) || normalizeSearchText(m.username).includes(searchVal);
       if (!matchSearch) return false;
-      if (currentKpiFilter === "completed") return m.percent >= 70;
-      if (currentKpiFilter === "balancing") return m.percent >= 40 && m.percent < 70;
+      if (currentKpiFilter === "completed") return m.percent >= 90;
+      if (currentKpiFilter === "balancing") return m.percent >= 40 && m.percent < 90;
       if (currentKpiFilter === "pending") return m.percent < 40 || m.status !== "approved";
       return true;
     });

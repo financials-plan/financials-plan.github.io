@@ -11626,7 +11626,7 @@ window.renderAdminStudentsTable = async function() {
     let textClass = "text-red";
     let bgGradient = "linear-gradient(90deg, #ef4444 0%, #f87171 100%)";
 
-    if (percent >= 70) {
+    if (percent >= 90) {
       colorClass = "prog-fill-green";
       textClass = "text-emerald";
       bgGradient = "linear-gradient(90deg, #10b981 0%, #34d399 100%)";
@@ -11697,8 +11697,8 @@ function paintAdminStudents() {
       const hay = normalizeSearchText([m.name, m.username].join(' '));
       if (!searchTokens.every(tok => hay.includes(tok))) return false;
     }
-    if (window.currentKpiFilter === 'completed') return m.percent >= 70;
-    if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
+    if (window.currentKpiFilter === 'completed') return m.percent >= 90;
+    if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 90;
     if (window.currentKpiFilter === 'pending') return m.percent < 40 || m.status !== 'approved';
     return true;
   });
