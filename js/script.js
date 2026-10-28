@@ -363,7 +363,7 @@ function organizeMonthlyTransactions() {
   for (let m = 1; m <= 12; m++) {
     const d = AppState.monthlyDetails && AppState.monthlyDetails[m];
     if (!d) continue;
-    ["incomes", "expenses"].forEach(type => {
+    ["incomes", "expenses", "learningDetails"].forEach(type => {
       const list = d[type];
       if (!Array.isArray(list)) return;
       for (let i = list.length - 1; i >= 0; i--) {
@@ -382,8 +382,40 @@ function organizeMonthlyTransactions() {
   for (let m = 1; m <= 12; m++) {
     sortMonthTransactions(m, "incomes");
     sortMonthTransactions(m, "expenses");
+    sortMonthTransactions(m, "learningDetails");
   }
   return moved;
+}
+
+// Đọc lại các ô đang hiển thị của bảng thu/chi/đào tạo vào dữ liệu trước khi đổi tháng hoặc lưu,
+// để số tiền và ghi chú vừa gõ không bao giờ phụ thuộc vào việc sự kiện nhập đã chạy hay chưa.
+function flushMonthInputsToState(m) {
+  const md = AppState.monthlyDetails && AppState.monthlyDetails[m];
+  if (!md) return;
+  const sections = [
+    ['tbody-m-detail-income', md.incomes, { val: 'input[type=number]', desc: 'input[type=text]:not(.input-date-cell)' }],
+    ['tbody-m-detail-expense', md.expenses, { val: 'input[type=number]', desc: 'input[type=text]:not(.input-date-cell)' }],
+    ['tbody-m-learning-detail', md.learningDetails, { val: 'input[type=number]' }]
+  ];
+  sections.forEach(([tbodyId, list, sel]) => {
+    const tb = document.getElementById(tbodyId);
+    if (!tb || !Array.isArray(list)) return;
+    const rows = tb.querySelectorAll('tr');
+    if (rows.length !== list.length) return;
+    rows.forEach((tr, i) => {
+      const item = list[i];
+      if (!item) return;
+      const numEl = tr.querySelector(sel.val);
+      if (numEl && String(numEl.value).trim() !== '') {
+        const num = parseFloat(String(numEl.value).replace(/,/g, '.'));
+        if (isFinite(num)) item.val = num;
+      }
+      if (sel.desc) {
+        const descEl = tr.querySelector(sel.desc);
+        if (descEl) item.desc = String(descEl.value || '').trim();
+      }
+    });
+  });
 }
 
 const UserSession = {
@@ -2677,6 +2709,7 @@ window.switchMonthTab = function(m) {
   if (window.FinDatePicker && FinDatePicker.isOpen && FinDatePicker.isOpen()) {
     FinDatePicker.close();
   }
+  if (AppState.currentMonth && AppState.currentMonth !== m) flushMonthInputsToState(AppState.currentMonth);
   AppState.currentMonth = m;
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   document.getElementById(`btn-month-${m}`)?.classList.add('active');
@@ -4967,26 +5000,12 @@ window.updateMonthLearningCat = function(m, i, val) {
 window.updateMonthLearningField = function(m, i, field, value) {
   if (!AppState.monthlyDetails[m] || !AppState.monthlyDetails[m].learningDetails[i]) return;
   if (field === 'date') {
+    // Giống thu/chi: chỉ ghi ngày, việc chuyển tháng và xếp theo ngày làm khi bấm Lưu (organizeMonthlyTransactions)
     const iso = parseToIsoDate(value);
     const item = AppState.monthlyDetails[m].learningDetails[i];
+    if (iso === item.date) return;
     item.date = iso;
-    const targetMonth = getMonthFromIso(iso);
-    if (targetMonth && targetMonth !== m && targetMonth >= 1 && targetMonth <= 12) {
-      if (!AppState.monthlyDetails[targetMonth]) {
-        AppState.monthlyDetails[targetMonth] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
-      }
-      AppState.monthlyDetails[m].learningDetails.splice(i, 1);
-      AppState.monthlyDetails[targetMonth].learningDetails.push(item);
-      sortMonthTransactions(targetMonth, 'learningDetails');
-      syncMonthLearningExpense(targetMonth);
-      showToast(`Đã tự động chuyển mục phát triển bản thân sang Tháng ${String(targetMonth).padStart(2, '0')}`, "info");
-      renderMonthView(AppState.currentMonth);
-      recalculateAll();
-    } else {
-      sortMonthTransactions(m, 'learningDetails');
-      renderMonthView(m);
-      recalculateAll();
-    }
+    window.hasUnsavedChanges = true;
   } else if (field === 'val') {
     window.updateMonthLearningVal(m, i, value);
   } else {
@@ -5013,7 +5032,6 @@ window.addMonthLearningRow = function() {
     expRes: "",
     actRes: ""
   });
-  sortMonthTransactions(m, 'learningDetails');
   renderMonthView(m);
   recalculateAll();
 };
@@ -7149,6 +7167,7 @@ window.saveAppStateToCloud = async function() {
   updateCloudStatus('loading', 'Đang lưu dữ liệu...');
 
   // Chỉ lúc bấm Lưu mới tự xếp lại ngày tháng và đưa giao dịch về đúng tháng
+  flushMonthInputsToState(AppState.currentMonth);
   const movedTx = organizeMonthlyTransactions();
   renderMonthView(AppState.currentMonth);
   recalculateAll();
