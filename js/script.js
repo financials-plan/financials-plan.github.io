@@ -11439,9 +11439,17 @@ let adminStudentsRenderSeq = 0;
 let adminStudentsCache = null;
 window.onAdminStudentSearchInput = debounceCall(() => paintAdminStudents(), 150);
 window.onAdminStudentViewChange = function() { paintAdminStudents(); };
+window.adminStudentsSort = { key: '', dir: 1 };
+window.sortAdminStudents = function(key) {
+  const cur = window.adminStudentsSort;
+  if (cur.key !== key) window.adminStudentsSort = { key, dir: 1 };
+  else if (cur.dir === 1) window.adminStudentsSort = { key, dir: -1 };
+  else window.adminStudentsSort = { key: '', dir: 1 };
+  paintAdminStudents();
+};
 window.resetAdminStudentFilters = function() {
-  const ids = { 'admin-student-search': '', 'admin-student-status-filter': 'all', 'admin-student-sort': 'default' };
-  Object.keys(ids).forEach(id => { const el = document.getElementById(id); if (el) el.value = ids[id]; });
+  ['admin-student-search', 'admin-student-date-from', 'admin-student-date-to'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  window.adminStudentsSort = { key: '', dir: 1 };
   window.filterAdminStudentsKpi('all');
 };
 
@@ -11683,16 +11691,17 @@ function paintAdminStudents() {
   const { curGroup, processedMembers } = cache;
 
   const searchTokens = normalizeSearchText(String(document.getElementById('admin-student-search')?.value || '').replace(/@/g, ' ')).split(' ').filter(Boolean);
-  const statusFilter = document.getElementById('admin-student-status-filter')?.value || 'all';
-  const sortKey = document.getElementById('admin-student-sort')?.value || 'default';
+  const dateFrom = document.getElementById('admin-student-date-from')?.value || '';
+  const dateTo = document.getElementById('admin-student-date-to')?.value || '';
 
   const filteredMembers = processedMembers.filter(m => {
     if (searchTokens.length) {
-      const hay = normalizeSearchText([m.name, m.username, m.email].join(' '));
+      const hay = normalizeSearchText([m.name, m.username].join(' '));
       if (!searchTokens.every(tok => hay.includes(tok))) return false;
     }
-    if (statusFilter === 'approved' && m.status !== 'approved') return false;
-    if (statusFilter === 'pending' && m.status === 'approved') return false;
+    const joinedDay = String(m.joinedAt || '').slice(0, 10);
+    if (dateFrom && (!joinedDay || joinedDay < dateFrom)) return false;
+    if (dateTo && (!joinedDay || joinedDay > dateTo)) return false;
     if (window.currentKpiFilter === 'completed') return m.percent >= 70;
     if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
     if (window.currentKpiFilter === 'pending') return m.percent < 40 || m.status !== 'approved';
@@ -11701,17 +11710,21 @@ function paintAdminStudents() {
 
   const byText = (a, b) => String(a || '').localeCompare(String(b || ''), 'vi', { sensitivity: 'base' });
   const sorters = {
-    'name-asc': (a, b) => byText(a.name, b.name),
-    'name-desc': (a, b) => byText(b.name, a.name),
-    'username-asc': (a, b) => byText(a.username, b.username),
-    'progress-desc': (a, b) => b.percent - a.percent,
-    'progress-asc': (a, b) => a.percent - b.percent,
-    'joined-desc': (a, b) => String(b.joinedAt || '').localeCompare(String(a.joinedAt || '')),
-    'joined-asc': (a, b) => String(a.joinedAt || '').localeCompare(String(b.joinedAt || '')),
-    'cashflow-desc': (a, b) => b.netCashflow - a.netCashflow,
-    'savings-desc': (a, b) => b.savingsRate - a.savingsRate
+    name: (a, b) => byText(a.name, b.name),
+    username: (a, b) => byText(a.username, b.username),
+    progress: (a, b) => a.percent - b.percent,
+    joined: (a, b) => String(a.joinedAt || '').localeCompare(String(b.joinedAt || '')),
+    cashflow: (a, b) => a.netCashflow - b.netCashflow,
+    savings: (a, b) => a.savingsRate - b.savingsRate,
+    dsr: (a, b) => a.dsrVal - b.dsrVal
   };
-  if (sorters[sortKey]) filteredMembers.sort(sorters[sortKey]);
+  const sortState = window.adminStudentsSort || { key: '', dir: 1 };
+  if (sorters[sortState.key]) filteredMembers.sort((a, b) => sorters[sortState.key](a, b) * sortState.dir);
+  const sortTh = (key, label, style = '') => {
+    const active = sortState.key === key;
+    const icon = !active ? 'fa-sort' : (sortState.dir === 1 ? 'fa-sort-up' : 'fa-sort-down');
+    return `<th class="th-sortable${active ? ' is-sorted' : ''}" style="${style}" onclick="sortAdminStudents('${key}')" title="Bấm để sắp xếp">${label} <i class="fa-solid ${icon}"></i></th>`;
+  };
 
   const countChip = document.getElementById('student-count-chip');
   if (countChip) countChip.textContent = `Hiển thị: ${filteredMembers.length} thành viên`;
@@ -11721,11 +11734,10 @@ function paintAdminStudents() {
       thead.innerHTML = `
         <tr>
           <th style="width: 45px;">STT</th>
-          <th style="min-width: 170px;">Sinh viên / Học viên</th>
-          <th style="min-width: 150px;">Email</th>
-          <th style="text-align: right; min-width: 110px;">Dòng tiền ròng</th>
-          <th style="text-align: right; min-width: 100px;">Tiết kiệm (%)</th>
-          <th style="text-align: right; min-width: 95px;">Tỷ lệ DSR</th>
+          ${sortTh('name', 'THÀNH VIÊN', 'min-width: 170px;')}
+          ${sortTh('cashflow', 'Dòng tiền ròng', 'text-align: right; min-width: 110px;')}
+          ${sortTh('savings', 'Tiết kiệm (%)', 'text-align: right; min-width: 100px;')}
+          ${sortTh('dsr', 'Tỷ lệ DSR', 'text-align: right; min-width: 95px;')}
           <th style="min-width: 180px;">Cơ cấu danh mục (CP/TP/BH/TG)</th>
           <th style="min-width: 120px;">Sức khỏe tài chính</th>
           <th style="text-align: right; width: 110px;">Thao tác</th>
@@ -11735,11 +11747,10 @@ function paintAdminStudents() {
       thead.innerHTML = `
         <tr>
           <th style="width: 50px;">STT</th>
-          <th>Sinh viên / Thành viên</th>
-          <th>Email</th>
-          <th>Ngày tham gia</th>
+          ${sortTh('name', 'THÀNH VIÊN')}
+          ${sortTh('joined', 'Ngày tham gia')}
           <th>Trạng thái duyệt</th>
-          <th style="width: 250px;">Tiến độ lộ trình</th>
+          ${sortTh('progress', 'Tiến độ lộ trình', 'width: 250px;')}
           <th style="text-align: right; width: 120px;">Thao tác</th>
         </tr>
       `;
@@ -11769,7 +11780,6 @@ function paintAdminStudents() {
             </div>
           </div>
         </td>
-        <td><code>${escapeHtmlText(m.email)}</code></td>
         <td style="text-align: right;"><strong class="${m.netCashflow >= 0 ? 'text-emerald' : 'text-red'}">${m.netCashflow >= 0 ? '+' : ''}${m.netCashflow} tr</strong></td>
         <td style="text-align: right;"><strong class="text-emerald">${m.savingsRate}%</strong></td>
         <td style="text-align: right;"><span class="text-muted">${m.dsrVal}%</span></td>
@@ -11810,7 +11820,6 @@ function paintAdminStudents() {
             </div>
           </div>
         </td>
-        <td><code>${escapeHtmlText(m.email)}</code></td>
         <td><small class="text-muted">${(m.joinedAt || '').slice(0, 10)}</small></td>
         <td>
           <span class="badge-prog ${m.status === 'approved' ? 'badge-prog-done' : 'badge-prog-doing'}">
