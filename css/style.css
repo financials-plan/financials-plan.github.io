@@ -8428,3 +8428,49 @@ body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings {
 body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings span {
   display: none;
 }
+.group-meta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.group-meta-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(98, 88, 245, 0.15);
+}
+.group-meta-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.group-meta-btn-code {
+  background: var(--violet-soft, rgba(98, 88, 245, 0.08));
+  border-color: transparent;
+}
+.group-meta-btn-code code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+.group-meta-btn-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.group-meta-btn i {
+  font-size: 12px;
+}

@@ -11500,11 +11500,13 @@ window.renderAdminStudentsTable = async function() {
       <span class="badge-group-type ${isAccepting ? 'badge-prog-done' : 'badge-prog-doing'}" style="cursor: pointer;" onclick="toggleGroupAcceptance(${jsStringArg(curGroup.id)})" title="Bấm để bật/tắt tiếp nhận học viên">
         <i class="fa-solid ${isAccepting ? 'fa-door-open' : 'fa-door-closed'}"></i> ${isAccepting ? 'Đang mở nhận' : 'Đã khóa nhận'}
       </span>
-      <span class="group-code-pill" onclick="copyGroupCodeToClipboard(${jsStringArg(curGroup.code)})" title="Bấm để sao chép mã">
-        <code>${escapeHtmlText(curGroup.code)}</code> <i class="fa-regular fa-copy" style="margin-left: 4px; font-size: 11px;"></i>
-      </span>
-      <button type="button" class="btn-group-action" style="padding: 2px 7px; font-size: 11px; border-radius: 4px;" onclick="regenGroupJoinCode(${jsStringArg(curGroup.id)})" title="Đổi mã tham gia mới">
-        <i class="fa-solid fa-arrows-rotate"></i> Đổi mã
+      <button type="button" class="group-meta-btn group-meta-btn-code" onclick="copyGroupCodeToClipboard(${jsStringArg(curGroup.code)})" title="Bấm để sao chép mã tham gia" aria-label="Sao chép mã tham gia ${escapeHtmlText(curGroup.code)}">
+        <span class="group-meta-btn-label">Mã</span>
+        <code>${escapeHtmlText(curGroup.code)}</code>
+        <i class="fa-regular fa-copy"></i>
+      </button>
+      <button type="button" class="group-meta-btn group-meta-btn-regen" onclick="regenGroupJoinCode(${jsStringArg(curGroup.id)})" title="Tạo mã tham gia mới (mã cũ sẽ hết hiệu lực)">
+        <i class="fa-solid fa-arrows-rotate"></i> <span>Đổi mã</span>
       </button>
       <span class="text-muted" style="font-size: 13px;">Quy mô: <strong>${limit === 0 ? 'Không giới hạn' : limit + ' người'}</strong></span>
     `;
