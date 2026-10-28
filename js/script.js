@@ -2970,7 +2970,7 @@ function renderDashboardAllCharts() {
   // Mức sinh lời trung bình ước tính = trung bình V(y) các năm đã có số dư (V = Σ tỷ trọng nhóm × lợi nhuận TB nhóm)
   const avgP30Ret = getAverageExpectedReturnPct();
   if (avgRetEl) {
-    avgRetEl.textContent = avgP30Ret === null ? '—' : (avgP30Ret.toFixed(2).replace('.', ',') + '%');
+    avgRetEl.textContent = avgP30Ret === null ? '—' : (avgP30Ret.toFixed(2) + '%');
   }
 
   const cvTcPie = document.getElementById('chart-dashboard-tc-goals-pie');
