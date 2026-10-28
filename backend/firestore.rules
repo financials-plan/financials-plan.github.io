@@ -38,25 +38,6 @@ service cloud.firestore {
       }
     }
 
-    match /groups/{groupId} {
-      allow get: if isValidDocId(groupId);
-      allow list: if true;
-      allow create, update: if isValidDocId(groupId) && fitsKeys(80);
-      allow delete: if isValidDocId(groupId);
-
-      match /submissions/{studentUsername} {
-        allow get: if isValidDocId(studentUsername);
-        allow create, update: if isValidDocId(studentUsername) && fitsKeys(80);
-        allow delete: if isOwner(studentUsername);
-      }
-    }
-
-    match /group_codes/{code} {
-      allow get: if isValidDocId(code);
-      allow create, update: if isValidDocId(code) && fitsKeys(40);
-      allow delete: if canDeleteDoc(code);
-    }
-
     match /student_plans/{planId} {
       allow get: if isValidDocId(planId);
       allow create, update: if isValidDocId(planId) && fitsKeys(200);
@@ -64,18 +45,6 @@ service cloud.firestore {
     }
 
     match /financial_accounts/{username} {
-      allow get: if isValidDocId(username);
-      allow create, update: if isValidDocId(username) && fitsKeys(60);
-      allow delete: if isOwner(username);
-    }
-
-    match /users/{username} {
-      allow get: if isValidDocId(username);
-      allow create, update: if isValidDocId(username) && fitsKeys(60);
-      allow delete: if isOwner(username);
-    }
-
-    match /accounts/{username} {
       allow get: if isValidDocId(username);
       allow create, update: if isValidDocId(username) && fitsKeys(60);
       allow delete: if isOwner(username);
@@ -92,12 +61,6 @@ service cloud.firestore {
       allow get: if isValidDocId(docId);
       allow create, update: if isValidDocId(docId) && fitsKeys(200);
       allow delete: if canDeleteDoc(docId);
-    }
-
-    match /student_keywords/{username} {
-      allow get: if isValidDocId(username);
-      allow create, update: if isValidDocId(username) && fitsKeys(200);
-      allow delete: if isOwner(username);
     }
   }
 }

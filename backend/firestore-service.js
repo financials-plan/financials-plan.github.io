@@ -268,7 +268,6 @@ const LOCAL_ADMIN_CODES_KEY = "FIN_APP_ADMIN_CODES_SECURE_V1";
 const LOCAL_CLASSES_KEY = "FIN_APP_CLASSES_SECURE_V1";
 const ADMIN_CODES_COLLECTION = "admin_codes";
 const CLASSES_COLLECTION = "classes";
-const GROUPS_COLLECTION = "groups";
 const FINANCIAL_AUTH_COLLECTION = firestoreSettings.collectionName || "financial_Authentication";
 
 const CLOUD_TIMEOUT_MS = 12000;
@@ -518,19 +517,6 @@ async function findClassesByCode(cleanCode) {
 
   if (isFirebaseReady && db) {
     try {
-      const gcSnap = await withTimeout(getDoc(doc(db, "group_codes", code)), 4000).catch(() => null);
-      if (gcSnap && gcSnap.exists()) {
-        const gc = gcSnap.data();
-        if (gc && gc.classId) {
-          const cSnap = await withTimeout(getDoc(doc(db, CLASSES_COLLECTION, gc.classId)), 4000).catch(() => null);
-          if (cSnap && cSnap.exists()) addIfValid({ ...cSnap.data(), id: cSnap.id });
-          const gSnap = await withTimeout(getDoc(doc(db, GROUPS_COLLECTION, gc.classId)), 4000).catch(() => null);
-          if (gSnap && gSnap.exists()) addIfValid({ ...gSnap.data(), id: gSnap.id });
-        }
-      }
-    } catch (e) {}
-
-    try {
       const snap = await withTimeout(getDocs(query(
         collection(db, CLASSES_COLLECTION),
         where("code", "==", code),
@@ -540,39 +526,6 @@ async function findClassesByCode(cleanCode) {
         snap.forEach(d => addIfValid({ ...d.data(), id: d.id }));
       }
     } catch (e) {}
-
-    try {
-      const gSnap = await withTimeout(getDocs(query(
-        collection(db, GROUPS_COLLECTION),
-        where("code", "==", code),
-        limit(10)
-      )), 5000).catch(() => null);
-      if (gSnap) {
-        gSnap.forEach(d => addIfValid({ ...d.data(), id: d.id }));
-      }
-    } catch (e) {}
-
-    const aggRefs = [
-      doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
-      doc(db, CLASSES_COLLECTION, "groups"),
-      doc(db, GROUPS_COLLECTION, "groups"),
-      doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
-      doc(db, CLASSES_COLLECTION, "class")
-    ];
-    for (const aRef of (list.length ? [] : aggRefs)) {
-      try {
-        const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
-        if (aSnap && aSnap.exists()) {
-          const aData = aSnap.data();
-          if (aData && aData.classes && typeof aData.classes === "object") {
-            for (const cid of Object.keys(aData.classes)) {
-              const c = aData.classes[cid];
-              if (c && c.code === code) addIfValid(c);
-            }
-          }
-        }
-      } catch (e) {}
-    }
   }
 
   const local = getLocalClasses();
@@ -592,36 +545,11 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
     saveLocalClasses(local);
 
     await withTimeout(setDoc(ref, classData, { merge: true }));
-    const codePayload = {
-      id: classData.code,
-      classId,
-      code: classData.code,
-      name: classData.name,
-      instructorUsername: classData.instructorUsername,
-      instructorName: classData.instructorName,
-      status: classData.status,
-      updatedAt: new Date().toISOString()
-    };
-    await withTimeout(Promise.allSettled([
-      setDoc(doc(db, GROUPS_COLLECTION, classId), classData, { merge: true }),
-      setDoc(doc(db, "group_codes", classData.code), codePayload, { merge: true })
-    ])).catch(() => {});
     return;
   }
   delete local[classId];
   saveLocalClasses(local);
   await withTimeout(deleteDoc(ref));
-  const legacyAggregates = [
-    doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
-    doc(db, CLASSES_COLLECTION, "groups"),
-    doc(db, CLASSES_COLLECTION, "class"),
-    doc(db, GROUPS_COLLECTION, "groups"),
-    doc(db, FINANCIAL_AUTH_COLLECTION, "class")
-  ];
-  await withTimeout(Promise.allSettled([
-    deleteDoc(doc(db, GROUPS_COLLECTION, classId)),
-    ...legacyAggregates.map(r => updateDoc(r, { [`classes.${classId}`]: deleteField() }))
-  ])).catch(() => {});
 }
 
 async function mutateClassInCloud(classId, mutator, options = {}) {
@@ -635,15 +563,6 @@ async function mutateClassInCloud(classId, mutator, options = {}) {
       if (cSnap && cSnap.exists()) {
         const cData = { ...cSnap.data(), id: cSnap.id };
         cls = cls ? mergeClassRecord(cls, cData) : cData;
-      }
-    } catch (e) {}
-
-    try {
-      const gRef = doc(db, GROUPS_COLLECTION, classId);
-      const gSnap = await withTimeout(getDoc(gRef), 5000).catch(() => null);
-      if (gSnap && gSnap.exists()) {
-        const gData = { ...gSnap.data(), id: gSnap.id };
-        cls = cls ? mergeClassRecord(cls, gData) : gData;
       }
     } catch (e) {}
   }
@@ -1222,7 +1141,6 @@ const FirestoreService = {
 
     const accounts = getLocalAuthAccounts();
     let target = null;
-    let loadedFromLegacy = false;
 
     if (isFirebaseReady && db) {
       try {
@@ -1234,22 +1152,8 @@ const FirestoreService = {
           target = snap.data();
           accounts[normalizedUsername] = target;
           saveLocalAuthAccounts(accounts);
-        } else {
-          const uSnap = await getDoc(doc(db, "users", normalizedUsername)).catch(() => null);
-          const accSnap = await getDoc(doc(db, "accounts", normalizedUsername)).catch(() => null);
-          loadedFromLegacy = Boolean((accSnap && accSnap.exists()) || (uSnap && uSnap.exists()));
-          if (accSnap && accSnap.exists()) {
-            target = accSnap.data();
-            accounts[normalizedUsername] = target;
-            saveLocalAuthAccounts(accounts);
-          } else if (uSnap && uSnap.exists()) {
-            const uData = uSnap.data();
-            target = { ...uData, normalizedUsername };
-            accounts[normalizedUsername] = target;
-            saveLocalAuthAccounts(accounts);
-          }
         }
-      } catch (fsErr) {
+            } catch (fsErr) {
         console.warn("Lỗi tải tài khoản từ Firestore, thử tiếp từ bộ nhớ thiết bị:", fsErr);
       }
     }
@@ -1317,7 +1221,7 @@ const FirestoreService = {
     target.updatedAt = target.lastLoginAt;
 
     const stampRecently = Date.now() - prevLoginMs < LOGIN_STAMP_MIN_INTERVAL_MS;
-    if (isFirebaseReady && db && (needsHashUpgrade || hadLegacyPlaintext || loadedFromLegacy || !stampRecently)) {
+    if (isFirebaseReady && db && (needsHashUpgrade || hadLegacyPlaintext || !stampRecently)) {
       const stampPayload = {
         password: deleteField(),
         mat_khau: deleteField(),
@@ -1330,12 +1234,7 @@ const FirestoreService = {
         stampPayload.hashAlgo = target.hashAlgo;
         stampPayload.altPassHash = deleteField();
       }
-      let cloudPayload = stampPayload;
-      if (loadedFromLegacy) {
-        const { sessionToken: _s, password: _p, mat_khau: _m, ...rest } = target;
-        cloudPayload = rest;
-      }
-      setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), cloudPayload, { merge: true }).catch(() => {});
+      setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), stampPayload, { merge: true }).catch(() => {});
     }
 
     accounts[normalizedUsername] = target;
@@ -2392,46 +2291,6 @@ const FirestoreService = {
       console.warn("[CloudDB] getClasses CLASSES_COLLECTION catch:", err);
     }
 
-    try {
-      const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 8000).catch((err) => {
-        console.warn("[CloudDB] getClasses GROUPS_COLLECTION error:", err);
-        return null;
-      });
-      if (gSnap) {
-        gSnap.forEach(d => {
-          const data = { ...d.data(), id: d.id };
-          if (isRealClassRecord(data)) {
-            remote[d.id] = remote[d.id] ? mergeClassRecord(remote[d.id], data) : data;
-          }
-        });
-      }
-    } catch (err) {
-      console.warn("[CloudDB] getClasses GROUPS_COLLECTION catch:", err);
-    }
-
-    const aggRefs = [
-      doc(db, FINANCIAL_AUTH_COLLECTION, "groups"),
-      doc(db, CLASSES_COLLECTION, "groups"),
-      doc(db, GROUPS_COLLECTION, "groups"),
-      doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
-      doc(db, CLASSES_COLLECTION, "class")
-    ];
-    const legacyNeeded = Object.keys(remote).length === 0;
-    for (const aRef of (legacyNeeded ? aggRefs : [])) {
-      try {
-        const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
-        if (aSnap && aSnap.exists()) {
-          const aData = aSnap.data();
-          if (aData && aData.classes && typeof aData.classes === "object") {
-            Object.keys(aData.classes).forEach(cid => {
-              const c = aData.classes[cid];
-              if (!remote[cid] && isRealClassRecord(c)) remote[cid] = c;
-            });
-          }
-        }
-      } catch (e) {}
-    }
-
     const dead = getDeletedClassIds();
     dead.forEach(id => { delete remote[id]; });
 
@@ -2925,14 +2784,6 @@ const FirestoreService = {
               return { success: true, data: subData.plan, message: "Đã tải bài làm học viên từ lớp!" };
             }
           }
-          const gSubRef = doc(db, GROUPS_COLLECTION, cid, "submissions", normUser);
-          const gSubSnap = await getDoc(gSubRef).catch(() => null);
-          if (gSubSnap && gSubSnap.exists()) {
-            const gSubData = gSubSnap.data();
-            if (gSubData && gSubData.plan) {
-              return { success: true, data: gSubData.plan, message: "Đã tải bài làm học viên từ nhóm!" };
-            }
-          }
         }
       } catch (e) {}
     }
@@ -2974,8 +2825,7 @@ const FirestoreService = {
           deleteDoc(doc(db, firestoreSettings.collectionName, normDocId)),
           deleteDoc(doc(db, FINANCIAL_AUTH_COLLECTION, normDocId)),
           deleteDoc(doc(db, "student_plans", normUser)),
-          deleteDoc(doc(db, "setup_keywords", normUser)),
-          deleteDoc(doc(db, "student_keywords", normUser))
+          deleteDoc(doc(db, "setup_keywords", normUser))
         ]).catch(() => {});
       }
       return { success: true, message: "Đã xóa dữ liệu học viên thành công." };
@@ -3154,19 +3004,6 @@ const FirestoreService = {
         }
       } catch (e) {}
 
-      try {
-        const userSnap = await withTimeout(getDocs(collection(db, "users")), 15000).catch(() => null);
-        if (userSnap) {
-          userSnap.forEach(d => {
-            const uData = d.data();
-            const u = normalizeUsername(d.id || uData.username);
-            if (u) {
-              accountsToSync[u] = { ...(accountsToSync[u] || {}), ...uData, normalizedUsername: u };
-            }
-          });
-        }
-      } catch (e) {}
-
       report.totalAccounts = Object.keys(accountsToSync).length;
       let accIdx = 0;
       for (const u of Object.keys(accountsToSync)) {
@@ -3225,16 +3062,6 @@ const FirestoreService = {
         }
       } catch (e) {}
 
-      try {
-        const gSnap = await withTimeout(getDocs(collection(db, GROUPS_COLLECTION)), 15000).catch(() => null);
-        if (gSnap) {
-          gSnap.forEach(d => {
-            const c = d.data();
-            if (isRealClassRecord(c)) classesToSync[c.id] = { ...(classesToSync[c.id] || {}), ...c };
-          });
-        }
-      } catch (e) {}
-
       report.totalClasses = Object.keys(classesToSync).length;
       let cIdx = 0;
       for (const cid of Object.keys(classesToSync)) {
@@ -3271,7 +3098,6 @@ const FirestoreService = {
                   };
                   await Promise.allSettled([
                     setDoc(doc(db, CLASSES_COLLECTION, cid, "submissions", u), subPayload, { merge: true }),
-                    setDoc(doc(db, GROUPS_COLLECTION, cid, "submissions", u), subPayload, { merge: true }),
                     setDoc(doc(db, "student_plans", u), subPayload, { merge: true })
                   ]);
                   report.submissionsSynced++;
