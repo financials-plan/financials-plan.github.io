@@ -12329,7 +12329,7 @@ window.renderAdminAnalyticsView = async function(classId) {
         <div class="analytics-research-box">
           <div class="research-box-header">
             <i class="fa-solid fa-graduation-cap"></i>
-            <span title="${escapeHtmlText(membersWithoutAlloc.slice(0, 30).map(m => m.name || m.username).join(', '))}">Chỉ số Phân tích Danh mục Nhóm (Dữ liệu thực tế từ ${membersWithAlloc}/${approvedMembers.length} học viên${approvedMembers.length > membersWithAlloc ?  — ${approvedMembers.length - membersWithAlloc} chưa thiết lập cơ cấu danh mục : ''})</span>
+            <span title="${escapeHtmlText(membersWithoutAlloc.slice(0, 30).map(m => m.name || m.username).join(', '))}">Chỉ số Phân tích Danh mục Nhóm (Dữ liệu thực tế từ ${membersWithAlloc}/${approvedMembers.length} học viên${approvedMembers.length > membersWithAlloc ? ` — ${approvedMembers.length - membersWithAlloc} chưa thiết lập cơ cấu danh mục` : ''})</span>
           </div>
           <div class="research-grid">
             <div class="research-metric-pill">
