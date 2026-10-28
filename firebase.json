@@ -1,5 +1,1 @@
-{
-  "firestore": {
-    "rules": "backend/firestore.rules"
-  }
-}
+{"firestore":{"rules":"backend/firestore.rules"},"auth":{"providers":{"emailPassword":true}}}
