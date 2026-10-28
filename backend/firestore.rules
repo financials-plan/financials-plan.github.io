@@ -1,14 +1,5 @@
 rules_version = '2';
 
-// Mục tiêu tối ưu chi phí/dung lượng (KHÔNG nới quyền so với bản trước):
-// - Chỉ khai báo các collection app thật sự dùng; mọi đường dẫn khác bị từ chối mặc định
-//   (bản cũ cho đọc công khai toàn bộ `/{document=**}` -> ai cũng quét được cả database).
-// - Bỏ các collection/subcollection không còn dùng (financial_data, user_states, keywords,
-//   keywords_config) để không ai có thể ghi rác làm phình dung lượng.
-// - Mỗi lần ghi phải là một map hợp lệ và không quá số trường tối đa của từng loại tài liệu,
-//   chặn việc ghi tài liệu phình to bất thường.
-// Lưu ý: app tự quản tài khoản (chưa dùng Firebase Authentication) nên quyền ghi vẫn mở; xem SECURITY.md mục 8b.
-
 service cloud.firestore {
   match /databases/{database}/documents {
 

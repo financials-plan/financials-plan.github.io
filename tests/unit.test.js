@@ -522,12 +522,12 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
 
   const rulesContent = fs.readFileSync(path.join(__dirname, "../backend/firestore.rules"), "utf8");
   assert.ok(rulesContent.includes("match /groups/{groupId}"));
-  assert.ok(rulesContent.includes("docId == 'groups'"));
-  assert.ok(rulesContent.includes("match /keywords/{keywordId}"));
+  assert.ok(!rulesContent.includes("match /{document=**}"), "rules must not expose undeclared paths");
+  assert.ok(!rulesContent.includes("true ||"));
   assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
   assert.ok(rulesContent.includes("match /student_keywords/{username}"));
   assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
-  assert.ok(rulesContent.includes("allow read, write: if true;"));
+  assert.ok(rulesContent.includes("allow create, update: if isValidDocId(groupId) && fitsKeys(80);"));
   assert.ok(!rulesContent.includes("//") && !rulesContent.includes("/*"));
 });
 
@@ -729,12 +729,12 @@ test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Veri
   assert.ok(!rulesContent.includes("//"), "firestore.rules must not contain single line comments");
   assert.ok(!rulesContent.includes("/*"), "firestore.rules must not contain multi line comments");
   assert.ok(rulesContent.includes("match /groups/{groupId}"));
-  assert.ok(rulesContent.includes("docId == 'groups'"));
-  assert.ok(rulesContent.includes("match /keywords/{keywordId}"));
+  assert.ok(!rulesContent.includes("match /{document=**}"), "rules must not expose undeclared paths");
+  assert.ok(!rulesContent.includes("true ||"));
   assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
   assert.ok(rulesContent.includes("match /student_keywords/{username}"));
   assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
-  assert.ok(rulesContent.includes("allow read, write: if true;"));
+  assert.ok(rulesContent.includes("allow create, update: if isValidDocId(groupId) && fitsKeys(80);"));
 
   // 7. Verify Admin Student Progress Roadmap calculation with real AppState schema
   function computeProgress(plan) {
