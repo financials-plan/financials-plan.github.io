@@ -524,7 +524,7 @@ test("9. UI & Global Sync Verification for Classroom and Roles", async () => {
   assert.ok(!rulesContent.includes("match /groups/") && !rulesContent.includes("match /group_codes/"), "khong con collection groups/group_codes");
   assert.ok(!rulesContent.includes("match /{document=**}"), "rules must not expose undeclared paths");
   assert.ok(!rulesContent.includes("true ||"));
-  assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
+  assert.ok(!rulesContent.includes("match /setup_keywords/"), "setup_keywords da gop vao student_plans");
   assert.ok(!rulesContent.includes("match /student_keywords/") && !rulesContent.includes("match /users/") && !rulesContent.includes("match /accounts/"), "collection cu da bo khoi rules");
   assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
   assert.ok(rulesContent.includes("allow create, update: if isValidDocId(classId) && fitsKeys(80);"));
@@ -731,7 +731,7 @@ test("12. Fix AIO — Read-Only Protection & Admin Student Roadmap Progress Veri
   assert.ok(!rulesContent.includes("match /groups/") && !rulesContent.includes("match /group_codes/"), "khong con collection groups/group_codes");
   assert.ok(!rulesContent.includes("match /{document=**}"), "rules must not expose undeclared paths");
   assert.ok(!rulesContent.includes("true ||"));
-  assert.ok(rulesContent.includes("match /setup_keywords/{docId}"));
+  assert.ok(!rulesContent.includes("match /setup_keywords/"), "setup_keywords da gop vao student_plans");
   assert.ok(!rulesContent.includes("match /student_keywords/") && !rulesContent.includes("match /users/") && !rulesContent.includes("match /accounts/"), "collection cu da bo khoi rules");
   assert.ok(rulesContent.includes("allow delete: if isValidDocId(classId);"));
   assert.ok(rulesContent.includes("allow create, update: if isValidDocId(classId) && fitsKeys(80);"));

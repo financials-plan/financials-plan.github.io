@@ -1806,19 +1806,7 @@ const FirestoreService = {
               updatedAt: new Date().toISOString(),
               plan: cleanData
             };
-            const kwPayload = {
-              username: studentUser,
-              name: cleanData.ho_ten || studentUser,
-              expenses: cleanData.expenses || [],
-              incomeList: cleanData.incomeList || [],
-              planList: cleanData.planList || [],
-              investProducts: cleanData.investProducts || [],
-              updatedAt: new Date().toISOString()
-            };
-            await Promise.allSettled([
-              setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }),
-              setDoc(doc(db, "setup_keywords", studentUser), kwPayload, { merge: true })
-            ]).catch(() => {});
+            await setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }).catch(() => {});
             for (const cid of Object.keys(classes)) {
               const c = classes[cid];
               const isMember = (c.members || []).some(m => m.username === studentUser);
@@ -2747,14 +2735,13 @@ const FirestoreService = {
     if (res && res.success && res.data) {
       if (isFirebaseReady && db) {
         try {
-          const kwRef = doc(db, "setup_keywords", normUser);
-          const kwSnap = await getDoc(kwRef).catch(() => null);
-          if (kwSnap && kwSnap.exists()) {
-            const kwData = kwSnap.data();
-            if (!Array.isArray(res.data.expenses) || res.data.expenses.length === 0) res.data.expenses = kwData.expenses || [];
-            if (!Array.isArray(res.data.incomeList) || res.data.incomeList.length === 0) res.data.incomeList = kwData.incomeList || [];
-            if (!Array.isArray(res.data.planList) || res.data.planList.length === 0) res.data.planList = kwData.planList || [];
-            if (!Array.isArray(res.data.investProducts) || res.data.investProducts.length === 0) res.data.investProducts = kwData.investProducts || [];
+          // Từ khóa thiết lập nằm sẵn trong bài làm lưu ở student_plans: chỉ đọc khi bản chính còn thiếu danh sách nào đó
+          const kwKeys = ["expenses", "incomeList", "planList", "investProducts"];
+          const missing = kwKeys.filter(k => !Array.isArray(res.data[k]) || res.data[k].length === 0);
+          if (missing.length > 0) {
+            const spSnap = await getDoc(doc(db, "student_plans", normUser)).catch(() => null);
+            const spPlan = spSnap && spSnap.exists() ? (spSnap.data().plan || {}) : {};
+            missing.forEach(k => { res.data[k] = Array.isArray(spPlan[k]) ? spPlan[k] : []; });
           }
         } catch (e) {}
       }
@@ -2824,8 +2811,7 @@ const FirestoreService = {
         await Promise.allSettled([
           deleteDoc(doc(db, firestoreSettings.collectionName, normDocId)),
           deleteDoc(doc(db, FINANCIAL_AUTH_COLLECTION, normDocId)),
-          deleteDoc(doc(db, "student_plans", normUser)),
-          deleteDoc(doc(db, "setup_keywords", normUser))
+          deleteDoc(doc(db, "student_plans", normUser))
         ]).catch(() => {});
       }
       return { success: true, message: "Đã xóa dữ liệu học viên thành công." };

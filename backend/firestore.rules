@@ -56,11 +56,5 @@ service cloud.firestore {
       allow create, update: if isValidDocId(code) && fitsKeys(40);
       allow delete: if canDeleteDoc(code);
     }
-
-    match /setup_keywords/{docId} {
-      allow get: if isValidDocId(docId);
-      allow create, update: if isValidDocId(docId) && fitsKeys(200);
-      allow delete: if canDeleteDoc(docId);
-    }
   }
 }
