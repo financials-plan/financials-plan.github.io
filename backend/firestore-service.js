@@ -2537,6 +2537,10 @@ const FirestoreService = {
         action
       };
     }, { requireManage: true });
+    if (res.success && action === "remove" && !res.localOnly && isFirebaseReady && db) {
+      // Xóa luôn bài làm của học viên trong nhóm để không còn dữ liệu thừa trên Firestore
+      await withTimeout(deleteDoc(doc(db, CLASSES_COLLECTION, classId, "submissions", cleanUser))).catch(() => {});
+    }
     if (res.localOnly) {
       return {
         ...res,

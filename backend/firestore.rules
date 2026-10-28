@@ -34,7 +34,7 @@ service cloud.firestore {
       match /submissions/{studentUsername} {
         allow get: if isValidDocId(studentUsername);
         allow create, update: if isValidDocId(studentUsername) && fitsKeys(80);
-        allow delete: if isOwner(studentUsername);
+        allow delete: if isValidDocId(studentUsername);
       }
     }
 
