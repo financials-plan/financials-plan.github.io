@@ -12035,7 +12035,7 @@ window.renderAdminAnalyticsView = async function(classId) {
 
   // TRƯỜNG HỢP 2: Đã có học viên -> Thu thập bài làm thực tế của từng học viên
   const memberPlans = [];
-  for (const m of approvedMembers) {
+  const loadedPlans = await Promise.all(approvedMembers.map(async (m) => {
     let plan = m.plan || null;
     if (!plan && window.CloudDB && typeof window.CloudDB.loadUserData === 'function') {
       try {
@@ -12049,11 +12049,9 @@ window.renderAdminAnalyticsView = async function(classId) {
         if (raw) plan = JSON.parse(raw);
       } catch (e) {}
     }
-    if (plan) {
-      memberPlans.push({ member: m, plan });
-    }
-  }
-
+    return plan ? { member: m, plan } : null;
+  }));
+  loadedPlans.forEach(p => { if (p) memberPlans.push(p); });
   // Nếu học viên trong lớp nhưng chưa ai nhập/lưu kế hoạch tài chính
   if (memberPlans.length === 0) {
     if (barsContainer) {
@@ -12088,6 +12086,7 @@ window.renderAdminAnalyticsView = async function(classId) {
   // TRƯỜNG HỢP 3: Có dữ liệu thực tế -> Tính toán trung bình toàn nhóm từ data thực tế
   let sumStocks = 0, sumBonds = 0, sumCash = 0, sumIns = 0;
   let membersWithAlloc = 0;
+  const membersWithoutAlloc = [];
 
   let totalEmergencyPct = 0;
   let countEmergency = 0;
@@ -12100,7 +12099,7 @@ window.renderAdminAnalyticsView = async function(classId) {
   let countSavings = 0;
   let totalDebtVal = 0;
 
-  memberPlans.forEach(({ plan }) => {
+  memberPlans.forEach(({ plan, member }) => {
     let mStocks = 0, mBonds = 0, mCash = 0, mIns = 0;
     let hasAlloc = false;
 
@@ -12165,6 +12164,7 @@ window.renderAdminAnalyticsView = async function(classId) {
         membersWithAlloc++;
       }
     }
+    if (!hasAlloc || (mStocks + mBonds + mCash + mIns) <= 0) membersWithoutAlloc.push(member);
 
     const inc = Number(plan.monthlyIncome || plan.incomeMonthly || 0);
     let exp = Number(plan.monthlyExpense || plan.expenseMonthly || 0);
@@ -12320,7 +12320,7 @@ window.renderAdminAnalyticsView = async function(classId) {
         <div class="analytics-research-box">
           <div class="research-box-header">
             <i class="fa-solid fa-graduation-cap"></i>
-            <span>Chỉ số Phân tích Danh mục Nhóm (Dữ liệu thực tế từ ${membersWithAlloc} học viên)</span>
+            <span title="${escapeHtmlText(membersWithoutAlloc.slice(0, 30).map(m => m.name || m.username).join(', '))}">Chỉ số Phân tích Danh mục Nhóm (Dữ liệu thực tế từ ${membersWithAlloc}/${approvedMembers.length} học viên${approvedMembers.length > membersWithAlloc ? ' — ${approvedMembers.length - membersWithAlloc} chưa thiết lập cơ cấu danh mục' : ''})</span>
           </div>
           <div class="research-grid">
             <div class="research-metric-pill">
