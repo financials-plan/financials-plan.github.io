@@ -271,6 +271,8 @@ const CLASSES_COLLECTION = "classes";
 const FINANCIAL_AUTH_COLLECTION = firestoreSettings.collectionName || "financial_Authentication";
 
 const CLOUD_TIMEOUT_MS = 12000;
+// Mỗi tài khoản chỉ giữ tối đa 3 bản sao lưu gần nhất trong tài liệu bài làm (giảm dung lượng đọc/ghi)
+const CLOUD_BACKUPS_MAX = 3;
 const LEGACY_AGGREGATE_DOC_IDS = ["groups", "class", "class_index"];
 
 function withTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
@@ -1770,7 +1772,7 @@ const FirestoreService = {
       }
 
       existingBackups.unshift(backupEntry);
-      if (existingBackups.length > 20) existingBackups.length = 20;
+      if (existingBackups.length > CLOUD_BACKUPS_MAX) existingBackups.length = CLOUD_BACKUPS_MAX;
 
       const payload = {
         ...cleanData,
