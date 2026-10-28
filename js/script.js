@@ -328,6 +328,42 @@ function sortMonthTransactions(m, type) {
   });
 }
 
+// Sắp xếp lại thu/chi chi tiết theo ngày: đưa giao dịch về đúng tháng của ngày đã nhập rồi xếp tăng dần theo ngày.
+// Chỉ gọi khi bấm Lưu; lúc đang nhập liệu các dòng giữ nguyên vị trí để số liệu không nhảy.
+function organizeMonthlyTransactions() {
+  let moved = 0;
+  const ensureMonth = (mm) => {
+    if (!AppState.monthlyDetails[mm]) {
+      AppState.monthlyDetails[mm] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
+    }
+    return AppState.monthlyDetails[mm];
+  };
+  for (let m = 1; m <= 12; m++) {
+    const d = AppState.monthlyDetails && AppState.monthlyDetails[m];
+    if (!d) continue;
+    ["incomes", "expenses"].forEach(type => {
+      const list = d[type];
+      if (!Array.isArray(list)) return;
+      for (let i = list.length - 1; i >= 0; i--) {
+        const item = list[i];
+        const target = item ? getMonthFromIso(item.date) : null;
+        if (target && target !== m) {
+          list.splice(i, 1);
+          const td = ensureMonth(target);
+          if (!Array.isArray(td[type])) td[type] = [];
+          td[type].push(item);
+          moved++;
+        }
+      }
+    });
+  }
+  for (let m = 1; m <= 12; m++) {
+    sortMonthTransactions(m, "incomes");
+    sortMonthTransactions(m, "expenses");
+  }
+  return moved;
+}
+
 const UserSession = {
   STORAGE_KEY: "FIN_APP_USER_SESSION",
   PROFILES_KEY: "FIN_APP_PROFILES_LIST",
@@ -4632,7 +4668,6 @@ window.addMonthDetailIncomeRow = function() {
     desc: "",
     val: 0.0
   });
-  sortMonthTransactions(m, 'incomes');
   renderMonthView(m);
   recalculateAll();
 };
@@ -4663,7 +4698,6 @@ window.addMonthDetailExpenseRow = function() {
     desc: "",
     val: 0.0
   });
-  sortMonthTransactions(m, 'expenses');
   renderMonthView(m);
   recalculateAll();
 };
@@ -4677,52 +4711,25 @@ window.deleteMonthExpenseRow = function(m, i) {
   }
 };
 
+// Sửa ngày chỉ lưu lại giá trị ngày; dòng giữ nguyên vị trí và không dựng lại bảng.
+// Việc đưa giao dịch về đúng tháng và xếp theo ngày được làm khi bấm Lưu (organizeMonthlyTransactions).
 window.updateMonthIncomeDate = function(m, i, val) {
+  const item = AppState.monthlyDetails[m] && AppState.monthlyDetails[m].incomes[i];
+  if (!item) return;
   const iso = parseToIsoDate(val);
-  if (!AppState.monthlyDetails[m] || !AppState.monthlyDetails[m].incomes[i]) return;
-  const item = AppState.monthlyDetails[m].incomes[i];
+  if (iso === item.date) return;
   item.date = iso;
-
-  const targetMonth = getMonthFromIso(iso);
-  if (targetMonth && targetMonth !== m && targetMonth >= 1 && targetMonth <= 12) {
-    if (!AppState.monthlyDetails[targetMonth]) {
-      AppState.monthlyDetails[targetMonth] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
-    }
-    AppState.monthlyDetails[m].incomes.splice(i, 1);
-    AppState.monthlyDetails[targetMonth].incomes.push(item);
-    sortMonthTransactions(targetMonth, 'incomes');
-    showToast(`Đã tự động chuyển giao dịch thu nhập sang Tháng ${String(targetMonth).padStart(2, '0')}`, "info");
-  } else {
-    sortMonthTransactions(m, 'incomes');
-  }
-
-  renderMonthView(AppState.currentMonth);
-  recalculateAll();
+  window.hasUnsavedChanges = true;
 };
 
 window.updateMonthExpenseDate = function(m, i, val) {
+  const item = AppState.monthlyDetails[m] && AppState.monthlyDetails[m].expenses[i];
+  if (!item) return;
   const iso = parseToIsoDate(val);
-  if (!AppState.monthlyDetails[m] || !AppState.monthlyDetails[m].expenses[i]) return;
-  const item = AppState.monthlyDetails[m].expenses[i];
+  if (iso === item.date) return;
   item.date = iso;
-
-  const targetMonth = getMonthFromIso(iso);
-  if (targetMonth && targetMonth !== m && targetMonth >= 1 && targetMonth <= 12) {
-    if (!AppState.monthlyDetails[targetMonth]) {
-      AppState.monthlyDetails[targetMonth] = { incomes: [], expenses: [], learningDetails: [], reconIncomeNotes: {}, reconExpenseNotes: {} };
-    }
-    AppState.monthlyDetails[m].expenses.splice(i, 1);
-    AppState.monthlyDetails[targetMonth].expenses.push(item);
-    sortMonthTransactions(targetMonth, 'expenses');
-    showToast(`Đã tự động chuyển giao dịch chi tiêu sang Tháng ${String(targetMonth).padStart(2, '0')}`, "info");
-  } else {
-    sortMonthTransactions(m, 'expenses');
-  }
-
-  renderMonthView(AppState.currentMonth);
-  recalculateAll();
+  window.hasUnsavedChanges = true;
 };
-
 window.updateMonthIncDesc = function(m, i, txt) {
   if (AppState.monthlyDetails[m]?.incomes?.[i]) {
     AppState.monthlyDetails[m].incomes[i].desc = (txt || '').trim();
@@ -7119,6 +7126,11 @@ window.saveAppStateToCloud = async function() {
   }
   updateCloudStatus('loading', 'Đang lưu dữ liệu...');
 
+  // Chỉ lúc bấm Lưu mới tự xếp lại ngày tháng và đưa giao dịch về đúng tháng
+  const movedTx = organizeMonthlyTransactions();
+  renderMonthView(AppState.currentMonth);
+  recalculateAll();
+
   const userDocId = UserSession.currentUser.docId;
   const result = await window.CloudDB.saveData(AppState, userDocId, UserSession.currentUser);
 
@@ -7132,7 +7144,7 @@ window.saveAppStateToCloud = async function() {
     window.hasSavedInSession = true;
     updateCloudStatus('ready', 'Đã lưu lúc ' + new Date().toLocaleTimeString('vi-VN'));
     const bkName = result.newBackup?.name || 'Bản sao lưu mới';
-    showToast(`Đã lưu thành công [${bkName}] của hồ sơ [${UserSession.currentUser.rawName}]!`, "success");
+    showToast(`Đã lưu thành công [${bkName}] của hồ sơ [${UserSession.currentUser.rawName}]!` + (movedTx > 0 ? ` Đã chuyển ${movedTx} giao dịch về đúng tháng theo ngày.` : ""), "success");
 
     const backupModal = document.getElementById('backup-modal-overlay');
     if (backupModal && backupModal.classList.contains('active')) {
