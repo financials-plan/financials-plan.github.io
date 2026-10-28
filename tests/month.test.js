@@ -1,4 +1,4 @@
-﻿const { test } = require("node:test");
+const { test } = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -48,4 +48,26 @@ test("Sửa ngày khi đang nhập không xếp lại hay chuyển dòng (chỉ 
   assert.ok(!/sortMonthTransactions|renderMonthView|splice/.test(dateFns), "hàm sửa ngày không được sắp xếp, chuyển tháng hay dựng lại bảng");
   const addFns = src.slice(src.indexOf("window.addMonthDetailIncomeRow"), src.indexOf("window.deleteMonthExpenseRow"));
   assert.ok(!/sortMonthTransactions/.test(addFns), "thêm dòng không tự xếp lại");
+});
+
+test("Ô ngày: số vừa gõ được ghi nhận, gõ sai thì trả lại ngày cũ, xóa trống thì xóa ngày", () => {
+  const code = ["function formatDisplayDate(", "function parseToIsoDate(", "function readDateCellValue("].map(extract).join("\n") + "\nreturn readDateCellValue;";
+  const read = new Function("window", code)({});
+  const cell = (iso, value) => {
+    const attrs = iso ? { "data-iso-date": iso } : {};
+    return { value, getAttribute: k => attrs[k] || null, setAttribute: (k, v) => { attrs[k] = v; }, removeAttribute: k => { delete attrs[k]; }, attrs };
+  };
+  let c = cell("2026-01-15", "20/01/2026");
+  assert.strictEqual(read(c), "2026-01-20", "ngày gõ tay thay cho data-iso-date cũ");
+  assert.strictEqual(c.attrs["data-iso-date"], "2026-01-20");
+  c = cell("2026-01-15", "15/01/2026");
+  assert.strictEqual(read(c), "2026-01-15", "không đổi thì giữ nguyên");
+  c = cell("2026-01-15", "abc");
+  assert.strictEqual(read(c), "2026-01-15", "gõ sai trả lại ngày cũ");
+  assert.strictEqual(c.value, "15/01/2026");
+  c = cell("2026-01-15", "31/02/2026x");
+  assert.strictEqual(read(c), "2026-01-15");
+  c = cell("2026-01-15", "");
+  assert.strictEqual(read(c), "", "xóa trống");
+  assert.ok(!("data-iso-date" in c.attrs));
 });

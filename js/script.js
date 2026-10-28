@@ -307,6 +307,28 @@ function parseToIsoDate(str) {
   return clean;
 }
 
+// Giá trị ngày của một ô nhập ngày: số người dùng vừa gõ là nguồn chính (trước đây chỉ đọc data-iso-date cũ nên ngày gõ tay bị bỏ qua).
+// Ngày hợp lệ được ghi lại vào data-iso-date; gõ sai định dạng thì trả lại ngày cũ.
+function readDateCellValue(el) {
+  const prevIso = (el.getAttribute('data-iso-date') || '').trim();
+  const typed = String(el.value || '').trim();
+  if (!typed) {
+    el.removeAttribute('data-iso-date');
+    return '';
+  }
+  if (prevIso && typed === formatDisplayDate(prevIso)) return prevIso;
+  const iso = parseToIsoDate(typed);
+  const valid = /^\d{4}-\d{2}-\d{2}$/.test(iso) && !isNaN(new Date(iso + 'T00:00:00').getTime());
+  if (!valid) {
+    el.value = formatDisplayDate(prevIso);
+    return prevIso;
+  }
+  el.setAttribute('data-iso-date', iso);
+  el.value = formatDisplayDate(iso);
+  return iso;
+}
+window.readDateCellValue = readDateCellValue;
+
 function getMonthFromIso(iso) {
   if (!iso || typeof iso !== 'string') return null;
   const parts = iso.trim().split('-');
@@ -4446,7 +4468,7 @@ function renderMonthView(m) {
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="income" data-index="${i}" data-iso-date="${inc.date || ''}" value="${formatDisplayDate(inc.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthIncomeDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthIncomeDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="income" data-index="${i}" data-iso-date="${inc.date || ''}" value="${formatDisplayDate(inc.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthIncomeDate(${m}, ${i}, readDateCellValue(this))" onblur="updateMonthIncomeDate(${m}, ${i}, readDateCellValue(this))">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
@@ -4479,7 +4501,7 @@ function renderMonthView(m) {
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="expense" data-index="${i}" data-iso-date="${exp.date || ''}" value="${formatDisplayDate(exp.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthExpenseDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthExpenseDate(${m}, ${i}, this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="expense" data-index="${i}" data-iso-date="${exp.date || ''}" value="${formatDisplayDate(exp.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthExpenseDate(${m}, ${i}, readDateCellValue(this))" onblur="updateMonthExpenseDate(${m}, ${i}, readDateCellValue(this))">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
@@ -4827,7 +4849,7 @@ function renderMonthLearningSection(m) {
       <tr>
         <td>
           <div class="date-input-wrap">
-            <input type="text" class="input-date-cell" data-month="${m}" data-type="learning" data-index="${i}" data-iso-date="${it.date || ''}" value="${formatDisplayDate(it.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthLearningField(${m}, ${i}, 'date', this.getAttribute('data-iso-date') || this.value)" onblur="updateMonthLearningField(${m}, ${i}, 'date', this.getAttribute('data-iso-date') || this.value)">
+            <input type="text" class="input-date-cell" data-month="${m}" data-type="learning" data-index="${i}" data-iso-date="${it.date || ''}" value="${formatDisplayDate(it.date)}" placeholder="DD/MM/YYYY" autocomplete="off" onchange="updateMonthLearningField(${m}, ${i}, 'date', readDateCellValue(this))" onblur="updateMonthLearningField(${m}, ${i}, 'date', readDateCellValue(this))">
             <i class="fa-regular fa-calendar date-input-icon"></i>
           </div>
         </td>
