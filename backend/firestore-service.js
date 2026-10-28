@@ -1729,7 +1729,7 @@ const FirestoreService = {
     try {
       const localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
       localBackups.unshift(backupEntry);
-      if (localBackups.length > 25) localBackups.length = 25;
+      if (localBackups.length > CLOUD_BACKUPS_MAX) localBackups.length = CLOUD_BACKUPS_MAX;
       localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(localBackups));
       localStorage.setItem("FIN_APP_LAST_STATE_" + targetDocId, JSON.stringify(cleanData));
     } catch (e) {}
@@ -1883,7 +1883,14 @@ const FirestoreService = {
       localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
     } catch (e) {}
 
-    return { success: true, backups: mergeBackupLists(cloudBackups, localBackups) };
+    // Chỉ giữ 3 bản gần nhất: bản cũ hơn trên thiết bị này cũng bị bỏ khỏi bộ nhớ trình duyệt
+    const merged = mergeBackupLists(cloudBackups, localBackups)
+      .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
+      .slice(0, CLOUD_BACKUPS_MAX);
+    try {
+      localStorage.setItem("FIN_APP_BACKUPS_" + targetDocId, JSON.stringify(merged.filter(b => localBackups.some(l => l.id === b.id))));
+    } catch (e) {}
+    return { success: true, backups: merged };
   },
 
   async deleteBackup(customDocId = null, backupId) {

@@ -7765,7 +7765,7 @@ window.executeConfirmedAction = async function() {
         const userDocId = UserSession.currentUser ? UserSession.currentUser.docId : 'khach_hang_mac_dinh';
         const localBk = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + userDocId) || "[]");
         localBk.unshift(safetyEntry);
-        localStorage.setItem("FIN_APP_BACKUPS_" + userDocId, JSON.stringify(localBk.slice(0, 25)));
+        localStorage.setItem("FIN_APP_BACKUPS_" + userDocId, JSON.stringify(localBk.slice(0, 3)));
       } catch (safeErr) {
         console.warn("Không thể tạo safety backup:", safeErr);
       }
