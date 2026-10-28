@@ -932,6 +932,21 @@ function generateSecureRandomToken(byteLen = 16) {
   return "rnd_" + Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
+function withFirestoreTimeout(promise, ms = 8000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), ms))
+  ]);
+}
+
+function mergeBackupLists(...lists) {
+  const mergedMap = new Map();
+  lists.flat().forEach(b => {
+    if (b && b.id && !mergedMap.has(b.id)) mergedMap.set(b.id, b);
+  });
+  return Array.from(mergedMap.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+}
+
 const FirestoreService = {
   isReady() {
     return isFirebaseReady && db !== null;
@@ -1969,18 +1984,7 @@ const FirestoreService = {
       localBackups = JSON.parse(localStorage.getItem("FIN_APP_BACKUPS_" + targetDocId) || "[]");
     } catch (e) {}
 
-    const mergedMap = new Map();
-    [...cloudBackups, ...localBackups].forEach(b => {
-      if (b && b.id && !mergedMap.has(b.id)) {
-        mergedMap.set(b.id, b);
-      }
-    });
-
-    const backups = Array.from(mergedMap.values()).sort((a, b) => {
-      return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
-    });
-
-    return { success: true, backups };
+    return { success: true, backups: mergeBackupLists(cloudBackups, localBackups) };
   },
 
   async deleteBackup(customDocId = null, backupId) {
@@ -2024,10 +2028,7 @@ const FirestoreService = {
 
     try {
       const docRef = doc(db, firestoreSettings.collectionName, targetDocId);
-      const snap = await Promise.race([
-        getDoc(docRef),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
-      ]);
+      const snap = await withFirestoreTimeout(getDoc(docRef));
       let cloudBackups = [];
       if (snap && snap.exists()) {
         const data = snap.data();
@@ -2038,25 +2039,16 @@ const FirestoreService = {
             error: "Từ chối xóa: Bản sao lưu thuộc quyền sở hữu của tài khoản khác."
           };
         }
-        cloudBackups = Array.isArray(data._backups) ? data._backups : [];
-        if (cloudBackups.some(b => b && b.id === backupId)) {
-          cloudBackups = cloudBackups.filter(b => b && b.id !== backupId);
-          await Promise.race([
-            updateDoc(docRef, { _backups: cloudBackups, _lastUpdated: new Date().toISOString() }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), 8000))
-          ]);
+        const allCloud = Array.isArray(data._backups) ? data._backups : [];
+        cloudBackups = allCloud.filter(b => b && b.id !== backupId);
+        if (cloudBackups.length !== allCloud.length) {
+          await withFirestoreTimeout(updateDoc(docRef, { _backups: cloudBackups, _lastUpdated: new Date().toISOString() }));
         }
       }
 
-      const mergedMap = new Map();
-      [...cloudBackups, ...localBackups].forEach(b => {
-        if (b && b.id && !mergedMap.has(b.id)) mergedMap.set(b.id, b);
-      });
-      const backups = Array.from(mergedMap.values()).sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-
       return {
         success: true,
-        backups,
+        backups: mergeBackupLists(cloudBackups, localBackups),
         message: "Đã xóa bản sao lưu trên Cloud và thiết bị."
       };
     } catch (e) {
