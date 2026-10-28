@@ -11503,7 +11503,7 @@ window.renderAdminStudentsTable = async function() {
     `;
   }
 
-  const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  const members = Array.isArray(curGroup.members) ? curGroup.members.filter(m => m.status !== 'rejected') : [];
 
   let completedCount = 0;
   let balancingCount = 0;
