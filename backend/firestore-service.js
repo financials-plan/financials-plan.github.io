@@ -445,6 +445,7 @@ function mergeClassRecord(c1, c2) {
 
 let classesRealtimeUnsubscribe = null;
 
+const LOGIN_STAMP_MIN_INTERVAL_MS = 10 * 60 * 1000;
 const CLASSES_CACHE_TTL_MS = 45000;
 let classesCache = { at: 0, user: "", value: null };
 let classesInflight = null;
@@ -1386,15 +1387,18 @@ const FirestoreService = {
       target.hashAlgo = upgraded.hashAlgo;
       delete target.altPassHash;
     }
+    const hadLegacyPlaintext = Boolean(target.password || target.mat_khau);
     delete target.password;
     delete target.mat_khau;
 
     const sessionToken = "sess_" + generateSecureRandomToken(24);
+    const prevLoginMs = Date.parse(target.lastLoginAt || "") || 0;
     target.sessionToken = sessionToken;
     target.lastLoginAt = new Date().toISOString();
     target.updatedAt = target.lastLoginAt;
 
-    if (isFirebaseReady && db) {
+    const stampRecently = Date.now() - prevLoginMs < LOGIN_STAMP_MIN_INTERVAL_MS;
+    if (isFirebaseReady && db && (needsHashUpgrade || hadLegacyPlaintext || !stampRecently)) {
       const stampPayload = {
         password: deleteField(),
         mat_khau: deleteField(),
@@ -1994,19 +1998,14 @@ const FirestoreService = {
             };
             await Promise.allSettled([
               setDoc(doc(db, "student_plans", studentUser), subData, { merge: true }),
-              setDoc(doc(db, "setup_keywords", studentUser), kwPayload, { merge: true }),
-              setDoc(doc(db, "student_keywords", studentUser), kwPayload, { merge: true })
+              setDoc(doc(db, "setup_keywords", studentUser), kwPayload, { merge: true })
             ]).catch(() => {});
             for (const cid of Object.keys(classes)) {
               const c = classes[cid];
               const isMember = (c.members || []).some(m => m.username === studentUser);
               if (isMember) {
                 const subRef = doc(db, CLASSES_COLLECTION, cid, "submissions", studentUser);
-                const gSubRef = doc(db, GROUPS_COLLECTION, cid, "submissions", studentUser);
-                await Promise.allSettled([
-                  setDoc(subRef, subData, { merge: true }),
-                  setDoc(gSubRef, subData, { merge: true })
-                ]).catch(() => {});
+                await setDoc(subRef, subData, { merge: true }).catch(() => {});
               }
             }
           }
