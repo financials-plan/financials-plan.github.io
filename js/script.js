@@ -418,6 +418,38 @@ function organizeMonthlyTransactions() {
   return moved;
 }
 
+// Hợp nhất giao dịch nhập từ JSON/CSV vào một danh sách tháng, giữ nguyên từng số đã nhập.
+// 'add': thêm tất cả. 'update': dòng khớp (ngày + khoản mục + chi tiết) được cập nhật, mỗi dòng cũ chỉ khớp tối đa một lần
+// để nhiều dòng cùng ngày/khoản mục không đè lên nhau; không khớp thì thêm mới.
+function mergeMonthTransactions(dstList, srcList, mode) {
+  const used = new Set();
+  srcList.forEach(tx => {
+    if (!tx || typeof tx !== 'object') return;
+    let idx = -1;
+    if (mode === 'update') {
+      const sameDesc = (x) => String(x.desc || '').trim() === String(tx.desc || '').trim();
+      idx = dstList.findIndex((x, i) => !used.has(i) && x && !x.autoSyncedLearning && x.date === tx.date && x.cat === tx.cat && sameDesc(x));
+      if (idx < 0 && !String(tx.desc || '').trim()) {
+        idx = dstList.findIndex((x, i) => !used.has(i) && x && !x.autoSyncedLearning && x.date === tx.date && x.cat === tx.cat);
+      }
+    }
+    if (idx >= 0) {
+      dstList[idx] = Object.assign({}, dstList[idx], tx);
+      used.add(idx);
+    } else {
+      dstList.push(Object.assign({}, tx));
+      used.add(dstList.length - 1);
+    }
+  });
+  return dstList;
+}
+
+// Số xuất ra CSV giữ nguyên giá trị đã nhập, không làm tròn
+function csvNumber(v) {
+  const n = Number(v);
+  return String(isFinite(n) ? n : 0);
+}
+
 // Đọc lại các ô đang hiển thị của bảng thu/chi/đào tạo vào dữ liệu trước khi đổi tháng hoặc lưu,
 // để số tiền và ghi chú vừa gõ không bao giờ phụ thuộc vào việc sự kiện nhập đã chạy hay chưa.
 function flushMonthInputsToState(m) {
@@ -8227,11 +8259,12 @@ const CSV_TABLE_SCHEMAS = {
     fields: [
       { key: "date", label: "Ngày (YYYY-MM-DD / DD/MM/YYYY)", required: false },
       { key: "cat", label: "Khoản mục thu", required: true },
-      { key: "val", label: "Số tiền", required: true, type: "number" }
+      { key: "val", label: "Số tiền", required: true, type: "number" },
+      { key: "desc", label: "Chi tiết giao dịch", required: false }
     ],
     sampleRows: [
-      ["2026-01-05", "Lương chính", "25.5"],
-      ["2026-01-15", "Thưởng dự án, hoa hồng", "8.0"]
+      ["2026-01-05", "Lương chính", "25.5", "Lương tháng 1"],
+      ["2026-01-15", "Thưởng dự án, hoa hồng", "8.0", ""]
     ]
   },
   month_expense: {
@@ -8240,24 +8273,28 @@ const CSV_TABLE_SCHEMAS = {
     fields: [
       { key: "date", label: "Ngày (YYYY-MM-DD / DD/MM/YYYY)", required: false },
       { key: "cat", label: "Khoản mục chi", required: true },
-      { key: "val", label: "Số tiền", required: true, type: "number" }
+      { key: "val", label: "Số tiền", required: true, type: "number" },
+      { key: "desc", label: "Chi tiết giao dịch", required: false }
     ],
     sampleRows: [
-      ["2026-01-06", "Tiền ăn uống, sinh hoạt", "6.5"],
-      ["2026-01-10", "Tiền thuê nhà", "4.5"]
+      ["2026-01-06", "Tiền ăn uống, sinh hoạt", "6.5", "Đi chợ"],
+      ["2026-01-10", "Tiền thuê nhà", "4.5", ""]
     ]
   },
   month_learning: {
     label: "Chi phí định kỳ theo tháng",
     requireMonth: true,
     fields: [
-      { key: "name", label: "Nội dung đào tạo", required: true },
-      { key: "cost", label: "Chi phí", required: true, type: "number" },
-      { key: "note", label: "Ghi chú", required: false }
+      { key: "date", label: "Ngày (YYYY-MM-DD / DD/MM/YYYY)", required: false },
+      { key: "cat", label: "Kế hoạch đào tạo", required: true },
+      { key: "desc", label: "Nội dung khóa học / sách", required: false },
+      { key: "val", label: "Chi phí", required: true, type: "number" },
+      { key: "expRes", label: "Kết quả kỳ vọng", required: false },
+      { key: "actRes", label: "Kết quả thực tế", required: false }
     ],
     sampleRows: [
-      ["Khóa học Phân tích Tài chính", "2.5", "Học trực tuyến"],
-      ["Sách chuyên ngành", "0.4", "Mua sách"]
+      ["2026-01-10", "Kế hoạch đào tạo 1", "Khóa học Phân tích Tài chính", "2.5", "Nắm vững mô hình", "Đang học"],
+      ["2026-01-20", "Kế hoạch đào tạo 1", "Sách chuyên ngành", "0.4", "", ""]
     ]
   },
   plan_income: {
@@ -8947,27 +8984,9 @@ window.applyJsonImportData = function(importData, mode = 'update', allowKeywords
         if (Array.isArray(srcM.expenses)) dstM.expenses = [...srcM.expenses];
         if (Array.isArray(srcM.learningDetails)) dstM.learningDetails = [...srcM.learningDetails];
       } else {
-        if (Array.isArray(srcM.incomes)) {
-          srcM.incomes.forEach(tx => {
-            if (!tx || typeof tx !== 'object') return;
-            const dupIdx = dstM.incomes.findIndex(x => x.date === tx.date && x.cat === tx.cat);
-            if (dupIdx === -1) dstM.incomes.push(tx);
-            else if (mode === 'update') dstM.incomes[dupIdx] = Object.assign({}, dstM.incomes[dupIdx], tx);
-            else dstM.incomes.push(tx);
-          });
-        }
-        if (Array.isArray(srcM.expenses)) {
-          srcM.expenses.forEach(tx => {
-            if (!tx || typeof tx !== 'object') return;
-            const dupIdx = dstM.expenses.findIndex(x => x.date === tx.date && x.cat === tx.cat);
-            if (dupIdx === -1) dstM.expenses.push(tx);
-            else if (mode === 'update') dstM.expenses[dupIdx] = Object.assign({}, dstM.expenses[dupIdx], tx);
-            else dstM.expenses.push(tx);
-          });
-        }
-        if (Array.isArray(srcM.learningDetails)) {
-          dstM.learningDetails = mergeByKey(dstM.learningDetails, srcM.learningDetails, 'name');
-        }
+        if (Array.isArray(srcM.incomes)) mergeMonthTransactions(dstM.incomes, srcM.incomes, mode);
+        if (Array.isArray(srcM.expenses)) mergeMonthTransactions(dstM.expenses, srcM.expenses, mode);
+        if (Array.isArray(srcM.learningDetails)) mergeMonthTransactions(dstM.learningDetails, srcM.learningDetails, mode);
       }
     }
   }
@@ -9208,23 +9227,23 @@ window.exportCurrentTableToCsv = function() {
     (AppState.investProducts || []).forEach(p => {
       rows.push([
         `"${String(p.name || '').replace(/"/g, '""')}"`,
-        `"${Number(p.returnRate || 0).toFixed(1)}"`,
-        `"${Number(p.risk || 0).toFixed(1)}"`,
+        `"${csvNumber(p.returnRate)}"`,
+        `"${csvNumber(p.risk)}"`,
         `"${FinancialMath.INVESTMENT_TYPE_LABELS[FinancialMath.normalizeInvestmentType(p.investmentType)] || ''}"`
       ]);
     });
   } else if (tableKey === 'career_route') {
     const list = (AppState.careerDetailList && AppState.careerDetailList.length > 0) ? AppState.careerDetailList : calculateCareerDetails();
     list.forEach(item => {
-      const act = (item.actual !== null && item.actual !== undefined && !isNaN(item.actual)) ? Number(item.actual).toFixed(1) : "";
-      const rt = (item.route !== null && item.route !== undefined && !isNaN(item.route)) ? Number(item.route).toFixed(1) : "";
+      const act = (item.actual !== null && item.actual !== undefined && !isNaN(item.actual)) ? csvNumber(item.actual) : "";
+      const rt = (item.route !== null && item.route !== undefined && !isNaN(item.route)) ? csvNumber(item.route) : "";
       rows.push([`"${item.age}"`, `"${act}"`, `"${rt}"`]);
     });
   } else if (tableKey === 'plan_income') {
     (AppState.planIncome || []).forEach(p => {
       rows.push([
         `"${String(p.name || '').replace(/"/g, '""')}"`,
-        `"${Number(p.plan || 0).toFixed(1)}"`,
+        `"${csvNumber(p.plan)}"`,
         `"${String(p.note || '').replace(/"/g, '""')}"`
       ]);
     });
@@ -9232,7 +9251,7 @@ window.exportCurrentTableToCsv = function() {
     (AppState.planExpense || []).forEach(p => {
       rows.push([
         `"${String(p.name || '').replace(/"/g, '""')}"`,
-        `"${Number(p.plan || 0).toFixed(1)}"`,
+        `"${csvNumber(p.plan)}"`,
         `"${String(p.note || '').replace(/"/g, '""')}"`
       ]);
     });
@@ -9241,42 +9260,23 @@ window.exportCurrentTableToCsv = function() {
       rows.push([
         `"${String(g.name || '').replace(/"/g, '""')}"`,
         `"${g.type || 'invest'}"`,
-        `"${Number(g.val || 0)}"`,
-        `"${Number(g.paid || 0)}"`,
+        `"${csvNumber(g.val)}"`,
+        `"${csvNumber(g.paid)}"`,
         `"${Number(g.start || 0)}"`,
         `"${Number(g.end || 0)}"`,
-        `"${Number(g.rate || 0)}"`
+        `"${csvNumber(g.rate)}"`
       ]);
     });
-  } else if (tableKey === 'month_income') {
+  } else if (tableKey === 'month_income' || tableKey === 'month_expense' || tableKey === 'month_learning') {
     const md = AppState.monthlyDetails?.[month];
-    (md?.incomes || []).forEach(tx => {
-      rows.push([
-        `"${String(tx.date || '').replace(/"/g, '""')}"`,
-        `"${String(tx.cat || '').replace(/"/g, '""')}"`,
-        `"${Number(tx.val || 0).toFixed(1)}"`
-      ]);
-    });
-  } else if (tableKey === 'month_expense') {
-    const md = AppState.monthlyDetails?.[month];
-    (md?.expenses || []).forEach(tx => {
-      rows.push([
-        `"${String(tx.date || '').replace(/"/g, '""')}"`,
-        `"${String(tx.cat || '').replace(/"/g, '""')}"`,
-        `"${Number(tx.val || 0).toFixed(1)}"`
-      ]);
-    });
-  } else if (tableKey === 'month_learning') {
-    const md = AppState.monthlyDetails?.[month];
-    (md?.learningDetails || []).forEach(l => {
-      rows.push([
-        `"${String(l.name || '').replace(/"/g, '""')}"`,
-        `"${Number(l.cost || 0).toFixed(1)}"`,
-        `"${String(l.note || '').replace(/"/g, '""')}"`
-      ]);
-    });
+    const q = (v) => `"${String(v === undefined || v === null ? '' : v).replace(/"/g, '""')}"`;
+    if (tableKey === 'month_income' || tableKey === 'month_expense') {
+      const list = (tableKey === 'month_income' ? md?.incomes : md?.expenses) || [];
+      list.forEach(tx => rows.push([q(tx.date), q(tx.cat), q(csvNumber(tx.val)), q(tx.desc)]));
+    } else {
+      (md?.learningDetails || []).forEach(l => rows.push([q(l.date), q(l.cat), q(l.desc), q(csvNumber(l.val)), q(l.expRes), q(l.actRes)]));
+    }
   }
-
   const csvContent = "\uFEFF" + [headerLine, ...rows.map(r => r.join(','))].join("\r\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -9425,7 +9425,9 @@ window.revalidateCsvPreview = function() {
           }
         }
       } else if (f.key === 'date') {
-        record.date = rawVal ? parseToIsoDate(rawVal) : `${AppState.currentYear || 2026}-01-01`;
+        // Không ghi ngày thì lấy ngày 10 của tháng đang nhập, để Lưu không chuyển dòng sang tháng 1
+        const importMonth = String(parseInt(document.getElementById('select-csv-target-month')?.value || String(AppState.currentMonth || 1), 10) || 1).padStart(2, '0');
+        record.date = rawVal ? parseToIsoDate(rawVal) : `${AppState.currentYear || 2026}-${importMonth}-10`;
       } else {
         record[f.key] = rawVal;
       }
@@ -9517,31 +9519,13 @@ window.confirmCsvImport = function() {
 
     if (tableKey === 'month_income') {
       if (mode === 'replace') md.incomes = [];
-      records.forEach(r => {
-        const idx = md.incomes.findIndex(x => x.cat === r.cat && x.date === r.date);
-        if (idx >= 0 && mode === 'update') md.incomes[idx].val = Number(r.val) || 0;
-        else md.incomes.push({ date: r.date, cat: r.cat, val: Number(r.val) || 0 });
-      });
-      sortMonthTransactions(month, 'incomes');
+      mergeMonthTransactions(md.incomes, records.map(r => ({ date: r.date, cat: r.cat, desc: r.desc || '', val: Number(r.val) || 0 })), mode);
     } else if (tableKey === 'month_expense') {
       if (mode === 'replace') md.expenses = md.expenses.filter(x => x.autoSyncedLearning);
-      records.forEach(r => {
-        const idx = md.expenses.findIndex(x => x.cat === r.cat && x.date === r.date && !x.autoSyncedLearning);
-        if (idx >= 0 && mode === 'update') md.expenses[idx].val = Number(r.val) || 0;
-        else md.expenses.push({ date: r.date, cat: r.cat, val: Number(r.val) || 0 });
-      });
-      sortMonthTransactions(month, 'expenses');
+      mergeMonthTransactions(md.expenses, records.map(r => ({ date: r.date, cat: r.cat, desc: r.desc || '', val: Number(r.val) || 0 })), mode);
     } else if (tableKey === 'month_learning') {
       if (mode === 'replace') md.learningDetails = [];
-      records.forEach(r => {
-        const idx = md.learningDetails.findIndex(x => x.name === r.name);
-        if (idx >= 0 && mode === 'update') {
-          md.learningDetails[idx].cost = Number(r.cost) || 0;
-          md.learningDetails[idx].note = r.note || '';
-        } else {
-          md.learningDetails.push({ name: r.name, cost: Number(r.cost) || 0, note: r.note || '' });
-        }
-      });
+      mergeMonthTransactions(md.learningDetails, records.map(r => ({ date: r.date, cat: r.cat, desc: r.desc || '', val: Number(r.val) || 0, expRes: r.expRes || '', actRes: r.actRes || '' })), mode);
       syncMonthLearningExpense(month);
     }
   } else if (tableKey === 'plan_income') {
@@ -12936,3 +12920,18 @@ if (typeof module !== 'undefined' && module.exports) {
   };
 }
 
+// Ô số kiểu contenteditable hiển thị số đã làm tròn (vd 7.3%), nên chỉ bấm vào rồi bấm ra mà không sửa không được ghi lại vào dữ liệu:
+// nếu chữ không đổi từ lúc vào ô thì bỏ qua trình xử lý blur, số đã nhập giữ nguyên tuyệt đối.
+(function guardUntouchedEditableCells() {
+  document.addEventListener('focus', (e) => {
+    const el = e.target;
+    if (el && el.isContentEditable && el.getAttribute && el.hasAttribute('onblur')) el.dataset.focusText = el.innerText;
+  }, true);
+  document.addEventListener('blur', (e) => {
+    const el = e.target;
+    if (!el || !el.isContentEditable || !el.dataset || el.dataset.focusText === undefined) return;
+    const untouched = el.dataset.focusText === el.innerText;
+    delete el.dataset.focusText;
+    if (untouched) e.stopImmediatePropagation();
+  }, true);
+})();

@@ -90,3 +90,13 @@ test("Ô nhập thu/chi/đào tạo ghi theo mã dòng, không theo vị trí m�
   });
   assert.strictEqual((src.match(/<tr data-rid="\$\{rowRid\(/g) || []).length, 3);
 });
+test("Xuất CSV giữ nguyên số đã nhập; nhập chế độ cập nhật không để các dòng cùng ngày/khoản mục đè nhau", () => {
+  const exportFn = src.slice(src.indexOf("window.exportCurrentTableToCsv = function"), src.indexOf("window.handleCsvFileSelected = function"));
+  assert.ok(!/toFixed/.test(exportFn), "xuất CSV không được làm tròn số bằng toFixed");
+  const merge = new Function(extract("function mergeMonthTransactions(") + "\nreturn mergeMonthTransactions;")();
+  const dst = [{ date: "2026-06-10", cat: "A", desc: "x", val: 1 }, { date: "2026-06-10", cat: "A", desc: "y", val: 2 }, { date: "2026-06-10", cat: "A", desc: "z", val: 3 }];
+  merge(dst, [{ date: "2026-06-10", cat: "A", desc: "x", val: 10 }, { date: "2026-06-10", cat: "A", desc: "y", val: 20 }, { date: "2026-06-10", cat: "A", desc: "z", val: 30 }], "update");
+  assert.deepStrictEqual(dst.map(x => x.val), [10, 20, 30]);
+  const add = merge([{ date: "d", cat: "A", val: 1 }], [{ date: "d", cat: "A", val: 2 }], "add");
+  assert.strictEqual(add.length, 2);
+});
