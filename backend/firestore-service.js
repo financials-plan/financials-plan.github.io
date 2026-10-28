@@ -47,7 +47,7 @@ try {
     }
     isFirebaseReady = true;
     setTimeout(() => {
-      setupClassesRealtimeListener();
+      ensureClassesRealtimeListener();
     }, 100);
   }
 } catch (error) {
@@ -445,6 +445,17 @@ function mergeClassRecord(c1, c2) {
 
 let classesRealtimeUnsubscribe = null;
 
+const CLASSES_CACHE_TTL_MS = 45000;
+let classesCache = { at: 0, user: "", value: null };
+let classesInflight = null;
+let classesGen = 0;
+
+function ensureClassesRealtimeListener() {
+  const role = getCallerContext().role;
+  if (role !== "admin" && role !== "instructor") return;
+  if (!classesRealtimeUnsubscribe) setupClassesRealtimeListener();
+}
+
 function setupClassesRealtimeListener() {
   if (!isFirebaseReady || !db) return;
   if (classesRealtimeUnsubscribe) {
@@ -791,6 +802,8 @@ function getDeletedClassIds() {
 }
 
 function markClassDeleted(classId, deleted = true) {
+  classesCache = { at: 0, user: "", value: null };
+  classesGen++;
   const ids = getDeletedClassIds();
   if (deleted) ids.add(classId); else ids.delete(classId);
   try {
@@ -833,7 +846,11 @@ function getLocalClasses() {
   return classes;
 }
 
-function saveLocalClasses(classes) {
+function saveLocalClasses(classes, keepCache = false) {
+  if (!keepCache) {
+    classesCache = { at: 0, user: "", value: null };
+    classesGen++;
+  }
   try {
     localStorage.setItem(LOCAL_CLASSES_KEY, JSON.stringify(omitDeletedClasses(classes)));
   } catch (e) {}
@@ -2415,7 +2432,23 @@ const FirestoreService = {
     };
   },
 
-  async getClasses() {
+  async getClasses(options = {}) {
+    if (!isFirebaseReady || !db) return FirestoreService.loadClasses();
+    ensureClassesRealtimeListener();
+    const user = getCallerContext().username;
+    const fresh = classesCache.value && classesCache.user === user && Date.now() - classesCache.at < CLASSES_CACHE_TTL_MS;
+    if (fresh && !options.force) return JSON.parse(JSON.stringify(classesCache.value));
+    if (!classesInflight) {
+      const gen = classesGen;
+      classesInflight = FirestoreService.loadClasses().then((list) => {
+        if (gen === classesGen) classesCache = { at: Date.now(), user, value: JSON.parse(JSON.stringify(list)) };
+        return list;
+      }).finally(() => { classesInflight = null; });
+    }
+    return JSON.parse(JSON.stringify(await classesInflight));
+  },
+
+  async loadClasses() {
     const local = getLocalClasses();
     if (!isFirebaseReady || !db) {
       return visibleClassesForCaller(Object.values(local));
@@ -2513,7 +2546,7 @@ const FirestoreService = {
       window.showToast(`${failed.length} lớp chỉ đang lưu trên máy này, chưa lên được Cloud — thiết bị khác sẽ chưa nhập được mã.`, "error");
     }
 
-    saveLocalClasses(cache);
+    saveLocalClasses(cache, true);
     return visibleClassesForCaller(Object.values(cache));
   },
 
