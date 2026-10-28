@@ -559,7 +559,7 @@ async function findClassesByCode(cleanCode) {
       doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
       doc(db, CLASSES_COLLECTION, "class")
     ];
-    for (const aRef of aggRefs) {
+    for (const aRef of (list.length ? [] : aggRefs)) {
       try {
         const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
         if (aSnap && aSnap.exists()) {
@@ -592,8 +592,6 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
     saveLocalClasses(local);
 
     await withTimeout(setDoc(ref, classData, { merge: true }));
-    const payload = { id: "groups", updatedAt: new Date().toISOString(), classes: local || {} };
-    const classPayload = { id: "class", updatedAt: new Date().toISOString(), classes: local || {} };
     const codePayload = {
       id: classData.code,
       classId,
@@ -606,12 +604,7 @@ async function syncClassesStoreToFirestore(classId, classData, isDeleted = false
     };
     await withTimeout(Promise.allSettled([
       setDoc(doc(db, GROUPS_COLLECTION, classId), classData, { merge: true }),
-      setDoc(doc(db, "group_codes", classData.code), codePayload, { merge: true }),
-      setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "groups"), payload, { merge: true }),
-      setDoc(doc(db, CLASSES_COLLECTION, "groups"), payload, { merge: true }),
-      setDoc(doc(db, GROUPS_COLLECTION, "groups"), payload, { merge: true }),
-      setDoc(doc(db, CLASSES_COLLECTION, "class"), classPayload, { merge: true }),
-      setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "class"), classPayload, { merge: true })
+      setDoc(doc(db, "group_codes", classData.code), codePayload, { merge: true })
     ])).catch(() => {});
     return;
   }
@@ -663,7 +656,6 @@ async function mutateClassInCloud(classId, mutator, options = {}) {
     return permissionDenied("Quản lý nhóm này", "Quản trị viên hoặc Giảng viên phụ trách nhóm");
   }
 
-  const prevMembers = Array.isArray(cls.members) ? cls.members.slice() : [];
   const out = mutator(cls);
   if (out && out.success === false) return out;
 
@@ -680,65 +672,6 @@ async function mutateClassInCloud(classId, mutator, options = {}) {
   try {
     await syncClassesStoreToFirestore(classId, cls, false);
 
-    const currentMemberUsernames = new Set(cls.members.map(m => normalizeUsername(m.username)));
-    const removedMembers = prevMembers.filter(m => !currentMemberUsernames.has(normalizeUsername(m.username)));
-    const writePromises = [];
-
-    cls.members.forEach(m => {
-      const u = normalizeUsername(m.username);
-      if (!u) return;
-      const memberDoc = {
-        username: u,
-        name: m.name || u,
-        status: m.status || "pending",
-        joinedAt: m.joinedAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        classId,
-        className: cls.name,
-        classCode: cls.code
-      };
-      writePromises.push(
-        setDoc(doc(db, CLASSES_COLLECTION, classId, "members", u), memberDoc, { merge: true }),
-        setDoc(doc(db, GROUPS_COLLECTION, classId, "members", u), memberDoc, { merge: true }),
-        setDoc(doc(db, "users", u), {
-          enrolledClasses: {
-            [classId]: {
-              classId,
-              code: cls.code,
-              name: cls.name,
-              status: m.status || "pending",
-              joinedAt: m.joinedAt || new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          }
-        }, { merge: true }).catch(() => {}),
-        setDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + u), {
-          enrolledClasses: {
-            [classId]: {
-              classId,
-              code: cls.code,
-              name: cls.name,
-              status: m.status || "pending",
-              joinedAt: m.joinedAt || new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          }
-        }, { merge: true }).catch(() => {})
-      );
-    });
-
-    removedMembers.forEach(m => {
-      const u = normalizeUsername(m.username);
-      if (!u) return;
-      writePromises.push(
-        deleteDoc(doc(db, CLASSES_COLLECTION, classId, "members", u)).catch(() => {}),
-        deleteDoc(doc(db, GROUPS_COLLECTION, classId, "members", u)).catch(() => {}),
-        updateDoc(doc(db, "users", u), { [`enrolledClasses.${classId}`]: deleteField() }).catch(() => {}),
-        updateDoc(doc(db, FINANCIAL_AUTH_COLLECTION, "user_" + u), { [`enrolledClasses.${classId}`]: deleteField() }).catch(() => {})
-      );
-    });
-
-    await withTimeout(Promise.allSettled(writePromises), 10000).catch(() => {});
     cacheClassLocally(cls);
     return { success: true, class: cls, ...(out && typeof out === "object" ? out : {}) };
   } catch (err) {
@@ -1212,25 +1145,9 @@ const FirestoreService = {
 
     if (isFirebaseReady && db) {
       try {
-        const userProfile = {
-          uid: newRecord.uid,
-          username: normalizedUsername,
-          displayName: rawUsername,
-          role: assignedRole,
-          recoveryEmail: cleanEmail || null,
-          maskedEmail,
-          hasRecoveryEmail: Boolean(cleanEmail),
-          createdAt: nowIso,
-          updatedAt: nowIso,
-          lastLoginAt: nowIso,
-          schemaVersion: 3,
-          groups: {}
-        };
         await Promise.race([
           Promise.allSettled([
-            setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord, { merge: true }),
-            setDoc(doc(db, "users", normalizedUsername), userProfile, { merge: true }),
-            setDoc(doc(db, "accounts", normalizedUsername), newRecord, { merge: true })
+            setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), newRecord, { merge: true })
           ]),
           new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
         ]);
@@ -1305,6 +1222,7 @@ const FirestoreService = {
 
     const accounts = getLocalAuthAccounts();
     let target = null;
+    let loadedFromLegacy = false;
 
     if (isFirebaseReady && db) {
       try {
@@ -1319,6 +1237,7 @@ const FirestoreService = {
         } else {
           const uSnap = await getDoc(doc(db, "users", normalizedUsername)).catch(() => null);
           const accSnap = await getDoc(doc(db, "accounts", normalizedUsername)).catch(() => null);
+          loadedFromLegacy = Boolean((accSnap && accSnap.exists()) || (uSnap && uSnap.exists()));
           if (accSnap && accSnap.exists()) {
             target = accSnap.data();
             accounts[normalizedUsername] = target;
@@ -1398,7 +1317,7 @@ const FirestoreService = {
     target.updatedAt = target.lastLoginAt;
 
     const stampRecently = Date.now() - prevLoginMs < LOGIN_STAMP_MIN_INTERVAL_MS;
-    if (isFirebaseReady && db && (needsHashUpgrade || hadLegacyPlaintext || !stampRecently)) {
+    if (isFirebaseReady && db && (needsHashUpgrade || hadLegacyPlaintext || loadedFromLegacy || !stampRecently)) {
       const stampPayload = {
         password: deleteField(),
         mat_khau: deleteField(),
@@ -1411,11 +1330,12 @@ const FirestoreService = {
         stampPayload.hashAlgo = target.hashAlgo;
         stampPayload.altPassHash = deleteField();
       }
-      Promise.allSettled([
-        setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), stampPayload, { merge: true }),
-        setDoc(doc(db, "accounts", normalizedUsername), stampPayload, { merge: true }),
-        setDoc(doc(db, "users", normalizedUsername), { lastLoginAt: target.lastLoginAt, updatedAt: target.updatedAt }, { merge: true })
-      ]).catch(() => {});
+      let cloudPayload = stampPayload;
+      if (loadedFromLegacy) {
+        const { sessionToken: _s, password: _p, mat_khau: _m, ...rest } = target;
+        cloudPayload = rest;
+      }
+      setDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername), cloudPayload, { merge: true }).catch(() => {});
     }
 
     accounts[normalizedUsername] = target;
@@ -2496,7 +2416,8 @@ const FirestoreService = {
       doc(db, FINANCIAL_AUTH_COLLECTION, "class"),
       doc(db, CLASSES_COLLECTION, "class")
     ];
-    for (const aRef of aggRefs) {
+    const legacyNeeded = Object.keys(remote).length === 0;
+    for (const aRef of (legacyNeeded ? aggRefs : [])) {
       try {
         const aSnap = await withTimeout(getDoc(aRef), 3000).catch(() => null);
         if (aSnap && aSnap.exists()) {
@@ -2504,9 +2425,7 @@ const FirestoreService = {
           if (aData && aData.classes && typeof aData.classes === "object") {
             Object.keys(aData.classes).forEach(cid => {
               const c = aData.classes[cid];
-              if (isRealClassRecord(c)) {
-                remote[cid] = remote[cid] ? mergeClassRecord(remote[cid], c) : c;
-              }
+              if (!remote[cid] && isRealClassRecord(c)) remote[cid] = c;
             });
           }
         }
@@ -3282,25 +3201,9 @@ const FirestoreService = {
             lastLoginAt: acc.lastLoginAt || new Date().toISOString(),
             schemaVersion: 3
           };
-          const userProfile = {
-            uid: fullAccount.uid,
-            username: norm,
-            displayName: dispName,
-            role,
-            recoveryEmail: fullAccount.recoveryEmail,
-            maskedEmail: fullAccount.maskedEmail,
-            hasRecoveryEmail: fullAccount.hasRecoveryEmail,
-            createdAt: fullAccount.createdAt,
-            updatedAt: fullAccount.updatedAt,
-            lastLoginAt: fullAccount.lastLoginAt,
-            schemaVersion: 3,
-            groups: acc.groups || {}
-          };
 
           await Promise.allSettled([
-            setDoc(doc(db, ACCOUNTS_COLLECTION, norm), fullAccount, { merge: true }),
-            setDoc(doc(db, "users", norm), userProfile, { merge: true }),
-            setDoc(doc(db, "accounts", norm), fullAccount, { merge: true })
+            setDoc(doc(db, ACCOUNTS_COLLECTION, norm), fullAccount, { merge: true })
           ]);
           report.accountsMigrated++;
           if (typeof onProgress === "function") {

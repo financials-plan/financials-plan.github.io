@@ -11436,7 +11436,14 @@ window.onAdminStudentGroupChange = function(classId) {
 };
 
 let adminStudentsRenderSeq = 0;
-window.onAdminStudentSearchInput = debounceCall(() => window.renderAdminStudentsTable(), 250);
+let adminStudentsCache = null;
+window.onAdminStudentSearchInput = debounceCall(() => paintAdminStudents(), 150);
+window.onAdminStudentViewChange = function() { paintAdminStudents(); };
+window.resetAdminStudentFilters = function() {
+  const ids = { 'admin-student-search': '', 'admin-student-status-filter': 'all', 'admin-student-sort': 'default' };
+  Object.keys(ids).forEach(id => { const el = document.getElementById(id); if (el) el.value = ids[id]; });
+  window.filterAdminStudentsKpi('all');
+};
 
 window.renderAdminStudentsTable = async function() {
   const tbody = document.getElementById('tbody-admin-students');
@@ -11489,7 +11496,6 @@ window.renderAdminStudentsTable = async function() {
   }
 
   const members = Array.isArray(curGroup.members) ? curGroup.members : [];
-  const searchVal = normalizeSearchText(document.getElementById('admin-student-search')?.value);
 
   let completedCount = 0;
   let balancingCount = 0;
@@ -11664,14 +11670,48 @@ window.renderAdminStudentsTable = async function() {
   document.getElementById('strip-kpi-balancing') && (document.getElementById('strip-kpi-balancing').textContent = balancingCount);
   document.getElementById('strip-kpi-pending') && (document.getElementById('strip-kpi-pending').textContent = pendingCount);
 
+  adminStudentsCache = { classId: curGroup.id, curGroup, processedMembers };
+  paintAdminStudents();
+};
+
+function paintAdminStudents() {
+  const cache = adminStudentsCache;
+  const tbody = document.getElementById('tbody-admin-students');
+  const thead = document.getElementById('thead-admin-students');
+  const emptyBox = document.getElementById('empty-admin-students');
+  if (!cache || !tbody || cache.classId !== currentSelectedClassId && currentSelectedClassId) return;
+  const { curGroup, processedMembers } = cache;
+
+  const searchTokens = normalizeSearchText(String(document.getElementById('admin-student-search')?.value || '').replace(/@/g, ' ')).split(' ').filter(Boolean);
+  const statusFilter = document.getElementById('admin-student-status-filter')?.value || 'all';
+  const sortKey = document.getElementById('admin-student-sort')?.value || 'default';
+
   const filteredMembers = processedMembers.filter(m => {
-    const matchSearch = !searchVal || normalizeSearchText(m.name).includes(searchVal) || normalizeSearchText(m.username).includes(searchVal);
-    if (!matchSearch) return false;
+    if (searchTokens.length) {
+      const hay = normalizeSearchText([m.name, m.username, m.email].join(' '));
+      if (!searchTokens.every(tok => hay.includes(tok))) return false;
+    }
+    if (statusFilter === 'approved' && m.status !== 'approved') return false;
+    if (statusFilter === 'pending' && m.status === 'approved') return false;
     if (window.currentKpiFilter === 'completed') return m.percent >= 70;
     if (window.currentKpiFilter === 'balancing') return m.percent >= 40 && m.percent < 70;
     if (window.currentKpiFilter === 'pending') return m.percent < 40 || m.status !== 'approved';
     return true;
   });
+
+  const byText = (a, b) => String(a || '').localeCompare(String(b || ''), 'vi', { sensitivity: 'base' });
+  const sorters = {
+    'name-asc': (a, b) => byText(a.name, b.name),
+    'name-desc': (a, b) => byText(b.name, a.name),
+    'username-asc': (a, b) => byText(a.username, b.username),
+    'progress-desc': (a, b) => b.percent - a.percent,
+    'progress-asc': (a, b) => a.percent - b.percent,
+    'joined-desc': (a, b) => String(b.joinedAt || '').localeCompare(String(a.joinedAt || '')),
+    'joined-asc': (a, b) => String(a.joinedAt || '').localeCompare(String(b.joinedAt || '')),
+    'cashflow-desc': (a, b) => b.netCashflow - a.netCashflow,
+    'savings-desc': (a, b) => b.savingsRate - a.savingsRate
+  };
+  if (sorters[sortKey]) filteredMembers.sort(sorters[sortKey]);
 
   const countChip = document.getElementById('student-count-chip');
   if (countChip) countChip.textContent = `Hiển thị: ${filteredMembers.length} thành viên`;

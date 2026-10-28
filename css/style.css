@@ -8387,3 +8387,8 @@ input::-ms-clear {
     padding: 16px;
   }
 }
+
+.admin-toolbar-row .search-box-wrap { min-width: 200px; }
+.admin-toolbar-row .admin-toolbar-select { width: auto; max-width: 220px; padding: 10px 12px; cursor: pointer; }
+.admin-toolbar-row > .view-switch-btn { background: var(--bg-card); border: 1px solid var(--border); padding: 9px 14px; }
+.admin-toolbar-row > .view-switch-btn:hover { color: var(--primary); border-color: var(--primary); }

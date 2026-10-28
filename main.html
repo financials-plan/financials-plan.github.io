@@ -495,8 +495,26 @@
           <div class="admin-toolbar-row">
             <div class="search-box-wrap" style="flex: 1;">
               <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm sinh viên theo họ tên hoặc username..." oninput="onAdminStudentSearchInput()">
+              <input type="text" id="admin-student-search" class="admin-search-input" placeholder="Tìm theo họ tên hoặc username..." oninput="onAdminStudentSearchInput()" autocomplete="off">
             </div>
+            <select id="admin-student-status-filter" class="admin-search-input admin-toolbar-select" onchange="onAdminStudentViewChange()" title="Lọc theo trạng thái duyệt">
+              <option value="all">Mọi trạng thái</option>
+              <option value="approved">Đã duyệt</option>
+              <option value="pending">Chưa duyệt</option>
+            </select>
+            <select id="admin-student-sort" class="admin-search-input admin-toolbar-select" onchange="onAdminStudentViewChange()" title="Sắp xếp danh sách">
+              <option value="default">Sắp xếp: mặc định</option>
+              <option value="name-asc">Họ tên A → Z</option>
+              <option value="name-desc">Họ tên Z → A</option>
+              <option value="username-asc">Username A → Z</option>
+              <option value="progress-desc">Tiến độ cao → thấp</option>
+              <option value="progress-asc">Tiến độ thấp → cao</option>
+              <option value="joined-desc">Tham gia mới nhất</option>
+              <option value="joined-asc">Tham gia cũ nhất</option>
+              <option value="cashflow-desc">Dòng tiền ròng cao nhất</option>
+              <option value="savings-desc">Tỷ lệ tiết kiệm cao nhất</option>
+            </select>
+            <button type="button" class="view-switch-btn" onclick="resetAdminStudentFilters()" title="Xóa bộ lọc và sắp xếp"><i class="fa-solid fa-rotate-left"></i> <span>Đặt lại</span></button>
             <div class="admin-view-switcher">
               <button type="button" class="view-switch-btn active" id="btn-view-mode-progress" onclick="setAdminStudentsViewMode('progress')" title="Chế độ xem tiến độ lộ trình">
                 <i class="fa-solid fa-bars-progress"></i> <span>Tiến độ</span>
