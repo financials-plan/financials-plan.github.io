@@ -111,3 +111,15 @@ test("11. Tai khoan admin dung chung: mat khau co dinh, khong bam, khong doi", (
   assert.ok(/FIXED_ADMIN_PASSWORD/.test(branch) && /role: "admin"/.test(branch));
   assert.ok(/code: "FIXED_ADMIN_PASSWORD"/.test(svc), "doi mat khau admin phai bi chan");
 });
+
+test("12. Xuat CSV/JSON nhom doc bai lam hoc vien tu Cloud, khong chi tu localStorage", () => {
+  assert.ok(/async function loadMembersExportData/.test(src));
+  const csv = src.slice(src.indexOf("window.exportGroupMembersCsv ="), src.indexOf("window.exportGroupJsonSnapshot ="));
+  const json = src.slice(src.indexOf("window.exportGroupJsonSnapshot ="), src.indexOf("window.renderAdminAnalyticsView = async"));
+  for (const part of [csv, json]) {
+    assert.ok(/async function/.test(part) && /loadMembersExportData\(members\)/.test(part));
+    assert.ok(!/localStorage\.getItem\('FIN_APP_LAST_STATE_user_'/.test(part), "khong doc truc tiep localStorage");
+  }
+  const helper = src.slice(src.indexOf("async function loadMembersExportData"), src.indexOf("function exportStatusLabel"));
+  assert.ok(/getStudentClassProgress/.test(helper));
+});

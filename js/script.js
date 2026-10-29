@@ -12011,13 +12011,42 @@ window.removeStudentFromGroup = async function(classId, username) {
   }
 };
 
-window.exportGroupMembersCsv = function() {
+// Bài làm học viên nằm trên Cloud (không có trong bộ nhớ trình duyệt của người xuất): nạp từ Cloud, dự phòng bộ nhớ máy.
+async function loadMembersExportData(members) {
+  const out = new Map();
+  await Promise.all(members.map(async (m) => {
+    let plan = m.plan || null;
+    let progress = null;
+    if (m.status === 'approved' && window.CloudDB && typeof window.CloudDB.getStudentClassProgress === 'function') {
+      try {
+        progress = await window.CloudDB.getStudentClassProgress(m.username);
+        if (progress && progress.plan) plan = progress.plan;
+      } catch (e) {}
+    }
+    if (!plan) {
+      try {
+        const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
+        if (raw) plan = JSON.parse(raw);
+      } catch (e) {}
+    }
+    out.set(m.username, { plan, progress });
+  }));
+  return out;
+}
+
+function exportStatusLabel(s) {
+  return s === 'completed' ? 'Hoàn thành' : (s === 'in_progress' ? 'Đang làm' : 'Chưa làm');
+}
+
+window.exportGroupMembersCsv = async function() {
   const curGroup = (cachedClassesList || []).find(c => c.id === currentSelectedClassId) || (cachedClassesList && cachedClassesList[0]);
   if (!curGroup) {
     showToast('Chưa chọn nhóm để xuất báo cáo.', 'warning');
     return;
   }
   const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  showToast('Đang tải bài làm của học viên từ Cloud…');
+  const exportData = await loadMembersExportData(members);
   const nowStr = new Date().toLocaleString('vi-VN');
   const isPriv = curGroup.isPrivate !== false ? 'Kín (Private)' : 'Mở (Global)';
   const maxM = parseInt(curGroup.maxMembers, 10) || 0;
@@ -12032,13 +12061,17 @@ window.exportGroupMembersCsv = function() {
   csv += 'STT,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
 
   members.forEach((m, idx) => {
-    let studentPlan = null;
-    try {
-      const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
-      if (raw) studentPlan = JSON.parse(raw);
-    } catch (e) {}
-
+    const got = exportData.get(m.username) || {};
+    const studentPlan = got.plan || null;
     const row = buildStudentExportMetrics(m, studentPlan);
+    const prog = got.progress;
+    if (studentPlan && prog && typeof prog.percent === 'number') {
+      row.m1 = exportStatusLabel(prog.keywords);
+      row.m2 = exportStatusLabel(prog.monthlyPlan);
+      row.m3 = exportStatusLabel(prog.goals);
+      row.m4 = exportStatusLabel(prog.careerMilestones);
+      row.pct = prog.percent + '%';
+    }
     csv += [idx + 1, m.username || '', m.name || '', m.email || m.recoveryEmail || '', (m.joinedAt || '').slice(0, 10), m.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt', row.m1, row.m2, row.m3, row.m4, row.pct, row.sRate, row.dsr, row.netCash, row.stocks, row.bonds, row.ins, row.cash].map(csvSafeCell).join(',') + '\n';
   });
 
@@ -12052,13 +12085,15 @@ window.exportGroupMembersCsv = function() {
   showToast('Đã tải xuống file phân tích chi tiết nhóm (CSV)!');
 };
 
-window.exportGroupJsonSnapshot = function() {
+window.exportGroupJsonSnapshot = async function() {
   const curGroup = (cachedClassesList || []).find(c => c.id === currentSelectedClassId) || (cachedClassesList && cachedClassesList[0]);
   if (!curGroup) {
     showToast('Chưa chọn nhóm để xuất dữ liệu.', 'warning');
     return;
   }
   const members = Array.isArray(curGroup.members) ? curGroup.members : [];
+  showToast('Đang tải bài làm của học viên từ Cloud…');
+  const exportData = await loadMembersExportData(members);
   const snapshot = {
     groupInfo: {
       id: curGroup.id,
@@ -12071,18 +12106,16 @@ window.exportGroupJsonSnapshot = function() {
     },
     studentsCount: members.length,
     studentsData: members.map(m => {
-      let plan = null;
-      try {
-        const raw = localStorage.getItem('FIN_APP_LAST_STATE_user_' + m.username);
-        if (raw) plan = JSON.parse(raw);
-      } catch (e) {}
+      const got = exportData.get(m.username) || {};
+      const prog = got.progress;
       return {
         username: m.username,
         name: m.name,
         email: m.email || m.recoveryEmail || '',
         status: m.status,
         joinedAt: m.joinedAt,
-        planSnapshot: plan
+        progress: prog ? { percent: prog.percent, keywords: prog.keywords, monthlyPlan: prog.monthlyPlan, goals: prog.goals, careerMilestones: prog.careerMilestones } : null,
+        planSnapshot: got.plan || null
       };
     })
   };
