@@ -123,3 +123,10 @@ test("12. Xuat CSV/JSON nhom doc bai lam hoc vien tu Cloud, khong chi tu localSt
   const helper = src.slice(src.indexOf("async function loadMembersExportData"), src.indexOf("function exportStatusLabel"));
   assert.ok(/getStudentClassProgress/.test(helper));
 });
+
+test("13. config/firebase-config.js phai export firebaseConfig, app, analytics (service import ../config/firebase-config.js)", () => {
+  const cfg = fs.readFileSync(path.join(__dirname, "../config/firebase-config.js"), "utf8");
+  assert.ok(/export\s*\{[^}]*\bfirebaseConfig\b[^}]*\}/.test(cfg), "thieu export firebaseConfig");
+  assert.ok(/export\s*\{[^}]*\bapp\b[^}]*\}/.test(cfg), "thieu export app");
+  assert.ok(/export\s*\{[^}]*\banalytics\b[^}]*\}/.test(cfg), "thieu export analytics");
+});
