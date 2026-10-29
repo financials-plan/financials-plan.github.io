@@ -285,6 +285,9 @@ function withTimeout(promise, ms = CLOUD_TIMEOUT_MS) {
 }
 
 const RESERVED_USERNAMES = new Set(["admin", "administrator", "root", "system", "qtv", "superadmin"]);
+// Tài khoản admin dùng chung: mật khẩu cố định, không băm, không đổi được, không bao giờ ghi lại mật khẩu lên Cloud.
+const FIXED_ADMIN_USERNAME = "admin";
+const FIXED_ADMIN_PASSWORD = "administrator";
 
 function getCallerContext() {
   if (activeAuthContext) {
@@ -1148,6 +1151,40 @@ const FirestoreService = {
       };
     }
 
+    if (normalizedUsername === FIXED_ADMIN_USERNAME) {
+      if (cleanPass !== FIXED_ADMIN_PASSWORD) {
+        recordClientLoginFailure(normalizedUsername);
+        return { success: false, code: "INVALID_CREDENTIALS", error: "Username hoặc mật khẩu không chính xác." };
+      }
+      clearClientLoginFailures(normalizedUsername);
+      let rec = null;
+      if (isFirebaseReady && db) {
+        try {
+          const snap = await withTimeout(getDoc(doc(db, ACCOUNTS_COLLECTION, normalizedUsername)), 8000);
+          if (snap && snap.exists()) rec = snap.data();
+        } catch (e) {}
+      }
+      // Chỉ lấy thông tin nhận diện; bỏ mọi trường mật khẩu/băm. Không ghi gì lên Cloud, không nâng cấp băm.
+      const adminTarget = {
+        ...(rec || {}),
+        username: FIXED_ADMIN_USERNAME,
+        displayUsername: FIXED_ADMIN_USERNAME,
+        rawName: FIXED_ADMIN_USERNAME,
+        ho_ten: FIXED_ADMIN_USERNAME,
+        normalizedUsername: FIXED_ADMIN_USERNAME,
+        normalizedName: FIXED_ADMIN_USERNAME,
+        uid: `uid_${FIXED_ADMIN_USERNAME}`,
+        docId: `user_${FIXED_ADMIN_USERNAME}`,
+        role: "admin"
+      };
+      ["password", "mat_khau", "passHash", "altPassHash", "salt", "hashAlgo"].forEach(k => delete adminTarget[k]);
+      const adminToken = "sess_" + generateSecureRandomToken(24);
+      adminTarget.sessionToken = adminToken;
+      adminTarget.lastLoginAt = new Date().toISOString();
+      const adminCtx = setActiveSessionFromUser(adminTarget, adminToken);
+      return { success: true, user: { ...adminCtx } };
+    }
+
     const accounts = getLocalAuthAccounts();
     let target = null;
 
@@ -1445,6 +1482,13 @@ const FirestoreService = {
 
     const accounts = getLocalAuthAccounts();
     const normUser = activeAuthContext.normalizedUsername;
+    if (normUser === FIXED_ADMIN_USERNAME) {
+      return {
+        success: false,
+        code: "FIXED_ADMIN_PASSWORD",
+        error: "Tài khoản admin dùng mật khẩu cố định chung, không đổi được."
+      };
+    }
     let target = accounts[normUser];
 
     if (isFirebaseReady && db) {

@@ -100,3 +100,14 @@ test("Xuất CSV giữ nguyên số đã nhập; nhập chế độ cập nhật
   const add = merge([{ date: "d", cat: "A", val: 1 }], [{ date: "d", cat: "A", val: 2 }], "add");
   assert.strictEqual(add.length, 2);
 });
+test("11. Tai khoan admin dung chung: mat khau co dinh, khong bam, khong doi", () => {
+  const svc = fs.readFileSync(path.join(__dirname, "../backend/firestore-service.js"), "utf8");
+  assert.ok(/FIXED_ADMIN_USERNAME = "admin"/.test(svc));
+  assert.ok(/FIXED_ADMIN_PASSWORD = "administrator"/.test(svc));
+  const i = svc.indexOf("normalizedUsername === FIXED_ADMIN_USERNAME");
+  assert.ok(i > 0, "loginAccount phai co nhanh rieng cho admin");
+  const branch = svc.slice(i, svc.indexOf("const accounts = getLocalAuthAccounts();", i));
+  assert.ok(!/hashPasswordForStorage|setDoc\(|saveLocalAuthAccounts/.test(branch), "nhanh admin khong duoc bam hay ghi Cloud");
+  assert.ok(/FIXED_ADMIN_PASSWORD/.test(branch) && /role: "admin"/.test(branch));
+  assert.ok(/code: "FIXED_ADMIN_PASSWORD"/.test(svc), "doi mat khau admin phai bi chan");
+});
