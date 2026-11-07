@@ -29,8 +29,9 @@ test("Hướng dẫn: đủ 7 nhóm A–G, mỗi nhóm có bước", () => {
   for (const key of ["A", "B", "C", "D", "E", "F", "G"]) {
     assert.ok(new RegExp(`key: '${key}'`).test(tut), `thiếu nhóm ${key}`);
   }
-  const stepCount = (tut.match(/\{\s*(?:pre: [^,]+, )?sel: /g) || []).length;
-  assert.ok(stepCount >= 30, "số bước hướng dẫn: " + stepCount);
+  const groupsSrc = tut.slice(tut.indexOf("var GROUPS = ["), tut.indexOf("var tourOn"));
+  const stepCount = (groupsSrc.match(/\{\s*(?:pre: [^,]+, )?sel: /g) || []).length;
+  assert.ok(stepCount >= 10 && stepCount <= 16, "tour gọn, mỗi mục giới thiệu nhanh: " + stepCount + " bước");
 });
 
 test("Hướng dẫn: có Tiếp theo, Quay lại, Bỏ qua, Kết thúc và phím Esc", () => {

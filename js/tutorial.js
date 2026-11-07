@@ -214,71 +214,49 @@
   }
   function goSurvey(n) { return function () { goTab('tab-khaosat')(); if (window.goToSurveyStep) window.goToSurveyStep(n); }; }
 
+  // Mỗi nhóm chỉ giới thiệu nhanh "mục này dùng để làm gì"; chi tiết từng ô đã có tooltip và biểu tượng ⓘ.
   var GROUPS = [
     {
       key: 'A', name: 'Làm quen với giao diện', steps: [
-        { pre: goTab('tab-tukhoa'), sel: '#rail-nav-menu', title: 'Thanh điều hướng', text: 'Các chức năng chia thành nhóm: Thiết lập, Mục tiêu và lộ trình, Theo dõi thu chi 12 tháng, Đánh giá tâm lý. Bấm vào một mục để mở trang tương ứng.' },
-        { sel: '#current-title', title: 'Bạn đang ở đâu?', text: 'Tiêu đề này đổi theo trang đang mở, giúp bạn luôn biết mình đang ở khu vực nào.' },
-        { sel: '#btn-tab-dashboard', title: 'Dashboard', text: 'Trang tổng hợp số liệu và biểu đồ về dòng tiền, mục tiêu và đầu tư. Dashboard chỉ hiển thị kết quả, bạn nhập dữ liệu ở các trang khác.' },
-        { sel: '#btn-cloud-load', title: 'Nhập dữ liệu', text: 'Nhập dữ liệu từ tệp, xuất ra tệp JSON hoặc CSV và khôi phục bản sao lưu.' },
-        { sel: '#btn-cloud-save', title: 'Nút Lưu', text: 'Dữ liệu chỉ được lưu khi bạn bấm Lưu. Hãy bấm sau khi chỉnh sửa xong.' },
-        { sel: '#u021-theme-switch', title: 'Giao diện sáng và tối', text: 'Bấm để đổi giữa giao diện sáng và tối.' },
-        { sel: '#topbar-auth-section', title: 'Khu vực tài khoản', text: 'Đăng nhập để lưu dữ liệu vào tài khoản. Sau khi đăng nhập, bấm vào tên của bạn để mở menu tài khoản.' }
+        { pre: goTab('tab-tukhoa'), sel: '#rail-nav-menu', title: 'Menu bên trái', text: 'Chia thành các nhóm: Thiết lập, Mục tiêu và lộ trình, Theo dõi thu chi 12 tháng, Khảo sát. Bấm một mục để mở trang tương ứng.' },
+        { sel: '.topbar-right', title: 'Thanh trên cùng', text: 'Hướng dẫn (xem lại bất cứ lúc nào), Nhập dữ liệu (nhập xuất tệp, sao lưu), Lưu, đổi giao diện sáng hoặc tối và tài khoản của bạn.' }
       ]
     },
     {
       key: 'B', name: 'Thiết lập thông tin', steps: [
-        { pre: goTab('tab-tukhoa'), sel: function () { var e = $('#input-year'); return e ? (e.closest('.card, .panel, .setup-card, div') || e) : null; }, title: 'Năm và tuổi', text: 'Nhập năm bắt đầu theo dõi (1900 đến 2100) trước, rồi nhập tuổi của bạn tại năm đó. Đổi năm không làm đổi tuổi đã nhập. Hai thông tin này là mốc cho mọi bảng kế hoạch.' },
-        { sel: function () { return closestOf('tbody-income', 'table'); }, title: 'Danh mục thu nhập', text: 'Liệt kê các nguồn thu của bạn. Chữ xanh tím là chỗ bạn nhập, chữ xám hoặc đen là giá trị tự tính.' },
-        { sel: function () { return closestOf('tbody-expenses', 'table'); }, title: 'Danh mục chi phí', text: 'Liệt kê các khoản chi. Bấm "Thêm" để tạo thêm danh mục và "Xóa" để bỏ danh mục không dùng.' },
-        { sel: function () { return closestOf('tbody-learning', 'table'); }, title: 'Chi phát triển bản thân', text: 'Các khoản chi cho học tập và đào tạo, được theo dõi riêng ở các trang khác.' },
-        { sel: function () { return closestOf('tbody-invest', 'table'); }, title: 'Sản phẩm đầu tư', text: 'Các sản phẩm bạn dự định dùng để đầu tư, mỗi sản phẩm có lợi suất kỳ vọng. Bạn sẽ chọn chúng khi phân bổ cho mục tiêu.' }
+        { pre: goTab('tab-tukhoa'), sel: '.top-info-row', title: 'Năm và tuổi', text: 'Nhập năm bắt đầu theo dõi (1900 đến 2100) trước, rồi nhập tuổi của bạn tại năm đó.' },
+        { sel: '.sheet-tables-container', title: 'Danh mục', text: 'Khai báo danh mục chi phí, thu nhập, chi phát triển bản thân và sản phẩm đầu tư. Đây là nền để lập kế hoạch và ghi thu chi, nên làm trước.' }
       ]
     },
     {
       key: 'C', name: 'Quản lý mục tiêu', steps: [
-        { pre: goTab('tab-muctieu-bt'), sel: function () { return closestOf('tbody-tc-form-goals', 'table'); }, title: 'Nhập mục tiêu', text: 'Mỗi dòng là một mục tiêu: tên, giá trị cần đạt (triệu đồng), năm bắt đầu và năm hoàn tất. Thiếu năm bắt đầu thì hệ thống chưa tính được lộ trình cho mục tiêu đó.' },
-        { sel: '#target-savings-rate-val', title: 'Tỷ lệ tiết kiệm đầu tư', text: 'Tỷ lệ thu nhập bạn dự định dành cho tiết kiệm và đầu tư. Từ đó hệ thống suy ra thu nhập cần có.' },
-        { pre: goTc(1), sel: '#tc-section-1', title: 'Khoản cần để dành mỗi tháng', text: 'Mỗi thẻ là một mục tiêu với khoản cần góp mỗi tháng, tính theo công thức tài chính chuẩn từ giá trị mục tiêu, thời gian và lợi suất sản phẩm.' },
-        { sel: '#tc-invest-cards-container', title: 'Phân bổ sản phẩm đầu tư', text: 'Chọn sản phẩm đầu tư cho mục tiêu. Khi chưa chọn sản phẩm, khoản góp chưa thể tính theo lợi suất.' },
-        { pre: goTc(2), sel: '#table-tc-matrix', title: 'Ma trận tiết kiệm và thu nhập', text: 'Bảng tổng hợp mức tiết kiệm và thu nhập cần đạt hàng tháng qua các năm.' }
+        { pre: goTab('tab-muctieu-bt'), sel: function () { return closestOf('tbody-tc-form-goals', '.tc-import-container'); }, title: 'Mục tiêu bản thân', text: 'Nhập các mục tiêu: tên, giá trị (triệu đồng), năm bắt đầu và năm hoàn tất, cùng tỷ lệ tiết kiệm bạn dự định.' },
+        { pre: goTc(1), sel: '#tc-section-1', title: 'Mục tiêu tài chính', text: 'Mỗi thẻ cho biết khoản cần để dành mỗi tháng. Chọn sản phẩm đầu tư để tính theo lợi suất của sản phẩm. Phần 2 là ma trận tiết kiệm và thu nhập cần có theo từng năm.' }
       ]
     },
     {
       key: 'D', name: 'Cân đối lộ trình', steps: [
-        { pre: goCareer(1), sel: '#career-sec-1', title: 'Phần 1: phân bổ danh mục', text: 'Xem công cụ tài chính và kỹ năng bạn cần theo từng độ tuổi.' },
-        { pre: goCareer(2), sel: '#careerChart', title: 'Phần 2: đối chiếu thu nhập', text: 'Biểu đồ so sánh thu nhập cần có để đáp ứng các khoản góp với thu nhập theo lộ trình dự kiến. Nếu đường thu nhập dự kiến nằm dưới đường cần có thì bạn cần tăng thu nhập hoặc điều chỉnh mục tiêu.' },
-        { sel: '#career-sec-2', title: 'Đọc bảng đối chiếu', text: 'Mỗi dòng là một năm: cột thu nhập cần có là số cần để đáp ứng các khoản góp, cột còn lại là thu nhập theo lộ trình. So hai cột để biết năm nào còn thiếu.' }
+        { pre: goCareer(2), sel: '#careerChart', title: 'Cân đối lộ trình', text: 'Phần 1 cho tỷ trọng danh mục theo tuổi. Phần 2 so thu nhập cần có để đáp ứng các khoản góp với thu nhập theo lộ trình; đường lộ trình thấp hơn nghĩa là còn thiếu.' }
       ]
     },
     {
       key: 'E', name: 'Theo dõi tài chính', steps: [
-        { pre: goTab('tab-kehoach'), sel: function () { return closestOf('tbody-plan-inc', 'table'); }, title: 'Kế hoạch thu nhập', text: 'Nhập số tiền dự tính kiếm được cho từng khoản thu. Đây là cơ sở để đối chiếu với thực tế.' },
-        { sel: function () { return closestOf('tbody-plan-exp', 'table'); }, title: 'Kế hoạch chi tiêu', text: 'Nhập số tiền dự tính chi cho từng khoản chi trong mỗi tháng.' },
-        { pre: goMonth(1), sel: '#m-summary-income', title: 'Cập nhật số liệu thực tế', text: 'Chọn tháng ở thanh bên rồi ghi các khoản thu, chi thực tế. Đầu trang là tổng thu, tổng chi và tiết kiệm còn lại của tháng.' },
-        { sel: function () { return closestOf('tbody-m-recon-income', 'table'); }, title: 'Chênh lệch thu nhập', text: 'Chênh lệch thu nhập = thực tế trừ kế hoạch. Số dương nghĩa là bạn thu nhiều hơn kế hoạch.' },
-        { sel: function () { return closestOf('tbody-m-recon-expense', 'table'); }, title: 'Chênh lệch chi tiêu', text: 'Chênh lệch chi tiêu = kế hoạch trừ thực tế. Số dương nghĩa là bạn chi thấp hơn kế hoạch.' },
-        { pre: goTab('tab-dashboard'), sel: '#chartDashVariance', title: 'Biểu đồ chênh lệch lũy kế', text: 'Biểu đồ so chi tiêu thực tế với kế hoạch và cộng dồn chênh lệch qua các tháng, giúp thấy xu hướng cả năm.' },
-        { pre: goMonth(3, 12), sel: '#month-sec-3', title: 'Bảng cân đối cuối năm', text: 'Ở tháng 12 có bảng cân đối tài sản và nợ, cho biết tài sản ròng cuối năm.' }
+        { pre: goTab('tab-kehoach'), sel: '#tab-kehoach', title: 'Kế hoạch thu chi', text: 'Nhập số tiền dự tính thu và chi cho từng khoản trong tháng, làm cơ sở để so với thực tế.' },
+        { pre: goMonth(1), sel: '#m-summary-income', title: 'Theo dõi từng tháng', text: 'Chọn tháng ở menu rồi ghi thu chi thực tế. Bảng đối chiếu cho biết chênh lệch: thu = thực tế trừ kế hoạch, chi = kế hoạch trừ thực tế, số dương là tốt. Tháng 12 có thêm bảng cân đối cuối năm.' },
+        { pre: goTab('tab-dashboard'), sel: '#chartDashCombo12', title: 'Tổng quan tài chính', text: 'Xem dòng tiền 12 tháng, mục tiêu, đầu tư và chênh lệch lũy kế. Trang này chỉ để xem, bạn nhập số liệu ở các trang khác.' }
       ]
     },
     {
       key: 'F', name: 'Khảo sát', steps: [
-        { pre: goSurvey(1), sel: '#survey-nav-three', title: 'Các phần khảo sát', text: 'Khảo sát chia thành các bước. Phần 1 nói về mức chấp nhận rủi ro, phần 2 về hoàn cảnh gia đình và môi trường phát triển.' },
-        { sel: '#gform-questions-p1', title: 'Cách trả lời', text: 'Chọn một đáp án cho mỗi câu. Bạn có thể quay lại sửa câu trả lời, kết quả sẽ tự cập nhật.' },
-        { sel: '#survey-progress-lbl', title: 'Tiến độ', text: 'Thanh tiến độ cho biết bạn đã trả lời bao nhiêu câu. Cần đủ các câu để có kết quả tổng hợp.' },
-        { pre: goSurvey(3), sel: '#survey-complete-badge', title: 'Ý nghĩa của kết quả', text: 'Kết quả tổng hợp mô tả khẩu vị rủi ro và điều kiện phát triển của bạn, kèm khuyến nghị đầu tư để bạn cân nhắc khi chọn sản phẩm cho mục tiêu.', alt: { sel: '#survey-incomplete-banner', title: 'Xem kết quả khảo sát', text: 'Khi trả lời đủ các câu hỏi, kết quả tổng hợp về khẩu vị rủi ro và điều kiện phát triển sẽ hiện ở đây. Phần này cho biết bạn còn thiếu bao nhiêu câu.' } }
+        { pre: goSurvey(1), sel: '#survey-nav-three', title: 'Khảo sát', text: 'Trả lời 21 câu ở hai phần để biết khẩu vị rủi ro và điều kiện phát triển của bạn. Xong sẽ có điểm, nhóm kết quả và khuyến nghị.' }
       ]
     },
     {
       key: 'G', name: 'Lưu trữ và quản lý dữ liệu', steps: [
-        { sel: '#btn-cloud-save', title: 'Lưu dữ liệu', text: 'Bấm Lưu để lưu dữ liệu hiện tại. Sau khi lưu, bạn sẽ thấy thông báo thành công hoặc lỗi. Nếu chưa đăng nhập, hãy đăng nhập trước để dữ liệu được giữ trong tài khoản.' },
-        { sel: '#btn-cloud-load', title: 'Tải và sao lưu', text: 'Mở hộp Nhập dữ liệu để nhập từ tệp, xuất ra tệp hoặc xem và khôi phục các bản sao lưu đã lưu.' },
-        { sel: '#topbar-auth-section', title: 'Chuyển thiết bị hoặc tài khoản', text: 'Muốn dùng ở thiết bị khác, hãy đăng nhập cùng tài khoản. Trước khi đăng xuất hoặc đổi tài khoản, hãy bấm Lưu để không mất thay đổi chưa lưu.' }
+        { sel: '#btn-cloud-save', title: 'Lưu dữ liệu', text: 'Dữ liệu chỉ được lưu khi bạn bấm Lưu (cần đăng nhập). Nút Nhập dữ liệu để nhập xuất tệp và sao lưu. Muốn dùng ở thiết bị khác, đăng nhập cùng tài khoản và nhớ Lưu trước khi đăng xuất.' }
       ]
     }
   ];
-
   var tourOn = false, cur = null; // cur: {steps, i, dir, saved}
   var spot, card, menu, nudge;
 
