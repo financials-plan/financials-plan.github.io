@@ -2038,7 +2038,7 @@ const FirestoreService = {
             return {
               success: true,
               data: serverDataRes.data.data,
-              message: "Đã tải dữ liệu từ máy chủ xác thực!"
+              message: "Đã tải dữ liệu từ tài khoản của bạn!"
             };
           }
         }

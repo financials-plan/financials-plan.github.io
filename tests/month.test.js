@@ -130,3 +130,52 @@ test("13. config/firebase-config.js phai export firebaseConfig, app, analytics (
   assert.ok(/export\s*\{[^}]*\bapp\b[^}]*\}/.test(cfg), "thieu export app");
   assert.ok(/export\s*\{[^}]*\banalytics\b[^}]*\}/.test(cfg), "thieu export analytics");
 });
+
+// ===== Rà soát lỗi theo báo cáo tổng hợp (3.8, 3.10, 3.12, 1.4, 2.2, 2.4, 2.12, 3.13) =====
+test("14. Kiểm toán: nhãn thống nhất (2.2, 2.4, 2.12, 3.10, 3.1)", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(html.includes("<span>Tổng quan tài chính</span>") && !html.includes("Dashboard phân tích"), "2.2 đổi tên Dashboard");
+  assert.ok(html.includes("Mức biến động (%)") && !html.includes(">Rủi ro (%)<"), "2.4 tách khái niệm rủi ro");
+  assert.ok(html.includes("Năm bắt đầu để dành") && !html.includes('<th class="th-year">Năm bắt đầu</th>'), "2.12 phân biệt mốc năm");
+  assert.ok(html.includes("Tổng giá trị mục tiêu") && !html.includes('>Tổng tiết kiệm cần đạt<'), "3.10 đổi tên tổng giá trị mục tiêu");
+  assert.ok(html.includes("Giá trị mục tiêu (triệu đồng)") && html.includes("Đã tích lũy (triệu đồng)"), "3.1 đơn vị ở nhãn cột");
+  assert.ok(html.includes("tính cả năm bắt đầu và năm hoàn tất"), "3.13 ghi quy ước đếm năm");
+  assert.ok(src.includes("'tab-dashboard': 'TỔNG QUAN TÀI CHÍNH'"), "tiêu đề trang khớp tên mới");
+});
+
+test("15. Kiểm toán: đáp án khảo sát không chồng lấn (3.12)", () => {
+  for (const bad of ['"10-20%"', '"20-30%"', '"0-10%"', '"<50%"', '"50-70%"', '"70-100%"', '"100-150%"', '"5-10%"', '">50%"', '">30%"', '"<5%"']) {
+    assert.ok(!src.includes(bad), "còn đáp án khoảng đóng chồng lấn: " + bad);
+  }
+  assert.ok(src.includes('"Từ 10% đến dưới 20%"') && src.includes('"0% (không trích)"'));
+  // trọng số giữ nguyên thứ tự: đổi nhãn không đổi điểm
+  assert.ok(src.includes('"Trên 50%"], weights: [1, 2, 3, 4, 5]'));
+});
+
+test("16. Kiểm toán: năm hoàn tất nhỏ hơn năm bắt đầu có cảnh báo tại ô nhập (3.8)", () => {
+  const i = src.indexOf("function goalYearError(g) {");
+  assert.ok(i > 0, "có hàm goalYearError");
+  const j = src.slice(i).search(/\r?\n\}\r?\n/);
+  const goalYearError = new Function(src.slice(i, i + j + 3) + "; return goalYearError;")();
+  assert.ok(goalYearError({ start: 2026, end: 2020 }).includes("nhỏ hơn năm bắt đầu"), "2020 < 2026 báo lỗi");
+  assert.strictEqual(goalYearError({ start: 2026, end: 2026 }), "", "bằng nhau hợp lệ");
+  assert.strictEqual(goalYearError({ start: 2026, end: 2035 }), "", "đạt sau năm bắt đầu hợp lệ");
+  assert.strictEqual(goalYearError({ start: 0, end: 0 }), "", "chưa nhập thì không báo lỗi");
+  assert.ok(src.includes("class=\"field-error\""), "hiển thị lỗi cạnh ô");
+  // không làm đổi số người dùng nhập: hàm chỉ đọc
+  const g = { start: 2026, end: 2020 }; goalYearError(g);
+  assert.deepStrictEqual(g, { start: 2026, end: 2020 });
+});
+
+test("17. Kiểm toán: Hoàn thành khảo sát chỉ lưu khi người dùng bấm (1.4)", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(html.includes('id="btn-survey-finish" onclick="finishSurvey()"'));
+  assert.ok(/window\.finishSurvey = async function\(\) \{\s*const ok = await window\.saveAppStateToCloud\(\);/.test(src));
+  const calls = src.split("finishSurvey").length - 1;
+  assert.strictEqual(calls, 1, "finishSurvey chỉ được định nghĩa, không tự gọi nền");
+});
+
+test("18. Kiểm toán: ghi chú khi chưa chọn sản phẩm đầu tư (3.2, 1.3)", () => {
+  assert.strictEqual(src.split('class="goal-alloc-note"').length - 1, 3, "ghi chú ở cả ba thẻ mục tiêu đầu tư");
+  assert.ok(src.includes("Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức"));
+});

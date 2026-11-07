@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=3.7.10">
+  <link rel="stylesheet" href="./css/style.css?v=3.7.11">
   <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/analytics":"https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"}}</script>
 </head>
 <body>
@@ -59,8 +59,8 @@
           <button class="nav-item active" id="btn-tab-tukhoa" data-tooltip="Từ khóa thiết lập" onclick="switchTab('tab-tukhoa')">
             <i class="fa-solid fa-sliders"></i><span>Từ khóa thiết lập</span>
           </button>
-          <button class="nav-item" id="btn-tab-dashboard" data-tooltip="Dashboard phân tích" onclick="switchTab('tab-dashboard')">
-            <i class="fa-solid fa-chart-pie"></i><span>Dashboard phân tích</span>
+          <button class="nav-item" id="btn-tab-dashboard" data-tooltip="Tổng quan tài chính" onclick="switchTab('tab-dashboard')">
+            <i class="fa-solid fa-chart-pie"></i><span>Tổng quan tài chính</span>
           </button>
 
           <div class="nav-section-label">MỤC TIÊU &amp; LỘ TRÌNH</div>
@@ -669,7 +669,7 @@
                   </th>
                 </tr>
                 <tr class="header-sub">
-                  <th style="width: 40px;">#</th><th style="min-width: 130px;">Sản phẩm tài chính</th><th style="width: 70px;" title="Lợi suất kỳ vọng hiệu dụng năm (giả định lập kế hoạch, không phải lợi nhuận được bảo đảm)">Lãi suất năm (%)</th><th style="width: 64px;">Rủi ro (%)</th><th style="width: 160px; min-width: 160px;" title="Nhóm tài sản của kênh đầu tư; dùng để tính tỷ trọng danh mục ở Cân đối lộ trình">Loại đầu tư</th><th style="width: 45px;">Xóa</th>
+                  <th style="width: 40px;">#</th><th style="min-width: 130px;">Sản phẩm tài chính</th><th style="width: 70px;" title="Lợi suất kỳ vọng hiệu dụng năm (giả định lập kế hoạch, không phải lợi nhuận được bảo đảm)">Lãi suất năm (%)</th><th style="width: 84px;" title="Mức biến động (độ dao động) của sản phẩm, tính theo %. Không phải khả năng chịu rủi ro trong phần khảo sát.">Mức biến động (%)</th><th style="width: 160px; min-width: 160px;" title="Nhóm tài sản của kênh đầu tư; dùng để tính tỷ trọng danh mục ở Cân đối lộ trình">Loại đầu tư</th><th style="width: 45px;">Xóa</th>
                 </tr>
               </thead>
               <tbody id="tbody-invest"></tbody>
@@ -746,7 +746,7 @@
           <div class="dash-kpi-block kpi-modern-warning">
             <div class="kpi-icon-wrap"><i class="fa-solid fa-bullseye"></i></div>
             <div class="kpi-content-wrap">
-              <span class="kpi-title">Tổng tiết kiệm cần đạt</span>
+              <span class="kpi-title" title="Cộng giá trị của tất cả mục tiêu, chưa trừ phần đã tích lũy">Tổng giá trị mục tiêu</span>
               <span class="kpi-num" id="dash-tc-total-savings">0</span>
             </div>
           </div>
@@ -913,8 +913,8 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false" id="vision-age-cell"></td>
-                    <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false" id="vision-desc-cell"></td>
+                    <td class="cell-primary-light text-center font-bold cell-blue" contenteditable="true" spellcheck="false" id="vision-age-cell" data-placeholder="Ví dụ: năm 2040 hoặc 45 tuổi"></td>
+                    <td class="cell-primary-light cell-blue font-semibold" contenteditable="true" spellcheck="false" id="vision-desc-cell" data-placeholder="Ví dụ: Có thu nhập thụ động đủ sống, nghỉ hưu sớm"></td>
                   </tr>
                 </tbody>
               </table>
@@ -938,9 +938,9 @@
                     <tr>
                       <th class="th-name">Tên mục tiêu</th>
                       <th class="th-type">Phân loại</th>
-                      <th class="th-num">Giá trị mục tiêu</th>
-                      <th class="th-num">Đã tích lũy</th>
-                      <th class="th-year">Năm bắt đầu</th>
+                      <th class="th-num">Giá trị mục tiêu (triệu đồng)</th>
+                      <th class="th-num">Đã tích lũy (triệu đồng)</th>
+                      <th class="th-year">Năm bắt đầu để dành</th>
                       <th class="th-year">Năm hoàn tất</th>
                       <th class="th-del">Xóa</th>
                     </tr>
@@ -951,6 +951,7 @@
                   <span class="tc-form-hint">
                     💡 <strong>Cơ chế tính toán dòng tiền:</strong><br>
                     • <strong>Giá trị mục tiêu:</strong> Định giá tại thời điểm hiện tại. Hệ thống tự động bù trừ tiền đã có sẵn.<br>
+                    • <strong>Số năm:</strong> tính cả năm bắt đầu và năm hoàn tất (ví dụ 2026 đến 2035 là 10 năm). Năm hoàn tất phải từ năm bắt đầu trở đi.<br>
                     • <strong>Cơ chế tính toán:</strong> Dòng tiền đóng góp được tính tự động chuẩn công thức tài chính (PMT) và hiển thị chi tiết tại thẻ mục tiêu bên dưới.
                   </span>
                 </div>
@@ -1719,6 +1720,7 @@
               <div class="complete-badge-text">
                 <strong>Đã hoàn thành đầy đủ 21/21 câu hỏi</strong>
                 <span>Kết quả trắc nghiệm và khuyến nghị phân bổ tài sản đạt độ tin cậy và chính xác cao nhất</span>
+                <button type="button" class="btn-banner-link" id="btn-survey-finish" onclick="finishSurvey()" title="Lưu toàn bộ dữ liệu, trong đó có câu trả lời khảo sát"><i class="fa-solid fa-cloud-arrow-up"></i> Hoàn thành &amp; lưu khảo sát</button>
               </div>
             </div>
 
@@ -2931,7 +2933,7 @@
   </button>
 
   <script type="module" src="./backend/firestore-service.js?v=3.7.22"></script>
-  <script src="./js/script.js?v=3.7.30"></script>
+  <script src="./js/script.js?v=3.7.31"></script>
   <script src="./js/tutorial.js?v=1.0.0"></script>
 
 </body>

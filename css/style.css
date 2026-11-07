@@ -8535,3 +8535,7 @@ body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings span {
 .tn-text b{color:var(--text);font-size:14px}
 .tn-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 @media (prefers-reduced-motion:reduce){#tip-pop,.tour-spot,.tour-card,.tour-toast,.tour-nudge{transition:none}}
+/* Cảnh báo ngay tại ô nhập (năm hoàn tất < năm bắt đầu) */
+.tc-input-table input.is-invalid{border-color:var(--danger-strong);background:var(--danger-bg);color:var(--danger-strong)}
+.field-error{margin-top:4px;font-size:11.5px;line-height:1.4;color:var(--danger-strong);font-weight:500;white-space:normal;max-width:240px}
+.tc-card-h4-table td.goal-alloc-note{font-size:11.5px;color:var(--text-muted);background:var(--bg-surface);text-align:left;line-height:1.45;padding:6px 10px}

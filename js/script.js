@@ -1355,13 +1355,13 @@ const surveyQuestionsPart1 = [
   { q: "Rủi ro danh mục đầu tư bị giảm giá trị thường là mối quan tâm hàng đầu của các nhà đầu tư. Bảng sau mô tả bốn danh mục đầu tư với giá trị dự kiến và khả năng lỗ tiềm năng. Hãy cho biết bạn cảm thấy thoải mái khi lựa chọn danh mục nào nhất?", hasTable: true, opts: ["Danh mục đầu tư A", "Danh mục đầu tư B", "Danh mục đầu tư C", "Danh mục đầu tư D"], weights: [1, 2, 3, 4] },
   { q: "Lạm phát có thể làm sụt giảm mức sinh lời thực tế từ danh mục đầu tư theo thời gian. Thông tin nào sau đây thể hiện quan điểm của bạn về nỗi lo lạm phát?", opts: ["Bạn muốn giảm thiểu những biến động trong ngắn hạn cho danh mục đầu tư của mình càng nhiều càng tốt, việc cao hơn mức lạm phát hàng năm đáng kể không quá quan trọng", "Muốn một danh mục đầu tư cao hơn mức lạm phát vừa phải và sẵn sàng chấp nhận mức sụt giảm vừa phải trong ngắn hạn để đạt được mục tiêu này", "Mức sinh lời của danh mục có thể vượt xa mức lạm phát trong dài hạn và bạn sẵn sàng chấp nhận những mức sụt giảm có thể trong ngắn hạn để đạt được mục tiêu này"], weights: [1, 2, 3] },
   { q: "Việc đầu tư đôi khi phải đối mặt với những khoản lỗ. Bạn nghĩ gì về những giai đoạn có những khoản lỗ cho danh mục của mình?", opts: ["Bạn sẽ bán các khoản đầu tư ngay lập tức nếu mức giảm đáng kể xảy ra", "Mặc dù việc sụt giảm khiến bạn không thoải mái nhưng bạn sẵn sàng chờ đợi giai đoạn phục hồi phía sau", "Bạn chịu được việc danh mục sụt giảm và hoàn toàn có thể duy trì trạng thái đầu tư của danh mục trong một năm", "Cho dù danh mục đầu tư của bạn có sụt giảm trong vài năm tuy nhiên bạn đủ nhận thức để kiên định với mục tiêu dài hạn ban đầu"], weights: [1, 2, 3, 4] },
-  { q: "Giá trị đầu tư tài sản hiện tại của bạn là?", opts: ["Dưới 200 triệu đồng", "200 triệu – 500 triệu đồng", "500 triệu đến 1 tỷ đồng", "Từ 1-2 tỷ đồng", "Hơn 2 tỷ đồng"], weights: [1, 2, 3, 4, 5] },
-  { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "10-20%", "20-30%", "30-50%", ">50%"], weights: [1, 2, 3, 4, 5] }
+  { q: "Giá trị đầu tư tài sản hiện tại của bạn là?", opts: ["Dưới 200 triệu đồng", "Từ 200 triệu đến dưới 500 triệu đồng", "Từ 500 triệu đến dưới 1 tỷ đồng", "Từ 1 tỷ đến 2 tỷ đồng", "Hơn 2 tỷ đồng"], weights: [1, 2, 3, 4, 5] },
+  { q: "Tỷ lệ tiết kiệm của bạn hàng tháng sau khi trừ các chi phí?", opts: ["Dưới 10%", "Từ 10% đến dưới 20%", "Từ 20% đến dưới 30%", "Từ 30% đến 50%", "Trên 50%"], weights: [1, 2, 3, 4, 5] }
 ];
 
 const surveyQuestionsPart2 = [
-  { q: "Tỷ lệ trích thu nhập hàng tháng của bạn để gửi về cho gia đình?", opts: [">30%", "20-30%", "10-20%", "0-10%", "0%"], weights: [1, 2, 3, 4, 5] },
-  { q: "Mức thu nhập của vợ/chồng của bạn so với bạn?", opts: ["<50%", "50-70%", "70-100%", "100-150%", "150-300%"], weights: [1, 2, 3, 4, 5] },
+  { q: "Tỷ lệ trích thu nhập hàng tháng của bạn để gửi về cho gia đình?", opts: ["Trên 30%", "Từ 20% đến 30%", "Từ 10% đến dưới 20%", "Trên 0% đến dưới 10%", "0% (không trích)"], weights: [1, 2, 3, 4, 5] },
+  { q: "Mức thu nhập của vợ/chồng của bạn so với bạn?", opts: ["Dưới 50%", "Từ 50% đến dưới 70%", "Từ 70% đến dưới 100%", "Từ 100% đến dưới 150%", "Từ 150% đến 300%"], weights: [1, 2, 3, 4, 5] },
   { q: "Tần suất bạn quan tâm đến mạng xã hội mỗi ngày?", opts: ["3-4 giờ", "2-3 giờ", "1-2 giờ", "30 phút - 60 phút", "<30 phút"], weights: [1, 2, 3, 4, 5] },
   { q: "Số lượng bạn bè của bạn trên Facebook?", opts: ["<100", "100-200", "200-400", "400-800", ">800"], weights: [1, 2, 3, 4, 5] },
   { q: "Bạn xây dựng như thế nào về kế hoạch đầu mỗi năm?", opts: ["Chưa bao giờ", "Hiếm khi", "Tùy hứng", "Thường xuyên", "Hầu như năm nào cũng lập"], weights: [1, 2, 3, 4, 5] },
@@ -1370,7 +1370,7 @@ const surveyQuestionsPart2 = [
   { q: "Bạn đánh giá sức khỏe của mình như thế nào so với bạn bè và những người khác?", opts: ["Kém hơn rất nhiều", "Kém hơn", "Bằng mức trung bình", "Tốt hơn", "Tốt hơn rất nhiều"], weights: [1, 2, 3, 4, 5] },
   { q: "Mô tả tình hình tài chính của bạn khi còn đi học?", opts: ["Phụ thuộc hoàn toàn vào gia đình", "Gia đình hỗ trợ học phí và vẫn phải đi làm thêm", "Tự đi làm thêm để lo cho mình"], weights: [2, 3, 4] },
   { q: "Bạn đánh giá như thế nào trong mức chênh lệch thu nhập của những người làm trong công ty của mình?", opts: ["Không đáng kể", "Chênh lệch vừa phải", "Tương đối lớn", "Rất lớn"], weights: [1, 2, 3, 4] },
-  { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "<5%", "5-10%", "10-20%", "20-30%", ">30%"], weights: [1, 2, 3, 4, 5, 6] }
+  { q: "Mức tăng thu nhập trung bình hàng năm của bạn trong 3 năm gần nhất?", opts: ["Gần như không tăng", "Dưới 5%", "Từ 5% đến dưới 10%", "Từ 10% đến dưới 20%", "Từ 20% đến 30%", "Trên 30%"], weights: [1, 2, 3, 4, 5, 6] }
 ];
 
 // ==========================================
@@ -2698,7 +2698,7 @@ window.switchTab = function(tabId) {
 
   const titlesMap = {
     'tab-tukhoa': 'TỪ KHÓA THIẾT LẬP',
-    'tab-dashboard': 'DASHBOARD THEO DÕI TÀI CHÍNH',
+    'tab-dashboard': 'TỔNG QUAN TÀI CHÍNH',
     'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
     'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
     'tab-candoi': 'CÂN ĐỐI LỘ TRÌNH NGHỀ NGHIỆP',
@@ -5901,6 +5901,11 @@ window.openSurveyTab = function(stepNum) {
   }
 };
 
+window.finishSurvey = async function() {
+  const ok = await window.saveAppStateToCloud();
+  if (ok) showToast('Đã lưu khảo sát lúc ' + new Date().toLocaleTimeString('vi-VN') + '.', 'success');
+};
+
 window.goToSurveyStep = function(stepNum) {
   const step = Math.max(1, Math.min(3, parseInt(stepNum, 10) || 1));
   window.currentSurveyStep = step;
@@ -6144,6 +6149,15 @@ function evaluateSurveys() {
   if (bar2) bar2.style.width = res2.count === 0 ? '0%' : `${Math.min(100, Math.round(res2.normalizedScore))}%`;
 }
 
+function goalYearError(g) {
+  const s = Number(g && g.start) || 0;
+  const e = Number(g && g.end) || 0;
+  if (s > 0 && e > 0 && e < s) {
+    return 'Năm hoàn tất (' + e + ') đang nhỏ hơn năm bắt đầu (' + s + '). Hãy nhập năm hoàn tất từ ' + s + ' trở đi, nếu không mục tiêu này chưa được tính lộ trình.';
+  }
+  return '';
+}
+
 function renderTcGoalsFormTable() {
   ensureFixedInvestmentGoals();
   const tb = document.getElementById('tbody-tc-form-goals');
@@ -6196,9 +6210,11 @@ function renderTcGoalsFormTable() {
                  onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||0)">
         </td>
         <td>
-          <input type="number" class="text-center font-mono" value="${Number(g.end) || 0}"
+          <input type="number" class="text-center font-mono${goalYearError(g) ? ' is-invalid' : ''}" value="${Number(g.end) || 0}"
+                 ${goalYearError(g) ? 'aria-invalid="true"' : ''}
                  oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
+          ${goalYearError(g) ? `<div class="field-error" role="alert">${goalYearError(g)}</div>` : ''}
         </td>
         <td class="text-center">
           ${isFixed
@@ -6408,7 +6424,7 @@ function createCardHtmlRetirement(g, num) {
           </thead>
           <tbody>
             <tr>
-              <td>Năm bắt đầu</td>
+              <td>Năm bắt đầu để dành</td>
               <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
               <td>Mục tiêu tiết kiệm cần đạt</td>
               <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
@@ -6458,6 +6474,7 @@ function createCardHtmlRetirement(g, num) {
               <td class="cell-green-val font-mono" id="retire-phase-return" contenteditable="true" spellcheck="false" title="Giai đoạn nghỉ hưu nên chuyển sang sản phẩm an toàn; để 0 = dùng mặc định ${RETIREMENT_PHASE_DEFAULT_RETURN_PCT}%" onblur="updateGoalCardField('${g.id}', 'retireReturnRate', this.innerText)">${(Number(g.retireReturnRate) || RETIREMENT_PHASE_DEFAULT_RETURN_PCT).toFixed(1)}%</td>
               <td colspan="4" class="text-muted" style="font-size: 11px;">Số năm nghỉ hưu và chi tiêu hưu trí nhập theo giá hôm nay (chưa tính lạm phát).</td>
             </tr>
+            ${!(portfolio.totalWeight > 0) ? `<tr><td colspan="8" class="goal-alloc-note" role="note">Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức "LS ước tính" bạn nhập. Chọn sản phẩm ở bảng trên để tính theo lợi suất riêng của từng sản phẩm.</td></tr>` : ""}
             ${!portfolio.isWeightValid ? `
             <tr>
               <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
@@ -6509,7 +6526,7 @@ function createCardHtmlCollege(g, num) {
           </thead>
           <tbody>
             <tr>
-              <td>Năm bắt đầu</td>
+              <td>Năm bắt đầu để dành</td>
               <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
               <td>Chi phí chi tiêu ước tính (tháng)</td>
               <td class="cell-orange-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
@@ -6555,6 +6572,7 @@ function createCardHtmlCollege(g, num) {
               <td colspan="2" class="cell-orange-val text-center font-bold font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
             </tr>
             
+            ${!(portfolio.totalWeight > 0) ? `<tr><td colspan="8" class="goal-alloc-note" role="note">Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức "LS ước tính" bạn nhập. Chọn sản phẩm ở bảng trên để tính theo lợi suất riêng của từng sản phẩm.</td></tr>` : ""}
             ${!portfolio.isWeightValid ? `
             <tr>
               <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
@@ -6646,7 +6664,7 @@ function createCardHtmlDebt(g, num) {
         <table class="tc-card-h4-table">
           <tbody>
             <tr>
-              <td style="width: 32%;">Năm bắt đầu</td>
+              <td style="width: 32%;">Năm bắt đầu vay</td>
               <td class="cell-green-val font-mono" style="width: 18%;" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${startYr}</td>
               <td class="bg-col-head" style="width: 32%;">Thời gian trả nợ</td>
               <td class="text-right font-bold font-mono" style="width: 18%;">${nYears.toFixed(0)} năm</td>
@@ -6711,7 +6729,7 @@ function createCardHtmlInvest(g, num) {
           </thead>
           <tbody>
             <tr>
-              <td>Năm bắt đầu</td>
+              <td>Năm bắt đầu để dành</td>
               <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${startYr}</td>
               <td>Cần gom</td>
               <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${Number(g.val) || 0}</td>
@@ -6748,6 +6766,7 @@ function createCardHtmlInvest(g, num) {
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi trung bình dự kiến</td>
               <td colspan="2" class="cell-gold-val text-center font-mono">${portfolio.expectedAvgReturn.toFixed(2)}%/năm</td>
             </tr>
+            ${!(portfolio.totalWeight > 0) ? `<tr><td colspan="8" class="goal-alloc-note" role="note">Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức "LS ước tính" bạn nhập. Chọn sản phẩm ở bảng trên để tính theo lợi suất riêng của từng sản phẩm.</td></tr>` : ""}
             ${!portfolio.isWeightValid ? `
             <tr>
               <td colspan="8" class="goal-weight-warning">
@@ -7107,7 +7126,7 @@ function renderSkillsFamilyJob() {
   if (tbS) {
     tbS.innerHTML = AppState.skillsList.map((s, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa kỹ năng')){ AppState.skillsList[${i}]=this.innerText.trim(); }">${s}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Phân tích tài chính, Excel nâng cao" onblur="if(assertWritePermission('Sửa kỹ năng')){ AppState.skillsList[${i}]=this.innerText.trim(); }">${s}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteSkillRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -7117,7 +7136,7 @@ function renderSkillsFamilyJob() {
   if (tbF) {
     tbF.innerHTML = AppState.familyList.map((f, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa nguồn hỗ trợ')){ AppState.familyList[${i}]=this.innerText.trim(); }">${f}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Hỗ trợ từ bố mẹ, thu nhập của vợ/chồng" onblur="if(assertWritePermission('Sửa nguồn hỗ trợ')){ AppState.familyList[${i}]=this.innerText.trim(); }">${f}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteFamilyRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -7127,7 +7146,7 @@ function renderSkillsFamilyJob() {
   if (tbJ) {
     tbJ.innerHTML = AppState.jobList.map((j, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" onblur="if(assertWritePermission('Sửa môi trường làm việc')){ AppState.jobList[${i}]=this.innerText.trim(); }">${j}</td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Công ty ổn định, có cơ hội thăng tiến" onblur="if(assertWritePermission('Sửa môi trường làm việc')){ AppState.jobList[${i}]=this.innerText.trim(); }">${j}</td>
         <td class="text-center"><button class="btn-table-del" onclick="deleteJobRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
@@ -10578,7 +10597,7 @@ window.submitStudentJoinClass = async function() {
         if (fb) {
           fb.style.display = 'block';
           fb.className = 'text-warning';
-          fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber"></i> ' + res.message + '<br><small style="color: #d97706;">(Chưa đồng bộ lên máy chủ: ' + (res.warning || 'Vui lòng kiểm tra mạng') + ' - Thiết bị khác chưa thể thấy yêu cầu này)</small>';
+          fb.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber"></i> ' + res.message + '<br><small style="color: #d97706;">(Chưa lưu được lên tài khoản: ' + (res.warning || 'vui lòng kiểm tra kết nối mạng') + '. Thiết bị khác chưa thể thấy yêu cầu này.)</small>';
         }
       } else {
         showToast(res.message);
@@ -10626,7 +10645,7 @@ window.submitStudentJoinClass = async function() {
     if (fb) {
       fb.style.display = 'block';
       fb.className = 'text-danger';
-      fb.textContent = "Lỗi kết nối máy chủ khi tham gia nhóm.";
+      fb.textContent = "Không kết nối được khi tham gia nhóm. Vui lòng kiểm tra mạng và thử lại.";
     }
   } finally {
     if (btnSubmit) {
@@ -10714,7 +10733,7 @@ async function renderStudentEnrolledClasses() {
   try {
     const allClasses = await window.CloudDB.getClasses();
     if (!Array.isArray(allClasses)) {
-      throw new Error("Dữ liệu nhóm không hợp lệ từ máy chủ");
+      throw new Error("Dữ liệu nhóm tải về không hợp lệ");
     }
     const enrolled = allClasses.filter(c => Array.isArray(c.members) && c.members.some(m => {
       const mUser = m?.username || m?.normalizedUsername || m?.studentId || m?.id || '';
@@ -10750,7 +10769,7 @@ async function renderStudentEnrolledClasses() {
     }
   } catch (err) {
     console.error("Lỗi tải danh sách nhóm đã tham gia:", err);
-    tbody.innerHTML = `<tr><td colspan="3" class="empty-cell" style="padding: 16px 12px; color: #ef4444;"><i class="fa-solid fa-circle-exclamation text-danger"></i> Không thể tải dữ liệu nhóm: ${escapeHtml(err.message || 'Lỗi kết nối máy chủ')}. <a href="javascript:void(0)" onclick="renderStudentEnrolledClasses()" style="text-decoration: underline; font-weight: 600; color: inherit; margin-left: 6px;"><i class="fa-solid fa-arrow-rotate-right"></i> Thử lại</a></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-cell" style="padding: 16px 12px; color: #ef4444;"><i class="fa-solid fa-circle-exclamation text-danger"></i> Không thể tải dữ liệu nhóm: ${escapeHtml(err.message || 'Lỗi kết nối mạng')}. <a href="javascript:void(0)" onclick="renderStudentEnrolledClasses()" style="text-decoration: underline; font-weight: 600; color: inherit; margin-left: 6px;"><i class="fa-solid fa-arrow-rotate-right"></i> Thử lại</a></td></tr>`;
   }
 
   if (typeof window.updateStudentClassStatusUI === 'function') {
