@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=3.7.12">
+  <link rel="stylesheet" href="./css/style.css?v=3.7.13">
   <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/analytics":"https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"}}</script>
 </head>
 <body>
@@ -601,6 +601,11 @@
           </div>
         </div>
 
+        <div class="setup-empty-banner" id="setup-empty-banner" role="note" style="display: none;">
+          <div class="seb-text"><strong>Bạn chưa có danh mục nào.</strong><span>Danh mục chi phí, thu nhập và chi phát triển bản thân là nền để lập kế hoạch và ghi thu chi. Bạn có thể dùng bộ gợi ý rồi sửa lại, hoặc tự thêm từng dòng bằng nút "Thêm". Sản phẩm đầu tư do bạn tự nhập lãi suất và loại đầu tư.</span></div>
+          <button type="button" class="btn-table-add-prominent" onclick="useStarterCategories()"><i class="fa-solid fa-wand-magic-sparkles"></i> Dùng bộ danh mục gợi ý</button>
+        </div>
+
         <div class="sheet-tables-container">
 
           <div class="sheet-table-wrap">
@@ -645,7 +650,7 @@
                 <tr class="header-main-warning">
                   <th colspan="3">
                     <div class="table-header-flex">
-                      <span class="title"><i class="fa-solid fa-graduation-cap"></i> Kế hoạch phát triển</span>
+                      <span class="title"><i class="fa-solid fa-graduation-cap"></i> Chi phát triển bản thân</span>
                       <button class="btn-table-add" onclick="addPlanRow()"><i class="fa-solid fa-plus"></i><span class="btn-text">Thêm</span></button>
                     </div>
                   </th>
@@ -1843,7 +1848,7 @@
             <i class="fa-solid fa-triangle-exclamation" id="confirm-warning-icon"></i>
           </div>
           <div class="confirm-warning-content">
-            <strong id="confirm-warning-heading">Cảnh báo ghi đè dữ liệu</strong>
+            <strong id="confirm-warning-heading">Cảnh báo thay thế dữ liệu</strong>
             <p id="confirm-warning-text">
               Thao tác này sẽ thay thế dữ liệu tài chính hiện tại trên màn hình bằng dữ liệu từ bản sao lưu được chọn. Một bản lưu an toàn cho phiên hiện tại sẽ được tự động tạo trước khi khôi phục.
             </p>
@@ -2024,7 +2029,7 @@
                   <optgroup label="Danh mục thiết lập">
                     <option value="keywords_expense">Thiết lập: Danh mục chi phí</option>
                     <option value="keywords_income">Thiết lập: Danh mục nguồn thu nhập</option>
-                    <option value="keywords_learning">Thiết lập: Kế hoạch phát triển chuyên môn</option>
+                    <option value="keywords_learning">Thiết lập: Chi phát triển bản thân</option>
                     <option value="keywords_invest">Thiết lập: Danh mục sản phẩm đầu tư</option>
                   </optgroup>
                   <optgroup label="Kế hoạch &amp; Lộ trình">
@@ -2933,7 +2938,7 @@
   </button>
 
   <script type="module" src="./backend/firestore-service.js?v=3.7.23"></script>
-  <script src="./js/script.js?v=3.7.33"></script>
+  <script src="./js/script.js?v=3.7.34"></script>
   <script src="./js/tutorial.js?v=1.0.2"></script>
 
 </body>

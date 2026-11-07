@@ -300,6 +300,42 @@ function guardWrite(fn, ms = 1500) {
   };
 }
 
+// Hiển thị đúng số người dùng đã nhập: giữ tối đa 6 chữ số thập phân, bỏ số 0 thừa (6.25 -> "6.25", 6 -> "6").
+function fmtTyped(n) {
+  const x = Number(n);
+  if (!isFinite(x)) return '0';
+  return String(Number(x.toFixed(6)));
+}
+
+// Bộ danh mục gợi ý (chỉ tên, không có số liệu). Sản phẩm đầu tư không gợi ý vì cần lãi suất và loại đầu tư do người dùng tự nhập.
+const STARTER_CATEGORIES = {
+  expenses: ["Tiền ăn uống, sinh hoạt", "Tiền thuê nhà, điện nước", "Mua sắm cá nhân", "Chi phí đi lại, xăng xe", "Quỹ khẩn cấp, y tế"],
+  incomeList: ["Lương chính", "Thu nhập làm thêm, Freelance", "Thưởng hiệu quả, Lễ Tết", "Thu nhập từ đầu tư / Tiết kiệm", "Thu nhập thụ động khác"],
+  planList: ["Học ngoại ngữ (IELTS / Tiếng Trung)", "Khóa học chuyên môn nâng cao", "Chứng chỉ nghề nghiệp chuyên sâu", "Mua sách & tài liệu phát triển kỹ năng", "Tham gia hội thảo, mạng lưới nghề nghiệp"]
+};
+
+function updateSetupEmptyBanner() {
+  const el = document.getElementById('setup-empty-banner');
+  if (!el) return;
+  const isEmpty = !(AppState.expenses && AppState.expenses.length) && !(AppState.incomeList && AppState.incomeList.length) && !(AppState.planList && AppState.planList.length);
+  el.style.display = isEmpty ? 'flex' : 'none';
+}
+
+window.useStarterCategories = function() {
+  if (!assertWritePermission("Dùng bộ danh mục gợi ý")) return;
+  let added = 0;
+  ['expenses', 'incomeList', 'planList'].forEach(key => {
+    if (!Array.isArray(AppState[key])) AppState[key] = [];
+    if (AppState[key].length === 0) {
+      AppState[key] = STARTER_CATEGORIES[key].slice();
+      added += AppState[key].length;
+    }
+  });
+  renderSetupTables();
+  syncKeywordChangesToDependentSheets();
+  showToast(added > 0 ? `Đã thêm ${added} danh mục gợi ý. Bạn có thể sửa, xóa hoặc thêm; nhớ bấm Lưu để giữ lại.` : 'Các danh mục đã có sẵn, không thêm gì.', added > 0 ? 'success' : 'info');
+};
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -1768,6 +1804,7 @@ const FinancialMath = {
       });
     }
 
+    const maxScore = Array.isArray(questions) ? questions.reduce((s, q) => s + (q && Array.isArray(q.weights) && q.weights.length ? Math.max(...q.weights) : 0), 0) : 0;
     const isComplete = (count === total && total > 0);
     const normalizedScore = (count > 0 && maxPossibleAnswered > 0)
       ? (rawScore / maxPossibleAnswered) * 100
@@ -1798,6 +1835,7 @@ const FinancialMath = {
       total,
       isComplete,
       normalizedScore,
+      maxScore,
       classification,
       description
     };
@@ -3703,6 +3741,7 @@ function renderDashboardAllCharts() {
 }
 
 function renderSetupTables() {
+  updateSetupEmptyBanner();
   const tbExp = document.getElementById('tbody-expenses');
   if (tbExp) {
     tbExp.innerHTML = AppState.expenses.map((item, idx) => `
@@ -3742,8 +3781,8 @@ function renderSetupTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'name', this.innerText)">${escapeHtml(p.name)}</td>
-        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.returnRate || 0).toFixed(1)}%</td>
-        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${Number(p.risk || 0).toFixed(1)}%</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'returnRate', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${fmtTyped(p.returnRate || 0)}%</td>
+        <td class="text-right cell-blue font-mono" contenteditable="true" spellcheck="false" onblur="updateInvestField(${idx}, 'risk', parseFloat(this.innerText.replace(/[^0-9.-]/g, ''))||0)">${fmtTyped(p.risk || 0)}%</td>
         <td>
           <select class="select-inline-cell" aria-label="Loại đầu tư" onchange="updateInvestField(${idx}, 'investmentType', this.value)">
             <option value="" ${FinancialMath.normalizeInvestmentType(p.investmentType) ? '' : 'selected'}>-- Chưa xác định --</option>
@@ -4020,7 +4059,7 @@ function renderPlanTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="font-semibold">${escapeHtml(p.name || '')}</td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanIncValLive(${idx}, this.innerText)" onblur="updatePlanIncVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanIncValLive(${idx}, this.innerText)" onblur="updatePlanIncVal(${idx}, this.innerText)">${fmtTyped(p.plan || 0)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanIncField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
       </tr>
@@ -4033,7 +4072,7 @@ function renderPlanTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="font-semibold">${escapeHtml(p.name || '')}</td>
-        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanExpValLive(${idx}, this.innerText)" onblur="updatePlanExpVal(${idx}, this.innerText)">${Number(p.plan || 0).toFixed(2)}</td>
+        <td class="text-right cell-blue font-bold font-mono" contenteditable="true" spellcheck="false" oninput="updatePlanExpValLive(${idx}, this.innerText)" onblur="updatePlanExpVal(${idx}, this.innerText)">${fmtTyped(p.plan || 0)}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'note', this.innerText)">${escapeHtml(p.note || '')}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanExpField(${idx}, 'analysis', this.innerText)">${escapeHtml(p.analysis || '')}</td>
       </tr>
@@ -6178,9 +6217,9 @@ function evaluateSurveys() {
   const sumCircTitle = document.getElementById('survey-summary-circumstance-title');
   const sumCircDesc = document.getElementById('survey-summary-circumstance-desc');
 
-  if (sumRiskTitle) sumRiskTitle.textContent = riskTitle;
+  if (sumRiskTitle) sumRiskTitle.textContent = riskTitle + (res1.isComplete ? ` · ${res1.rawScore}/${res1.maxScore} điểm` : '');
   if (sumRiskDesc) sumRiskDesc.textContent = rTxt;
-  if (sumCircTitle) sumCircTitle.textContent = circumstanceTitle;
+  if (sumCircTitle) sumCircTitle.textContent = circumstanceTitle + (res2.isComplete ? ` · ${res2.rawScore}/${res2.maxScore} điểm` : '');
   if (sumCircDesc) sumCircDesc.textContent = cTxt;
 
   const bar1 = document.getElementById('survey-result-bar-1');
@@ -6469,9 +6508,9 @@ function createCardHtmlRetirement(g, num) {
               <td>Mục tiêu tiết kiệm cần đạt</td>
               <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
@@ -6479,9 +6518,9 @@ function createCardHtmlRetirement(g, num) {
               <td class="font-bold">Tổng số năm tích lũy</td>
               <td class="cell-green-val font-bold font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Số năm sống sau nghỉ hưu</td>
@@ -6489,9 +6528,9 @@ function createCardHtmlRetirement(g, num) {
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
               <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Chi tiêu hưu trí mỗi tháng (giá hôm nay)</td>
@@ -6505,7 +6544,7 @@ function createCardHtmlRetirement(g, num) {
               <td>Số tiền để lại (cuối đời):</td>
               <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
               <td style="text-align: right;">LS ước tính:</td>
-              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
               <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
               <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
@@ -6571,9 +6610,9 @@ function createCardHtmlCollege(g, num) {
               <td>Chi phí chi tiêu ước tính (tháng)</td>
               <td class="cell-orange-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
@@ -6581,9 +6620,9 @@ function createCardHtmlCollege(g, num) {
               <td>Thời gian tiết kiệm (năm)</td>
               <td class="cell-green-val font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Số tháng dự phòng</td>
@@ -6591,9 +6630,9 @@ function createCardHtmlCollege(g, num) {
               <td>Số tiền thanh toán hằng tháng</td>
               <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Tổng ước chi phí</td>
@@ -6605,7 +6644,7 @@ function createCardHtmlCollege(g, num) {
             </tr>
             <tr>
               <td>Lãi suất ước tính (năm)</td>
-              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${estRate.toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
               <td>Số tiền dự phòng đã có</td>
               <td class="cell-green-val font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Mục tiêu tiết kiệm cần đạt</td>
@@ -6774,9 +6813,9 @@ function createCardHtmlInvest(g, num) {
               <td>Cần gom</td>
               <td class="cell-orange-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${Number(g.val) || 0}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${(Number(prods[0]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[0]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[0]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
@@ -6784,9 +6823,9 @@ function createCardHtmlInvest(g, num) {
               <td class="font-bold">Số năm gom</td>
               <td class="text-right font-bold font-mono">${nYears.toFixed(0)} năm</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${(Number(prods[1]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[1]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[1]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Tiền sẵn có</td>
@@ -6794,9 +6833,9 @@ function createCardHtmlInvest(g, num) {
               <td class="font-bold">Cần / tháng</td>
               <td class="cell-orange-val font-mono">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${(Number(prods[2]?.weight) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[2]?.returnRate) || 0).toFixed(1)}%</td>
-              <td class="text-right font-mono">${(Number(prods[2]?.risk) || 0).toFixed(1)}%</td>
+              <td class="cell-green-val font-mono" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Số tiền còn thiếu</td>
@@ -8271,7 +8310,7 @@ const CSV_TABLE_SCHEMAS = {
     ]
   },
   keywords_learning: {
-    label: "Thiết lập: Kế hoạch phát triển chuyên môn",
+    label: "Thiết lập: Chi phát triển bản thân",
     requireMonth: false,
     fields: [
       { key: "name", label: "Hạng mục phát triển", required: true }

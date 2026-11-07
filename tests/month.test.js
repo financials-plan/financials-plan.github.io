@@ -271,3 +271,37 @@ test("25. service: ghi trùng cùng tham số đang chạy chỉ gửi một l�
     assert.ok(!new RegExp('"' + name + '"').test(svcSrc.slice(svcSrc.indexOf("const DEDUPED_WRITES"), svcSrc.indexOf("function dedupeInFlightWrites"))), name + " không được gom");
   }
 });
+
+// ===== Sửa các mục còn lại: hiển thị đúng số đã nhập, danh mục gợi ý, điểm khảo sát, tên chi phát triển =====
+test("26. fmtTyped: không làm tròn số người dùng đã nhập ở các ô nhập lãi suất, biến động, tỷ trọng, kế hoạch", () => {
+  const fmtTyped = new Function(extractFn(src, "function fmtTyped(") + "; return fmtTyped;")();
+  assert.deepStrictEqual([6.25, 6, 33.333, 12.375, 0.1 + 0.2, NaN].map(fmtTyped), ["6.25", "6", "33.333", "12.375", "0.3", "0"]);
+  for (const bad of ["(Number(prods[0]?.weight) || 0).toFixed(1)", "(Number(prods[1]?.returnRate) || 0).toFixed(1)", "(Number(prods[2]?.risk) || 0).toFixed(1)", "Number(p.returnRate || 0).toFixed(1)", "Number(p.risk || 0).toFixed(1)", "Number(p.plan || 0).toFixed(2)", "estRate.toFixed(1)}%"]) {
+    assert.ok(!src.includes(bad), "còn làm tròn ô nhập: " + bad);
+  }
+});
+
+test("27. Danh mục gợi ý: chỉ điền danh sách đang trống, không bịa số liệu sản phẩm đầu tư", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(html.includes('id="setup-empty-banner"') && html.includes('onclick="useStarterCategories()"'));
+  const i = src.indexOf("const STARTER_CATEGORIES = {");
+  const block = src.slice(i, src.indexOf("};", i) + 2);
+  assert.ok(/expenses:/.test(block) && /incomeList:/.test(block) && /planList:/.test(block));
+  assert.ok(!/investProducts/.test(block), "không gợi ý sản phẩm đầu tư (cần lãi suất và loại đầu tư do người dùng nhập)");
+  const fn = src.slice(src.indexOf("window.useStarterCategories = function() {"), src.indexOf("function escapeHtml(str) {"));
+  assert.ok(fn.includes("if (AppState[key].length === 0)"), "chỉ điền khi danh sách trống, không ghi đè");
+  assert.ok(!/investProducts/.test(fn), "không đụng tới sản phẩm đầu tư");
+  assert.ok(!/saveAppStateToCloud/.test(fn), "không tự lưu; người dùng bấm Lưu");
+});
+
+test("28. Khảo sát: hiển thị điểm/điểm tối đa theo thang web hiện hành, không đổi ngưỡng", () => {
+  assert.ok(src.includes("maxScore,"), "evaluateSurvey trả maxScore");
+  assert.ok(src.includes("${res1.rawScore}/${res1.maxScore} điểm") && src.includes("${res2.rawScore}/${res2.maxScore} điểm"));
+  for (const s of ["maxScore: 20,", "maxScore: 29,", "maxScore: 21,", "maxScore: 30,", "maxScore: 39,", "maxScore: 48,"]) assert.ok(src.includes(s), "ngưỡng thang web phải giữ nguyên: " + s);
+});
+
+test("29. Tên 'Chi phát triển bản thân' và hộp khôi phục dùng cùng cách nói", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  assert.ok(html.includes("Chi phát triển bản thân</span>") && !html.includes("> Kế hoạch phát triển</span>"));
+  assert.ok(!html.includes("Cảnh báo ghi đè dữ liệu") && html.includes("Cảnh báo thay thế dữ liệu"));
+});

@@ -8543,3 +8543,8 @@ body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings span {
 .tc-input-table input.is-invalid{border-color:var(--danger-strong);background:var(--danger-bg);color:var(--danger-strong)}
 .field-error{margin-top:4px;font-size:11.5px;line-height:1.4;color:var(--danger-strong);font-weight:500;white-space:normal;max-width:240px}
 .tc-card-h4-table td.goal-alloc-note{font-size:11.5px;color:var(--text-muted);background:var(--bg-surface);text-align:left;line-height:1.45;padding:6px 10px}
+
+/* Gợi ý khi chưa có danh mục */
+.setup-empty-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 16px;padding:14px 16px;border:1px dashed var(--primary);border-radius:var(--radius-card);background:var(--bg-surface)}
+.setup-empty-banner .seb-text{flex:1 1 320px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5;color:var(--text-muted)}
+.setup-empty-banner .seb-text strong{color:var(--text);font-size:14.5px}

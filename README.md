@@ -14,12 +14,12 @@ Trang chạy tại: <https://financials-plan.github.io/>
 
 | Tab | Nội dung |
 |---|---|
-| Danh mục thiết lập | Năm bắt đầu theo dõi (1900–2100) và tuổi tại năm đó; danh mục chi, thu, kế hoạch phát triển và **danh mục sản phẩm đầu tư** (lãi suất, mức biến động, *Loại đầu tư*) |
+| Danh mục thiết lập | Năm bắt đầu theo dõi (1900–2100) và tuổi tại năm đó; danh mục chi, thu, kế hoạch phát triển và **danh mục sản phẩm đầu tư** (lãi suất, mức biến động, *Loại đầu tư*); khi chưa có danh mục, nút **Dùng bộ danh mục gợi ý** điền sẵn tên các danh mục chi, thu, chi phát triển bản thân (không có số liệu) |
 | Tổng quan tài chính | Tổng quan dòng tiền, mục tiêu và các biểu đồ |
 | Mục tiêu bản thân / tài chính | Bảng mục tiêu, thẻ phân bổ sản phẩm cho từng mục tiêu, ma trận khoản góp theo năm |
 | Cân đối lộ trình | Phần 1: tỷ trọng cổ phiếu / trái phiếu / bảo hiểm / tiền gửi theo tuổi và mức sinh lời; Phần 2: đối chiếu thu nhập thực tế với mức cần có |
 | Kế hoạch thu chi & Theo dõi 12 tháng | Kế hoạch, thực tế, chênh lệch lũy kế, bảng cân đối cuối năm |
-| Khảo sát | Đánh giá khẩu vị rủi ro và hoàn cảnh (21 câu) |
+| Khảo sát | Đánh giá khẩu vị rủi ro và hoàn cảnh (21 câu); kết quả kèm điểm/điểm tối đa theo thang đang dùng |
 
 Công thức đang dùng được mô tả tại [docs/reference/CONG_THUC_HIEN_HANH.md](docs/reference/CONG_THUC_HIEN_HANH.md).
 
