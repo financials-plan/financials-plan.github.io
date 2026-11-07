@@ -48,8 +48,8 @@
     { sel: '#topbar-user-chip', t: 'Mở menu tài khoản: thông tin, đổi mật khẩu, tham gia nhóm, nhập xuất dữ liệu.' },
     { sel: '#btn-tutorial', t: 'Mở hướng dẫn sử dụng: xem toàn bộ hoặc từng nhóm chức năng.' },
 
-    { sel: '#input-year', t: 'Năm bắt đầu theo dõi. Các bảng kế hoạch và lộ trình lấy năm này làm mốc đầu tiên.' },
-    { sel: '#input-age', t: 'Tuổi của bạn tại năm bắt đầu theo dõi. Tuổi ở các năm sau được tính tăng dần theo từng năm.' },
+    { sel: '#input-year', t: 'Năm bắt đầu theo dõi (từ 1900 đến 2100). Nhập năm trước, rồi nhập tuổi của bạn tại năm đó.' },
+    { sel: '#input-age', t: 'Tuổi của bạn tại năm đã nhập ở ô bên cạnh. Tuổi ở các năm sau được tính tăng dần theo từng năm.' },
 
     { sel: function () { return headingBefore('tbody-expenses'); }, t: 'Danh mục chi phí bạn dùng khi lập kế hoạch và ghi chi tiêu. Bấm "Thêm" để tạo danh mục mới.', icon: true },
     { sel: function () { return headingBefore('tbody-income'); }, t: 'Danh mục các nguồn thu nhập. Sau khi có danh mục, bạn mới ghi được thu nhập.', icon: true },
@@ -228,7 +228,7 @@
     },
     {
       key: 'B', name: 'Thiết lập thông tin', steps: [
-        { pre: goTab('tab-tukhoa'), sel: function () { var e = $('#input-year'); return e ? (e.closest('.card, .panel, .setup-card, div') || e) : null; }, title: 'Năm và tuổi', text: 'Nhập năm bắt đầu theo dõi và tuổi của bạn tại năm đó. Hai thông tin này là mốc cho mọi bảng kế hoạch.' },
+        { pre: goTab('tab-tukhoa'), sel: function () { var e = $('#input-year'); return e ? (e.closest('.card, .panel, .setup-card, div') || e) : null; }, title: 'Năm và tuổi', text: 'Nhập năm bắt đầu theo dõi (1900 đến 2100) trước, rồi nhập tuổi của bạn tại năm đó. Đổi năm không làm đổi tuổi đã nhập. Hai thông tin này là mốc cho mọi bảng kế hoạch.' },
         { sel: function () { return closestOf('tbody-income', 'table'); }, title: 'Danh mục thu nhập', text: 'Liệt kê các nguồn thu của bạn. Chữ xanh tím là chỗ bạn nhập, chữ xám hoặc đen là giá trị tự tính.' },
         { sel: function () { return closestOf('tbody-expenses', 'table'); }, title: 'Danh mục chi phí', text: 'Liệt kê các khoản chi. Bấm "Thêm" để tạo thêm danh mục và "Xóa" để bỏ danh mục không dùng.' },
         { sel: function () { return closestOf('tbody-learning', 'table'); }, title: 'Chi phát triển bản thân', text: 'Các khoản chi cho học tập và đào tạo, được theo dõi riêng ở các trang khác.' },

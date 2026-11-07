@@ -2697,7 +2697,7 @@ window.switchTab = function(tabId) {
   document.getElementById(`btn-${tabId}`)?.classList.add('active');
 
   const titlesMap = {
-    'tab-tukhoa': 'TỪ KHÓA THIẾT LẬP',
+    'tab-tukhoa': 'DANH MỤC THIẾT LẬP',
     'tab-dashboard': 'TỔNG QUAN TÀI CHÍNH',
     'tab-muctieu-bt': 'XÁC ĐỊNH MỤC TIÊU BẢN THÂN',
     'tab-muctieu-tc': 'XÁC ĐỊNH MỤC TIÊU TÀI CHÍNH',
@@ -6365,8 +6365,8 @@ function renderGoalProductSelectHtml(g, pIndex) {
 
   if (validProducts.length === 0) {
     return `
-      <select class="select-inline-cell" disabled style="opacity:0.75; cursor:not-allowed;" title="Chưa có sản phẩm đầu tư trong mục Từ khóa">
-        <option value="" selected>-- Chưa có sản phẩm (Thêm ở Từ khóa) --</option>
+      <select class="select-inline-cell" disabled style="opacity:0.75; cursor:not-allowed;" title="Chưa có sản phẩm đầu tư trong mục Danh mục thiết lập">
+        <option value="" selected>-- Chưa có sản phẩm (Thêm ở Danh mục thiết lập) --</option>
       </select>
     `;
   }
@@ -8201,7 +8201,7 @@ let pendingCsvParsedState = null;
 
 const CSV_TABLE_SCHEMAS = {
   keywords_expense: {
-    label: "Từ khóa: Danh mục chi phí",
+    label: "Thiết lập: Danh mục chi phí",
     requireMonth: false,
     fields: [
       { key: "name", label: "Tên khoản mục chi", required: true }
@@ -8215,7 +8215,7 @@ const CSV_TABLE_SCHEMAS = {
     ]
   },
   keywords_income: {
-    label: "Từ khóa: Danh mục nguồn thu nhập",
+    label: "Thiết lập: Danh mục nguồn thu nhập",
     requireMonth: false,
     fields: [
       { key: "name", label: "Tên nguồn thu", required: true }
@@ -8228,7 +8228,7 @@ const CSV_TABLE_SCHEMAS = {
     ]
   },
   keywords_learning: {
-    label: "Từ khóa: Kế hoạch phát triển chuyên môn",
+    label: "Thiết lập: Kế hoạch phát triển chuyên môn",
     requireMonth: false,
     fields: [
       { key: "name", label: "Hạng mục phát triển", required: true }
@@ -8241,7 +8241,7 @@ const CSV_TABLE_SCHEMAS = {
     ]
   },
   keywords_invest: {
-    label: "Từ khóa: Danh mục sản phẩm đầu tư",
+    label: "Thiết lập: Danh mục sản phẩm đầu tư",
     requireMonth: false,
     fields: [
       { key: "name", label: "Sản phẩm tài chính", required: true },
@@ -8538,8 +8538,8 @@ window.validateAndPrepareJsonImport = function(rawText) {
     return { valid: false, error: "File JSON không chứa các trường dữ liệu hợp lệ của Sổ Tài Chính." };
   }
 
-  if (candidateData.currentYear !== undefined && (typeof candidateData.currentYear !== 'number' || candidateData.currentYear < 1900 || candidateData.currentYear > 2200)) {
-    return { valid: false, error: "Trường currentYear trong JSON không hợp lệ (phải là số năm từ 1900–2200)." };
+  if (candidateData.currentYear !== undefined && (typeof candidateData.currentYear !== 'number' || candidateData.currentYear < 1900 || candidateData.currentYear > 2100)) {
+    return { valid: false, error: "Trường currentYear trong JSON không hợp lệ (phải là số năm từ 1900 đến 2100)." };
   }
 
   const arrayFields = ["expenses", "incomeList", "planList", "investProducts", "tcGoals", "planIncome", "planExpense", "skillsList", "familyList", "jobList"];
@@ -8835,7 +8835,7 @@ window.updateJsonImportPreview = function() {
       : (mode === 'replace' ? 'Thay thế dữ liệu hiện có (Replace)' : 'Cập nhật dữ liệu trùng khóa (Update)');
     listEl.innerHTML = `
       <div>• <strong>Chế độ nhập đã chọn:</strong> ${modeLabel}</div>
-      <div>• <strong>Thông số "Từ khóa" trong file:</strong> ${kwCount} mục (${d.expenses?.length || 0} chi, ${d.incomeList?.length || 0} thu, ${d.investProducts?.length || 0} đầu tư, ${d.planList?.length || 0} học tập) - ${allowKeywords ? '<span class="text-success font-bold">Sẽ đồng bộ</span>' : '<span class="text-muted">Bỏ qua (Giữ hiện tại)</span>'}</div>
+      <div>• <strong>Thông số "Danh mục thiết lập" trong file:</strong> ${kwCount} mục (${d.expenses?.length || 0} chi, ${d.incomeList?.length || 0} thu, ${d.investProducts?.length || 0} đầu tư, ${d.planList?.length || 0} học tập) - ${allowKeywords ? '<span class="text-success font-bold">Sẽ đồng bộ</span>' : '<span class="text-muted">Bỏ qua (Giữ hiện tại)</span>'}</div>
       <div>• <strong>Mục tiêu tài chính trong file:</strong> ${goalsCount} mục tiêu ${pendingJsonImportPayload.duplicateGoalIds > 0 ? `(Phát hiện ${pendingJsonImportPayload.duplicateGoalIds} ID trùng sẽ được chuẩn hóa)` : ''}</div>
       <div>• <strong>Kế hoạch thu / chi:</strong> ${planIncCount} khoản thu, ${planExpCount} khoản chi</div>
       <div>• <strong>Giao dịch 12 tháng:</strong> ${txCount} bản ghi</div>
@@ -10020,10 +10020,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (yEl) {
     yEl.addEventListener('input', () => {
       const v = parseInt(yEl.innerText.trim(), 10);
-      if (!isNaN(v) && v > 1900 && v < 2100) {
+      if (!isNaN(v) && v >= 1900 && v <= 2100) {
         AppState.currentYear = v;
-        AppState.currentAge = AppState.currentYear - AppState.birthYear;
-        if (aEl) aEl.innerText = AppState.currentAge;
+        // Tuổi là tuổi tại năm đã nhập: đổi năm không làm đổi tuổi đã nhập, chỉ cập nhật năm sinh suy ra.
+        const ageNow = Number(AppState.currentAge);
+        if (isFinite(ageNow) && ageNow > 0) AppState.birthYear = v - ageNow;
         document.querySelectorAll('.dynamic-year').forEach(el => el.textContent = v);
         renderTcGoalsFormTable();
         renderTcMatrixTable();
@@ -10899,7 +10900,7 @@ window.viewStudentPlanReadOnly = async function(studentUsername, studentName) {
     if (typeof recalculateAll === 'function') recalculateAll();
     if (typeof calculateAgeMilestones === 'function') calculateAgeMilestones();
     if (typeof renderAll === 'function') renderAll();
-    showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch, đang hiển thị các mục từ khóa thiết lập.`, "warning");
+    showToast(`Học viên @${studentUsername} chưa lưu dữ liệu kế hoạch, đang hiển thị các danh mục thiết lập.`, "warning");
   }
 
   const banner = document.getElementById('student-preview-banner');
@@ -12077,7 +12078,7 @@ window.exportGroupMembersCsv = async function() {
   csv += csvSafeCell(`Ngày xuất: ${nowStr} | Chế độ: ${isPriv} | Quy mô tối đa: ${maxStr} | Phụ trách: ${curGroup.instructorName || curGroup.instructorUsername || ''}`) + '\n';
   csv += '========================================================================================================================\n\n';
 
-  csv += 'STT,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
+  csv += 'STT,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Danh mục thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
 
   members.forEach((m, idx) => {
     const got = exportData.get(m.username) || {};
@@ -12853,7 +12854,7 @@ window.exportAdminComprehensiveCsv = async function() {
   csv += '\n';
 
   csv += '--- PHẦN 3: MA TRẬN TIẾN ĐỘ & DỮ LIỆU TÀI CHÍNH TỪNG HỌC VIÊN (STUDENT PROGRESS MATRIX) ---\n';
-  csv += 'STT,Tên Nhóm,Mã Nhóm,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Từ khóa thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
+  csv += 'STT,Tên Nhóm,Mã Nhóm,Username,Họ và tên học viên,Email,Ngày tham gia,Trạng thái duyệt,M1 - Danh mục thiết lập,M2 - Kế hoạch thu chi,M3 - Mục tiêu tài chính,M4 - Lộ trình & Danh mục,Tiến độ tổng thể (%),Tỷ lệ tiết kiệm (%),Tỷ lệ nợ DSR (%),Dòng tiền ròng (tr/tháng),Cổ phiếu (%),Trái phiếu (%),Bảo hiểm (%),Tiền gửi NH (%)\n';
 
   let stt = 1;
   classes.forEach(c => {

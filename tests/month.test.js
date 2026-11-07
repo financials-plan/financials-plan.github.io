@@ -179,3 +179,33 @@ test("18. Kiểm toán: ghi chú khi chưa chọn sản phẩm đầu tư (3.2, 
   assert.strictEqual(src.split('class="goal-alloc-note"').length - 1, 3, "ghi chú ở cả ba thẻ mục tiêu đầu tư");
   assert.ok(src.includes("Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức"));
 });
+
+// ===== Quyết định chủ sản phẩm: tên "Danh mục", năm 1900–2100, tuổi gắn với năm đã nhập =====
+test("19. Quyết định: dùng tên Danh mục thiết lập, không còn 'Từ khóa' trên giao diện", () => {
+  const html = fs.readFileSync(path.join(__dirname, "../main.html"), "utf8");
+  const tut = fs.readFileSync(path.join(__dirname, "../js/tutorial.js"), "utf8");
+  const ui = (s) => s.split(/\r?\n/).filter((l) => !/^\s*\/\//.test(l)).join("\n");
+  for (const [name, text] of [["main.html", html], ["script.js", ui(src)], ["tutorial.js", tut]]) {
+    assert.ok(!/Từ khóa|TỪ KHÓA/.test(text), name + " còn chữ 'Từ khóa'");
+  }
+  assert.ok(html.includes("<span>Danh mục thiết lập</span>") && src.includes("'tab-tukhoa': 'DANH MỤC THIẾT LẬP'"));
+  assert.ok(html.includes('id="btn-tab-tukhoa"'), "mã tab nội bộ giữ nguyên");
+  assert.ok(html.includes('value="keywords_expense"'), "khóa dữ liệu nội bộ giữ nguyên để nhập tệp cũ");
+});
+
+test("20. Quyết định: năm hợp lệ 1900–2100 (gồm cả hai đầu) ở ô nhập và khi nhập JSON", () => {
+  assert.ok(/v >= 1900 && v <= 2100/.test(src), "ô nhập năm");
+  assert.ok(/currentYear < 1900 \|\| candidateData\.currentYear > 2100/.test(src), "nhập JSON");
+  assert.ok(!/2200/.test(src.slice(src.indexOf("function validateImportedData") > 0 ? src.indexOf("function validateImportedData") : 0, 400000).split("\n").filter((l) => /currentYear/.test(l)).join("\n")), "không còn ngưỡng 2200 cho năm");
+});
+
+test("21. Quyết định: đổi năm không làm đổi tuổi đã nhập (tuổi gắn với năm nhập trước)", () => {
+  const i = src.indexOf("yEl.addEventListener('input'");
+  const block = src.slice(i, i + 900);
+  assert.ok(!/AppState\.currentAge\s*=\s*AppState\.currentYear\s*-/.test(block), "không suy lại tuổi từ năm");
+  assert.ok(/AppState\.birthYear\s*=\s*v - ageNow/.test(block), "chỉ cập nhật năm sinh suy ra");
+  // mô phỏng quy tắc: năm 2026 tuổi 30 -> đổi năm 2030: tuổi vẫn 30, năm sinh 2000
+  const state = { currentYear: 2026, currentAge: 30, birthYear: 1996 };
+  const v = 2030; state.currentYear = v; const ageNow = Number(state.currentAge); if (isFinite(ageNow) && ageNow > 0) state.birthYear = v - ageNow;
+  assert.deepStrictEqual(state, { currentYear: 2030, currentAge: 30, birthYear: 2000 });
+});
