@@ -49,9 +49,9 @@ const L = require('./lib');
   await page.click('#btn-tc-sec1');
   await page.click('#btn-tab-candoi'); await page.click('#btn-career-sec2'); await page.waitForTimeout(300);
   L.check('2.14 Cân đối > Phần 2 hiện biểu đồ', await page.isVisible('#careerChart'));
-  await page.click('#btn-month-12'); await page.click('#btn-month-sec3'); await page.waitForTimeout(300);
+  await page.evaluate(() => switchMonthTab(12)); await page.click('#btn-month-sec3'); await page.waitForTimeout(300);
   L.check('2.15 Tháng 12 > Bảng cân đối hiện', await page.isVisible('#month-sec-3'));
-  await page.click('#btn-month-3');
+  await page.evaluate(() => switchMonthTab(3));
   L.check('2.16 Tháng 3 không có phần cân đối (ẩn nút)', !(await page.isVisible('#btn-month-sec3')));
 
   // ---- 3. nhập liệu danh mục thiết lập ----

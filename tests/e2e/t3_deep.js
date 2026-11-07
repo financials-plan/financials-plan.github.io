@@ -100,7 +100,7 @@ const fs = require('fs'), path = require('path');
     }
     await page.evaluate(() => { renderSetupTables(); renderTcGoalsFormTable(); syncGoalsToCards(); renderTcMatrixTable(); renderDashboardMatrices(); renderDashboardAllCharts(); renderPlanTables && renderPlanTables(); renderMonthView(3); });
     for (const t of ['tab-tukhoa', 'tab-dashboard', 'tab-muctieu-bt', 'tab-muctieu-tc', 'tab-candoi', 'tab-kehoach', 'tab-khaosat']) { await page.evaluate(t => switchTab(t), t); await page.waitForTimeout(350); }
-    await page.click('#btn-month-3'); await page.waitForTimeout(400);
+    await page.evaluate(() => switchMonthTab(3)); await page.waitForTimeout(400);
     const liveList = await page.evaluate(() => [...document.querySelectorAll('img[src="x"], svg[onload], b[onmouseover], img[onerror]')].map(e => e.tagName + ' in #' + ((e.closest('[id]') || {}).id || '?') + ' / ' + (e.closest('tbody,table,div[class]') || {}).className).slice(0, 8)); const hasLiveImg = liveList.length; if (hasLiveImg) console.log('  phần tử XSS còn sót:', JSON.stringify(liveList));
     L.check('X1 payload trong danh mục/mục tiêu/sản phẩm bị thoát, không tạo phần tử thật', hasLiveImg === 0, hasLiveImg);
     L.check('X2 payload không chạy mã (không alert, không đặt __xss)', pwn.length === 0 && !(await page.evaluate(() => window.__xss)), pwn);

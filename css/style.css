@@ -8584,3 +8584,14 @@ body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings span {
   .tab-pane.active{display:block!important}
   .table-scroll-x,.tc-form-table-wrap,.tc-card-table-scroll{overflow:visible!important}
 }
+/* ===== Theo dõi thu chi: một nút + bộ chuyển tháng ‹ › ===== */
+.month-stepper{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 2px 6px}
+.month-stepper .ms-label{flex:1;text-align:center;font-weight:700;font-size:.875rem;color:var(--text);white-space:nowrap}
+.month-stepper .ms-btn{width:34px;height:34px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;transition:background .16s,border-color .16s}
+.month-stepper .ms-btn:hover:not(:disabled){background:var(--bg-hover);border-color:var(--primary);color:var(--primary)}
+.month-stepper .ms-btn:disabled{opacity:.35;cursor:default}
+.month-stepper .ms-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.month-stepper-page{max-width:320px;margin:0 auto 14px;padding:0}
+.month-stepper-page .ms-btn{width:40px;height:40px}
+.month-stepper-page .ms-label{font-size:1rem}
+@media(min-width:901px){.month-stepper-page{display:none}}

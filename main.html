@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=3.7.16">
+  <link rel="stylesheet" href="./css/style.css?v=3.7.17">
   <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/analytics":"https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"}}</script>
 </head>
 <body>
@@ -77,26 +77,14 @@
             <i class="fa-solid fa-wallet"></i><span>Kế hoạch thu chi</span>
           </button>
 
-          <div class="nav-section-label">THEO DÕI THU CHI 12 THÁNG</div>
-
-          <button type="button" class="rail-month-collapsed-btn" id="btn-month-collapsed" data-tooltip="Theo dõi 12 tháng" onclick="switchMonthTab(AppState.currentMonth || 1)">
-            <i class="fa-solid fa-calendar-days"></i>
+          <button type="button" class="nav-item two-lines" id="btn-month-collapsed" data-tooltip="Theo dõi thu chi" onclick="switchMonthTab(AppState.currentMonth || 1)">
+            <i class="fa-solid fa-calendar-days"></i><span>Theo dõi thu chi</span>
           </button>
-          <div class="month-nav-grid">
-            <button class="nav-item nav-month" id="btn-month-1" onclick="switchMonthTab(1)"><span>Tháng 01</span></button>
-            <button class="nav-item nav-month" id="btn-month-2" onclick="switchMonthTab(2)"><span>Tháng 02</span></button>
-            <button class="nav-item nav-month" id="btn-month-3" onclick="switchMonthTab(3)"><span>Tháng 03</span></button>
-            <button class="nav-item nav-month" id="btn-month-4" onclick="switchMonthTab(4)"><span>Tháng 04</span></button>
-            <button class="nav-item nav-month" id="btn-month-5" onclick="switchMonthTab(5)"><span>Tháng 05</span></button>
-            <button class="nav-item nav-month" id="btn-month-6" onclick="switchMonthTab(6)"><span>Tháng 06</span></button>
-            <button class="nav-item nav-month" id="btn-month-7" onclick="switchMonthTab(7)"><span>Tháng 07</span></button>
-            <button class="nav-item nav-month" id="btn-month-8" onclick="switchMonthTab(8)"><span>Tháng 08</span></button>
-            <button class="nav-item nav-month" id="btn-month-9" onclick="switchMonthTab(9)"><span>Tháng 09</span></button>
-            <button class="nav-item nav-month" id="btn-month-10" onclick="switchMonthTab(10)"><span>Tháng 10</span></button>
-            <button class="nav-item nav-month" id="btn-month-11" onclick="switchMonthTab(11)"><span>Tháng 11</span></button>
-            <button class="nav-item nav-month" id="btn-month-12" onclick="switchMonthTab(12)"><span>Tháng 12</span></button>
+          <div class="month-nav-grid month-stepper" id="month-stepper" role="group" aria-label="Chuyển sang tháng khác">
+            <button type="button" class="ms-btn" id="btn-month-prev" aria-label="Tháng trước" onclick="stepMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <span class="ms-label" id="month-stepper-label" aria-live="polite">Tháng 01</span>
+            <button type="button" class="ms-btn" id="btn-month-next" aria-label="Tháng sau" onclick="stepMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
-
           <div class="nav-section-label">ĐÁNH GIÁ TÂM LÝ</div>
           <button class="nav-item" id="btn-tab-khaosat" data-tooltip="Bảng khảo sát hồ sơ" onclick="switchTab('tab-khaosat')">
             <i class="fa-solid fa-clipboard-check"></i><span>Bảng khảo sát hồ sơ</span>
@@ -1253,6 +1241,11 @@
       <div id="tab-month" class="tab-pane">
         <div class="custom-sheet-container full-width-sheet">
 
+          <div class="month-stepper month-stepper-page" role="group" aria-label="Chuyển sang tháng khác">
+            <button type="button" class="ms-btn" aria-label="Tháng trước" data-step="-1" onclick="stepMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+            <span class="ms-label" data-month-label aria-live="polite">Tháng 01</span>
+            <button type="button" class="ms-btn" aria-label="Tháng sau" data-step="1" onclick="stepMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
           <div class="sub-nav-bar mb-3">
             <button type="button" class="btn-sub-nav active" id="btn-month-sec1" onclick="switchMonthSection(1)">
               <i class="fa-solid fa-receipt"></i> Nhật ký & Đối chiếu thu chi thực tế
@@ -2938,7 +2931,7 @@
   </button>
 
   <script type="module" src="./backend/firestore-service.js?v=3.7.23"></script>
-  <script src="./js/script.js?v=3.7.36"></script>
+  <script src="./js/script.js?v=3.7.37"></script>
   <script src="./js/tutorial.js?v=1.0.4"></script>
 
 </body>

@@ -2872,6 +2872,12 @@ window.switchTab = function(tabId) {
   setTimeout(window.fixScrollRegions, 160);
 };
 
+window.stepMonth = function(d) {
+  const cur = AppState.currentMonth || 1;
+  const next = Math.min(12, Math.max(1, cur + d));
+  if (next !== cur || !document.getElementById('tab-month')?.classList.contains('active')) window.switchMonthTab(next);
+};
+
 window.switchMonthTab = function(m) {
   document.body.classList.remove('nav-open');
   if (window.FinDatePicker && FinDatePicker.isOpen && FinDatePicker.isOpen()) {
@@ -2882,6 +2888,13 @@ window.switchMonthTab = function(m) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   document.getElementById(`btn-month-${m}`)?.classList.add('active');
   document.getElementById('btn-month-collapsed')?.classList.add('active');
+  const mLabel = 'Tháng ' + String(m).padStart(2, '0');
+  const mLabelEl = document.getElementById('month-stepper-label'); if (mLabelEl) mLabelEl.textContent = mLabel;
+  document.querySelectorAll('[data-month-label]').forEach(el => { el.textContent = mLabel; });
+  const bPrev = document.getElementById('btn-month-prev'), bNext = document.getElementById('btn-month-next');
+  if (bPrev) bPrev.disabled = m <= 1;
+  if (bNext) bNext.disabled = m >= 12;
+  document.querySelectorAll('.month-stepper-page [data-step]').forEach(b => { b.disabled = (b.dataset.step === '-1' && m <= 1) || (b.dataset.step === '1' && m >= 12); });
   document.getElementById('current-title').textContent = `THEO DÕI THU - CHI THÁNG ${m}`;
 
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
@@ -2975,7 +2988,7 @@ window.updateSlidingHighlight = function() {
     if (isCollapsed) {
       activeItem = document.getElementById('btn-month-collapsed');
     } else {
-      activeItem = wrapper.querySelector('.nav-month.active') || wrapper.querySelector(`#btn-month-${AppState.currentMonth}`) || document.getElementById('btn-month-collapsed');
+      activeItem = document.getElementById('btn-month-collapsed');
     }
   } else {
     activeItem = wrapper.querySelector('.nav-item.active:not(.nav-month)');
