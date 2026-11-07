@@ -44,3 +44,15 @@ firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
 
+
+# Cong cu agent: chi dung tren may lam viec, khong dua len git (tru cac skill git/firebase can thiet)
+.claude/
+skills-lock.json
+.agents/skills/*
+!.agents/skills/using-git-worktrees/
+!.agents/skills/finishing-a-development-branch/
+!.agents/skills/firebase-basics/
+!.agents/skills/firebase-firestore/
+!.agents/skills/firebase-hosting-basics/
+!.agents/skills/firebase-security-rules-auditor/
+!.agents/skills/firestore-rules-creation/
