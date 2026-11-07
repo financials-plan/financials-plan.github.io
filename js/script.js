@@ -1157,10 +1157,26 @@ function migrateLegacyRetirementReserve(goals) {
   goals.unshift(moved);
 }
 
+// Mã mục tiêu được nhúng vào thuộc tính HTML (onblur, id). Dữ liệu nhập từ tệp hoặc xem bài học viên có thể chứa ký tự lạ,
+// nên chỉ giữ chữ, số, gạch dưới và gạch nối để không thể thoát khỏi thuộc tính (chống XSS lưu trữ).
+function sanitizeGoalIds(goals) {
+  if (!Array.isArray(goals)) return;
+  const used = new Set();
+  goals.forEach((g, i) => {
+    if (!g || typeof g !== 'object') return;
+    let id = String(g.id === undefined || g.id === null ? '' : g.id).replace(/[^A-Za-z0-9_-]/g, '_');
+    if (!id) id = 'g_' + i;
+    while (used.has(id)) id += '_';
+    used.add(id);
+    g.id = id;
+  });
+}
+
 function ensureFixedInvestmentGoals() {
   if (!Array.isArray(AppState.tcGoals)) {
     AppState.tcGoals = [];
   }
+  sanitizeGoalIds(AppState.tcGoals);
   migrateLegacyRetirementReserve(AppState.tcGoals);
   let retireGoal = AppState.tcGoals.find(isRetirementFixedGoal);
   if (!retireGoal) {
@@ -2765,6 +2781,17 @@ function calculateCareerDetails() {
   });
 }
 
+// Vùng bảng cuộn ngang phải dùng được bằng bàn phím (WCAG 2.1.1): thêm tabindex và nhãn cho vùng thật sự cuộn được.
+window.fixScrollRegions = function() {
+  document.querySelectorAll('.table-scroll-x, .tc-form-table-wrap, .tc-card-table-scroll, .table-scroll').forEach(el => {
+    if (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) {
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+      if (!el.hasAttribute('role')) el.setAttribute('role', 'region');
+      if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', 'Bảng có thể cuộn, dùng phím mũi tên để xem thêm');
+    }
+  });
+};
+
 window.switchTab = function(tabId) {
   document.body.classList.remove('nav-open');
   if (window.FinDatePicker && FinDatePicker.isOpen && FinDatePicker.isOpen()) {
@@ -2842,6 +2869,7 @@ window.switchTab = function(tabId) {
   }
 
   setTimeout(updateSlidingHighlight, 40);
+  setTimeout(window.fixScrollRegions, 160);
 };
 
 window.switchMonthTab = function(m) {
@@ -3748,7 +3776,7 @@ function renderSetupTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateExpenseItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteExpenseItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteExpenseItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -3759,7 +3787,7 @@ function renderSetupTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateIncomeItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteIncomeItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteIncomeItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -3770,7 +3798,7 @@ function renderSetupTables() {
       <tr>
         <td class="text-center text-muted font-mono">${idx + 1}</td>
         <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updatePlanListItem(${idx}, this.innerText)">${escapeHtml(item)}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deletePlanListItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deletePlanListItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -3790,7 +3818,7 @@ function renderSetupTables() {
           </select>
           ${p.investmentTypeAuto ? '<div class="text-muted" style="font-size:10px;" title="Hệ thống tự nhận diện từ tên sản phẩm. Hãy xác nhận hoặc chọn lại.">tự nhận diện</div>' : ''}
         </td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteInvestItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteInvestItem(${idx})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -4647,7 +4675,7 @@ function renderMonthView(m) {
           </div>
         </td>
         <td>
-          <select class="select-inline-cell" onchange="updateMonthIncCat(${m}, ${i}, this.value)">
+          <select class="select-inline-cell" aria-label="Khoản mục thu" onchange="updateMonthIncCat(${m}, ${i}, this.value)">
             ${incOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === inc.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
             <option value="__ADD_NEW_CAT__">+ Thêm nguồn thu mới...</option>
           </select>
@@ -4658,7 +4686,7 @@ function renderMonthView(m) {
         <td>
           <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${Number(inc.val) ? inc.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthIncValLive(${m}, ${i}, this.value)" onchange="updateMonthIncVal(${m}, ${i}, this.value)">
         </td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteMonthIncomeRow(${m}, ${i})" aria-label="Xoá dòng thu nhập"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteMonthIncomeRow(${m}, ${i})" aria-label="Xoá dòng thu nhập"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -4680,7 +4708,7 @@ function renderMonthView(m) {
           </div>
         </td>
         <td>
-          <select class="select-inline-cell" onchange="updateMonthExpCat(${m}, ${i}, this.value)">
+          <select class="select-inline-cell" aria-label="Khoản mục chi" onchange="updateMonthExpCat(${m}, ${i}, this.value)">
             ${expOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === exp.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
             <option value="__ADD_NEW_CAT__">+ Thêm danh mục mới...</option>
           </select>
@@ -4691,7 +4719,7 @@ function renderMonthView(m) {
         <td>
           <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${Number(exp.val) ? exp.val : ''}" placeholder="0.0" onfocus="this.select()" oninput="updateMonthExpValLive(${m}, ${i}, this.value)" onchange="updateMonthExpVal(${m}, ${i}, this.value)">
         </td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteMonthExpenseRow(${m}, ${i})" aria-label="Xoá dòng chi tiêu"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteMonthExpenseRow(${m}, ${i})" aria-label="Xoá dòng chi tiêu"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -4733,15 +4761,14 @@ function renderReconciliationTable(m) {
     const diff = act - plan;
     sumPlanInc += plan;
     const note = mData.reconIncomeNotes[catName] || { reason: '', action: '' };
-    const safeCatJs = catName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    return `
+        return `
       <tr>
         <td class="font-medium">${escapeHtml(catName)}</td>
         <td class="text-right font-mono">${plan.toFixed(1)}</td>
         <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
         <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${safeCatJs}', 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', '${safeCatJs}', 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', ${jsStringArg(catName)}, 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'inc', ${jsStringArg(catName)}, 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
       </tr>
     `;
   }).join('');
@@ -4792,15 +4819,14 @@ function renderReconciliationTable(m) {
     const diff = plan - act;
     sumPlanExp += plan;
     const note = mData.reconExpenseNotes[catName] || { reason: '', action: '' };
-    const safeCatJs = catName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    return `
+        return `
       <tr>
         <td class="font-medium">${escapeHtml(catName)}</td>
         <td class="text-right font-mono">${plan.toFixed(1)}</td>
         <td class="text-right font-bold font-mono">${act.toFixed(1)}</td>
         <td class="text-right font-bold font-mono ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff === 0 ? '-' : (diff > 0 ? diff.toFixed(1) : `(${Math.abs(diff).toFixed(1)})`)}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${safeCatJs}', 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
-        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', '${safeCatJs}', 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', ${jsStringArg(catName)}, 'reason', this.innerText)">${escapeHtml(note.reason || '')}</td>
+        <td class="cell-blue" contenteditable="true" spellcheck="false" onblur="updateReconNote(${m}, 'exp', ${jsStringArg(catName)}, 'action', this.innerText)">${escapeHtml(note.action || '')}</td>
       </tr>
     `;
   }).join('');
@@ -5038,7 +5064,7 @@ function renderMonthLearningSection(m) {
           </div>
         </td>
         <td>
-          <select class="select-inline-cell" onchange="updateMonthLearningCat(${m}, ${i}, this.value)">
+          <select class="select-inline-cell" aria-label="Khoản mục chi phát triển bản thân" onchange="updateMonthLearningCat(${m}, ${i}, this.value)">
             ${lrnOptions.map(opt => `<option value="${escapeHtml(opt)}" ${opt === it.cat ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
             <option value="__ADD_NEW_CAT__">+ Thêm kế hoạch mới...</option>
           </select>
@@ -5055,7 +5081,7 @@ function renderMonthLearningSection(m) {
         <td>
           <input type="text" class="input-inline-cell" value="${escapeHtml(it.actRes || '')}" placeholder="Kết quả thực tế..." oninput="updateMonthLearningFieldLive(${m}, ${i}, 'actRes', this.value)" onchange="updateMonthLearningFieldLive(${m}, ${i}, 'actRes', this.value)">
         </td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteMonthLearningRow(${m}, ${i})" aria-label="Xoá dòng đào tạo"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteMonthLearningRow(${m}, ${i})" aria-label="Xoá dòng đào tạo"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -5343,7 +5369,7 @@ function renderYearEndBalanceSheet() {
           }
 
           nameCellHtml = `
-            <select class="select-inline-cell font-bold" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
+            <select class="select-inline-cell font-bold" aria-label="Khoản tài sản" onchange="updateBalanceSheetAssetField(${idx}, 'name', this.value)">
               ${investProds.length === 0 ? '<option value="">-- Chưa có sản phẩm đầu tư --</option>' : ''}
               ${extraOption}
               ${optionsHtml}
@@ -5355,7 +5381,7 @@ function renderYearEndBalanceSheet() {
           <tr>
             <td class="text-center font-bold font-mono bg-neutral-gray">${idx + 1}</td>
             <td>
-              <select class="select-inline-cell" style="font-size: 12px; font-weight: 600; min-width: 145px;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
+              <select class="select-inline-cell" aria-label="Phân loại tài sản" style="font-size: 12px; font-weight: 600; min-width: 145px;" onchange="updateBalanceSheetAssetSource(${idx}, this.value)">
                 <option value="keyword" ${!isCustom ? 'selected' : ''}>Sản phẩm đầu tư</option>
                 <option value="custom" ${isCustom ? 'selected' : ''}>Tài sản khác</option>
               </select>
@@ -5365,7 +5391,7 @@ function renderYearEndBalanceSheet() {
               <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-success" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetAssetFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetAssetField(${idx}, 'val', this.value)">
             </td>
             <td class="text-center">
-              <button type="button" class="btn-table-del" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
+              <button type="button" class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteBalanceSheetAssetRow(${idx})" aria-label="Xoá tài sản"><i class="fa-solid fa-trash-can"></i></button>
             </td>
           </tr>
         `;
@@ -5388,7 +5414,7 @@ function renderYearEndBalanceSheet() {
             <input type="number" step="any" min="0" class="input-inline-cell text-right font-bold font-mono text-danger" value="${item.val !== undefined && item.val !== null ? item.val : ''}" placeholder="0.0" oninput="updateBalanceSheetLiabilityFieldLive(${idx}, 'val', this.value)" onchange="updateBalanceSheetLiabilityField(${idx}, 'val', this.value)">
           </td>
           <td class="text-center">
-            <button type="button" class="btn-table-del" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
+            <button type="button" class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteBalanceSheetLiabilityRow(${idx})" aria-label="Xoá khoản nợ"><i class="fa-solid fa-trash-can"></i></button>
           </td>
         </tr>
       `).join('');
@@ -6250,13 +6276,13 @@ function renderTcGoalsFormTable() {
         <td>
           ${isFixed
             ? `<div style="display:flex;align-items:center;gap:6px;width:100%;">
-                 <input type="text" class="cell-blue font-bold" style="flex:1;min-width:0;" value="${escapeHtml(g.name)}"
+                 <input type="text" class="cell-blue font-bold" style="flex:1;min-width:0;" value="${escapeHtml(g.name)}" aria-label="Tên mục tiêu"
                    placeholder="Nhập tên mục tiêu..."
                    oninput="onGoalFieldInput(${idx}, 'name', this.value)"
                    onchange="onGoalFieldChange(${idx}, 'name', this.value)">
                  <span class="badge-fixed-goal" title="Mục tiêu cố định (Bảo toàn công thức tính chuẩn)"><i class="fa-solid fa-lock"></i> Cố định</span>
                </div>`
-            : `<input type="text" class="cell-blue font-bold" value="${escapeHtml(g.name)}"
+            : `<input type="text" class="cell-blue font-bold" value="${escapeHtml(g.name)}" aria-label="Tên mục tiêu"
                  placeholder="VD: Mua nhà, Mua xe..."
                  oninput="onGoalFieldInput(${idx}, 'name', this.value)"
                  onchange="onGoalFieldChange(${idx}, 'name', this.value)">`
@@ -6265,31 +6291,31 @@ function renderTcGoalsFormTable() {
         <td>
           ${isFixed
             ? `<span class="font-bold text-primary" style="padding:0 8px;">Tích lũy &amp; Đầu tư</span>`
-            : `<select class="select-inline-cell" onchange="onGoalFieldChange(${idx}, 'type', this.value)">
+            : `<select class="select-inline-cell" aria-label="Phân loại mục tiêu" onchange="onGoalFieldChange(${idx}, 'type', this.value)">
                  <option value="debt" ${g.type === 'debt' ? 'selected' : ''}>Khoản nợ phải trả</option>
                  <option value="invest" ${g.type === 'invest' ? 'selected' : ''}>Tích lũy &amp; Đầu tư</option>
                </select>`
           }
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number(g.val) || 0}"
+          <input type="number" step="any" aria-label="Giá trị mục tiêu (triệu đồng)" class="text-right font-mono" value="${Number(g.val) || 0}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'val', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'val', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" step="any" class="text-right font-mono" value="${Number(g.paid) || 0}"
+          <input type="number" step="any" aria-label="Đã tích lũy (triệu đồng)" class="text-right font-mono" value="${Number(g.paid) || 0}"
                  placeholder="0"
                  oninput="onGoalFieldInput(${idx}, 'paid', parseFloat(this.value)||0)"
                  onchange="onGoalFieldChange(${idx}, 'paid', parseFloat(this.value)||0)">
         </td>
         <td>
-          <input type="number" class="text-center font-mono" value="${Number(g.start) || 0}"
+          <input type="number" aria-label="Năm bắt đầu để dành" class="text-center font-mono" value="${Number(g.start) || 0}"
                  oninput="onGoalFieldInput(${idx}, 'start', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'start', parseInt(this.value, 10)||0)">
         </td>
         <td>
-          <input type="number" class="text-center font-mono${goalYearError(g) ? ' is-invalid' : ''}" value="${Number(g.end) || 0}"
+          <input type="number" aria-label="Năm hoàn tất" class="text-center font-mono${goalYearError(g) ? ' is-invalid' : ''}" value="${Number(g.end) || 0}"
                  ${goalYearError(g) ? 'aria-invalid="true"' : ''}
                  oninput="onGoalFieldInput(${idx}, 'end', parseInt(this.value, 10)||0)"
                  onchange="onGoalFieldChange(${idx}, 'end', parseInt(this.value, 10)||0)">
@@ -6444,7 +6470,7 @@ function renderGoalProductSelectHtml(g, pIndex) {
 
   if (validProducts.length === 0) {
     return `
-      <select class="select-inline-cell" disabled style="opacity:0.75; cursor:not-allowed;" title="Chưa có sản phẩm đầu tư trong mục Danh mục thiết lập">
+      <select class="select-inline-cell" aria-label="Chọn sản phẩm đầu tư cho mục tiêu" disabled style="opacity:0.75; cursor:not-allowed;" title="Chưa có sản phẩm đầu tư trong mục Danh mục thiết lập">
         <option value="" selected>-- Chưa có sản phẩm (Thêm ở Danh mục thiết lập) --</option>
       </select>
     `;
@@ -6453,7 +6479,7 @@ function renderGoalProductSelectHtml(g, pIndex) {
   const isSelectedValid = validProducts.some(ip => ip.name.trim() === curName);
 
   return `
-    <select class="select-inline-cell" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
+    <select class="select-inline-cell" aria-label="Chọn sản phẩm đầu tư cho mục tiêu" onchange="updateGoalInvestProduct('${g.id}', ${pIndex}, this.value)">
       <option value="" ${(!curName) ? 'selected' : ''}>-- Chưa chọn (0%) --</option>
       ${(curName && !isSelectedValid) ? `<option value="${escapeHtml(curName)}" selected>⚠ ${escapeHtml(curName)} (không còn trong danh mục)</option>` : ''}
       ${validProducts.map(p => {
@@ -6504,49 +6530,49 @@ function createCardHtmlRetirement(g, num) {
           <tbody>
             <tr>
               <td>Năm bắt đầu để dành</td>
-              <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
               <td>Mục tiêu tiết kiệm cần đạt</td>
-              <td class="cell-orange-val font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
-              <td class="cell-green-val font-mono" id="college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
               <td class="font-bold">Tổng số năm tích lũy</td>
-              <td class="cell-green-val font-bold font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
+              <td class="cell-green-val font-bold font-mono" id="${g.id}-college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(0)} năm</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Số năm sống sau nghỉ hưu</td>
-              <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi tháng</td>
-              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(2)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-monthly-need">${mVal.toFixed(2)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Chi tiêu hưu trí mỗi tháng (giá hôm nay)</td>
-              <td class="cell-green-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td class="font-bold">Số tiền cần tích lũy mỗi năm</td>
-              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(2)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-annual-need">${yVal.toFixed(2)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Lãi suất TB dự kiến</td>
-              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="${g.id}-college-avg-return">${effectiveReturn.toFixed(2)}%/năm</td>
             </tr>
             <tr class="bg-neutral-gray font-semibold">
               <td>Số tiền để lại (cuối đời):</td>
-              <td class="font-bold text-right text-danger font-mono" id="college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
+              <td class="font-bold text-right text-danger font-mono" id="${g.id}-college-support-fund" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'supportFund', this.innerText)">${supportFund}</td>
               <td style="text-align: right;">LS ước tính:</td>
-              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
               <td colspan="2" style="text-align: right;">Tiền sẵn có:</td>
-              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td colspan="2" class="cell-green-val text-center font-bold font-mono" id="${g.id}-college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
             </tr>
             <tr>
               <td>Lợi suất giai đoạn nghỉ hưu (%/năm)</td>
@@ -6556,7 +6582,7 @@ function createCardHtmlRetirement(g, num) {
             ${!(portfolio.totalWeight > 0) ? `<tr><td colspan="8" class="goal-alloc-note" role="note">Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức "LS ước tính" bạn nhập. Chọn sản phẩm ở bảng trên để tính theo lợi suất riêng của từng sản phẩm.</td></tr>` : ""}
             ${!portfolio.isWeightValid ? `
             <tr>
-              <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
+              <td colspan="8" class="goal-weight-warning" id="${g.id}-college-weight-warning">
                 <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
               </td>
             </tr>` : ''}
@@ -6606,55 +6632,55 @@ function createCardHtmlCollege(g, num) {
           <tbody>
             <tr>
               <td>Năm bắt đầu để dành</td>
-              <td class="cell-green-val font-mono" id="college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-start" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'start', this.innerText)">${Number(g.start) || 0}</td>
               <td>Chi phí chi tiêu ước tính (tháng)</td>
-              <td class="cell-orange-val font-mono" id="college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-periodic-need" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'monthlyTuition', this.innerText)">${periodicNeed}</td>
               <td>${renderGoalProductSelectHtml(g, 0)}</td>
-              <td class="cell-green-val font-mono" id="college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-0" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 0, this.innerText)">${fmtTyped(Number(prods[0]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Năm kết thúc</td>
-              <td class="cell-green-val font-mono" id="college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-end" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'end', this.innerText)">${Number(g.end) || 0}</td>
               <td>Thời gian tiết kiệm (năm)</td>
-              <td class="cell-green-val font-mono" id="college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(1)}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-accum-years" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'accumulationYears', this.innerText)">${nYears.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 1)}</td>
-              <td class="cell-green-val font-mono" id="college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-1" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 1, this.innerText)">${fmtTyped(Number(prods[1]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Số tháng dự phòng</td>
-              <td class="cell-green-val font-mono" id="college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-periods" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'collegePeriods', this.innerText)">${periods}</td>
               <td>Số tiền thanh toán hằng tháng</td>
-              <td class="cell-orange-val font-mono" id="college-monthly-need">${mVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-monthly-need">${mVal.toFixed(1)}</td>
               <td>${renderGoalProductSelectHtml(g, 2)}</td>
-              <td class="cell-green-val font-mono" id="college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
-              <td class="text-right font-mono" id="college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
-              <td class="text-right font-mono" id="college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-w-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdWeight('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.weight) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-r-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRate('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.returnRate) || 0)}%</td>
+              <td class="text-right font-mono" id="${g.id}-college-k-2" contenteditable="true" spellcheck="false" onblur="updateGoalProdRisk('${g.id}', 2, this.innerText)">${fmtTyped(Number(prods[2]?.risk) || 0)}%</td>
             </tr>
             <tr>
               <td>Tổng ước chi phí</td>
-              <td class="cell-orange-val font-mono" id="college-total-cost" contenteditable="true" spellcheck="false" title="Mặc định = số tháng dự phòng × chi phí mỗi tháng; có thể gõ số khác" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-total-cost" contenteditable="true" spellcheck="false" title="Mặc định = số tháng dự phòng × chi phí mỗi tháng; có thể gõ số khác" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
               <td>Số tiền thanh toán hằng năm</td>
-              <td class="cell-orange-val font-mono" id="college-annual-need">${yVal.toFixed(1)}</td>
+              <td class="cell-orange-val font-mono" id="${g.id}-college-annual-need">${yVal.toFixed(1)}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Mức sinh lời kỳ vọng trung bình</td>
-              <td colspan="2" class="cell-gold-val text-center font-mono" id="college-avg-return">${effectiveReturn.toFixed(2)}%</td>
+              <td colspan="2" class="cell-gold-val text-center font-mono" id="${g.id}-college-avg-return">${effectiveReturn.toFixed(2)}%</td>
             </tr>
             <tr>
               <td>Lãi suất ước tính (năm)</td>
-              <td class="cell-green-val font-mono" id="college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-est-rate" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'estimatedRate', this.innerText)">${fmtTyped(estRate)}%</td>
               <td>Số tiền dự phòng đã có</td>
-              <td class="cell-green-val font-mono" id="college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
+              <td class="cell-green-val font-mono" id="${g.id}-college-paid" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'paid', this.innerText)">${Number(g.paid) || 0}</td>
               <td colspan="2" class="font-bold text-center bg-col-head">Mục tiêu tiết kiệm cần đạt</td>
-              <td colspan="2" class="cell-orange-val text-center font-bold font-mono" id="college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
+              <td colspan="2" class="cell-orange-val text-center font-bold font-mono" id="${g.id}-college-target-val" contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'val', this.innerText)">${targetVal.toFixed(0)}</td>
             </tr>
             
             ${!(portfolio.totalWeight > 0) ? `<tr><td colspan="8" class="goal-alloc-note" role="note">Chưa chọn sản phẩm đầu tư: khoản góp đang tính theo mức "LS ước tính" bạn nhập. Chọn sản phẩm ở bảng trên để tính theo lợi suất riêng của từng sản phẩm.</td></tr>` : ""}
             ${!portfolio.isWeightValid ? `
             <tr>
-              <td colspan="8" class="goal-weight-warning" id="college-weight-warning">
+              <td colspan="8" class="goal-weight-warning" id="${g.id}-college-weight-warning">
                 <i class="fa-solid fa-triangle-exclamation"></i> Cảnh báo: Tổng tỷ trọng phân bổ hiện tại là ${portfolio.totalWeight.toFixed(1)}% (khác 100%).
               </td>
             </tr>` : ''}
@@ -6737,7 +6763,7 @@ function createCardHtmlDebt(g, num) {
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
         <span>Khoản nợ ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Khoản nợ')}</strong></span>
-        <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+        <button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
         <table class="tc-card-h4-table">
@@ -6790,7 +6816,7 @@ function createCardHtmlInvest(g, num) {
     <div class="tc-goal-card-h4" id="card-${g.id}">
       <div class="tc-card-h4-title">
         <span>Mục tiêu đầu tư ${num}: <strong contenteditable="true" spellcheck="false" onblur="updateGoalCardField('${g.id}', 'name', this.innerText)">${escapeHtml(g.name || 'Mục tiêu')}</strong></span>
-        <button class="btn-table-del" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
+        <button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="removeGoalFromCard('${g.id}')"><i class="fa-solid fa-trash-can"></i></button>
       </div>
       <div class="tc-card-table-scroll">
         <table class="tc-card-h4-table">
@@ -7051,8 +7077,8 @@ function renderTcMatrixTable() {
   thead.innerHTML = `
     <th style="min-width: 55px;">Năm</th>
     <th style="min-width: 55px;">Tuổi</th>
-    ${debts.map((g, i) => `<th style="min-width: 95px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
-    ${invests.map((g, i) => `<th style="min-width: 95px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${g.name}</span></th>`).join('')}
+    ${debts.map((g, i) => `<th style="min-width: 95px;">Nợ ${i + 1}:<br><span style="font-weight: 500;">${escapeHtml(g.name)}</span></th>`).join('')}
+    ${invests.map((g, i) => `<th style="min-width: 95px;">Đầu tư ${i + 1}:<br><span style="font-weight: 500;">${escapeHtml(g.name)}</span></th>`).join('')}
     <th style="min-width: 90px;" class="col-highlight-gold">Tiết kiệm cần / tháng</th>
     <th style="min-width: 95px;" class="col-highlight-orange" title="Thu nhập cần đáp ứng khoản góp mục tiêu = Tiết kiệm cần có / Tỷ lệ tiết kiệm mục tiêu. Chưa gồm chi phí sinh hoạt và nghĩa vụ trả nợ.">Thu nhập cần đáp ứng khoản góp mục tiêu (triệu đồng/tháng)</th>
   `;
@@ -7205,8 +7231,8 @@ function renderSkillsFamilyJob() {
   if (tbS) {
     tbS.innerHTML = AppState.skillsList.map((s, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Phân tích tài chính, Excel nâng cao" onblur="if(assertWritePermission('Sửa kỹ năng')){ AppState.skillsList[${i}]=this.innerText.trim(); }">${s}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteSkillRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Phân tích tài chính, Excel nâng cao" onblur="if(assertWritePermission('Sửa kỹ năng')){ AppState.skillsList[${i}]=this.innerText.trim(); }">${escapeHtml(s)}</td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteSkillRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -7215,8 +7241,8 @@ function renderSkillsFamilyJob() {
   if (tbF) {
     tbF.innerHTML = AppState.familyList.map((f, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Hỗ trợ từ bố mẹ, thu nhập của vợ/chồng" onblur="if(assertWritePermission('Sửa nguồn hỗ trợ')){ AppState.familyList[${i}]=this.innerText.trim(); }">${f}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteFamilyRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Hỗ trợ từ bố mẹ, thu nhập của vợ/chồng" onblur="if(assertWritePermission('Sửa nguồn hỗ trợ')){ AppState.familyList[${i}]=this.innerText.trim(); }">${escapeHtml(f)}</td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteFamilyRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -7225,8 +7251,8 @@ function renderSkillsFamilyJob() {
   if (tbJ) {
     tbJ.innerHTML = AppState.jobList.map((j, i) => `
       <tr>
-        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Công ty ổn định, có cơ hội thăng tiến" onblur="if(assertWritePermission('Sửa môi trường làm việc')){ AppState.jobList[${i}]=this.innerText.trim(); }">${j}</td>
-        <td class="text-center"><button class="btn-table-del" onclick="deleteJobRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
+        <td class="cell-blue font-medium" contenteditable="true" spellcheck="false" data-placeholder="Ví dụ: Công ty ổn định, có cơ hội thăng tiến" onblur="if(assertWritePermission('Sửa môi trường làm việc')){ AppState.jobList[${i}]=this.innerText.trim(); }">${escapeHtml(j)}</td>
+        <td class="text-center"><button class="btn-table-del" aria-label="Xóa dòng" title="Xóa dòng" onclick="deleteJobRow(${i})"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `).join('');
   }
@@ -7329,7 +7355,19 @@ window.saveAppStateToCloud = async function() {
   }
 
   if (!UserSession.currentUser) {
-    showToast("Vui lòng xác nhận danh tính trước khi lưu dữ liệu!", "error");
+    // Chưa đăng nhập: chuyển sang trang đăng nhập sẽ làm mất dữ liệu đang nhập trên trang này (không có lưu nháp cục bộ),
+    // nên hỏi trước khi rời trang và cho chọn xuất tệp để giữ lại.
+    if (window.hasUnsavedChanges) {
+      const goLogin = await appConfirm(
+        'Bạn chưa đăng nhập nên chưa thể lưu lên tài khoản. Nếu chuyển sang trang đăng nhập, dữ liệu bạn vừa nhập trên trang này sẽ không được giữ lại.\n\nChọn "Ở lại" để xuất dữ liệu ra tệp trước, rồi nhập lại sau khi đăng nhập.',
+        { title: 'Chưa đăng nhập', confirmText: 'Đăng nhập', cancelText: 'Ở lại' }
+      );
+      if (!goLogin) {
+        if (typeof window.openUnifiedDataModal === 'function') window.openUnifiedDataModal('export');
+        return;
+      }
+    }
+    showToast("Vui lòng đăng nhập trước khi lưu dữ liệu!", "error");
     openUserModal(false);
     return;
   }
@@ -9427,7 +9465,7 @@ function buildCsvColumnMappingUI(headers, tableKey) {
     return `
       <div class="io-mapping-item">
         <label>${escapeHtml(f.label)} ${f.required ? '*' : ''}</label>
-        <select class="io-select csv-col-map-select" data-field-key="${f.key}" onchange="revalidateCsvPreview()">
+        <select class="io-select csv-col-map-select" aria-label="Cột trong tệp cho trường ${f.label}" data-field-key="${f.key}" onchange="revalidateCsvPreview()">
           <option value="-1">-- Bỏ qua --</option>
           ${headers.map((h, i) => `<option value="${i}" ${i === defaultIdx ? 'selected' : ''}>Cột ${i + 1}: ${escapeHtml(h || `(Cột ${i + 1})`)}</option>`).join('')}
         </select>

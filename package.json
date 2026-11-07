@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "serve": "npx serve -l 8899 .",
+    "e2e": "node tests/e2e/run-all.js",
     "test": "node --test tests/unit.test.js tests/portfolio.test.js tests/cache.test.js tests/month.test.js tests/tutorial.test.js",
     "admin": "node backend/admin-cli.js"
   },

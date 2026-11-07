@@ -56,3 +56,5 @@ skills-lock.json
 !.agents/skills/firebase-hosting-basics/
 !.agents/skills/firebase-security-rules-auditor/
 !.agents/skills/firestore-rules-creation/
+
+tests/e2e/out/

@@ -8548,3 +8548,35 @@ body.rail-collapsed:not(.rail-hover-expanded) .btn-sidebar-admin-settings span {
 .setup-empty-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 16px;padding:14px 16px;border:1px dashed var(--primary);border-radius:var(--radius-card);background:var(--bg-surface)}
 .setup-empty-banner .seb-text{flex:1 1 320px;display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.5;color:var(--text-muted)}
 .setup-empty-banner .seb-text strong{color:var(--text);font-size:14.5px}
+
+/* ===== Độ tương phản chữ đạt WCAG AA (kiểm bằng axe), tách riêng giao diện sáng và tối ===== */
+#btn-tutorial{color:var(--text)}
+#btn-tutorial i{color:var(--primary)}
+:root:not([data-theme="dark"]) .header-main-danger .title{color:#b3303d!important}
+:root:not([data-theme="dark"]) .cell-orange-val{color:#b3303d}
+:root:not([data-theme="dark"]) .badge-fixed-goal{color:#4a40d6!important}
+:root:not([data-theme="dark"]) #plan-sum-inc-val{color:#0e7f6b!important}
+:root:not([data-theme="dark"]) #plan-sum-exp-val{color:#c62f3d!important}
+:root:not([data-theme="dark"]) .survey-nav-tab.active .nav-tab-title{color:#4a40d6!important}
+:root:not([data-theme="dark"]) .survey-nav-tab .nav-tab-sub{color:#5a5779!important}
+:root:not([data-theme="dark"]) th[colspan="6"] .table-header-flex .title{color:#0a6a78!important}
+[data-theme="dark"] .badge-fixed-goal,[data-theme="dark"] .text-primary,[data-theme="dark"] .text-blue-rule,[data-theme="dark"] .nav-item.active,[data-theme="dark"] .nav-item.active span,[data-theme="dark"] .brand-unit-badge,[data-theme="dark"] #btn-tutorial i{color:#a8abff!important}
+[data-theme="dark"] #plan-sum-exp-val{color:#ff8a8a!important}
+[data-theme="dark"] .header-main-danger .title{color:#ffa3aa!important}
+[data-theme="dark"] th[colspan="6"] .table-header-flex .title{color:#62e3f2!important}
+[data-theme="dark"] .survey-nav-tab .nav-tab-sub{color:#a9b3c9!important}
+[data-theme="dark"] .btn-cloud-sync.btn-cloud-save,[data-theme="dark"] #btn-floating-switch-class{background-color:#4f53dc!important}
+[data-theme="dark"] .btn-next-step{color:#05281f!important}
+:root:not([data-theme="dark"]) .bg-header-danger th{color:#b3303d!important}
+[data-theme="dark"] .cell-blue{color:#a8abff}
+[data-theme="dark"] .btn-table-add-prominent{background-color:#4f53dc!important}
+[data-theme="dark"] #survey-progress-stat{color:#a8abff!important}
+[data-theme="dark"] .btn-sub-nav.active{background-color:#4f53dc!important}
+/* ===== In ấn: chỉ in nội dung, bỏ thanh bên, nút và hướng dẫn ===== */
+@media print{
+  .sidebar,.mobile-appbar,.sidebar-backdrop,.topbar-right,#tip-pop,.tour-spot,.tour-card,.tour-menu,.tour-nudge,.tour-toast,.tip-i,.btn-table-del,.btn-table-add-prominent{display:none!important}
+  .main-content{margin:0!important;width:100%!important}
+  body{background:#fff!important}
+  .tab-pane.active{display:block!important}
+  .table-scroll-x,.tc-form-table-wrap,.tc-card-table-scroll{overflow:visible!important}
+}

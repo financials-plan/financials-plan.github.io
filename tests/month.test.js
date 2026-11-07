@@ -305,3 +305,25 @@ test("29. Tên 'Chi phát triển bản thân' và hộp khôi phục dùng cùn
   assert.ok(html.includes("Chi phát triển bản thân</span>") && !html.includes("> Kế hoạch phát triển</span>"));
   assert.ok(!html.includes("Cảnh báo ghi đè dữ liệu") && html.includes("Cảnh báo thay thế dữ liệu"));
 });
+
+// ===== Phát hiện từ kiểm thử Playwright: trợ năng, id trùng, bấm Lưu khi chưa đăng nhập =====
+test("30. Không còn id trùng ở hai thẻ mục tiêu cố định (hưu trí, quỹ dự phòng)", () => {
+  assert.ok(!/id="college-/.test(src), "id thẻ phải gắn theo mã mục tiêu");
+  assert.ok(/id="\$\{g\.id\}-college-start"/.test(src));
+});
+
+test("31. Trợ năng: nút xóa, ô chọn và ô nhập mục tiêu có tên truy cập", () => {
+  assert.ok(!/class="btn-table-del"(?! title| aria-label)/.test(src), "nút xóa phải có aria-label hoặc title");
+  assert.ok(src.includes('aria-label="Tên mục tiêu"') && src.includes('aria-label="Năm hoàn tất"') && src.includes('aria-label="Giá trị mục tiêu (triệu đồng)"'));
+  const noName = src.split(/\r?\n/).filter((l) => /<select\b/.test(l) && !/aria-label|\bid=|title=/.test(l));
+  assert.deepStrictEqual(noName, [], "còn <select> không có tên: " + noName.map((s) => s.trim().slice(0, 60)).join(" | "));
+  assert.ok(src.includes("window.fixScrollRegions = function()"), "vùng bảng cuộn dùng được bằng bàn phím");
+});
+
+test("32. Chưa đăng nhập mà bấm Lưu: hỏi trước khi rời trang và cho xuất tệp, không tự ghi gì", () => {
+  const i = src.indexOf("window.saveAppStateToCloud = async function() {");
+  const block = src.slice(i, i + 2600);
+  assert.ok(/if \(!UserSession\.currentUser\) \{[\s\S]*appConfirm\(/.test(block), "có hộp xác nhận trước khi sang trang đăng nhập");
+  assert.ok(block.includes("openUnifiedDataModal('export')"), "đường lui: xuất tệp");
+  assert.ok(block.indexOf("appConfirm(") < block.indexOf("openUserModal(false)"), "hỏi trước rồi mới chuyển trang");
+});
