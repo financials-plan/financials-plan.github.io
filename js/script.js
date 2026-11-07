@@ -260,6 +260,46 @@ function debounceCall(fn, ms = 250) {
   };
 }
 
+// Chống ghi dồn lên Firebase khi người dùng bấm lưu liên tục (gồm cả các nút Lưu ở nhiều nơi).
+// Lần gọi đầu chạy ngay. Các lần gọi tiếp theo, khi lần trước còn đang chạy hoặc chưa đủ `ms`,
+// được gom thành MỘT lần chạy cuối, dùng trạng thái mới nhất, nên không mất dữ liệu và không gửi dồn.
+// Không tự ghi nền: hàm chỉ chạy khi có người gọi.
+function guardWrite(fn, ms = 1500) {
+  let running = null;
+  let lastStart = 0;
+  let timer = null;
+  let waiters = [];
+  let ctx = null;
+  let latestArgs = [];
+
+  const run = () => {
+    lastStart = Date.now();
+    const runCtx = ctx;
+    const runArgs = latestArgs;
+    running = Promise.resolve().then(() => fn.apply(runCtx, runArgs)).finally(() => { running = null; });
+    return running;
+  };
+  const tick = () => {
+    timer = null;
+    if (running || Date.now() - lastStart < ms) { schedule(); return; }
+    const pending = waiters;
+    waiters = [];
+    run().then(r => pending.forEach(f => f(r)), () => pending.forEach(f => f(false)));
+  };
+  const schedule = () => {
+    if (timer) return;
+    const wait = running ? 50 : Math.max(0, ms - (Date.now() - lastStart));
+    timer = setTimeout(tick, wait);
+  };
+
+  return function(...args) {
+    ctx = this;
+    latestArgs = args;
+    if (!running && !timer && Date.now() - lastStart >= ms) return run();
+    return new Promise(resolve => { waiters.push(resolve); schedule(); });
+  };
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -7298,6 +7338,9 @@ window.saveAppStateToCloud = async function() {
     return false;
   }
 };
+
+// Bấm Lưu liên tục (hoặc từ nhiều nút) chỉ tạo tối đa một lần ghi mỗi 1,5 giây; lần cuối luôn lưu trạng thái mới nhất.
+window.saveAppStateToCloud = guardWrite(window.saveAppStateToCloud, 1500);
 
 let cloudInitialLoad = null;
 

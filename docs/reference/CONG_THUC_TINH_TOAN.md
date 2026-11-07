@@ -101,7 +101,7 @@ Tỷ suất sinh lời kỳ vọng của danh mục đa tài sản tại mỗi �
 
 $$R_{\text{portfolio}}(Age) = w_{\text{stocks}} R_{\text{stocks}} + w_{\text{bonds}} R_{\text{bonds}} + w_{\text{ins}} R_{\text{ins}} + w_{\text{cash}} R_{\text{cash}}$$
 
-Trong đó $R_i$ là tỷ suất sinh lời danh nghĩa của từng lớp tài sản được cấu hình trong bảng Từ khóa.
+Trong đó $R_i$ là tỷ suất sinh lời danh nghĩa của từng lớp tài sản được cấu hình trong bảng Danh mục thiết lập.
 
 ---
 

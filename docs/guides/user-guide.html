@@ -222,10 +222,10 @@
   </thead>
   <tbody>
     <tr>
-      <td><strong>1. Khối Từ Khóa</strong></td>
+      <td><strong>1. Khối Danh mục thiết lập</strong></td>
       <td>Thiết lập các tham số nền tảng của bản thân và giả định kinh tế vĩ mô.</td>
       <td>
-        • <strong>Độ tuổi hiện tại</strong> (mặc định 21 tuổi).<br>
+        • <strong>Năm bắt đầu theo dõi</strong> (từ 1900 đến 2100) rồi đến <strong>tuổi của bạn tại năm đó</strong>. Hãy nhập năm trước, sau đó mới nhập tuổi; đổi năm sau này không làm đổi tuổi đã nhập.<br>
         • <strong>Tuổi nghỉ hưu dự kiến</strong> (mặc định 60 tuổi).<br>
         • <strong>Tỷ lệ lạm phát kỳ vọng</strong> (khuyến nghị 4.0% - 6.0%/năm).<br>
         • <strong>Lãi suất phi rủi ro & Lãi suất đầu tư</strong> (tiền gửi, trái phiếu, cổ phiếu).
@@ -306,7 +306,7 @@
 
 <h3>5.1. Cơ chế đồng bộ dữ liệu</h3>
 <ul>
-  <li><strong>Lưu lên Đám mây (Cloud Sync)</strong>: Mỗi khi bạn nhấn nút <strong>Lưu Kế Hoạch Lên Cloud</strong>, toàn bộ cấu trúc dữ liệu gồm 4 khối sẽ được mã hóa và gửi về cơ sở dữ liệu Cloud Firestore an toàn. Khi đổi máy tính hoặc mở điện thoại, dữ liệu của bạn sẽ tự động phục hồi.</li>
+  <li><strong>Lưu lên Đám mây (Cloud Sync)</strong>: Mỗi khi bạn nhấn nút <strong>Lưu</strong> ở thanh trên cùng, toàn bộ cấu trúc dữ liệu gồm 4 khối sẽ được mã hóa và gửi về cơ sở dữ liệu Cloud Firestore an toàn. Khi đổi máy tính hoặc mở điện thoại, dữ liệu của bạn sẽ tự động phục hồi.</li>
   <li><strong>Cơ chế Ngoại tuyến (LocalStorage)</strong>: Khi đang làm việc mà mất mạng, mọi thay đổi trên các ô nhập liệu vẫn được lưu tự động tức thì vào bộ nhớ trình duyệt. Bạn sẽ không bao giờ bị mất số liệu đang tính toán dở dang.</li>
 </ul>
 
@@ -318,9 +318,23 @@
   • Toàn bộ số liệu tài chính của bạn chỉ có bạn và Giảng viên được phân công lớp học của bạn mới có quyền xem ở chế độ chỉ đọc. Không thành viên nào khác trong lớp có thể xem bài của bạn.
 </div>
 
+<h3>5.3. Bấm Lưu nhiều lần</h3>
+<ul>
+<li>Ứng dụng chỉ lưu khi bạn bấm <strong>Lưu</strong>; không có chế độ tự lưu nền.</li>
+<li>Nếu bạn bấm <strong>Lưu</strong> liên tục (hoặc từ nhiều nút), hệ thống chỉ gửi tối đa một lần mỗi 1,5 giây và lần cuối luôn lưu dữ liệu mới nhất. Bạn không cần bấm lại; hãy chờ thông báo "Đã lưu thành công".</li>
+</ul>
+
+<h3>5.4. Hướng dẫn tương tác trong ứng dụng</h3>
+<ul>
+<li>Lần đầu truy cập, ứng dụng hỏi "Bạn mới sử dụng web phải không?". Chọn <strong>Có</strong> để xem hướng dẫn, <strong>Không</strong> để bỏ qua. Câu hỏi này chỉ hiện một lần.</li>
+<li>Bấm nút <strong>Hướng dẫn</strong> ở thanh trên cùng để xem lại bất cứ lúc nào: chọn xem toàn bộ hoặc từng nhóm (A Làm quen giao diện, B Thiết lập, C Mục tiêu, D Cân đối lộ trình, E Theo dõi tài chính, F Khảo sát, G Lưu trữ dữ liệu).</li>
+<li>Trong lúc xem: <strong>Tiếp theo</strong>, <strong>Quay lại</strong>, <strong>Bỏ qua</strong> hoặc phím Esc để thoát.</li>
+<li>Trên máy tính, di chuột vào nút, tab hoặc số liệu để xem giải thích ngắn. Trên điện thoại, chạm vào biểu tượng ⓘ cạnh tiêu đề bảng và biểu đồ.</li>
+</ul>
+
 <h2>6. HỎI ĐÁP THƯỜNG GẶP (FAQ)</h2>
 <p><strong>Hỏi: Tại sao tôi chỉnh sửa số liệu mà trên máy khác không thấy cập nhật?</strong><br>
-<em>Trả lời:</em> Bạn hãy kiểm tra xem mình đã nhấn nút <strong>Lưu Kế Hoạch Lên Cloud</strong> chưa. Khi có thông báo "Đã lưu kế hoạch thành công", dữ liệu mới được đồng bộ lên máy chủ đám mây.</p>
+<em>Trả lời:</em> Bạn hãy kiểm tra xem mình đã nhấn nút <strong>Lưu</strong> ở thanh trên cùng chưa. Khi có thông báo "Đã lưu kế hoạch thành công", dữ liệu mới được đồng bộ lên máy chủ đám mây.</p>
 
 <p><strong>Hỏi: Tôi có thể tham gia nhiều lớp học cùng lúc không?</strong><br>
 <em>Trả lời:</em> Có. Ứng dụng hỗ trợ bạn ghi danh vào nhiều lớp học hoặc chuyên đề khác nhau. Danh sách lớp học và trạng thái duyệt sẽ hiển thị đầy đủ trong bảng quản lý lớp của bạn.</p>

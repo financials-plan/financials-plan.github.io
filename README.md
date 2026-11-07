@@ -14,8 +14,8 @@ Trang chạy tại: <https://financials-plan.github.io/>
 
 | Tab | Nội dung |
 |---|---|
-| Từ khóa thiết lập | Danh mục chi, thu, kế hoạch phát triển và **danh mục sản phẩm đầu tư** (lãi suất, rủi ro, *Loại đầu tư*) |
-| Dashboard phân tích | Tổng quan dòng tiền, mục tiêu và các biểu đồ |
+| Danh mục thiết lập | Năm bắt đầu theo dõi (1900–2100) và tuổi tại năm đó; danh mục chi, thu, kế hoạch phát triển và **danh mục sản phẩm đầu tư** (lãi suất, mức biến động, *Loại đầu tư*) |
+| Tổng quan tài chính | Tổng quan dòng tiền, mục tiêu và các biểu đồ |
 | Mục tiêu bản thân / tài chính | Bảng mục tiêu, thẻ phân bổ sản phẩm cho từng mục tiêu, ma trận khoản góp theo năm |
 | Cân đối lộ trình | Phần 1: tỷ trọng cổ phiếu / trái phiếu / bảo hiểm / tiền gửi theo tuổi và mức sinh lời; Phần 2: đối chiếu thu nhập thực tế với mức cần có |
 | Kế hoạch thu chi & Theo dõi 12 tháng | Kế hoạch, thực tế, chênh lệch lũy kế, bảng cân đối cuối năm |
@@ -29,6 +29,7 @@ Công thức đang dùng được mô tả tại [docs/reference/CONG_THUC_HIEN_
 .
 ├── index.html, main.html, 404.html   # Điểm vào và giao diện chính (GitHub Pages phục vụ từ thư mục gốc)
 ├── js/script.js                      # Toàn bộ logic ứng dụng và thư viện FinancialMath
+├── js/tutorial.js                    # Hướng dẫn trong ứng dụng (tooltip, biểu tượng ⓘ, tour theo nhóm A–G)
 ├── css/style.css                     # Giao diện
 ├── config/firebase-config.js         # Cấu hình Firebase của web app (đúng dạng đoạn mã Firebase cấp)
 ├── config/firestore-settings.js      # Tên collection và mã tài liệu mặc định
@@ -79,6 +80,8 @@ Khi sửa `js/script.js`, hãy tăng số phiên bản trong thẻ `<script src=
 ## Quy ước dữ liệu
 
 - Dữ liệu người dùng chỉ ghi lên Cloud khi bấm **Lưu** (không có tự đồng bộ nền).
+- Chống ghi dồn: bấm **Lưu** liên tục (hoặc từ nhiều nút) chỉ tạo tối đa một lần ghi mỗi 1,5 giây, lần cuối luôn lưu dữ liệu mới nhất (`guardWrite` trong `js/script.js`). Các thao tác ghi khác (tạo/tham gia nhóm, duyệt thành viên, mã quản trị…) nếu gửi trùng cùng tham số khi lần trước chưa xong thì dùng chung một lần ghi (`dedupeInFlightWrites` trong `backend/firestore-service.js`).
+- Hướng dẫn trong ứng dụng: nút **Hướng dẫn** ở thanh trên mở tour theo nhóm; trạng thái xem chỉ lưu trong trình duyệt (`tccn_tutorial_v1`), không ghi lên Cloud.
 - Không đưa dữ liệu người dùng, khóa dịch vụ hay token vào repository (xem `.gitignore` và [SECURITY.md](SECURITY.md)).
 
 ## Giấy phép

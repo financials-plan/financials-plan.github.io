@@ -209,3 +209,65 @@ test("21. Quyết định: đổi năm không làm đổi tuổi đã nhập (tu
   const v = 2030; state.currentYear = v; const ageNow = Number(state.currentAge); if (isFinite(ageNow) && ageNow > 0) state.birthYear = v - ageNow;
   assert.deepStrictEqual(state, { currentYear: 2030, currentAge: 30, birthYear: 2000 });
 });
+
+// ===== Chống ghi dồn lên Firebase (guardWrite ở giao diện, dedupeInFlightWrites ở service) =====
+function extractFn(source, startMarker) {
+  const i = source.indexOf(startMarker);
+  assert.ok(i >= 0, "không thấy " + startMarker);
+  const j = source.slice(i).search(/\r?\n\}\r?\n/);
+  return source.slice(i, i + j + 3);
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test("22. guardWrite: bấm liên tục chỉ ghi tối đa 2 lần (đầu + cuối), lần cuối dùng trạng thái mới nhất", async () => {
+  const guardWrite = new Function(extractFn(src, "function guardWrite(") + "; return guardWrite;")();
+  const calls = [];
+  const save = guardWrite(async (v) => { calls.push(v); await sleep(20); return "ok:" + v; }, 80);
+  const results = await Promise.all([1, 2, 3, 4, 5].map((v) => save(v)));
+  assert.strictEqual(calls.length, 2, "5 lần bấm chỉ tạo 2 lần ghi: " + JSON.stringify(calls));
+  assert.strictEqual(calls[0], 1, "lần đầu chạy ngay");
+  assert.strictEqual(calls[1], 5, "lần cuối lưu trạng thái mới nhất, không mất thay đổi");
+  assert.strictEqual(results[0], "ok:1");
+  assert.ok(results.slice(1).every((r) => r === "ok:5"), "các lần bấm gộp đều nhận kết quả của lần ghi cuối");
+});
+
+test("23. guardWrite: lần gọi cách xa nhau vẫn chạy ngay; lỗi không làm kẹt hàng đợi", async () => {
+  const guardWrite = new Function(extractFn(src, "function guardWrite(") + "; return guardWrite;")();
+  let n = 0;
+  const save = guardWrite(async () => { n++; if (n === 1) throw new Error("mạng lỗi"); return "ok"; }, 40);
+  await assert.rejects(save(), /mạng lỗi/);
+  await sleep(60);
+  assert.strictEqual(await save(), "ok");
+  await sleep(60);
+  assert.strictEqual(await save(), "ok");
+  assert.strictEqual(n, 3, "mỗi lần gọi cách xa đều được ghi");
+});
+
+test("24. guardWrite: chỉ chạy khi có người gọi (không tự ghi nền) và đã bọc nút Lưu", async () => {
+  const guardWrite = new Function(extractFn(src, "function guardWrite(") + "; return guardWrite;")();
+  let n = 0;
+  guardWrite(async () => { n++; }, 30);
+  await sleep(120);
+  assert.strictEqual(n, 0, "không gọi thì không ghi");
+  assert.ok(src.includes("window.saveAppStateToCloud = guardWrite(window.saveAppStateToCloud, 1500);"));
+  assert.ok(!/setInterval\([^)]*saveAppStateToCloud/.test(src), "không có hẹn giờ tự lưu");
+});
+
+test("25. service: ghi trùng cùng tham số đang chạy chỉ gửi một lần, khác tham số vẫn gửi riêng", async () => {
+  const svcSrc = fs.readFileSync(path.join(__dirname, "../backend/firestore-service.js"), "utf8");
+  const i = svcSrc.indexOf("function dedupeInFlightWrites(");
+  const j = svcSrc.slice(i).search(/\r?\n\}\r?\n/);
+  const dedupe = new Function(svcSrc.slice(i, i + j + 3) + "; return dedupeInFlightWrites;")();
+  let writes = 0;
+  const service = { async joinClass(code, user) { writes++; await sleep(30); return { success: true, code, user }; }, async untouched() { return 1; } };
+  dedupe(service, ["joinClass", "missing"]);
+  const [a, b, c] = await Promise.all([service.joinClass("ABC", "u1"), service.joinClass("ABC", "u1"), service.joinClass("ABC", "u2")]);
+  assert.strictEqual(writes, 2, "u1 gửi một lần, u2 gửi riêng");
+  assert.deepStrictEqual(a, b);
+  assert.strictEqual(c.user, "u2");
+  await service.joinClass("ABC", "u1");
+  assert.strictEqual(writes, 3, "xong rồi thì lần sau vẫn ghi bình thường");
+  for (const name of ["changePassword", "adminResetPassword", "updateRecoveryEmail", "saveData"]) {
+    assert.ok(!new RegExp('"' + name + '"').test(svcSrc.slice(svcSrc.indexOf("const DEDUPED_WRITES"), svcSrc.indexOf("function dedupeInFlightWrites"))), name + " không được gom");
+  }
+});

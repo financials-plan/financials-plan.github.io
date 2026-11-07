@@ -3203,6 +3203,31 @@ const FirestoreService = {
   }
 };
 
+// Chống ghi trùng: cùng một thao tác ghi (cùng tên và cùng tham số) đang chạy thì dùng chung kết quả,
+// không gửi thêm lên Firestore (bấm đúp, gửi lặp). Không đổi dữ liệu, không tự ghi nền.
+// Không áp dụng cho thao tác có mật khẩu (đổi mật khẩu, email khôi phục) và saveData (đã gom ở giao diện).
+const DEDUPED_WRITES = [
+  "createAdminCode", "revokeAdminCode", "activateAdminCode",
+  "createClass", "joinClass", "approveClassMember", "updateClass", "archiveClass", "deleteClass",
+  "restoreClassRecord", "restoreAdminCodeRecord", "deleteBackup"
+];
+function dedupeInFlightWrites(service, names) {
+  const inflight = new Map();
+  names.forEach((name) => {
+    const original = service[name];
+    if (typeof original !== "function") return;
+    service[name] = function (...args) {
+      let key;
+      try { key = name + ":" + JSON.stringify(args); } catch (e) { return original.apply(this, args); }
+      if (inflight.has(key)) return inflight.get(key);
+      const p = Promise.resolve(original.apply(this, args)).finally(() => inflight.delete(key));
+      inflight.set(key, p);
+      return p;
+    };
+  });
+}
+dedupeInFlightWrites(FirestoreService, DEDUPED_WRITES);
+
 window.CloudDB = FirestoreService;
 window.dispatchEvent(new CustomEvent("firebase-ready", { detail: { ready: isFirebaseReady } }));
 export { FirestoreService, FirestoreService as CloudDB };
