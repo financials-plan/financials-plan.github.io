@@ -14,7 +14,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="./css/style.css?v=3.7.9">
+  <link rel="stylesheet" href="./css/style.css?v=3.7.10">
   <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js","firebase/analytics":"https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"}}</script>
 </head>
 <body>
@@ -149,6 +149,10 @@
       </div>
 
       <div class="topbar-right">
+        <button type="button" id="btn-tutorial" aria-haspopup="menu" aria-expanded="false" aria-label="Hướng dẫn sử dụng">
+          <i class="fa-solid fa-circle-question"></i> <span>Hướng dẫn</span>
+        </button>
+
         <button type="button" class="btn-cloud-sync" id="btn-cloud-load" onclick="openUnifiedDataModal('import')" title="Nhập / Xuất dữ liệu &amp; Sao lưu">
           <i class="fa-solid fa-cloud-arrow-down"></i> <span>Nhập dữ liệu</span>
         </button>
@@ -2928,6 +2932,7 @@
 
   <script type="module" src="./backend/firestore-service.js?v=3.7.22"></script>
   <script src="./js/script.js?v=3.7.30"></script>
+  <script src="./js/tutorial.js?v=1.0.0"></script>
 
 </body>
 </html>
