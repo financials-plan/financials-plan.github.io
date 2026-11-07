@@ -512,10 +512,12 @@
     var prevFocus = document.activeElement;
     nudge = mk('div', 'tour-nudge');
     nudge.innerHTML = '<div class="tn-box" role="dialog" aria-modal="true" aria-labelledby="tn-q">' +
-      '<i class="fa-solid fa-hand tn-icon" aria-hidden="true"></i>' +
-      '<div class="tn-q" id="tn-q">Bạn mới sử dụng web phải không?</div>' +
-      '<div class="tn-sub">Nếu có, chúng tôi sẽ hướng dẫn nhanh để bạn biết bắt đầu từ đâu. Bạn có thể mở lại hướng dẫn bất cứ lúc nào bằng nút Hướng dẫn.</div>' +
-      '<div class="tn-actions"><button type="button" class="tour-btn" data-n="no">Không</button><button type="button" class="tour-btn primary" data-n="yes">Có</button></div></div>';
+      '<i class="fa-solid fa-book-open tn-icon" aria-hidden="true"></i>' +
+      '<div class="tn-hello">Chào mừng bạn đến với</div>' +
+      '<div class="tn-q" id="tn-q">Sổ Tài chính</div>' +
+      '<div class="tn-sub">Nơi bạn lập kế hoạch thu chi, đặt mục tiêu và theo dõi tiền bạc của mình.<br>Bạn đã dùng Sổ Tài chính lần nào chưa?</div>' +
+      '<div class="tn-actions"><button type="button" class="tour-btn primary" data-n="yes">Chưa, mình mới dùng lần đầu</button><button type="button" class="tour-btn" data-n="no">Rồi, mình quen rồi</button></div>' +
+      '<div class="tn-foot">Bạn có thể xem hướng dẫn bất cứ lúc nào ở nút Hướng dẫn.</div></div>';
     document.body.appendChild(nudge);
     requestAnimationFrame(function () { nudge.classList.add('show'); });
     var yes = nudge.querySelector('[data-n="yes"]'); if (yes) yes.focus({ preventScroll: true });
@@ -574,7 +576,7 @@
     // các bảng được vẽ lại sau khi nạp dữ liệu: gắn tooltip cho phần tử xuất hiện muộn
     setTimeout(applyTips, 1500);
     setTimeout(applyTips, 4000);
-    setTimeout(showNudge, 3500);
+    setTimeout(showNudge, 1200);
 
     window.TCCNTutorial = { start: startTour, applyTips: applyTips, groups: GROUPS.map(function (g) { return { key: g.key, name: g.name, steps: g.steps.length }; }), _tips: TIPS.length };
   }
