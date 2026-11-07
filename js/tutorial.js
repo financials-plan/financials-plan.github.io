@@ -531,17 +531,29 @@
     var s = store.get();
     if (s.dismissed || s.nudged) return;
     store.patch({ nudged: Date.now() });
+    var prevFocus = document.activeElement;
     nudge = mk('div', 'tour-nudge');
-    nudge.setAttribute('role', 'region'); nudge.setAttribute('aria-label', 'Gợi ý xem hướng dẫn');
-    nudge.innerHTML = '<div class="tn-text"><b>Bạn mới dùng ứng dụng?</b><span>Xem hướng dẫn nhanh để biết bắt đầu từ đâu. Bạn có thể bỏ qua và mở lại sau.</span></div>' +
-      '<div class="tn-actions"><button type="button" class="tour-btn ghost" data-n="later">Để sau</button><button type="button" class="tour-btn primary" data-n="go">Xem hướng dẫn</button></div>';
+    nudge.innerHTML = '<div class="tn-box" role="dialog" aria-modal="true" aria-labelledby="tn-q">' +
+      '<i class="fa-solid fa-hand tn-icon" aria-hidden="true"></i>' +
+      '<div class="tn-q" id="tn-q">Bạn mới sử dụng web phải không?</div>' +
+      '<div class="tn-sub">Nếu có, chúng tôi sẽ hướng dẫn nhanh để bạn biết bắt đầu từ đâu. Bạn có thể mở lại hướng dẫn bất cứ lúc nào bằng nút Hướng dẫn.</div>' +
+      '<div class="tn-actions"><button type="button" class="tour-btn" data-n="no">Không</button><button type="button" class="tour-btn primary" data-n="yes">Có</button></div></div>';
     document.body.appendChild(nudge);
     requestAnimationFrame(function () { nudge.classList.add('show'); });
+    var yes = nudge.querySelector('[data-n="yes"]'); if (yes) yes.focus({ preventScroll: true });
+    function answer(go) {
+      if (!nudge) return;
+      document.removeEventListener('keydown', onKey, true);
+      store.patch({ dismissed: true });
+      var n = nudge; nudge = null;
+      n.classList.remove('show'); setTimeout(function () { n.remove(); }, 250);
+      if (go) startTour('ALL'); else if (prevFocus && prevFocus.focus) { try { prevFocus.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ } }
+    }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); answer(false); } }
+    document.addEventListener('keydown', onKey, true);
     nudge.addEventListener('click', function (e) {
       var b = e.target.closest('[data-n]'); if (!b) return;
-      store.patch({ dismissed: true });
-      nudge.classList.remove('show'); setTimeout(function () { nudge.remove(); }, 250);
-      if (b.getAttribute('data-n') === 'go') startTour('ALL');
+      answer(b.getAttribute('data-n') === 'yes');
     });
   }
 
