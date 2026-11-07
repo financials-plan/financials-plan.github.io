@@ -28,10 +28,20 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare site (chi dang tep web can thiet)
+        shell: bash
+        run: |
+          mkdir -p _site/backend
+          cp index.html main.html 404.html _site/
+          cp -r auth css js config _site/
+          cp backend/firestore-service.js _site/backend/
+          rm -f _site/config/*.md
+          test -f _site/main.html && test -f _site/backend/firestore-service.js && test -f _site/config/firebase-config.js
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
